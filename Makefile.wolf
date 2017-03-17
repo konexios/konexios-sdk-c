@@ -1,0 +1,6 @@
+SRC += $(wildcard $(PWD)/platforms/common/wolf/crypt/*.c)
+SRC += $(shell find $(PWD)/src/wolfSSL -name "*.c")
+
+INCLUDES += \
+    -I./src/wolfSSL \
+    -I./src/wolfSSL/wolfssl

@@ -1,0 +1,37 @@
+#include "ntp/ntp.h"
+#include <debug.h>
+#include <time/time.h>
+#include <ntp/client.h>
+#if defined(_ARIS_)
+#include "reloc_macro.h"
+#define SLEEP(ms) tx_thread_sleep(CONV_MS_TO_TICK(ms));
+#elif defined(__MBED__)
+#define SLEEP(ms) wait_ms(ms)
+#elif defined(__linux__)
+#include <unistd.h>
+#define SLEEP(ms) usleep(ms*1000)
+#elif defined(__XCC__)
+#include <qcom_time.h>
+#define SLEEP(ms) qcom_thread_msleep(ms)
+#endif
+
+int ntp_set_time_cycle() {
+    return ntp_set_time_common(NTP_DEFAULT_SERVER, NTP_DEFAULT_PORT, NTP_DEFAULT_TIMEOUT, -1);
+}
+
+int ntp_set_time_common(
+        const char *server,
+        uint16_t port,
+        int timeout,
+        int try_times) {
+    int i=0;
+    do {
+        while( ntp_set_time(server, port, timeout) != NTP_OK ) {
+            DBG("NTP set time fail...");
+            SLEEP(1000);
+            if ( try_times >= 0 && i++ >= try_times ) return -1;
+        }
+        DBG(" time diff %d %d ", (int)time(NULL), (int)build_time());
+    } while(time(NULL) <= build_time());
+    return 0;
+}

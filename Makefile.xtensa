@@ -1,0 +1,49 @@
+-include Makefile.static
+
+LIBDIR ?= .
+KRONOS_C_SDK_LIB = $(LIBDIR)/libkronoscsdk.a
+
+INCLUDES_LOC = \
+    -I. \
+    -I./include \
+    -I./src/wolfSSL \
+    $(INCLUDES)
+
+CFLAGS = $(COPTS) $(DEFINES) $(INCLUDES_LOC) -L$(LIBDIR) -ljson -lcrypto_hmacsha -lqcomcrypto
+
+CC = xt-xcc
+AR = xt-ar
+RM = rm -f
+
+INCLUDES_LOC += -I$(PWD)/platforms/xtensa/time/
+
+SRC += $(wildcard $(PWD)/platforms/xtensa/arrow/*.c)
+SRC += $(wildcard $(PWD)/platforms/xtensa/bsd/*.c)
+SRC += $(wildcard $(PWD)/platforms/xtensa/time/*.c)
+SRC += $(wildcard $(PWD)/platforms/xtensa/crypt/*.c)
+SRC += $(wildcard $(PWD)/platforms/xtensa/json/*.c)
+SRC += ./src/wolfSSL/wolfcrypt/src/coding.c
+SRC := $(filter-out ./src/json/json.c, $(SRC))
+ 
+OBJ = $(SRC:.c=.o)
+
+# AR_PRM = rcs
+AR_PRM = ru
+ 
+.SUFFIXES: .c
+ 
+default: $(KRONOS_C_SDK_LIB)
+ 
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+ 
+$(KRONOS_C_SDK_LIB): $(OBJ)
+	$(AR) $(AR_PRM) $(KRONOS_C_SDK_LIB) $(OBJ)
+ 
+depend: dep
+ 
+dep:
+	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
+ 
+clean:
+	$(RM) $(OBJ) $(KRONOS_C_SDK_LIB)

@@ -1,0 +1,11 @@
+SRC += $(wildcard ./src/ntp/*.c)
+SRC += $(wildcard ./src/http/*.c)
+SRC += $(wildcard ./src/json/*.c)
+SRC += $(wildcard ./src/bsd/*.c) 
+SRC += $(wildcard ./src/time/*.c)
+SRC += $(wildcard ./src/arrow/*.c)
+SRC += $(wildcard ./src/mqtt/client/src/*.c)
+SRC += $(wildcard ./src/mqtt/packet/src/*.c)
+
+INCLUDES += \
+    -I./include
