@@ -317,21 +317,21 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
       cli->ctx = qcom_SSL_ctx_new(SSL_CLIENT, SSL_INBUF_SIZE, SSL_OUTBUF_SIZE, 0);
       if ( cli->ctx == NULL) {
           DBG("unable to get ctx");
-          soc_close(n->my_socket);
+          soc_close(cli->sock);
           return -1;
       }
       cli->ssl = qcom_SSL_new(cli->ctx);
       qcom_SSL_set_fd(cli->ssl, cli->sock);
       if (cli->ssl == NULL) {
           DBG("oops, bad SSL ptr");
-          soc_close(n->my_socket);
+          soc_close(cli->sock);
           return -1;
       }
       int err = qcom_SSL_connect(cli->ssl);
-      if (ret < 0) {
+      if (err < 0) {
           DBG("SSL connect fail %d", ret);
-          soc_close(n->my_socket);
-          return ret;
+          soc_close(cli->sock);
+          return err;
       }
 #else
       cli->ctx = wolfSSL_CTX_new(cli->method);

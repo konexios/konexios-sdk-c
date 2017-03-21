@@ -20,6 +20,7 @@ typedef struct {
   char *hid;
   char *software_name;
   char *software_version;
+  char *sdkVersion;
 } arrow_gateway_t;
 
 enum account_type {

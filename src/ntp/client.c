@@ -19,7 +19,6 @@
 
 //Debug is disabled by default
 #include "ntp/client.h"
-#define DEBUG
 #include <debug.h>
 #include <bsd/socket.h>
 #include <time/time.h>
