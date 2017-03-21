@@ -28,6 +28,7 @@ GATEWAY_ADD_PROPERTY(arrow_gateway, os);
 GATEWAY_ADD_PROPERTY(arrow_gateway, type);
 GATEWAY_ADD_PROPERTY(arrow_gateway, software_name);
 GATEWAY_ADD_PROPERTY(arrow_gateway, software_version);
+GATEWAY_ADD_PROPERTY(arrow_gateway, sdkVersion);
 GATEWAY_ADD_PROPERTY(arrow_gateway, hid);
 
 #if defined(__IBM__)
@@ -59,6 +60,8 @@ char *arrow_gateway_serialize(arrow_gateway_t *gate) {
     json_append_member(_main, "softwareName", json_mkstring(gate->software_name));
   if ( gate->software_version )
     json_append_member(_main, "softwareVersion", json_mkstring(gate->software_version));
+  if ( gate->sdkVersion )
+    json_append_member(_main, "sdkVersion", json_mkstring(gate->software_version));
   char *str = json_encode(_main);
   json_minify(str);
   json_delete(_main);
@@ -87,6 +90,7 @@ void arrow_gateway_free(arrow_gateway_t *gate) {
   FREE_PROP( gate->hid );
   FREE_PROP( gate->software_name );
   FREE_PROP( gate->software_version );
+  FREE_PROP( gate->sdkVersion );
 }
 
 
