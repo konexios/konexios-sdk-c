@@ -54,6 +54,7 @@ struct hostent* gethostbyname(const char *name);
 #include <netdb.h>
 #include <strings.h>
 #define soc_close(x) close((x))
+    
 #elif defined(__XCC__)
 # include <qcom/base.h>
 # include <qcom_network.h>
@@ -68,5 +69,18 @@ STRUCT_HOSTENT
 # define send qcom_send
 # define connect qcom_connect
 struct hostent *gethostbyname(const char *name);
+
+#elif defined(__senseability__)
+# include <unint.h>
+# include <bsd/inet.h>
+# include <platforms/common/bsd/sockdef.h>
+# define htons _htons
+# define htonl _htonl
+# define ntohl _ntohl
+STRUCT_HOSTENT
+
+
 #endif
+
+
 #endif // _COMMON_BSD_SOCKET_H_

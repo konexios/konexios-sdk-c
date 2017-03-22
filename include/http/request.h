@@ -9,6 +9,8 @@
 #ifndef HTTPCLIENT_REQUEST_H_
 #define HTTPCLIENT_REQUEST_H_
 
+#include <unint.h>
+    
 #if defined(_ARIS_)
 # include "wifi_thread.h"
 # include "driver/include/m2m_wifi.h"
@@ -25,8 +27,6 @@
 #elif defined(__XCC__)
 # include <qcom/base.h>
 # include <qcom_common.h>
-#else
-# warning "target not defined"
 #endif
 
 #define REQUEST_HOST_LEN 100

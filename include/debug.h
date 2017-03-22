@@ -20,6 +20,9 @@
 #define DBG(x, ...) A_PRINTF("[DBG]"x"\r\n", ##__VA_ARGS__);
 #define WARN(x, ...) A_PRINTF("[WARN]"x"\r\n", ##__VA_ARGS__);
 #define ERR(x, ...)  A_PRINTF("[ERR]"x"\r\n", ##__VA_ARGS__);
+    
+#elif defined(__senseability__)
+#include "platforms/senseability/trace.h"
 #else
 #include <stdio.h>
 #define DBG(x, ...) printf("[DBG]"x"\r\n", ##__VA_ARGS__);

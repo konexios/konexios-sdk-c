@@ -21,6 +21,8 @@
 #elif defined(__XCC__)
 #include <qcom_time.h>
 #define SLEEP(ms) qcom_thread_msleep(ms)
+#elif defined(__senseability__)
+#define SLEEP CyDelay
 #endif
 
 int ntp_set_time_cycle() {

@@ -21,5 +21,9 @@
 typedef A_INT64 int64_t;
 #elif defined(__linux__)
 #include <inttypes.h>
+#elif defined(__senseability__)
+# include <cytypes.h>
+# include <sys/types.h>
+typedef unsigned int size_t;
 #endif
 #endif
