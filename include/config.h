@@ -180,4 +180,11 @@
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
 
+#if !defined(DEFAULT_API_KEY)
+#error "set the API key"
+#endif
+#if !defined(DEFAULT_SECRET_KEY)
+#error "set the SECRET key"
+#endif
+
 #endif /* CONFIG_H_ */

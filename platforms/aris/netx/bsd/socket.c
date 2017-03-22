@@ -1,6 +1,14 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #include "bsd/socket.h"
-//#include <debug.h>
-#include "TRACE_USE.h" //FIXME delete
+#include <debug.h>
+
 
 #include <tx_api.h>
 #include <nxd_dns.h>
@@ -331,7 +339,7 @@ INT recv(INT sockID, VOID *rcvBuffer, INT bufferLength, INT flags) {
         }
         memcpy(__buf + __size, pack->nx_packet_prepend_ptr, pack->nx_packet_length);
         __size += pack->nx_packet_length;
-        DBG("new size %d", __size);
+//        DBG("new size %d", __size);
         nx_packet_release(pack);
     }
 
