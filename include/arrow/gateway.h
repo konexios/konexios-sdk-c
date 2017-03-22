@@ -20,6 +20,7 @@ typedef struct {
   char *hid;
   char *software_name;
   char *software_version;
+  char *sdkVersion;
 } arrow_gateway_t;
 
 enum account_type {
@@ -53,6 +54,7 @@ void arrow_gateway_add_type(arrow_gateway_t *gate, const char *name);
 void arrow_gateway_add_software_name(arrow_gateway_t *gate, const char *name);
 void arrow_gateway_add_software_version(arrow_gateway_t *gate, const char *name);
 void arrow_gateway_add_hid(arrow_gateway_t *gate, const char *name);
+void arrow_gateway_add_sdkVersion(arrow_gateway_t *gate, const char *name);
 
 char *arrow_gateway_serialize(arrow_gateway_t *gate);
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str);

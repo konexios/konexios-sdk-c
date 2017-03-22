@@ -16,6 +16,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
+#define SDK_VERSION 1.1.0
 
 #if defined(__IBM__)
 //#define HTTP_CIPHER

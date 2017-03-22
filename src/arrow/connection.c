@@ -15,6 +15,7 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_add_software_name(gateway, GATEWAY_SOFTWARE_NAME);
   arrow_gateway_add_software_version(gateway, GATEWAY_SOFTWARE_VERSION);
   arrow_gateway_add_type(gateway, GATEWAY_TYPE);
+  arrow_gateway_add_sdkVersion(gateway, xstr(SDK_VERSION));
   char *uid = (char*)malloc(strlen(GATEWAY_UID_PREFIX) + 20);
   strcpy(uid, GATEWAY_UID_PREFIX);
   strcat(uid, "-");
