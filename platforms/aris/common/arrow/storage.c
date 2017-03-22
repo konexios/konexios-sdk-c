@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #include <stdio.h>
 #include <debug.h>
 #include <driver/include/m2m_types.h>
@@ -29,8 +37,10 @@ void save_gateway_info(const arrow_gateway_t *gateway) {
     char *flash_ptr = flash + 256;
     if ( gateway->hid ) {
         strcpy(flash_ptr, gateway->hid);
-        flash_storage_write((uint8_t*)flash, 512);
+    } else {
+        *flash_ptr = 0x0;
     }
+    flash_storage_write((uint8_t*)flash, 512);
 }
 
 int restore_device_info(arrow_device_t *device) {
@@ -54,10 +64,12 @@ int restore_device_info(arrow_device_t *device) {
 void save_device_info(arrow_device_t *device) {
     if ( !flash_read ) read_flash();
     char *flash_ptr = flash + 256 + 124;
-    strcpy(flash_ptr, device->hid);
+    if ( device->hid ) strcpy(flash_ptr, device->hid);
+    else *flash_ptr = 0x0;
 #if defined(__IBM__)
     flash_ptr = flash + 256 + 124 + 64;
-    strcpy(flash_ptr, device->eid);
+    if ( device->eid ) strcpy(flash_ptr, device->eid);
+    else *flash_ptr = 0x0;
 #endif
     flash_storage_write((uint8_t*)flash, 512);
 }

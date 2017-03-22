@@ -1,9 +1,11 @@
-/*
- * winc.c
- *
- *  Created on: 8 февр. 2017 г.
- *      Author: ddemidov
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
  */
+
 #define MODULE_NAME "WiFiWINC"
 
 #define MAIN_OTA_URL          "http://10.0.0.187/m2m_ota_3a0.bin"
@@ -133,7 +135,7 @@ static void wifi_socket_cb(SOCKET sock, uint8 u8Msg, void *pvMsg) {
 //                        DBG("recv add buffer %d", pstrRecvMsg->s16BufferSize);
                         ts_add_chunk_to_buffer(ssock, pstrRecvMsg->pu8Buffer, (size_t)pstrRecvMsg->s16BufferSize);
                         if ( pstrRecvMsg->u16RemainingSize == 0 ) {
-                            DBG("received size : %p", ssock->buf);
+                            //DBG("received size : %p", ssock->buf);
                             tx_event_flags_set(&ssock->flags, (uint32_t)~SOCK_WAIT_RX, TX_AND);
                             tx_event_flags_set(&ssock->flags, SOCK_RECV, TX_OR);
                         }
@@ -265,7 +267,7 @@ static void wifi_dns_cb(uint8* pu8DomainName, uint32 u32ServerIP) {
     if ( tx_event_flags_set(&_net.events, NET_EVENT_STATE_DNS, TX_OR) != TX_SUCCESS ) {
         TRACE("Cannot set the DNS flag...\r\n");
     }
-    DBG("DNS %08x", _net.events.tx_event_flags_group_current);
+    //DBG("DNS %08x", _net.events.tx_event_flags_group_current);
 }
 
 ///////////////////////////////////////
@@ -377,12 +379,11 @@ struct hostent *gethostbyname(char *host) {
     static ULONG s_hostent_addr;
     static ULONG *s_phostent_addr[2];
     uint32_t state = 0;
-    DBG("NET_EVENT_STATE_CONNECT");
     if ( tx_event_flags_get( &_net.events, NET_EVENT_STATE_CONNECT, TX_AND, &state, TX_WAIT_FOREVER) != TX_SUCCESS ) {
         return NULL;
     }
     _gethostbyname((uint8*)host);
-    DBG("NET_EVENT_STATE_DNS %d", _net.timeout_ms);
+    //DBG("NET_EVENT_STATE_DNS %d", _net.timeout_ms);
     if( tx_event_flags_get( &_net.events,
                             NET_EVENT_STATE_DNS,
                             TX_AND_CLEAR,
@@ -620,4 +621,111 @@ int accept(int sock, struct sockaddr *addr, socklen_t *addrlen) {
     return s->sock;
 }
 
-#include "netsocket.c"
+
+int net_socket_init(wifi_socket_t *sock, SOCKET curr) {
+    char evgroup[15];
+    sock->sock = curr;
+    sock->next = NULL;
+    sock->waitopt = 30000;//TX_WAIT_FOREVER; // FIXME for test
+    sock->buf = NULL;
+    if ( curr >= 0 ) {
+        snprintf(evgroup, 15, "socket_eg_%d", (int)curr); // should be unique
+        DBG("server: init flags %s", evgroup);
+        SSP_ASSERT( tx_event_flags_create(&sock->flags, evgroup) == TX_SUCCESS );
+        SSP_ASSERT( tx_event_flags_set(&sock->flags, 0x00, TX_AND) == TX_SUCCESS );
+    }
+    return SSP_SUCCESS;
+}
+
+wifi_socket_t *net_socket_find(wifi_socket_t *sock, SOCKET curr) {
+    wifi_socket_t *s = sock;
+    while( s && s->sock != curr ) {
+        s = s->next;
+    }
+    return s;
+}
+
+wifi_socket_t *net_socket_add(wifi_socket_t **sock, SOCKET curr) {
+    wifi_socket_t *s = *sock;
+    if ( s ) {
+        while( s->next )  s = s->next;
+    }
+    wifi_socket_t *tmp = malloc(sizeof(wifi_socket_t));
+    if ( !tmp ) {
+        DBG("[socket] malloc fail, %d", (int)curr);
+        return NULL;
+    }
+    net_socket_init(tmp, curr);
+    if ( s ) s->next = tmp;
+    else *sock = tmp;
+    return tmp;
+}
+
+static void buf_init(net_buffer_t *buf) {
+    memset(buf, 0x00, sizeof(net_buffer_t));
+}
+
+void buf_free(net_buffer_t *buf) {
+    free(buf->buffer);
+    free(buf);
+}
+
+void net_socket_free(wifi_socket_t **list, SOCKET curr) {
+    wifi_socket_t *s = *list;
+    wifi_socket_t *prev = NULL;
+    while( s && s->sock != curr ) {
+        prev = s;
+        s = s->next;
+    }
+    if ( s ) {
+        tx_event_flags_delete(&s->flags);
+        if ( prev ) prev->next = s->next;
+        else *list = s->next;
+        net_buffer_t *buf = s->buf;
+        while(buf) {
+            net_buffer_t *old = buf;
+            buf = buf->next;
+            buf_free(old);
+        }
+        free(s);
+        s = NULL;
+    }
+}
+
+int add_buffer(wifi_socket_t *ssock, uint8_t *src, size_t size) {
+    net_buffer_t *buf = ssock->buf;
+    net_buffer_t *alloc_buf = (net_buffer_t *)malloc(sizeof(net_buffer_t));
+    buf_init(alloc_buf);
+    if ( buf ) {
+        while(buf->next) buf = buf->next;
+        buf->next = alloc_buf;
+    } else {
+        ssock->buf = alloc_buf;
+    }
+    alloc_buf->buffer = malloc(size);
+    alloc_buf->size = size;
+    memcpy(alloc_buf->buffer, src, size);
+    return 0;
+}
+
+int get_buffer(wifi_socket_t *ssock, uint8_t *dst, uint16_t size) {
+    net_buffer_t *buf = ssock->buf;
+    if ( !buf ) return -1;
+    size_t chunk = 0;
+    while( chunk < size && buf ) {
+        if ( buf->size - buf->start <= size - chunk ) {
+            memcpy(dst + chunk, buf->buffer + buf->start, buf->size - buf->start);
+            chunk += buf->size - buf->start;
+            net_buffer_t *old = buf;
+            buf = buf->next;
+            buf_free(old);
+            ssock->buf = buf;
+        } else {
+            memcpy(dst + chunk, buf->buffer + buf->start, size - chunk);
+            buf->start += size - chunk;
+            chunk += size - chunk;
+        }
+    }
+    return chunk;
+}
+
