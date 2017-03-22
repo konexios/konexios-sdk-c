@@ -133,7 +133,7 @@ static void wifi_socket_cb(SOCKET sock, uint8 u8Msg, void *pvMsg) {
 //                        DBG("recv add buffer %d", pstrRecvMsg->s16BufferSize);
                         ts_add_chunk_to_buffer(ssock, pstrRecvMsg->pu8Buffer, (size_t)pstrRecvMsg->s16BufferSize);
                         if ( pstrRecvMsg->u16RemainingSize == 0 ) {
-                            DBG("received size : %p", ssock->buf);
+                            //DBG("received size : %p", ssock->buf);
                             tx_event_flags_set(&ssock->flags, (uint32_t)~SOCK_WAIT_RX, TX_AND);
                             tx_event_flags_set(&ssock->flags, SOCK_RECV, TX_OR);
                         }
@@ -265,7 +265,7 @@ static void wifi_dns_cb(uint8* pu8DomainName, uint32 u32ServerIP) {
     if ( tx_event_flags_set(&_net.events, NET_EVENT_STATE_DNS, TX_OR) != TX_SUCCESS ) {
         TRACE("Cannot set the DNS flag...\r\n");
     }
-    DBG("DNS %08x", _net.events.tx_event_flags_group_current);
+    //DBG("DNS %08x", _net.events.tx_event_flags_group_current);
 }
 
 ///////////////////////////////////////
@@ -377,12 +377,11 @@ struct hostent *gethostbyname(char *host) {
     static ULONG s_hostent_addr;
     static ULONG *s_phostent_addr[2];
     uint32_t state = 0;
-    DBG("NET_EVENT_STATE_CONNECT");
     if ( tx_event_flags_get( &_net.events, NET_EVENT_STATE_CONNECT, TX_AND, &state, TX_WAIT_FOREVER) != TX_SUCCESS ) {
         return NULL;
     }
     _gethostbyname((uint8*)host);
-    DBG("NET_EVENT_STATE_DNS %d", _net.timeout_ms);
+    //DBG("NET_EVENT_STATE_DNS %d", _net.timeout_ms);
     if( tx_event_flags_get( &_net.events,
                             NET_EVENT_STATE_DNS,
                             TX_AND_CLEAR,
