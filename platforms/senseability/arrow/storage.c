@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #include "arrow/storage.h"
 #include <string.h>
 #include <stdio.h>
@@ -33,13 +41,14 @@ int check_mgc() {
 
 static flash_mem_t flash;
 
-#define ROW 1024
+#define ROW 1020
 
 static void read_flash() {
     static int read = 0;
     if (!read) {
         char *ptr;
         ptr = (CY_FLASH_BASE + ROW * CY_FLASH_SIZEOF_ROW);
+        DBG("ptr %p", ptr);
         memcpy(&flash, ptr, sizeof(flash_mem_t));        
         read = 1;
     }
@@ -59,8 +68,8 @@ static void write_flash() {
 }
 
 int restore_gateway_info(arrow_gateway_t *gateway) {
+    DBG("restore gateway info");
     read_flash();    
-    DBG("restore gateway info\r\n");
     if ( utf8check(flash.gateway_hid) && strlen(flash.gateway_hid) > 0 ) {
       arrow_gateway_add_hid(gateway, flash.gateway_hid);
       return 0;
