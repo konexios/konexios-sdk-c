@@ -1,52 +1,34 @@
 -include Makefile.static
 -include Makefile.wolf
+-include Makefile.linux.def
 
 LIBDIR ?= .
-KRONOS_C_SDK_LIB = $(LIBDIR)/libkronoscsdk.a
+C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
 INCLUDES += \
     -I.
-    #-I./src/wolfSSL \
-    #-I./src/wolfSSL/wolfssl
-    
-AS      = as
-CC      = gcc
-CPP     = g++
-LD      = gcc
-OBJCOPY = objcopy
-OBJDUMP = objdump
-SIZE    = size 
-RM 	= rm -f
 
 SRC += $(wildcard $(PWD)/platforms/linux/json/*.c)
 SRC += $(wildcard $(PWD)/platforms/linux/arrow/*.c)
 SRC += $(wildcard $(PWD)/platforms/linux/time/*.c)
-# SRC := $(filter-out ./src/arrow/mqtt.c, $(SRC))
 
 OBJ = $(SRC:.c=.o)
 
 AR_PRM = rcs
 # AR_PRM = ru
 
-CPU = 
-COMMON_FLAGS = -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -MMD -fno-delete-null-pointer-checks -fomit-frame-pointer
-CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu99 -MMD -MP
-CPPC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu++98 -fno-rtti -MMD -MP
-ASM_FLAGS = -x assembler-with-cpp $(COMMON_FLAGS) -Os
-CC_SYMBOLS = -DTOOLCHAIN_GCC
-
 LD_FLAGS =
 LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc
  
 .SUFFIXES: .c
 
-default: $(KRONOS_C_SDK_LIB)
+default: $(C_SDK_LIB)
 
 .c.o:
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
 
-$(KRONOS_C_SDK_LIB): $(OBJ)
-	$(AR) $(AR_PRM) $(KRONOS_C_SDK_LIB) $(OBJ)
+$(C_SDK_LIB): $(OBJ)
+	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
 
 depend: dep
 
@@ -54,4 +36,4 @@ dep:
 	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
 
 clean:
-	$(RM) $(OBJ) $(KRONOS_C_SDK_LIB)
+	$(RM) $(OBJ) $(C_SDK_LIB)
