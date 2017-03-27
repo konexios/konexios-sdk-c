@@ -16,19 +16,6 @@
 
 #include <project.h>
 
-typedef struct {
-  int magic;
-  char ssid[64];
-  char pass[64];
-  int sec;
-  char padding[116];
-  int config;
-  char gateway_hid[64];
-  char device_hid[64];
-  char device_eid[64];
-  char unused[64];
-} flash_mem_t;
-
 /*
 int check_mgc() {
   int *c = flash_start();

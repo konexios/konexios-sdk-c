@@ -46,5 +46,5 @@ void sign_request(http_request_t *req) {
     http_request_add_header(req, "Accept", "application/json");
     http_request_add_header(req, "Connection", "Keep-Alive");
     http_request_add_header(req, "Accept-Encoding", "gzip, deflate");
-    http_request_add_header(req, "User-Agent", "Go 1.1 package http");
+    http_request_add_header(req, "User-Agent", "Eos");
 }
