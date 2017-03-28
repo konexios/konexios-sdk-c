@@ -8,7 +8,11 @@
 
 #define MODULE_NAME "WiFiWINC"
 
-#define MAIN_OTA_URL          "http://10.0.0.187/m2m_ota_3a0.bin"
+#if !defined(MAIN_OTA_URL)
+#define MAIN_OTA_URL "http://192.168.83.72/m2m_ota_3a0.bin"
+#endif
+
+#include "bsd/socket.h"
 
 #include "reloc_assert.h"
 #include "wifi_thread.h"
@@ -17,7 +21,6 @@
 
 #include <arrow/storage.h>
 #include <time/time.h>
-#include <bsd/socket.h>
 
 #include "driver/include/m2m_ota.h"
 #include "_netstack.h"
@@ -360,9 +363,40 @@ int net_ap_init() {
     socketInit();
     registerSocketCallback(wifi_socket_cb, wifi_dns_cb);
     _net.sock = NULL;
-
-//    SSP_ASSERT( wifi_server_run(&_net) == TX_SUCCESS );
     return 0;
+}
+
+static void OtaUpdateCb(uint8_t u8OtaUpdateStatusType, uint8_t u8OtaUpdateStatus) {
+    DBG("OtaUpdateCb %d %d", u8OtaUpdateStatusType, u8OtaUpdateStatus);
+    if (u8OtaUpdateStatusType == DL_STATUS) {
+        if (u8OtaUpdateStatus == OTA_STATUS_SUCSESS) {
+            /* Start Host Controller OTA HERE ... Before switching.... */
+            DBG("OtaUpdateCb m2m_ota_switch_firmware start.");
+            m2m_ota_switch_firmware();
+        } else {
+            DBG("OtaUpdateCb FAIL u8OtaUpdateStatus %d", u8OtaUpdateStatus);
+        }
+    } else if (u8OtaUpdateStatusType == SW_STATUS) {
+        if (u8OtaUpdateStatus == OTA_STATUS_SUCSESS) {
+            DBG("OTA Success. Press reset your board.");
+            /* system_reset(); */
+        }
+    }
+}
+
+/**
+ * \brief OTA notify callback.
+ *
+ * OTA notify callback typedef.
+ */
+static void OtaNotifCb(tstrOtaUpdateInfo *pv) {
+    SSP_PARAMETER_NOT_USED(pv);
+}
+
+int net_ota_init() {
+    _net.mode = OTA;
+    m2m_ota_init(OtaUpdateCb, OtaNotifCb);
+    return TX_SUCCESS;
 }
 
 static int sock_is_connected(wifi_socket_t *ssock, uint32_t *state) {
