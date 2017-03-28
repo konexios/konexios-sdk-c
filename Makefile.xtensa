@@ -1,9 +1,9 @@
 -include Makefile.static
 
 LIBDIR ?= .
-C_SDK_LIB = $(LIBDIR)/libkronoscsdk.a
+C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
--include Makefile.def
+-include Makefile.xtensa.def
 
 INCLUDES += \
     -I. \

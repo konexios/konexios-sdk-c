@@ -47,7 +47,7 @@ void set_time(time_t t);
 #endif
 
 
-#if ( defined(_TIMEVAL_DEFINED) && !defined(__BSD_VISIBLE) ) || defined(__NO_STD__) || defined(ETH_MODE)
+#if ( defined(_TIMEVAL_DEFINED) && !defined(__BSD_VISIBLE) ) || defined(__NO_STD__) || defined(ETH_MODE) || defined(__senseability__)
 
 #define timerclear(tvp)     ((tvp)->tv_sec = (tvp)->tv_usec = 0)
 #define timerisset(tvp)     ((tvp)->tv_sec || (tvp)->tv_usec)

@@ -130,6 +130,7 @@ int NetworkConnect(Network* n, char* addr, int port) {
         return -1;
     }
     memset(&serv, 0, sizeof(serv));
+
     if (serv_resolve->h_addrtype == AF_INET) {
         serv.sin_family = PF_INET;
         bcopy((char *)serv_resolve->h_addr,
@@ -148,6 +149,7 @@ DBG("try socket");
         soc_close(n->my_socket);
         return -2;
     }
+
 
 #if defined(MQTT_CIPHER)
 #if defined(__XCC__)

@@ -33,9 +33,10 @@
 #endif
 
 #if defined(__linux__) \
- || defined( _ARIS_)    \
- || defined(__MBED__)  \
- || defined(__XCC__)
+    || defined(_ARIS_) \
+    || defined(__MBED__) \
+    || defined(__XCC__) \
+    || defined(__senseability__)
 #else
 # error "platform doesn't support"
 #endif
@@ -110,38 +111,23 @@
 #define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL"/api/v1/kronos/telemetries"
 #define ARROW_MQTT_URL                  MQTT_SCH"://"MQTT_ADDR":" xstr(MQTT_PORT)
 
+/* gateway and device configuration */
+
+#if defined(_ARIS_)
 /* gateway configuration */
-
-#if defined(_ARIS_)
-#define GATEWAY_UID_PREFIX          "aris"
-#define GATEWAY_NAME                "aris-gateway-demo"
-#define GATEWAY_OS                  "ThreadX"
-#elif defined(__MBED__) //TARGET_NUCLEO_F401RE
-#define GATEWAY_UID_PREFIX          "nucleo"
-#define GATEWAY_NAME                "my-test-gateway-123"
-#define GATEWAY_OS                  "mbed"
-#elif defined(__linux__)
-#define GATEWAY_UID_PREFIX          "probook"
-#define GATEWAY_NAME                "probook-gateway-demo"
-#define GATEWAY_OS                  "linux"
-#elif defined(__XCC__)
-#define GATEWAY_UID_PREFIX          "QCA"
-#define GATEWAY_NAME                "QCA-gateway-demo"
-#define GATEWAY_OS                  "ThreadX"
-#else
-# error "Not supported platform"
-#endif
-#define GATEWAY_TYPE                "Local"
-#define GATEWAY_SOFTWARE_NAME       "eos"
-#define GATEWAY_SOFTWARE_VERSION    "0.1"
-
+# define GATEWAY_UID_PREFIX          "aris"
+# define GATEWAY_NAME                "aris-gateway-demo"
+# define GATEWAY_OS                  "ThreadX"
 /* device configuration */
-
-#if defined(_ARIS_)
-#define DEVICE_NAME         "aris-device-demo"
-#define DEVICE_TYPE         "aris-device"
-#define DEVICE_UID_SUFFIX   "board"
-#elif defined(TARGET_NUCLEO_F401RE)
+# define DEVICE_NAME         "aris-device-demo"
+# define DEVICE_TYPE         "aris-device"
+# define DEVICE_UID_SUFFIX   "board"
+#elif defined(__MBED__) //TARGET_NUCLEO_F401RE
+    // gateway
+# define GATEWAY_UID_PREFIX          "nucleo"
+# define GATEWAY_NAME                "my-test-gateway-123"
+# define GATEWAY_OS                  "mbed"
+    // device
 # if defined(SENSOR_TILE)
 #  define DEVICE_UID_SUFFIX   "sensortile"
 #  define DEVICE_NAME         "nucleo-sensortile"
@@ -150,18 +136,40 @@
 #  define DEVICE_UID_SUFFIX   "iks01a1"
 #  define DEVICE_NAME         "nucleo iks01a1"
 #  define DEVICE_TYPE         "x-nucleo-iks01a1"
-# endif
+# endif    
 #elif defined(__linux__)
-#define DEVICE_NAME         "probook-4540s"
-#define DEVICE_TYPE         "hp-probook-4540s"
-#define DEVICE_UID_SUFFIX   "notebook"
+    // gateway
+# define GATEWAY_UID_PREFIX          "probook"
+# define GATEWAY_NAME                "probook-gateway-demo"
+# define GATEWAY_OS                  "linux"
+    // device
+# define DEVICE_NAME         "probook-4540s"
+# define DEVICE_TYPE         "hp-probook-4540s"
+# define DEVICE_UID_SUFFIX   "notebook"
 #elif defined(__XCC__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "QCA"
+# define GATEWAY_NAME                "QCA-gateway-demo"
+# define GATEWAY_OS                  "ThreadX"
+    // device
 #define DEVICE_NAME         "ULPGN"
 #define DEVICE_TYPE         "SX_ULPGN"
+#define DEVICE_UID_SUFFIX   "devkit"
+#elif defined(__senseability__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "Cypress"
+# define GATEWAY_NAME                "Cypress-gate-demo"
+# define GATEWAY_OS                  "none"
+    // device
+#define DEVICE_NAME         "SenseAbility20"
+#define DEVICE_TYPE         "SenseAbility"
 #define DEVICE_UID_SUFFIX   "devkit"
 #else
 # error "Not supported platform"
 #endif
+#define GATEWAY_TYPE                "Local"
+#define GATEWAY_SOFTWARE_NAME       "eos"
+#define GATEWAY_SOFTWARE_VERSION    "0.1"
 
 /* telemetry configuration */
 

@@ -12,6 +12,18 @@
 #include <arrow/device.h>
 #include <arrow/gateway.h>
 
+typedef struct {
+  int magic;
+  char ssid[64];
+  char pass[64];
+  int sec;
+  char padding[120];
+  char gateway_hid[64];
+  char device_hid[64];
+  char device_eid[64];
+  char unused[64];
+} flash_mem_t;
+
 int restore_gateway_info(arrow_gateway_t *gateway);
 void save_gateway_info(const arrow_gateway_t *gateway);
 
