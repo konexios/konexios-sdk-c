@@ -396,6 +396,9 @@ static void OtaNotifCb(tstrOtaUpdateInfo *pv) {
 int net_ota_init() {
     _net.mode = OTA;
     m2m_ota_init(OtaUpdateCb, OtaNotifCb);
+
+    m2m_ota_start_update((uint8_t *)MAIN_OTA_URL);
+    DBG("start update...");
     return TX_SUCCESS;
 }
 
