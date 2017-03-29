@@ -1,0 +1,50 @@
+DBG=-g3
+
+COPTS := $(DBG) -Os -Wall -Wextra -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -ffunction-sections
+DEFINES := \
+ -DAR6K \
+ -DAR6002 \
+ -TARG:unaligned_loads=1 \
+ -DIOT_BUILD_FLAG \
+ -DAR6002_REV7 \
+ -include $(INTERNALDIR)/include/fwconfig_AR6006.h \
+ -Wno-return-type \
+ -DATHOS \
+ -DATH_TARGET \
+ -DHTTP_ENABLED \
+ -DDEFAULT_API_KEY=\"$(API_KEY)\" \
+ -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\" \
+ -DDEBUG
+ 
+ifdef dev
+DEFINES += -DDEV_ENV
+endif
+ 
+ # -DCONFIG_HOSTLESS
+
+ifeq ($(AR6002_REV7_VER), 5) # {
+DEFINES += -DNUM_OF_VDEVS=2 \
+  -DAR6002_REV75 
+endif # }
+
+ifeq ($(AR6002_REV7_VER), 6) # {
+DEFINES += -DNUM_OF_VDEVS=2 \
+  -DAR6002_REV76 
+endif # }
+
+ifeq ($(FPGA_FLAG),1) # {
+DEFINES += -DFPGA
+endif # }
+
+INCLUDES := \
+ -I$(FW)/include/AR6002/hw/include \
+ -I. \
+ -I$(FW)/include/qcom \
+ -I$(FW)/include \
+ -I$(FW)/include/AR6002/ \
+ -I$(FW)/include/AR6K/ \
+ -I$(THREADXDIR)/include/ \
+ -I$(INTERNALDIR)/include \
+ -I$(INTERNALDIR)/include/os \
+ -I$(INTERNALDIR)/include/whal \
+ -I$(FW)/demo/ezxml
