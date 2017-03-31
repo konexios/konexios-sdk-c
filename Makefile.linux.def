@@ -16,10 +16,21 @@ CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu99 -MMD -MP
 CPPC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu++98 -fno-rtti -MMD -MP
 ASM_FLAGS = -x assembler-with-cpp $(COMMON_FLAGS) -Os
 CC_SYMBOLS = -DTOOLCHAIN_GCC \
-	     -DDEFAULT_API_KEY=\"$(API_KEY)\" \
-	     -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\" \
-	     -DDEBUG \
-	     -DDEV_ENV
+	     -DDEBUG
+
+ifdef DEV_ENV
+CC_SYMBOLS += -DDEV_ENV
+endif
+
+ifdef API_KEY
+CC_SYMBOLS += -DDEFAULT_API_KEY=\"$(API_KEY)\"
+endif
+
+ifdef SEC_KEY
+CC_SYMBOLS += -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\"
+endif
+
 
 INCLUDES += -I. \
 	    -I./include
+

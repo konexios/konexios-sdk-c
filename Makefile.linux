@@ -22,14 +22,20 @@ LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc
  
 .SUFFIXES: .c
 
-default: $(C_SDK_LIB)
+default: private $(C_SDK_LIB)
 
 .c.o:
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
 
 $(C_SDK_LIB): $(OBJ)
+	echo $(SRC)
 	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
 
+private:
+	@echo -----------------------------------------------
+	$(call check_private)
+	@echo -----------------------------------------------
+	
 depend: dep
 
 dep:

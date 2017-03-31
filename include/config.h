@@ -188,11 +188,15 @@
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
 
+#if !defined(_KEYS_)
+#include "private.h"
+#endif
+
 #if !defined(DEFAULT_API_KEY)
-#error "set the API key"
+#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
 #endif
 #if !defined(DEFAULT_SECRET_KEY)
-#error "set the SECRET key"
+#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
 #endif
 
 #endif /* CONFIG_H_ */
