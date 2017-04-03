@@ -1,12 +1,9 @@
 -include Makefile.static
 -include Makefile.wolf
--include Makefile.linux.def
+-include $(PWD)/platforms/linux/Makefile.linux.def
 
 LIBDIR ?= .
 C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
-
-INCLUDES += \
-    -I.
 
 SRC += $(wildcard $(PWD)/platforms/linux/json/*.c)
 SRC += $(wildcard $(PWD)/platforms/linux/arrow/*.c)
@@ -16,9 +13,6 @@ OBJ = $(SRC:.c=.o)
 
 AR_PRM = rcs
 # AR_PRM = ru
-
-LD_FLAGS =
-LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc
  
 .SUFFIXES: .c
 
@@ -28,13 +22,10 @@ default: private $(C_SDK_LIB)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
 
 $(C_SDK_LIB): $(OBJ)
-	echo $(SRC)
 	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
 
 private:
-	@echo -----------------------------------------------
 	$(call check_private)
-	@echo -----------------------------------------------
 	
 depend: dep
 

@@ -8,7 +8,7 @@ SRC += $(wildcard ./src/mqtt/client/src/*.c)
 SRC += $(wildcard ./src/mqtt/packet/src/*.c)
 
 INCLUDES += \
-    -I./include
+    -I$(PWD)/include
 
 PRIV_INC = private.h
 

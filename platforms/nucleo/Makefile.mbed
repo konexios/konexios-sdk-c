@@ -1,14 +1,13 @@
 -include Makefile.static
 -include Makefile.wolf
--include Makefile.mbed.def
+-include $(PWD)/platforms/nucleo/Makefile.mbed.def
 
 LIBDIR ?= .
 C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
 INCLUDES += \
-    -I./platforms/nucleo/bsd \
-    -I./platforms/nucleo/bsd/ipv4
-
+    -I$(PWD)/platforms/nucleo/bsd \
+    -I$(PWD)/platforms/nucleo/bsd/ipv4
 
 
 SRC += $(wildcard $(PWD)/platforms/nucleo/arrow/*.c)
@@ -22,13 +21,16 @@ AR_PRM = rcs
  
 .SUFFIXES: .c
 
-default: $(C_SDK_LIB)
+default: private $(C_SDK_LIB)
 
 .c.o:
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
 
 $(C_SDK_LIB): $(OBJ)
 	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
+	
+private:
+	$(call check_private)
 
 depend: dep
 
