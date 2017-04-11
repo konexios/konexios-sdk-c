@@ -11,19 +11,27 @@
 
 #if defined(_ARIS_)
 # include <inttypes.h>
-#include <sys/types.h>
+# include <sys/types.h>
+
 #elif defined(__MBED__)
 # include <inttypes.h>
 # include <sys/types.h>
+
 #elif defined(__XCC__)
-#include <qcom/basetypes.h>
-#include <qcom/stdint.h>
+# include <qcom/basetypes.h>
+# include <qcom/stdint.h>
 typedef A_INT64 int64_t;
+
 #elif defined(__linux__)
-#include <inttypes.h>
+# include <inttypes.h>
+
 #elif defined(__senseability__)
 # include <cytypes.h>
 # include <sys/types.h>
 typedef unsigned int size_t;
+
+#elif defined(__semiconductor__)
+# include <inttypes.h>
 #endif
-#endif
+
+#endif // KRONOS_C_SDK_UNINT_H_

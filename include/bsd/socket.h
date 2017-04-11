@@ -9,6 +9,8 @@
 #ifndef _COMMON_BSD_SOCKET_H_
 #define _COMMON_BSD_SOCKET_H_
 
+#include <unint.h>
+
 #define STRUCT_HOSTENT \
   struct hostent { \
       char  *h_name;      /* Official name of the host. */ \
@@ -79,6 +81,12 @@ struct hostent *gethostbyname(const char *name);
 # define ntohl _ntohl
 STRUCT_HOSTENT
 
+#elif defined(__semiconductor__)
+# include <platforms/common/bsd/sockdef.h>
+# ifndef socklen_t
+#  define socklen_t uint32_t
+# endif
+STRUCT_HOSTENT
 
 #endif
 

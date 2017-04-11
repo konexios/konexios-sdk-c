@@ -36,7 +36,8 @@
     || defined(_ARIS_) \
     || defined(__MBED__) \
     || defined(__XCC__) \
-    || defined(__senseability__)
+    || defined(__senseability__) \
+	|| defined(__semiconductor__)
 #else
 # error "platform doesn't support"
 #endif
@@ -155,6 +156,7 @@
 #define DEVICE_NAME         "ULPGN"
 #define DEVICE_TYPE         "SX_ULPGN"
 #define DEVICE_UID_SUFFIX   "devkit"
+
 #elif defined(__senseability__)
     // gateway
 # define GATEWAY_UID_PREFIX          "Cypress"
@@ -164,6 +166,18 @@
 #define DEVICE_NAME         "SenseAbility20"
 #define DEVICE_TYPE         "SenseAbility"
 #define DEVICE_UID_SUFFIX   "devkit"
+
+#elif defined(__semiconductor__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "semiconductor"
+# define GATEWAY_NAME                "semiconductor-demo"
+# define GATEWAY_OS                  "mbed"
+    // device
+#define DEVICE_NAME         "BB-GEVK"
+#define DEVICE_TYPE         "BB-GEVK-IOT"
+#define DEVICE_UID_SUFFIX   "devkit"
+
+
 #else
 # error "Not supported platform"
 #endif
