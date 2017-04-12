@@ -106,11 +106,11 @@
 # endif
 #endif
 
-#define ARROW_API_BASE_URL              ARROW_SCH"://"ARROW_ADDR":" xstr(ARROW_PORT)
-#define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL"/api/v1/kronos/gateways"
-#define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL"/api/v1/kronos/devices"
-#define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL"/api/v1/kronos/telemetries"
-#define ARROW_MQTT_URL                  MQTT_SCH"://"MQTT_ADDR":" xstr(MQTT_PORT)
+#define ARROW_API_BASE_URL              ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
+#define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL "/api/v1/kronos/gateways"
+#define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL "/api/v1/kronos/devices"
+#define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
+#define ARROW_MQTT_URL                  MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
 
 /* gateway and device configuration */
 

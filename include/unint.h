@@ -32,6 +32,7 @@ typedef unsigned int size_t;
 
 #elif defined(__semiconductor__)
 # include <inttypes.h>
+# include <sys/types.h>
 #endif
 
 #endif // KRONOS_C_SDK_UNINT_H_

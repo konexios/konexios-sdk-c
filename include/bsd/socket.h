@@ -83,6 +83,7 @@ STRUCT_HOSTENT
 
 #elif defined(__semiconductor__)
 # include <platforms/common/bsd/sockdef.h>
+# define htons _htons
 # ifndef socklen_t
 #  define socklen_t uint32_t
 # endif

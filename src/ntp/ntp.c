@@ -15,7 +15,7 @@
 #define SLEEP(ms) tx_thread_sleep(CONV_MS_TO_TICK(ms));
 #elif defined(__MBED__)
 #define SLEEP(ms) wait_ms(ms)
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__semiconductor__)
 #include <unistd.h>
 #define SLEEP(ms) usleep(ms*1000)
 #elif defined(__XCC__)

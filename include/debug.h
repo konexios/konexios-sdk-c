@@ -9,6 +9,10 @@
 #ifndef DEBUG_H_
 #define DEBUG_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <config.h>
 
 //Debug is disabled by default
@@ -35,6 +39,10 @@
 #define WARN(x, ...)
 #define ERR(x, ...)
 
+#endif
+
+#if defined(__cplusplus)
+}
 #endif
 
 #endif

@@ -9,6 +9,10 @@
 #ifndef ARROW_TELEMETRY_H_
 #define ARROW_TELEMETRY_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <arrow/device.h>
 #include <unint.h>
     
@@ -17,17 +21,20 @@
 #else
 typedef void sensor_data_t;
 #endif
+
 #if defined(__linux__)
 typedef struct {
   float temperature_core0;
   float temperature_core1;
 } probook_data_t;
+
 #elif defined(__XCC__)
 # include <qcom_common.h>
 typedef struct {
    A_UINT8 rssi;
    float temperature;
 } rssi_data_t;
+
 #elif defined(__senseability__)
 typedef struct {
     uint8   Status;             /* Bit 0 - Humidicon Sensor Present
@@ -53,9 +60,17 @@ typedef struct {
 #define TEMP_ALARM_LOW_MASK     0x10
 #define TEMP_ALARM_HIGH_MASK    0x20
 
+#elif defined(__semiconductor__)
+typedef struct {
+   int als;
+   float abmienceInLux;
+} gevk_data_t;
 #endif
 
-
 char *telemetry_serialize(arrow_device_t *device, sensor_data_t *data);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* ARROW_TELEMETRY_H_ */

@@ -9,6 +9,10 @@
 #ifndef ARROW_MQTT_H_
 #define ARROW_MQTT_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include "gateway.h"
 #include "device.h"
 
@@ -20,6 +24,8 @@ void mqtt_disconnect();
 int mqtt_subscribe();
 int mqtt_publish(arrow_device_t *device, void *data);
 
-
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* ARROW_MQTT_H_ */
