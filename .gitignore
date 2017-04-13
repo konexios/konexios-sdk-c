@@ -2,3 +2,4 @@ gcc*
 *.o
 *.d
 private.h
+*.qbs
