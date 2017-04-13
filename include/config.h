@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.1.1
+#define SDK_VERSION 1.1.2
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -47,7 +47,8 @@
     || defined(_ARIS_) \
     || defined(__MBED__) \
     || defined(__XCC__) \
-    || defined(__senseability__)
+    || defined(__senseability__) \
+    || defined(__stm32l475iot__)
 #else
 # error "platform doesn't support"
 #endif
@@ -157,6 +158,7 @@
 # define DEVICE_NAME         "probook-4540s"
 # define DEVICE_TYPE         "hp-probook-4540s"
 # define DEVICE_UID_SUFFIX   "notebook"
+
 #elif defined(__XCC__)
     // gateway
 # define GATEWAY_UID_PREFIX          "QCA"
@@ -166,6 +168,7 @@
 #define DEVICE_NAME         "ULPGN"
 #define DEVICE_TYPE         "SX_ULPGN"
 #define DEVICE_UID_SUFFIX   "devkit"
+
 #elif defined(__senseability__)
     // gateway
 # define GATEWAY_UID_PREFIX          "Cypress"
@@ -175,6 +178,17 @@
 #define DEVICE_NAME         "SenseAbility20"
 #define DEVICE_TYPE         "SenseAbility"
 #define DEVICE_UID_SUFFIX   "devkit"
+
+#elif defined(__stm32l475iot__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "STM32"
+# define GATEWAY_NAME                "STM32-gate-demo"
+# define GATEWAY_OS                  "rtos"
+    // device
+#define DEVICE_NAME         "B-L475E-IOT01"
+#define DEVICE_TYPE         "B-L475E-Type"
+#define DEVICE_UID_SUFFIX   "devkit"
+
 #else
 # error "Not supported platform"
 #endif

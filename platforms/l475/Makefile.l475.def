@@ -1,0 +1,61 @@
+
+INCLUDES += \
+    -I$(PWD) \
+    -I$(PWD)/include
+    
+GCC_BIN = 
+    
+AS      = $(GCC_BIN)arm-none-eabi-as
+CC      = $(GCC_BIN)arm-none-eabi-gcc
+CPP     = $(GCC_BIN)arm-none-eabi-g++
+LD      = $(GCC_BIN)arm-none-eabi-gcc
+OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
+OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
+SIZE    = $(GCC_BIN)arm-none-eabi-size 
+MAKEDIR = mkdir -p
+RM 	= rm -rf
+
+FLOAT_ABI = hard
+
+CPU = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=$(FLOAT_ABI)
+COMMON_FLAGS = -c -Wall -Wextra \
+               -Wno-unused-parameter \
+               -Wno-missing-field-initializers \
+               -fmessage-length=0 \
+               -fno-exceptions \
+               -fno-builtin \
+               -ffunction-sections \
+               -fdata-sections \
+               -funsigned-char \
+               -MMD -fno-delete-null-pointer-checks \
+               -fomit-frame-pointer \
+               $(CPU)
+               
+CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu99 -MP
+CPPC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu++98 -fno-rtti -Wvla -MP
+ASM_FLAGS = -x assembler-with-cpp $(COMMON_FLAGS) -Os
+
+
+CC_SYMBOLS = -DTOOLCHAIN_GCC \
+	     -DTOOLCHAIN_GCC_ARM \
+ 	     -DSTM32L475xx \
+	     -DUSE_HAL_DRIVER \
+	     -DUSE_STM32L475E_IOT01 \
+	     -DUSE_IOEXPANDER \
+	     -D__stm32l475iot__ \
+	     -DDEBUG
+
+ifdef API_KEY
+CC_SYMBOLS += -DDEFAULT_API_KEY=\"$(API_KEY)\"
+endif
+
+ifdef SEC_KEY
+CC_SYMBOLS += -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\"
+endif
+
+ifdef DEV_ENV
+CC_SYMBOLS += -DDEV_ENV
+endif
+
+LD_FLAGS = -Wl,--gc-sections $(CPU)
+LD_SYS_LIBS = -lm -lc -lgcc -lnosys

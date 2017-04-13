@@ -38,7 +38,7 @@ int ntp_set_time_common(
     do {
         while( ntp_set_time(server, port, timeout) != NTP_OK ) {
             DBG("NTP set time fail...");
-            SLEEP(1000);
+            msleep(1000);
             if ( try_times >= 0 && i++ >= try_times ) return -1;
         }
         DBG(" time diff %d %d ", (int)time(NULL), (int)build_time());
