@@ -1,9 +1,8 @@
 
 INCLUDES += \
-    -I. \
-    -I./include
+    -I$(PWD) \
+    -I$(PWD)/include
     
-############################################################################### 
 AS      = $(GCC_BIN)arm-none-eabi-as
 CC      = $(GCC_BIN)arm-none-eabi-gcc
 CPP     = $(GCC_BIN)arm-none-eabi-g++
@@ -36,11 +35,17 @@ CC_SYMBOLS = -D__MBED__=1 -DOPENSSL_EXTRA -DDEVICE_I2CSLAVE=1 -DTARGET_LIKE_MBED
 	     -DMBED_BUILD_TIMESTAMP=1471326725.12 -D__MBED_CMSIS_RTOS_CM -DDEVICE_SLEEP=1 \
 	     -DTOOLCHAIN_GCC_ARM -DDEVICE_SPI=1 -DDEVICE_ERROR_RED=1 -DDEVICE_SPISLAVE=1 \
 	     -DDEVICE_ANALOGIN=1 -DDEVICE_SERIAL=1 -DARM_MATH_CM4 \
-	     -DDEFAULT_API_KEY=\"$(API_KEY)\" \
-	     -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\" \
 	     -DDEBUG
 
-ifdef dev
+ifdef API_KEY
+CC_SYMBOLS += -DDEFAULT_API_KEY=\"$(API_KEY)\"
+endif
+
+ifdef SEC_KEY
+CC_SYMBOLS += -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\"
+endif
+
+ifdef DEV_ENV
 CC_SYMBOLS += -DDEV_ENV
 endif
 

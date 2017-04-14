@@ -17,7 +17,18 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.1.0
+#define SDK_VERSION 1.1.1
+
+#if !defined(_KEYS_)
+#include "private.h"
+#endif
+
+#if !defined(DEFAULT_API_KEY)
+#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
+#endif
+#if !defined(DEFAULT_SECRET_KEY)
+#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#endif
 
 #if defined(__IBM__)
 //#define HTTP_CIPHER
@@ -188,16 +199,5 @@
 #define TELEMETRY_MAGNETOMETER_Y    "f|magnetometerY"
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
-
-#if !defined(_KEYS_)
-#include "private.h"
-#endif
-
-#if !defined(DEFAULT_API_KEY)
-#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
-#endif
-#if !defined(DEFAULT_SECRET_KEY)
-#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
-#endif
 
 #endif /* CONFIG_H_ */
