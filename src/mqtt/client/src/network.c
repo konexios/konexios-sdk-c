@@ -36,10 +36,10 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 #else
       rc = recv(n->my_socket, (char*) buffer +bytes, (uint16_t)(len - bytes), 0);
 #endif
-        if (rc) DBG("mqtt recv %d/%d", rc, len);
+//         if (rc) DBG("mqtt recv %d/%d", rc, len);
         if (rc < 0) {
 #if defined(errno)
-            DBG("error(%d): %s\r\n", rc, strerror(errno));
+            DBG("error(%d): %s", rc, strerror(errno));
 #endif
             bytes = -1;
             break;

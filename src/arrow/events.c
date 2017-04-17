@@ -9,10 +9,41 @@
 #include "arrow/events.h"
 #include <debug.h>
 #include <http/client.h>
+#include <json/json.h>
+#include <string.h>
 
+static cmd_handler *__handlers = NULL;
+
+static void __create_cmd_handler(cmd_handler *hd, const char *name, fp callback) {
+  hd->name = malloc(strlen(name)+1);
+  strcpy(hd->name, name);
+  hd->callback = callback;
+  hd->next = NULL;
+}
+
+// handlers
+int add_cmd_handler(const char *name, fp callback) {
+  cmd_handler *h = malloc(sizeof(cmd_handler));
+  __create_cmd_handler(h, name, callback);
+  if ( !__handlers ) {
+    __handlers = h;
+  } else {
+    cmd_handler *last = __handlers;
+    while( last->next ) last = last->next;
+    last->next = h;
+  }
+  return 0;
+}
+
+void free_cmd_handler() {
+  
+}
+
+
+// events
 static char *form_evetns_url(const char *hid, event_t ev) {
     char *uri = (char *)malloc(strlen(ARROW_API_EVENTS_ENDPOINT) + strlen(hid) + 15);
-    strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
+    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
     strcat(uri, "/");
     strcat(uri, hid);
     switch(ev) {
@@ -47,4 +78,95 @@ int arrow_send_event_ans(const char *hid, event_t ev, const char *payload) {
     }
     http_response_free(&response);
     return 0;
+}
+
+typedef struct {
+  char *gateway_hid;
+  char *device_hid;
+  char *cmd;
+  char *payload;
+} mqtt_event_t;
+
+void free_mqtt_event(mqtt_event_t *mq) {
+  if ( mq->gateway_hid ) free(mq->gateway_hid);
+  if ( mq->device_hid ) free(mq->device_hid);
+  if ( mq->cmd ) free(mq->cmd);
+  if ( mq->payload ) free(mq->payload);
+}
+
+int arrow_event_parse(const char *str, mqtt_event_t *mq_ev) {
+  if (!str) return -1;
+  JsonNode *_main = json_decode(str);
+  if ( !_main ) return -1;
+  JsonNode *hid = json_find_member(_main, "hid");
+  if ( !hid ) return -1;
+  if ( hid->tag != JSON_STRING ) return -1;
+  mq_ev->gateway_hid = malloc(strlen(hid->string_)+1);
+  strcpy(mq_ev->gateway_hid, hid->string_);
+  JsonNode *_parameters = json_find_member(_main, "parameters");
+  if ( !_parameters ) return -1;
+  hid = json_find_member(_parameters, "deviceHid");
+  if ( !hid || hid->tag != JSON_STRING ) return -1;
+  mq_ev->device_hid = malloc(strlen(hid->string_)+1);
+  strcpy(mq_ev->device_hid, hid->string_);
+  
+  hid = json_find_member(_parameters, "command");
+  if ( !hid || hid->tag != JSON_STRING ) return -1;
+  mq_ev->cmd = malloc(strlen(hid->string_)+1);
+  strcpy(mq_ev->cmd, hid->string_);
+  
+  hid = json_find_member(_parameters, "payload");
+  if ( !hid || hid->tag != JSON_STRING ) return -1;
+  mq_ev->payload = malloc(strlen(hid->string_)+1);
+  strcpy(mq_ev->payload, hid->string_);
+  
+  json_delete(_main);
+  return 0;
+}
+
+fp find_cmd_handler(char *cmd) {
+  if ( __handlers ) {
+    cmd_handler *h = __handlers;
+    while(h) {
+      if ( strcmp(h->name, cmd) == 0 ) return h->callback;
+      h = h->next;
+    }
+  } else {
+    DBG("No cmd handlers");
+  }
+  return NULL;
+}
+
+int test_cmd_proc(const char *str) {
+  DBG("test: [%s]", str);
+  return 0;
+}
+
+int fail_cmd_proc(const char *str) {
+  DBG("fail: [%s]", str);
+  return -1;
+}
+
+int process_event(const char *str) {
+  DBG("ev: %s", str);
+  mqtt_event_t mqtt_e;
+  // FIXME just for a test
+  if (!__handlers) {
+    add_cmd_handler("test", test_cmd_proc);
+    add_cmd_handler("fail", fail_cmd_proc);
+  }
+  int ret = -1;
+  if ( arrow_event_parse(str, &mqtt_e) >= 0 ) {
+    DBG("gateway hid %s", mqtt_e.gateway_hid);
+    DBG("device  hid %s", mqtt_e.device_hid);
+    arrow_send_event_ans(mqtt_e.gateway_hid, received, NULL);
+    fp callback = find_cmd_handler(mqtt_e.cmd);
+    if ( callback ) {
+      ret = callback(mqtt_e.payload);
+    }
+  }
+  if ( ret < 0 ) arrow_send_event_ans(mqtt_e.gateway_hid, failed, "failed");
+  else arrow_send_event_ans(mqtt_e.gateway_hid, succeeded, NULL);
+  free_mqtt_event(&mqtt_e);
+  return 0;
 }
