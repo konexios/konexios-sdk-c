@@ -137,24 +137,11 @@ fp find_cmd_handler(char *cmd) {
   return NULL;
 }
 
-int test_cmd_proc(const char *str) {
-  DBG("test: [%s]", str);
-  return 0;
-}
-
-int fail_cmd_proc(const char *str) {
-  DBG("fail: [%s]", str);
-  return -1;
-}
-
 int process_event(const char *str) {
   DBG("ev: %s", str);
   mqtt_event_t mqtt_e;
-  // FIXME just for a test
-  if (!__handlers) {
-    add_cmd_handler("test", test_cmd_proc);
-    add_cmd_handler("fail", fail_cmd_proc);
-  }
+  JsonNode *_error = NULL;
+  
   int ret = -1;
   if ( arrow_event_parse(str, &mqtt_e) >= 0 ) {
     DBG("gateway hid %s", mqtt_e.gateway_hid);
@@ -163,10 +150,21 @@ int process_event(const char *str) {
     fp callback = find_cmd_handler(mqtt_e.cmd);
     if ( callback ) {
       ret = callback(mqtt_e.payload);
+    } else {
+      _error = json_mkobject();
+      json_append_member(_error, "error", json_mkstring("there is no a command handler"));
     }
   }
-  if ( ret < 0 ) arrow_send_event_ans(mqtt_e.gateway_hid, failed, "failed");
+  if ( ret < 0 ) {
+    if ( !_error ) {
+      // default
+      _error = json_mkobject();
+      json_append_member(_error, "error", json_mkstring("unknown"));
+    }
+    arrow_send_event_ans(mqtt_e.gateway_hid, failed, json_encode(_error));
+  }
   else arrow_send_event_ans(mqtt_e.gateway_hid, succeeded, NULL);
   free_mqtt_event(&mqtt_e);
+  if ( _error ) json_delete(_error);
   return 0;
 }

@@ -8,8 +8,15 @@ typedef enum {
     succeeded
 } event_t;
 
+typedef enum {
+    CMD_OK,
+    CMD_NO_HANDLER = -1,
+    CMD_ERROR = -2
+} handler_t;
 
-typedef int (*fp)(char *);
+
+
+typedef int (*fp)(const char *);
 
 typedef struct __cmd_handler {
   char *name;
