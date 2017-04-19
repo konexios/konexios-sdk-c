@@ -127,7 +127,7 @@ void http_client_init(http_client_t *cli) {
     wolfSSL_Init();
     cli->method = wolfTLSv1_2_client_method();
 #endif
-#ifdef DEBUG
+#ifdef DEBUG_WOLFSSL
 //    wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
 //    wolfSSL_Debugging_ON();
 #endif

@@ -12,6 +12,8 @@
 #include <arrow/device.h>
 #include <arrow/gateway.h>
 
+#define FLASH_MAGIC_NUMBER 0xdeadbeaf
+
 typedef struct {
   int magic;
   char ssid[64];

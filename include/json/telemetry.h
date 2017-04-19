@@ -53,6 +53,16 @@ typedef struct {
 #define TEMP_ALARM_LOW_MASK     0x10
 #define TEMP_ALARM_HIGH_MASK    0x20
 
+#elif defined(__stm32l475iot__)
+typedef struct {
+  float    temperature;
+  float    humidity;
+  float    pressure;
+  int16_t  acc[3];
+  float    gyr[3];
+  int16_t  mag[3];
+  uint16_t proximity;
+} sensors_data_t;
 #endif
 
 
