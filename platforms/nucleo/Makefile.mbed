@@ -1,24 +1,23 @@
 -include Makefile.static
 -include Makefile.wolf
--include Makefile.linux.def
+-include $(PWD)/platforms/nucleo/Makefile.mbed.def
 
 LIBDIR ?= .
 C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
 INCLUDES += \
-    -I.
+    -I$(PWD)/platforms/nucleo/bsd \
+    -I$(PWD)/platforms/nucleo/bsd/ipv4
 
-SRC += $(wildcard $(PWD)/platforms/linux/json/*.c)
-SRC += $(wildcard $(PWD)/platforms/linux/arrow/*.c)
-SRC += $(wildcard $(PWD)/platforms/linux/time/*.c)
+
+SRC += $(wildcard $(PWD)/platforms/nucleo/arrow/*.c)
+SRC += $(wildcard $(PWD)/platforms/nucleo/bsd/*.c)
+SRC += $(wildcard $(PWD)/platforms/nucleo/time/*.c)
+SRC += $(wildcard $(PWD)/platforms/nucleo/json/*.c)
 
 OBJ = $(SRC:.c=.o)
 
 AR_PRM = rcs
-# AR_PRM = ru
-
-LD_FLAGS =
-LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc
  
 .SUFFIXES: .c
 
@@ -28,14 +27,11 @@ default: private $(C_SDK_LIB)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
 
 $(C_SDK_LIB): $(OBJ)
-	echo $(SRC)
 	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
-
-private:
-	@echo -----------------------------------------------
-	$(call check_private)
-	@echo -----------------------------------------------
 	
+private:
+	$(call check_private)
+
 depend: dep
 
 dep:

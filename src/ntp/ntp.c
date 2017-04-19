@@ -10,10 +10,7 @@
 #include <debug.h>
 #include <time/time.h>
 #include <ntp/client.h>
-#if defined(_ARIS_)
-#include "reloc_macro.h"
-#define SLEEP(ms) tx_thread_sleep(CONV_MS_TO_TICK(ms));
-#elif defined(__MBED__)
+#if defined(__MBED__)
 #define SLEEP(ms) wait_ms(ms)
 #elif defined(__linux__) || defined(__semiconductor__)
 #include <unistd.h>
@@ -38,7 +35,7 @@ int ntp_set_time_common(
     do {
         while( ntp_set_time(server, port, timeout) != NTP_OK ) {
             DBG("NTP set time fail...");
-            SLEEP(1000);
+            msleep(1000);
             if ( try_times >= 0 && i++ >= try_times ) return -1;
         }
         DBG(" time diff %d %d ", (int)time(NULL), (int)build_time());

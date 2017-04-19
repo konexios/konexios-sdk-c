@@ -14,6 +14,8 @@
 #include <arrow/mem.h>
 #include <debug.h>
 
+#include <arrow/events.h>
+
 #define MQTT_BUF_LEN 500
 
 static Network mqtt_net;
@@ -25,9 +27,10 @@ static char p_topic[100];
 
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
-    SSP_PARAMETER_NOT_USED(message);
     DBG("mqtt msg arrived %u", message->payloadlen);
     DBG("%.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
+    ((char *)message->payload)[message->payloadlen] = '\0';
+    process_event(message->payload);
 }
 
 #if defined(__IBM__)
@@ -184,7 +187,7 @@ int mqtt_connect_iot(arrow_gateway_t *gateway) {
   strcat(username, gateway->hid);
   DBG("qmtt.username %s", username);
 
-  strcpy(s_topic, "krs.cmd.stg.");
+  strcpy(s_topic, "krs/cmd/stg/");
   strcat(s_topic, gateway->hid);
 
   strcpy(p_topic, "krs.tel.gts.");
@@ -239,12 +242,15 @@ void mqtt_disconnect() {
     NetworkDisconnect(&mqtt_net);
 }
 
-// TODO more?
 int mqtt_subscribe() {
     DBG("Subscribing to %s", s_topic);
     int rc = MQTTSubscribe(&mqtt_client, s_topic, QOS2, messageArrived);
     DBG("Subscribed %d\n", rc);
     return rc;
+}
+
+int mqtt_yield(int timeout_ms) {
+  return MQTTYield(&mqtt_client, timeout_ms);
 }
 
 int mqtt_publish(arrow_device_t *device, void *d) {

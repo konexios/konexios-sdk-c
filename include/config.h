@@ -17,7 +17,18 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.1.0
+#define SDK_VERSION 1.1.2
+
+#if !defined(_KEYS_)
+#include "private.h"
+#endif
+
+#if !defined(DEFAULT_API_KEY)
+#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
+#endif
+#if !defined(DEFAULT_SECRET_KEY)
+#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#endif
 
 #if defined(__IBM__)
 //#define HTTP_CIPHER
@@ -37,7 +48,8 @@
     || defined(__MBED__) \
     || defined(__XCC__) \
     || defined(__senseability__) \
-	|| defined(__semiconductor__)
+    || defined(__stm32l475iot__) \
+    || defined(__semiconductor__)
 #else
 # error "platform doesn't support"
 #endif
@@ -110,7 +122,8 @@
 #define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL "/api/v1/kronos/gateways"
 #define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL "/api/v1/kronos/devices"
 #define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
-#define ARROW_MQTT_URL                  MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
+#define ARROW_API_EVENTS_ENDPOINT       ARROW_API_BASE_URL "/api/v1/core/events"
+#define ARROW_MQTT_URL                  MQTT_SCH"://"MQTT_ADDR":" xstr(MQTT_PORT)
 
 /* gateway and device configuration */
 
@@ -147,6 +160,7 @@
 # define DEVICE_NAME         "probook-4540s"
 # define DEVICE_TYPE         "hp-probook-4540s"
 # define DEVICE_UID_SUFFIX   "notebook"
+
 #elif defined(__XCC__)
     // gateway
 # define GATEWAY_UID_PREFIX          "QCA"
@@ -167,6 +181,16 @@
 #define DEVICE_TYPE         "SenseAbility"
 #define DEVICE_UID_SUFFIX   "devkit"
 
+#elif defined(__stm32l475iot__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "STM32"
+# define GATEWAY_NAME                "STM32-gate-demo"
+# define GATEWAY_OS                  "rtos"
+    // device
+#define DEVICE_NAME         "B-L475E-IOT01"
+#define DEVICE_TYPE         "B-L475E-Type"
+#define DEVICE_UID_SUFFIX   "devkit"
+
 #elif defined(__semiconductor__)
     // gateway
 # define GATEWAY_UID_PREFIX          "semiconductor"
@@ -176,7 +200,6 @@
 #define DEVICE_NAME         "BB-GEVK"
 #define DEVICE_TYPE         "BB-GEVK-IOT"
 #define DEVICE_UID_SUFFIX   "devkit"
-
 
 #else
 # error "Not supported platform"
@@ -201,16 +224,5 @@
 #define TELEMETRY_MAGNETOMETER_Y    "f|magnetometerY"
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
-
-#if !defined(_KEYS_)
-#include "private.h"
-#endif
-
-#if !defined(DEFAULT_API_KEY)
-#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
-#endif
-#if !defined(DEFAULT_SECRET_KEY)
-#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
-#endif
 
 #endif /* CONFIG_H_ */

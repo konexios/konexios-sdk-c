@@ -12,11 +12,17 @@ DEFINES := \
  -DATHOS \
  -DATH_TARGET \
  -DHTTP_ENABLED \
- -DDEFAULT_API_KEY=\"$(API_KEY)\" \
- -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\" \
  -DDEBUG
  
-ifdef dev
+ifdef API_KEY
+DEFINES += DEFAULT_API_KEY=\"$(API_KEY)\"
+endif
+
+ifdef SEC_KEY
+DEFINES += DEFAULT_SECRET_KEY=\"$(SEC_KEY)\"
+endif
+
+ifdef DEV_ENV
 DEFINES += -DDEV_ENV
 endif
  
@@ -36,9 +42,9 @@ ifeq ($(FPGA_FLAG),1) # {
 DEFINES += -DFPGA
 endif # }
 
-INCLUDES := \
+INCLUDES += \
  -I$(FW)/include/AR6002/hw/include \
- -I. \
+ -I$(PWD) \
  -I$(FW)/include/qcom \
  -I$(FW)/include \
  -I$(FW)/include/AR6002/ \

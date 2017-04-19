@@ -36,10 +36,10 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 #else
       rc = recv(n->my_socket, (char*) buffer +bytes, (uint16_t)(len - bytes), 0);
 #endif
-        if (rc) DBG("mqtt recv %d/%d", rc, len);
+//         if (rc) DBG("mqtt recv %d/%d", rc, len);
         if (rc < 0) {
-#if defined(errno)
-            DBG("error(%d): %s\r\n", rc, strerror(errno));
+#if defined(errno) && defined(__linux__)
+            DBG("error(%d): %s", rc, strerror(errno));
 #endif
             bytes = -1;
             break;
@@ -54,7 +54,7 @@ static int _write(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     struct timeval tv = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
 
     setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-    DBG("mqtt send %d", len);
+//    DBG("mqtt send %d", len);
     int rc = 0;
 #if defined(MQTT_CIPHER)
     rc = wolfSSL_write(n->ssl, buffer, len);

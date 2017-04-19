@@ -1,3 +1,4 @@
+SRC += $(wildcard $(PWD)/src/*.c)
 SRC += $(wildcard ./src/ntp/*.c)
 SRC += $(wildcard ./src/http/*.c)
 SRC += $(wildcard ./src/json/*.c)
@@ -8,7 +9,8 @@ SRC += $(wildcard ./src/mqtt/client/src/*.c)
 SRC += $(wildcard ./src/mqtt/packet/src/*.c)
 
 INCLUDES += \
-    -I./include
+    -I$(PWD) \
+    -I$(PWD)/include
 
 PRIV_INC = private.h
 

@@ -22,6 +22,7 @@ int mqtt_connect(arrow_gateway_t *gateway,
 void mqtt_disconnect();
 
 int mqtt_subscribe();
+int mqtt_yield(int timeout_ms);
 int mqtt_publish(arrow_device_t *device, void *data);
 
 #if defined(__cplusplus)

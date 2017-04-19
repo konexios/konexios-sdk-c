@@ -30,6 +30,10 @@ typedef A_INT64 int64_t;
 # include <sys/types.h>
 typedef unsigned int size_t;
 
+#elif defined(__stm32l475iot__)
+# include <stdint.h>
+# include <sys/types.h>
+
 #elif defined(__semiconductor__)
 # include <inttypes.h>
 # include <sys/types.h>

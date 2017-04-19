@@ -1,0 +1,33 @@
+-include Makefile.static
+-include Makefile.wolf
+-include $(PWD)/platforms/linux/Makefile.linux.def
+
+LIBDIR ?= .
+C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
+
+OBJ = $(SRC:.c=.o)
+
+AR_PRM = rcs
+# AR_PRM = ru
+ 
+.SUFFIXES: .c
+
+default: private $(C_SDK_LIB)
+
+.c.o:
+	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(INCLUDES) -c $< -o $@
+
+$(C_SDK_LIB): $(OBJ)
+	$(AR) $(AR_PRM) $(C_SDK_LIB) $(OBJ)
+
+private:
+	$(call check_private)
+	
+depend: dep
+
+dep:
+	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
+
+clean:
+	$(RM) $(OBJ) $(C_SDK_LIB)
+	@find $(PWD) -name "*.d" -delete >/dev/null
