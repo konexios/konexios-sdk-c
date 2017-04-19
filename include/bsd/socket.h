@@ -33,9 +33,10 @@ struct hostent* gethostbyname(const char *name);
 #  define ntohl _ntohl
 # endif
 
-#elif defined(__MBED__)
+// FIXME rm MBED define
+#elif defined(__MBED__) && !defined(__semiconductor__)
 # include "platforms/nucleo/bsd/_socket.h"
-STRUCT_HOSTENT
+# include "struct_hostent.h"
 struct hostent* gethostbyname(const char *name);
 
 #elif defined(__linux__)
@@ -72,7 +73,7 @@ STRUCT_HOSTENT
 #elif defined(__stm32l475iot__)
 # include <bsd/inet.h>
 # include <platforms/common/bsd/sockdef.h>
-#  include "struct_hostent.h"
+# include "struct_hostent.h"
 # define htons _htons
 # define htonl _htonl
 # define ntohl _ntohl
@@ -80,11 +81,13 @@ STRUCT_HOSTENT
 
 #elif defined(__semiconductor__)
 # include <platforms/common/bsd/sockdef.h>
-# define htons _htons
+# include "struct_hostent.h"
+# if !defined(htons)
+#  define htons _htons
+# endif
 # ifndef socklen_t
 #  define socklen_t uint32_t
 # endif
-STRUCT_HOSTENT
 
 #endif
 
