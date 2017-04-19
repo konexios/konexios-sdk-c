@@ -17,13 +17,6 @@ extern "C" {
 
 //Debug is disabled by default
 #ifdef DEBUG
-//#elif defined(__XCC__)
-//#include <qcom/base.h>
-//#define DBG(x, ...) A_PRINTF("[DBG]"x"\r\n", ##__VA_ARGS__);
-//#define WARN(x, ...) A_PRINTF("[WARN]"x"\r\n", ##__VA_ARGS__);
-//#define ERR(x, ...)  A_PRINTF("[ERR]"x"\r\n", ##__VA_ARGS__);
-//#elif defined(__senseability__)
-//#include "platforms/senseability/trace.h"
 
 #define DBG_LINE_SIZE 120
 void dbg_line(const char *fmt, ...);
