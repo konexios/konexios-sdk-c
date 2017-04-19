@@ -34,7 +34,6 @@ int ntp_set_time(
   ctTime = time(NULL);
   DBG("Time is set to (UTC): %s", ctime(&ctTime));
 #endif
-
   struct NTPPacket pkt;
 
   int udp_sock;
@@ -118,7 +117,7 @@ int ntp_set_time(
 
   //TODO: Accept chunks
   if ( ret < (int)sizeof(struct NTPPacket) ) {
-    DBG("Receive packet size does not match");
+    DBG("Receive packet size does not match %d", ret);
     return NTP_PRTCL;
   }
 

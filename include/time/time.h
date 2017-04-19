@@ -40,6 +40,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 int stime(time_t *timer);
 #endif
 
+int msleep(int m_sec);
 void get_time(char *ts);
 time_t build_time();
 #if !defined(__MBED__)
