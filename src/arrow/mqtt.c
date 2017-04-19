@@ -29,6 +29,7 @@ static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     DBG("mqtt msg arrived %u", message->payloadlen);
     DBG("%.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
+    ((char *)message->payload)[message->payloadlen] = '\0';
     process_event(message->payload);
 }
 

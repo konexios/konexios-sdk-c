@@ -12,8 +12,6 @@
 #include <config.h>
 
 #ifdef DEBUG
-//#ifdef _ARIS_
-//#include "TRACE_USE.h"
 //#elif defined(__XCC__)
 //#include <qcom/base.h>
 //#define DBG(x, ...) A_PRINTF("[DBG]"x"\r\n", ##__VA_ARGS__);

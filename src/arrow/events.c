@@ -97,10 +97,17 @@ void free_mqtt_event(mqtt_event_t *mq) {
 int arrow_event_parse(const char *str, mqtt_event_t *mq_ev) {
   if (!str) return -1;
   JsonNode *_main = json_decode(str);
-  if ( !_main ) return -1;
+  if ( !_main ) {
+      DBG("event payload decode failed %d", strlen(str));
+      return -1;
+  }
   JsonNode *hid = json_find_member(_main, "hid");
-  if ( !hid ) return -1;
+  if ( !hid ) {
+      DBG("cannot find HID");
+      return -1;
+  }
   if ( hid->tag != JSON_STRING ) return -1;
+  DBG("ev ghid: %s", hid->string_);
   mq_ev->gateway_hid = malloc(strlen(hid->string_)+1);
   strcpy(mq_ev->gateway_hid, hid->string_);
   JsonNode *_parameters = json_find_member(_main, "parameters");
@@ -112,11 +119,13 @@ int arrow_event_parse(const char *str, mqtt_event_t *mq_ev) {
   
   hid = json_find_member(_parameters, "command");
   if ( !hid || hid->tag != JSON_STRING ) return -1;
+  DBG("ev cmd: %s", hid->string_);
   mq_ev->cmd = malloc(strlen(hid->string_)+1);
   strcpy(mq_ev->cmd, hid->string_);
   
   hid = json_find_member(_parameters, "payload");
   if ( !hid || hid->tag != JSON_STRING ) return -1;
+  DBG("ev msg: %s", hid->string_);
   mq_ev->payload = malloc(strlen(hid->string_)+1);
   strcpy(mq_ev->payload, hid->string_);
   
@@ -154,6 +163,9 @@ int process_event(const char *str) {
       _error = json_mkobject();
       json_append_member(_error, "error", json_mkstring("there is no a command handler"));
     }
+  } else {
+      // json is broken
+      return -1;
   }
   if ( ret < 0 ) {
     if ( !_error ) {

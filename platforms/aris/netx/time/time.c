@@ -10,6 +10,14 @@
 #include "r_rtc.h"
 #include "hal_data.h"
 #include "r_gpt.h"
+#include "reloc_macro.h"
+
+#include <stdio.h>
+
+int msleep(int m_sec) {
+    tx_thread_sleep(CONV_MS_TO_TICK(m_sec));
+    return 0;
+}
 
 void get_time(char *ts) {
     struct tm tmp;

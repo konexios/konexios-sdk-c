@@ -10,10 +10,7 @@
 #include <debug.h>
 #include <time/time.h>
 #include <ntp/client.h>
-#if defined(_ARIS_)
-#include "reloc_macro.h"
-#define SLEEP(ms) tx_thread_sleep(CONV_MS_TO_TICK(ms));
-#elif defined(__MBED__)
+#if defined(__MBED__)
 #define SLEEP(ms) wait_ms(ms)
 #elif defined(__linux__)
 #include <unistd.h>
