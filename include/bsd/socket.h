@@ -72,10 +72,10 @@ STRUCT_HOSTENT
 #elif defined(__stm32l475iot__)
 # include <bsd/inet.h>
 # include <platforms/common/bsd/sockdef.h>
+# include "struct_hostent.h"
 # define htons _htons
 # define htonl _htonl
 # define ntohl _ntohl
-STRUCT_HOSTENT
 
 #endif
 
