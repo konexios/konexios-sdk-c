@@ -13,13 +13,8 @@ CC = xt-xcc
 AR = xt-ar
 RM = rm -f
 
-INCLUDES += -I$(PWD)/platforms/xtensa/time/
+INCLUDES += -I$(PWD)/platforms/xtensa/
 
-SRC += $(wildcard $(PWD)/platforms/xtensa/arrow/*.c)
-SRC += $(wildcard $(PWD)/platforms/xtensa/bsd/*.c)
-SRC += $(wildcard $(PWD)/platforms/xtensa/time/*.c)
-SRC += $(wildcard $(PWD)/platforms/xtensa/crypt/*.c)
-SRC += $(wildcard $(PWD)/platforms/xtensa/json/*.c)
 SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/coding.c
 SRC := $(filter-out ./src/json/json.c, $(SRC))
  

@@ -15,5 +15,5 @@ INCLUDES += \
 PRIV_INC = private.h
 
 define check_private
-    if [ ! -e $(PRIV_INC) ]; then echo -e "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC); fi
+    @if [ ! -e $(PRIV_INC) ]; then echo -e "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC); fi
 endef

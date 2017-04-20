@@ -10,14 +10,6 @@
 #include <debug.h>
 #include <time/time.h>
 #include <ntp/client.h>
-//#if defined(__MBED__)
-//#define SLEEP(ms) wait_ms(ms)
-//#elif defined(__linux__)
-//#include <unistd.h>
-//#define SLEEP(ms) usleep(ms*1000)
-//#elif defined(__XCC__)
-//#include <qcom_time.h>
-//#define SLEEP(ms) qcom_thread_msleep(ms)
 //#elif defined(__senseability__)
 //#define SLEEP CyDelay
 //#endif

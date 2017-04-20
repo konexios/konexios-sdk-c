@@ -6,11 +6,16 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _ARROW_KRONOS_C_SDK_XCCTIME_H_
-#define _ARROW_KRONOS_C_SDK_XCCTIME_H_
+#ifndef COMMON_TIME_TIME_H_
+#define COMMON_TIME_TIME_H_
 
-time_t mktime(struct tm *timeptr);
-char *strptime (const char *buf, const char *format, struct tm *tm);
-int stime(time_t *t);
+#include <config.h>
 
+int msleep(int m_sec);
+void get_time(char *ts);
+time_t build_time();
+#if !defined(__MBED__)
+void set_time(time_t t);
 #endif
+
+# endif // COMMON_TIME_TIME_H_

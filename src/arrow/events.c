@@ -9,8 +9,9 @@
 #include "arrow/events.h"
 #include <debug.h>
 #include <http/client.h>
+#include <arrow/request.h>
 #include <json/json.h>
-#include <string.h>
+#include <arrow/mem.h>
 
 static cmd_handler *__handlers = NULL;
 
@@ -63,7 +64,7 @@ int arrow_send_event_ans(const char *hid, event_t ev, const char *payload) {
     http_client_init( &cli );
     http_request_init(&request, PUT, uri);
     if ( payload ) {
-        http_request_set_payload(&request, payload);
+        http_request_set_payload(&request, (char *)payload);
     }    
     sign_request(&request);
     http_client_do(&cli, &request, &response);

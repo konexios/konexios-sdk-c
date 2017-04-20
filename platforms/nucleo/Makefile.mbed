@@ -9,12 +9,6 @@ INCLUDES += \
     -I$(PWD)/platforms/nucleo/bsd \
     -I$(PWD)/platforms/nucleo/bsd/ipv4
 
-
-SRC += $(wildcard $(PWD)/platforms/nucleo/arrow/*.c)
-SRC += $(wildcard $(PWD)/platforms/nucleo/bsd/*.c)
-SRC += $(wildcard $(PWD)/platforms/nucleo/time/*.c)
-SRC += $(wildcard $(PWD)/platforms/nucleo/json/*.c)
-
 OBJ = $(SRC:.c=.o)
 
 AR_PRM = rcs

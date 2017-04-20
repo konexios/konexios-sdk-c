@@ -7,12 +7,6 @@
  */
 
 #include "time/time.h"
-#if defined (__XCC__)
-#include <qcom/base.h>
-#include <platforms/xtensa/time/xcctime.h>
-#else
-#include <stdio.h>
-#endif
 
 time_t build_time() {
   static const char *built = __DATE__" "__TIME__;

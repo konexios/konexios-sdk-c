@@ -6,7 +6,17 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "NetworkSocketAPI/WiFi_c.h"
-int get_mac_address(char *mac) {
-    return wifi_mac_address(mac);
-}
+#ifndef _NUCLEO_BSD_SOCKET_H_
+#define _NUCLEO_BSD_SOCKET_H_
+
+#include <unint.h>
+#include <bsd/inet.h>
+#include <bsd/struct_hostent.h>
+#include <platforms/default/bsd/sockdef.h>
+
+# define htons _htons
+# define htonl _htonl
+struct hostent* gethostbyname(const char *name);
+
+
+#endif // _NUCLEO_BSD_SOCKET_H_
