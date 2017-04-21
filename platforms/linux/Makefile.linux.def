@@ -29,7 +29,12 @@ ifdef SEC_KEY
 CC_SYMBOLS += -DDEFAULT_SECRET_KEY=\"$(SEC_KEY)\"
 endif
 
+mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# $(info $(mkfile_path))
+sdk_path := $(abspath $(mkfile_path)/../../)
+# $(info $(sdk_path))
 
-INCLUDES += -I$(PWD) \
-	    -I$(PWD)/include
+INCLUDES += -I$(sdk_path) \
+	    -I$(sdk_path)/include \
+	    -I$(mkfile_path)
 

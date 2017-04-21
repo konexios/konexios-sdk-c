@@ -5,6 +5,8 @@
 LIBDIR ?= .
 C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
+INCLUDES += -I$(PWD)/platforms/linux
+
 OBJ = $(SRC:.c=.o)
 
 AR_PRM = rcs
