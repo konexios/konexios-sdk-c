@@ -17,9 +17,8 @@
 #else
 # include <sys/time.h>
 #endif
+#include <time/timer_functions.h>
 #include <platforms/default/time/time.h>
 int stime(time_t *timer);
-
-
 
 #endif // ARIS_WINC_TIME_TIME_H_
