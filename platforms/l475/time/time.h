@@ -6,15 +6,12 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _STM32L475IOT_BSD_SOCKET_H_
-#define _STM32L475IOT_BSD_SOCKET_H_
+#ifndef STM32L475IOT_TIME_TIME_H_
+#define STM32L475IOT_TIME_TIME_H_
 
-#include <unint.h>
-# include <bsd/inet.h>
-# include <platforms/default/bsd/sockdef.h>
-# include <bsd/struct_hostent.h>
-# define htons _htons
-# define htonl _htonl
-# define ntohl _ntohl
+#include <config.h>
+#include <time.h>
+#include <sys/time.h>
+#include <platforms/default/time/time.h>
 
-#endif // _STM32L475IOT_BSD_SOCKET_H_
+#endif // STM32L475IOT_TIME_TIME_H_

@@ -8,9 +8,12 @@ SRC += $(wildcard ./src/arrow/*.c)
 SRC += $(wildcard ./src/mqtt/client/src/*.c)
 SRC += $(wildcard ./src/mqtt/packet/src/*.c)
 
+ACN_SDK_C_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# $(info $(ACN_SDK_C_PATH))
+
 INCLUDES += \
-    -I$(PWD) \
-    -I$(PWD)/include
+    -I$(ACN_SDK_C_PATH) \
+    -I$(ACN_SDK_C_PATH)/include
 
 PRIV_INC = private.h
 

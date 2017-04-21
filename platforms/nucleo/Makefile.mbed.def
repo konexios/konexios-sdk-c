@@ -1,8 +1,11 @@
+mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# $(info $(mkfile_path))
+sdk_path = $(abspath $(mkfile_path)/../../)
 
 INCLUDES += \
-    -I$(PWD) \
-    -I$(PWD)/include \
-    -I$(PWD)/platforms/nucleo
+    -I$(sdk_path) \
+    -I$(sdk_path)/include \
+    -I$(mkfile_path)
     
 AS      = $(GCC_BIN)arm-none-eabi-as
 CC      = $(GCC_BIN)arm-none-eabi-gcc

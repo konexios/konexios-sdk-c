@@ -1,7 +1,8 @@
+mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+# $(info $(mkfile_path))
+sdk_path = $(abspath $(mkfile_path)/../../)
 
-INCLUDES += \
-    -I$(PWD) \
-    -I$(PWD)/include
+INCLUDES += -I$(sdk_path) -I$(sdk_path)/include -I$(mkfile_path)
     
 GCC_BIN = 
     
