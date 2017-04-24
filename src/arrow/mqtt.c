@@ -16,7 +16,7 @@
 
 #include <arrow/events.h>
 
-#define MQTT_BUF_LEN 500
+#define MQTT_BUF_LEN 600
 
 static Network mqtt_net;
 static MQTTClient mqtt_client;
@@ -262,6 +262,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     char *payload = telemetry_serialize(device, data);
     msg.payload = payload;
     msg.payloadlen = strlen(payload);
+    DBG("payload %d", msg.payloadlen);
     int ret = MQTTPublish(&mqtt_client, p_topic, &msg);
     free(payload);
     return ret;
