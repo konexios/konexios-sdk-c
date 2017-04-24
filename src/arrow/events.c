@@ -37,7 +37,7 @@ int add_cmd_handler(const char *name, fp callback) {
 }
 
 void free_cmd_handler() {
-  
+  // FIXME impl if it is needed
 }
 
 
