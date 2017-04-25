@@ -484,7 +484,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 chunk_len = 0;
                 return -1; // fail
             }
-            DBG("detect chunk %d, %d", chunk_len, ret);
+//            DBG("detect chunk %d, %d", chunk_len, ret);
             crlfPtr = strstr(buf, "\r\n");
             crlfPos = crlfPtr + 2 - buf;
             memmove(buf, crlfPtr+2, trfLen - (size_t)crlfPos);

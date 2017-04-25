@@ -36,22 +36,28 @@ char *get_meth(int i) {
 }
 
 void http_request_init(http_request_t *req, int meth, const char *url) {
+  req->is_corrupt = 0;
     req->meth = (uint8_t*)meth_str[meth];
     char *sch_end = strstr((char*)url, "://");
     if ( !sch_end ) { req->is_corrupt = 1; return; }
     req->scheme = (uint8_t*)malloc((size_t)(sch_end - url) + 1);
     strncpy((char*)req->scheme, url, (size_t)(sch_end - url));
     req->scheme[sch_end - url] = '\0';
+
     char *host_start = sch_end + 3; //sch_end + strlen("://");
     char *host_end = strstr(host_start, ":");
     if ( !host_end ) { req->is_corrupt = 1; return; }
+    req->host = malloc((size_t)(host_end - host_start) + 1);
     strncpy((char*)req->host, host_start, (size_t)(host_end - host_start));
     req->host[host_end - host_start] = '\0';
+
     int res = sscanf(host_end+1, "%hu", &req->port);
     if ( res!=1 ) { req->is_corrupt = 1; return; }
     char *uri_start = strstr(host_end+1, "/");
+    req->uri = malloc(strlen(uri_start)+1);
     strncpy((char*)req->uri, uri_start, strlen(uri_start));
     req->uri[strlen(uri_start)] = '\0';
+
     if (strcmp((char*)req->scheme, "https")==0) req->is_cipher = 1;
     else req->is_cipher = 0;
     DBG("meth: %s", req->meth);
@@ -75,7 +81,9 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
 }
 
 void http_request_close(http_request_t *req) {
-    if (req->scheme) free(req->scheme);
+    if ( req->scheme ) free(req->scheme);
+    if ( req->uri ) free(req->uri);
+    if ( req->host ) free(req->host);
     if (req->payload.buf) free(req->payload.buf);
     req->payload.size = 0;
     http_header_t *head = req->header;
@@ -89,6 +97,19 @@ void http_request_close(http_request_t *req) {
         }
         head = head_next;
     } while(head);
+
+    http_query_t *query = req->query;
+    http_query_t *query_next = NULL;
+    do {
+        if (query) {
+            query_next = query->next;
+            if (query->key) free(query->key);
+            if (query->value) free(query->value);
+            free(query);
+        }
+        query = query_next;
+    } while(query);
+
     if (req->content_type.value) free(req->content_type.value);
 }
 
@@ -125,6 +146,20 @@ void http_request_add_header(http_request_t *req, const char *key, const char *v
     head_new->next = NULL;
     if ( head ) head->next = head_new;
     else req->header = head_new;
+}
+
+void http_request_add_query(http_request_t *req, const char *key, const char *value) {
+  http_query_t *head = req->query;
+  while ( head && head->next )
+    head = head->next;
+  http_query_t *head_new = (http_query_t *)malloc(sizeof(http_query_t));
+  head_new->key = (uint8_t*)malloc(strlen(key)+1);
+  head_new->value = (uint8_t*)malloc(strlen(value)+1);
+  strcpy((char*)head_new->key, key);
+  strcpy((char*)head_new->value, value);
+  head_new->next = NULL;
+  if ( head ) head->next = head_new;
+  else req->query = head_new;
 }
 
 void http_request_set_content_type(http_request_t *req, const char *value) {

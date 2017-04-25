@@ -164,7 +164,10 @@ int arrow_checkin(arrow_gateway_t *gateway) {
   http_client_init(&cli);
   http_request_init(&request, PUT, uri);
 
+  DBG("req port: %d", request.port);
+
   sign_request(&request);
+  DBG("req port: %d", request.port);
   http_client_do(&cli, &request, &response);
   http_request_close(&request);
   DBG("response %d", response.m_httpResponseCode);

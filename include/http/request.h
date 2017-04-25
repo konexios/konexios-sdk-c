@@ -29,8 +29,6 @@
 # include <qcom_common.h>
 #endif
 
-#define REQUEST_HOST_LEN 100
-#define REQUEST_URI_LEN 100
 #define HEAD_FIELD_LEN 100
 
 enum METH {
@@ -60,8 +58,8 @@ typedef struct {
 typedef struct {
     uint8_t *meth;
     uint8_t *scheme;
-    uint8_t host[REQUEST_HOST_LEN];
-    uint8_t uri[REQUEST_URI_LEN];
+    uint8_t *host;
+    uint8_t *uri;
     uint16_t port;
     int is_corrupt;
     int is_cipher;
@@ -83,6 +81,7 @@ typedef struct {
 void http_request_init(http_request_t *req, int meth, const char *url);
 void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, const char *key, const char *value);
+void http_request_add_query(http_request_t *req, const char *key, const char *value);
 void http_request_set_content_type(http_request_t *req, const char *value);
 http_header_t *http_request_first_header(http_request_t *req);
 http_header_t *http_request_next_header(http_request_t *req, http_header_t *head);
