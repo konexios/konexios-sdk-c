@@ -103,6 +103,24 @@ fp find_cmd_handler(char *cmd) {
   return NULL;
 }
 
+int command_handler(const char *name,
+                    JsonNode *payload,
+                    JsonNode **error) {
+  int ret;
+  fp callback = find_cmd_handler(name);
+  if ( callback ) {
+    ret = callback(payload->string_);
+    if ( ret < 0 ) {
+      *error = json_mkobject();
+      json_append_member(*error, "error", json_mkstring("Something went wrong"));
+    }
+  } else {
+    *error = json_mkobject();
+    json_append_member(*error, "error", json_mkstring("there is no a command handler"));
+  }
+  return ret;
+} __attribute__((weak))
+
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
@@ -121,17 +139,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   if ( !pay || pay->tag != JSON_STRING ) return -1;
   DBG("ev msg: %s", pay->string_);
 
-  fp callback = find_cmd_handler(cmd->string_);
-  if ( callback ) {
-    ret = callback(pay->string_);
-    if ( ret < 0 ) {
-      _error = json_mkobject();
-      json_append_member(_error, "error", json_mkstring("Something went wrong"));
-    }
-  } else {
-    _error = json_mkobject();
-    json_append_member(_error, "error", json_mkstring("there is no a command handler"));
-  }
+  ret = command_handler(cmd->string_, pay, &_error);
 
   if ( _error ) {
     arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error));

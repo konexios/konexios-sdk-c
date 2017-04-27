@@ -24,6 +24,10 @@ typedef struct __cmd_handler {
   struct __cmd_handler *next;
 } cmd_handler;
 
+int command_handler(const char *name,
+                    JsonNode *payload,
+                    JsonNode **error);
+
 int add_cmd_handler(const char *name, fp callback);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 

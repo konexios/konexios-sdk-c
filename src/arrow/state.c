@@ -152,7 +152,6 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
     if ( _error ) {
       http_request_set_payload(&request, json_encode(_error));
       json_delete(_error);
-      http_request_add_query(&request, "error", "unknown");
     }
     sign_request(&request);
     DBG("send: %s", request.payload.buf);
