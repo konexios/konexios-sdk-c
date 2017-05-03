@@ -20,9 +20,18 @@
 #ifndef NTP_DEFAULT_TIMEOUT
 #define NTP_DEFAULT_TIMEOUT 4000
 #endif
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <unint.h>
 
 int ntp_set_time_cycle();
 int ntp_set_time_common(const char *server, uint16_t port, int timeout, int try_times);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* ARROW_NTP_H_ */

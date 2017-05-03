@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.1.2
+#define SDK_VERSION 1.1.3
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -48,7 +48,8 @@
     || defined(__MBED__) \
     || defined(__XCC__) \
     || defined(__senseability__) \
-    || defined(__stm32l475iot__)
+    || defined(__stm32l475iot__) \
+    || defined(__semiconductor__)
 #else
 # error "platform doesn't support"
 #endif
@@ -117,11 +118,11 @@
 # endif
 #endif
 
-#define ARROW_API_BASE_URL              ARROW_SCH"://"ARROW_ADDR":" xstr(ARROW_PORT)
-#define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL"/api/v1/kronos/gateways"
-#define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL"/api/v1/kronos/devices"
-#define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL"/api/v1/kronos/telemetries"
-#define ARROW_API_EVENTS_ENDPOINT       ARROW_API_BASE_URL"/api/v1/core/events"
+#define ARROW_API_BASE_URL              ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
+#define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL "/api/v1/kronos/gateways"
+#define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL "/api/v1/kronos/devices"
+#define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
+#define ARROW_API_EVENTS_ENDPOINT       ARROW_API_BASE_URL "/api/v1/core/events"
 #define ARROW_MQTT_URL                  MQTT_SCH"://"MQTT_ADDR":" xstr(MQTT_PORT)
 
 /* gateway and device configuration */
@@ -135,7 +136,7 @@
 # define DEVICE_NAME         "aris-device-demo"
 # define DEVICE_TYPE         "aris-device"
 # define DEVICE_UID_SUFFIX   "board"
-#elif defined(__MBED__) //TARGET_NUCLEO_F401RE
+#elif defined(TARGET_NUCLEO_F401RE)
     // gateway
 # define GATEWAY_UID_PREFIX          "nucleo"
 # define GATEWAY_NAME                "my-test-gateway-123"
@@ -188,6 +189,16 @@
     // device
 #define DEVICE_NAME         "B-L475E-IOT01"
 #define DEVICE_TYPE         "B-L475E-Type"
+#define DEVICE_UID_SUFFIX   "devkit"
+
+#elif defined(__semiconductor__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "semiconductor"
+# define GATEWAY_NAME                "semiconductor-demo"
+# define GATEWAY_OS                  "mbed"
+    // device
+#define DEVICE_NAME         "BB-GEVK"
+#define DEVICE_TYPE         "BB-GEVK-IOT"
 #define DEVICE_UID_SUFFIX   "devkit"
 
 #else

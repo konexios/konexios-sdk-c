@@ -9,6 +9,10 @@
 #ifndef ARROW_CONNECTION_H_
 #define ARROW_CONNECTION_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include "gateway.h"
 #include "device.h"
 #include "request.h"
@@ -27,5 +31,9 @@ int arrow_send_telemetry(arrow_device_t *device, void *data);
 
 int arrow_connect_gateway(arrow_gateway_t *gateway);
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* ARROW_CONNECTION_H_ */

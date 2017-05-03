@@ -45,7 +45,6 @@ sub_t sub_list[] = {
 
 int process_event(const char *str) {
   DBG("ev: %s", str);
-  printf("+=[%s]=+\r\n", str);
   mqtt_event_t mqtt_e;
   memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
   JsonNode *_main = json_decode(str);

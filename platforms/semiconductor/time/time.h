@@ -6,30 +6,20 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef ARROW_TIME_TIME_H_
+#define ARROW_TIME_TIME_H_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 #include <config.h>
-
-//Debug is disabled by default
-#ifdef DEBUG
-
-#define DBG_LINE_SIZE 120
-void dbg_line(const char *fmt, ...);
-#define DBG(...) dbg_line(__VA_ARGS__);
-
-#else
-# define DBG(...)
-# define WARN(...)
-# define ERR(...)
-#endif
+#include <time.h>
+#include <sys/time.h>
+#include <platforms/default/time/time.h>
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif // DEBUG_H_
+#endif // ARROW_TIME_TIME_H_
