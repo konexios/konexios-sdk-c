@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.1.2
+#define SDK_VERSION 1.1.3
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -136,7 +136,7 @@
 # define DEVICE_NAME         "aris-device-demo"
 # define DEVICE_TYPE         "aris-device"
 # define DEVICE_UID_SUFFIX   "board"
-#elif defined(__MBED__) //TARGET_NUCLEO_F401RE
+#elif defined(TARGET_NUCLEO_F401RE)
     // gateway
 # define GATEWAY_UID_PREFIX          "nucleo"
 # define GATEWAY_NAME                "my-test-gateway-123"

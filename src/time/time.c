@@ -28,7 +28,7 @@ time_t build_time() {
   return 0;
 }
 
-#if !defined(__MBED__)
+#if !defined(TARGET_NUCLEO_F401RE)
 void set_time(time_t t) {
     stime(&t);
 }

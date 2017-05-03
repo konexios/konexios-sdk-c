@@ -8,7 +8,12 @@
 
 #ifndef ARROW_TIME_TIME_H_
 #define ARROW_TIME_TIME_H_
-//#define __XCC__
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
 #include <config.h>
 #if !defined(__XCC__)
 # if defined (__STRICT_ANSI__)
@@ -43,7 +48,7 @@ int stime(time_t *timer);
 int msleep(int m_sec);
 void get_time(char *ts);
 time_t build_time();
-#if !defined(__MBED__)
+#if !defined(TARGET_NUCLEO_F401RE)
 void set_time(time_t t);
 #endif
 
@@ -75,6 +80,10 @@ void set_time(time_t t);
             }                           \
         } while (0)
 
+#endif
+
+#if defined(__cplusplus)
+}
 #endif
 
 #endif // ARROW_TIME_TIME_H_

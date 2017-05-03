@@ -64,8 +64,8 @@ ACN_SDK_C_LIB := $(OUTDIR)/libacnsdkc.a
 
 ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
-DEFINES += -D__semiconductor__
-ACNSDK_DEF = -D__semiconductor__ -I.
+DEFINES += -D__semiconductor__ -DDEBUG
+ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I.
 
 #$(warning "$(PROJECT)")
 #$(warning "$(LIB_DIR)")
