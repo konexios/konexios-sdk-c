@@ -235,17 +235,17 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
     return -1;
 }
 
-static int receive_response(http_client_t *cli, http_response_t *res, char *buf, size_t *len) {
+static int receive_response(http_client_t *cli, http_response_t *res, char *buf, uint32_t *len) {
     int ret;
     if ( (ret = client_recv(buf, 20, cli)) < 0 ) return ret;
-    *len = (size_t)ret;
+    *len = (uint32_t)ret;
     char* crlfPtr = strstr(buf, "\r\n");
 
     while( crlfPtr == NULL ) {
         if( *len < CHUNK_SIZE - 1 ) {
-            size_t newTrfLen;
+            uint32_t newTrfLen;
             if ( (ret = client_recv(buf + *len, 10, cli)) < 0 ) return ret;
-            newTrfLen = (size_t)ret;
+            newTrfLen = (uint32_t)ret;
             *len += newTrfLen;
         } else {
             return -1;
@@ -264,11 +264,11 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
         return -1;
     }
 
-    if ( *len < (size_t)crlfPos + 2 ) {
+    if ( *len < (uint32_t)crlfPos + 2 ) {
         DBG("receive_response memmove warning [%08x] %d, %d", (int)buf, crlfPos, *len);
     }
-    memmove(buf, buf+crlfPos+2, *len - (size_t)(crlfPos + 2) + 1 ); //Be sure to move NULL-terminating char as well
-    *len -= (size_t)(crlfPos + 2);
+    memmove(buf, buf+crlfPos+2, *len - (uint32_t)(crlfPos + 2) + 1 ); //Be sure to move NULL-terminating char as well
+    *len -= (uint32_t)(crlfPos + 2);
 
     if( (res->m_httpResponseCode < 200) || (res->m_httpResponseCode >= 300) ) {
         //Did not return a 2xx code; TODO fetch headers/(&data?) anyway and implement a mean of writing/reading headers
@@ -297,7 +297,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     serv.sin_family = PF_INET;
     bcopy((char *)serv_resolve->h_addr,
             (char *)&serv.sin_addr.s_addr,
-            (size_t)serv_resolve->h_length);
+            (uint32_t)serv_resolve->h_length);
     serv.sin_port = htons(req->port);
 //    serv.sin_addr.s_addr = serv.sin_addr.s_addr;
 
@@ -389,7 +389,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     HTTP_DBG("Receiving response");
 
-    size_t trfLen;
+    uint32_t trfLen;
     ret = receive_response(cli, res, buf, &trfLen);
     if ( ret < 0 ) {
         DBG("Connection error (%d)", ret);
@@ -414,10 +414,10 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         crlfPtr = strstr(buf, "\r\n");
         if(crlfPtr == NULL) {
             if( trfLen < CHUNK_SIZE - 1 ) {
-                size_t newTrfLen;
+                uint32_t newTrfLen;
                 ret = client_recv(buf + trfLen, 40, cli);
                 CHECK_CONN_ERR(ret);
-                newTrfLen = (size_t)ret;
+                newTrfLen = (uint32_t)ret;
                 trfLen += newTrfLen;
                 HTTP_DBG("Read %d chars; In buf: [%s]", newTrfLen, buf);
                 continue;
@@ -452,8 +452,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             } else {
                 http_response_add_header(res, key, value);
             }
-            memmove(buf, crlfPtr+2, trfLen - (size_t)(crlfPos + 2) + 1);
-            trfLen -= (size_t)(crlfPos + 2);
+            memmove(buf, crlfPtr+2, trfLen - (uint32_t)(crlfPos + 2) + 1);
+            trfLen -= (uint32_t)(crlfPos + 2);
         } else {
             DBG("Could not parse header");
             PRTCL_ERR();
@@ -462,7 +462,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     // return resp; //
 
-    size_t chunk_len;
+    uint32_t chunk_len;
     HTTP_DBG("get payload form buf: %d", trfLen);
     HTTP_DBG("get payload form buf: [%s]", buf);
     do {
@@ -472,36 +472,36 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                     memmove(buf, buf+10, trfLen-10);
                     trfLen -= 10;
                 }
-                size_t newTrfLen = 0;
+                uint32_t newTrfLen = 0;
                 ret = client_recv(buf+trfLen, 10, cli);
-                if ( ret > 0 ) newTrfLen = (size_t)ret;
+                if ( ret > 0 ) newTrfLen = (uint32_t)ret;
                 trfLen += newTrfLen;
             }
             ret = sscanf(buf, "%x\r\n", (unsigned int*)&chunk_len);
             if ( ret != 1 ) {
-                memmove(buf, crlfPtr+2, trfLen - (size_t)crlfPos);
-                trfLen -= (size_t)crlfPos;
+                memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
+                trfLen -= (uint32_t)crlfPos;
                 chunk_len = 0;
                 return -1; // fail
             }
             HTTP_DBG("detect chunk %d, %d", chunk_len, ret);
             crlfPtr = strstr(buf, "\r\n");
             crlfPos = crlfPtr + 2 - buf;
-            memmove(buf, crlfPtr+2, trfLen - (size_t)crlfPos);
-            trfLen -= (size_t)crlfPos;
+            memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
+            trfLen -= (uint32_t)crlfPos;
         } else {
             chunk_len = MAX_BUFFER_SIZE - trfLen;
         }
         if ( !chunk_len ) break;
         while ( chunk_len ) {
-            size_t need_to_read = CHUNK_SIZE-10;
+            uint32_t need_to_read = CHUNK_SIZE-10;
             if ( (int)chunk_len < CHUNK_SIZE-10) need_to_read = chunk_len;
             HTTP_DBG("need to read %d/%d", need_to_read, trfLen);
             while ( (int)trfLen < (int)need_to_read ) {
-                size_t newTrfLen = 0;
+                uint32_t newTrfLen = 0;
                 HTTP_DBG("get chunk add %d", need_to_read-trfLen);
                 ret = client_recv(buf+trfLen, need_to_read-trfLen, cli);
-                if ( ret >= 0 ) newTrfLen = (size_t)ret;
+                if ( ret >= 0 ) newTrfLen = (uint32_t)ret;
                 else { // ret < 0 - error
                     need_to_read = trfLen;
                     chunk_len = need_to_read;

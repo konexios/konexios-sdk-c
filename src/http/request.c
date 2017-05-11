@@ -40,15 +40,15 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
     req->meth = (uint8_t*)meth_str[meth];
     char *sch_end = strstr((char*)url, "://");
     if ( !sch_end ) { req->is_corrupt = 1; return; }
-    req->scheme = (uint8_t*)malloc((size_t)(sch_end - url) + 1);
-    strncpy((char*)req->scheme, url, (size_t)(sch_end - url));
+    req->scheme = (uint8_t*)malloc((uint32_t)(sch_end - url) + 1);
+    strncpy((char*)req->scheme, url, (uint32_t)(sch_end - url));
     req->scheme[sch_end - url] = '\0';
 
     char *host_start = sch_end + 3; //sch_end + strlen("://");
     char *host_end = strstr(host_start, ":");
     if ( !host_end ) { req->is_corrupt = 1; return; }
-    req->host = malloc((size_t)(host_end - host_start) + 1);
-    strncpy((char*)req->host, host_start, (size_t)(host_end - host_start));
+    req->host = malloc((uint32_t)(host_end - host_start) + 1);
+    strncpy((char*)req->host, host_start, (uint32_t)(host_end - host_start));
     req->host[host_end - host_start] = '\0';
 
     int res = sscanf(host_end+1, "%hu", &req->port);
@@ -177,7 +177,7 @@ http_header_t *http_request_next_header(http_request_t *req, http_header_t *head
     return head->next;
 }
 
-static int set_payload(http_payload_t *pay, const char *buf, size_t size) {
+static int set_payload(http_payload_t *pay, const char *buf, uint32_t size) {
     pay->size = size;
     if ( pay->buf ) {
         pay->buf = (uint8_t*)realloc(pay->buf, size+1);
@@ -221,12 +221,12 @@ void http_response_set_content_type(http_response_t *res, const char *value) {
     strcpy((char*)res->content_type.value, value);
 }
 
-void http_response_set_payload(http_response_t *res, char *payload, size_t size) {
+void http_response_set_payload(http_response_t *res, char *payload, uint32_t size) {
     if ( !size ) size = strlen(payload);
     set_payload(&res->payload, payload, size);
 }
 
-void http_response_add_payload(http_response_t *res, char *payload, size_t size) {
+void http_response_add_payload(http_response_t *res, char *payload, uint32_t size) {
     if ( !size ) size = strlen(payload);
     if ( !res->payload.buf ) {
         set_payload(&res->payload, payload, size);

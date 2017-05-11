@@ -27,7 +27,7 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   char *uid = (char*)malloc(strlen(GATEWAY_UID_PREFIX) + 20);
   strcpy(uid, GATEWAY_UID_PREFIX);
   strcat(uid, "-");
-  size_t uidlen = strlen(uid);
+  uint32_t uidlen = strlen(uid);
   char mac[7];
   get_mac_address(mac);
   int i;
