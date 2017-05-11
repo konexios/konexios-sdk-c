@@ -59,7 +59,7 @@ static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     if ( sz < 0 ) return sz;
     int got = 0;
     got = recv(cli->sock, buf, sz, 0);
-//    DBG("recv ssl %d [%d]", got, sz);
+    HTTP_DBG("recv ssl %d [%d]", got, sz);
     if (got == 0)  return -2;  // IO_ERR_WANT_READ;
     return got;
 }
@@ -71,7 +71,7 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     if ( sz < 0 ) return sz;
     int sent = 0;
     sent = send(cli->sock, buf, sz, 0);
-//    DBG("send ssl %d [%d]", sent, sz);
+    HTTP_DBG("send ssl %d [%d]", sent, sz);
     if (sent == 0)
         return -2;  // IO_ERR_WANT_WRITE
     return sent;
@@ -83,14 +83,14 @@ static int simple_read(uint8_t *buf, uint16_t len, void *c) {
     int ret;
     ret = recv(cli->sock, (char*)buf, (int)len, 0);
     if (ret > 0) buf[ret] = 0x00;
-//    DBG("%d|%s|", ret, buf);
+    HTTP_DBG("%d|%s|", ret, buf);
     return ret;
 }
 
 static int simple_write(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
     if ( !len ) len = (uint16_t)strlen((char*)buf);
-//    DBG("%d|%s|", len, buf);
+    HTTP_DBG("%d|%s|", len, buf);
     return send(cli->sock, (char*)buf, (int)len, 0);
 }
 
@@ -98,14 +98,14 @@ static int ssl_read(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
     int ret = wolfSSL_read(cli->ssl, buf, (int)len);
     if (ret > 0) buf[ret] = 0x00;
-//    DBG("[%d]{%s}", ret, buf);
+    HTTP_DBG("[%d]{%s}", ret, buf);
     return ret;
 }
 
 static int ssl_write(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
     if ( !len && buf ) len = (uint16_t)strlen((char*)buf);
-//    DBG("[%d]|%s|",len, buf);
+    HTTP_DBG("[%d]|%s|",len, buf);
     int ret = wolfSSL_write(cli->ssl, buf, (int)len);
     return ret;
 }
@@ -273,7 +273,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     if( (res->m_httpResponseCode < 200) || (res->m_httpResponseCode >= 300) ) {
         //Did not return a 2xx code; TODO fetch headers/(&data?) anyway and implement a mean of writing/reading headers
         DBG("Response code %d", res->m_httpResponseCode);
-        DBG("Protocol error");
+        HTTP_DBG("Protocol error");
         return -1;
     }
     cli->response_code = res->m_httpResponseCode;
@@ -312,7 +312,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         soc_close(cli->sock);
         return -1;
     }
-    DBG("connect done");
+    HTTP_DBG("connect done");
 
     if ( req->is_cipher ) {
 #if defined(__XCC__)
@@ -355,7 +355,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
       if (err != SSL_SUCCESS) {
           DBG("SSL connect fail");
       } else {
-          DBG("SSL connect done");
+          HTTP_DBG("SSL connect done");
       }
 #endif
         cli->_r_func = ssl_read;
@@ -387,7 +387,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     char buf[CHUNK_SIZE];
 
-    DBG("Receiving response");
+    HTTP_DBG("Receiving response");
 
     size_t trfLen;
     ret = receive_response(cli, res, buf, &trfLen);
@@ -397,7 +397,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         return -1;
     }
 
-    DBG("Reading headers %d", trfLen);
+    HTTP_DBG("Reading headers %d", trfLen);
     char *crlfPtr;
     int crlfPos;
     res->header = NULL;
@@ -419,7 +419,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 CHECK_CONN_ERR(ret);
                 newTrfLen = (size_t)ret;
                 trfLen += newTrfLen;
-//                DBG("Read %d chars; In buf: [%s]", newTrfLen, buf);
+                HTTP_DBG("Read %d chars; In buf: [%s]", newTrfLen, buf);
                 continue;
             } else {
                 PRTCL_ERR();
@@ -429,7 +429,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         crlfPos = crlfPtr - buf;
 
         if(crlfPos == 0) {
-            DBG("Headers read done");
+            HTTP_DBG("Headers read done");
             memmove(buf, &buf[2], trfLen - 2 + 1); //Be sure to move NULL-terminating char as well
             trfLen -= 2;
             break;
@@ -441,7 +441,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
         int n = sscanf(buf, "%[^:]: %[^\r\n]", key, value);
         if ( n == 2 ) {
-//            DBG("Read header : %s: %s", key, value);
+            HTTP_DBG("Read header : %s: %s", key, value);
             if( !strcmp(key, "Content-Length") ) {
                 sscanf(value, "%d", &recvContentLength);
             } else if( !strcmp(key, "Transfer-Encoding") ) {
@@ -463,8 +463,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     // return resp; //
 
     size_t chunk_len;
-//    DBG("get payload form buf: %d", trfLen);
-//    DBG("get payload form buf: [%s]", buf);
+    HTTP_DBG("get payload form buf: %d", trfLen);
+    HTTP_DBG("get payload form buf: [%s]", buf);
     do {
         if ( res->is_chunked ) {
             while( (crlfPtr = strstr(buf, "\r\n")) == NULL ) {
@@ -484,7 +484,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 chunk_len = 0;
                 return -1; // fail
             }
-//            DBG("detect chunk %d, %d", chunk_len, ret);
+            HTTP_DBG("detect chunk %d, %d", chunk_len, ret);
             crlfPtr = strstr(buf, "\r\n");
             crlfPos = crlfPtr + 2 - buf;
             memmove(buf, crlfPtr+2, trfLen - (size_t)crlfPos);
@@ -519,7 +519,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         }
     } while(1);
 
-    DBG("body{%s}", res->payload.buf);
+    HTTP_DBG("body{%s}", res->payload.buf);
     soc_close(cli->sock);
     return 0;
 }

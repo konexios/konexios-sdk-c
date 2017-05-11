@@ -9,8 +9,15 @@
 #ifndef HTTPCLIENT_REQUEST_H_
 #define HTTPCLIENT_REQUEST_H_
 
+#include <config.h>
 #include <unint.h>
-    
+
+#if defined(HTTP_DEBUG)
+#define HTTP_DBG DBG
+#else
+#define HTTP_DBG(...)
+#endif
+
 #if defined(_ARIS_)
 # include "wifi_thread.h"
 # include "driver/include/m2m_wifi.h"

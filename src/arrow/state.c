@@ -136,7 +136,7 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
         strcat(uri, "/received");
       break;
       case st_complete:
-        strcat(uri, "/complete");
+        strcat(uri, "/succeeded");
       break;
       case st_error: {
         strcat(uri, "/error");
