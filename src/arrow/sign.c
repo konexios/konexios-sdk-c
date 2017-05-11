@@ -65,7 +65,7 @@ void sign(char *signature,
           const char *payload,
           const char *apiVersion) {
     int i;
-    static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 500];
+    static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
     static char signKey[128];
     static char tmp[128];
 

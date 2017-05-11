@@ -177,15 +177,20 @@ http_header_t *http_request_next_header(http_request_t *req, http_header_t *head
     return head->next;
 }
 
-static void set_payload(http_payload_t *pay, const char *buf, size_t size) {
+static int set_payload(http_payload_t *pay, const char *buf, size_t size) {
     pay->size = size;
     if ( pay->buf ) {
         pay->buf = (uint8_t*)realloc(pay->buf, size+1);
     } else {
         pay->buf = (uint8_t*)malloc(size+1);
     }
+    if ( !pay->buf ) {
+      DBG("[http] set_payload: fail");
+      return -1;
+    }
     memcpy(pay->buf, buf, size);
     pay->buf[pay->size] = '\0';
+    return 0;
 }
 
 void http_request_set_payload(http_request_t *req, char *payload) {

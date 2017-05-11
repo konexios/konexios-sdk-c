@@ -489,15 +489,17 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             crlfPos = crlfPtr + 2 - buf;
             memmove(buf, crlfPtr+2, trfLen - (size_t)crlfPos);
             trfLen -= (size_t)crlfPos;
+            chunk_len -= trfLen;
         } else {
             chunk_len = MAX_BUFFER_SIZE - trfLen;
         }
         if ( !chunk_len ) break;
         while ( chunk_len ) {
-            size_t need_to_read = chunk_len < CHUNK_SIZE-10 ?
-                    chunk_len : CHUNK_SIZE-10;
-            while ( trfLen < need_to_read ) {
+            size_t need_to_read = CHUNK_SIZE-10;
+            if ( (int)chunk_len < CHUNK_SIZE-10) need_to_read = chunk_len;
+            while ( (int)trfLen < (int)need_to_read ) {
                 size_t newTrfLen = 0;
+                HTTP_DBG("get chunk add %d", need_to_read-trfLen);
                 ret = client_recv(buf+trfLen, need_to_read-trfLen, cli);
                 if ( ret >= 0 ) newTrfLen = (size_t)ret;
                 else { // ret < 0 - error
