@@ -6,30 +6,25 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef _NUCLEO_BSD_SOCKET_H_
+#define _NUCLEO_BSD_SOCKET_H_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-#include <config.h>
 
-//Debug is disabled by default
-#ifdef DEBUG
+#include <unint.h>
+#include <bsd/inet.h>
+#include <bsd/struct_hostent.h>
+#include <platforms/default/bsd/sockdef.h>
 
-#define DBG_LINE_SIZE 120
-void dbg_line(const char *fmt, ...);
-#define DBG(...) dbg_line(__VA_ARGS__);
-
-#else
-# define DBG(...)
-# define WARN(...)
-# define ERR(...)
-#endif
+# define htons _htons
+# define htonl _htonl
+struct hostent* gethostbyname(const char *name);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif // DEBUG_H_
+#endif // _NUCLEO_BSD_SOCKET_H_

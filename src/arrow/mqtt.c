@@ -262,7 +262,6 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     char *payload = telemetry_serialize(device, data);
     msg.payload = payload;
     msg.payloadlen = strlen(payload);
-    DBG("payload %d", msg.payloadlen);
     int ret = MQTTPublish(&mqtt_client, p_topic, &msg);
     free(payload);
     return ret;

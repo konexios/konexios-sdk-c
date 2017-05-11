@@ -1,6 +1,10 @@
 #if !defined(ARROW_DEVICECOMMAND_H_)
 #define ARROW_DEVICECOMMAND_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <json/json.h>
 
 typedef enum {
@@ -32,5 +36,9 @@ int add_cmd_handler(const char *name, fp callback);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif // ARROW_DEVICECOMMAND_H_
