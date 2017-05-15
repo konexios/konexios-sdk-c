@@ -38,7 +38,7 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 #endif
 //         if (rc) DBG("mqtt recv %d/%d", rc, len);
         if (rc < 0) {
-#if defined(errno) && defined(__linux__)
+#if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
             DBG("error(%d): %s", rc, strerror(errno));
 #endif
             bytes = -1;

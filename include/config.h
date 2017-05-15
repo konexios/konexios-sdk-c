@@ -70,16 +70,18 @@
 #define NTP_DEFAULT_TIMEOUT 4000
 
 /* Initialize AP mode parameters structure with SSID, channel and OPEN security type. */
-#if defined(_ARIS_)
-# define MAIN_WLAN_SSID      "ARIS_WIFI"
-#elif defined(__MBED__)
-# define MAIN_WLAN_SSID      "NUCLEO_WIFI"
-#elif defined(__XCC__)
-# define MAIN_WLAN_SSID      "QCA4010_WIFI"
+#if !defined(MAIN_WLAN_SSID)
+# if defined(_ARIS_)
+#  define MAIN_WLAN_SSID      "ARIS_WIFI"
+# elif defined(__MBED__)
+#  define MAIN_WLAN_SSID      "NUCLEO_WIFI"
+# elif defined(__XCC__)
+#  define MAIN_WLAN_SSID      "QCA4010_WIFI"
+# endif
 #endif
 
 #define MAIN_WLAN_CHANNEL   5
-#define MAIN_WLAN_AUTH      1 //M2M_WIFI_SEC_OPEN
+#define MAIN_WLAN_AUTH      1
 
 /* cloud connectivity */
 #if defined(HTTP_CIPHER)

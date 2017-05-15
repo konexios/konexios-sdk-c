@@ -9,8 +9,15 @@
 #ifndef HTTPCLIENT_REQUEST_H_
 #define HTTPCLIENT_REQUEST_H_
 
+#include <config.h>
 #include <unint.h>
-    
+
+#if defined(HTTP_DEBUG)
+#define HTTP_DBG DBG
+#else
+#define HTTP_DBG(...)
+#endif
+
 #if defined(_ARIS_)
 # include "wifi_thread.h"
 # include "driver/include/m2m_wifi.h"
@@ -90,7 +97,7 @@ void http_request_set_payload(http_request_t *req, char *payload);
 void http_response_free(http_response_t *res);
 void http_response_add_header(http_response_t *req, const char *key, const char *value);
 void http_response_set_content_type(http_response_t *req, const char *value);
-void http_response_set_payload(http_response_t *req, char *payload, size_t size);
-void http_response_add_payload(http_response_t *req, char *payload, size_t size);
+void http_response_set_payload(http_response_t *req, char *payload, uint32_t size);
+void http_response_add_payload(http_response_t *req, char *payload, uint32_t size);
 
 #endif /* HTTPCLIENT_REQUEST_H_ */

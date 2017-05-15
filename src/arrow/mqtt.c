@@ -254,12 +254,11 @@ int mqtt_yield(int timeout_ms) {
 }
 
 int mqtt_publish(arrow_device_t *device, void *d) {
-    sensor_data_t *data = (sensor_data_t *)d;
     MQTTMessage msg;
     msg.qos = QOS0;
     msg.retained = 0;
     msg.dup = 0;
-    char *payload = telemetry_serialize(device, data);
+    char *payload = telemetry_serialize(device, d);
     msg.payload = payload;
     msg.payloadlen = strlen(payload);
     int ret = MQTTPublish(&mqtt_client, p_topic, &msg);

@@ -27,7 +27,7 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   char *uid = (char*)malloc(strlen(GATEWAY_UID_PREFIX) + 20);
   strcpy(uid, GATEWAY_UID_PREFIX);
   strcat(uid, "-");
-  size_t uidlen = strlen(uid);
+  uint32_t uidlen = strlen(uid);
   char mac[7];
   get_mac_address(mac);
   int i;
@@ -254,12 +254,11 @@ int arrow_send_telemetry(arrow_device_t *device, void *d) {
     http_client_t cli;
     http_response_t response;
     http_request_t request;
-    sensor_data_t *data = (sensor_data_t*)d;
 
     http_client_init(&cli);
     http_request_init(&request, POST, ARROW_API_TELEMETRY_ENDPOINT);
     request.is_chunked = 1;
-    char *tmp = telemetry_serialize(device, data);
+    char *tmp = telemetry_serialize(device, d);
     DBG("set payload %s", tmp);
     http_request_set_payload(&request, tmp);
     free(tmp);

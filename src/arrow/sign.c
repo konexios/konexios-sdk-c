@@ -23,8 +23,8 @@
 static const char *default_api_key = DEFAULT_API_KEY;
 static const char *default_secret_key = DEFAULT_SECRET_KEY;
 
-static char api_key[100];
-static char secret_key[100];
+static char api_key[sizeof(DEFAULT_API_KEY) + 10];
+static char secret_key[sizeof(DEFAULT_SECRET_KEY) + 10];
 
 typedef struct {
   char *key;
@@ -65,7 +65,7 @@ void sign(char *signature,
           const char *payload,
           const char *apiVersion) {
     int i;
-    static char canonicalRequest[512];
+    static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
     static char signKey[128];
     static char tmp[128];
 
