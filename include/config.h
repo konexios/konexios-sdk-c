@@ -125,7 +125,7 @@
 #define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL "/api/v1/kronos/devices"
 #define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
 #define ARROW_API_EVENTS_ENDPOINT       ARROW_API_BASE_URL "/api/v1/core/events"
-#define ARROW_MQTT_URL                  MQTT_SCH"://"MQTT_ADDR":" xstr(MQTT_PORT)
+#define ARROW_MQTT_URL                  MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
 
 /* gateway and device configuration */
 
