@@ -18,15 +18,6 @@ extern "C" {
     
 #if defined(_ARIS_)
 #include "sensors_data.h"
-#else
-typedef void sensor_data_t;
-#endif
-
-#if defined(__linux__)
-typedef struct {
-  float temperature_core0;
-  float temperature_core1;
-} probook_data_t;
 
 #elif defined(__XCC__)
 # include <qcom_common.h>
@@ -79,7 +70,7 @@ typedef struct {
 } gevk_data_t;
 #endif
 
-char *telemetry_serialize(arrow_device_t *device, sensor_data_t *data);
+char *telemetry_serialize(arrow_device_t *device, void *data);
 
 #if defined(__cplusplus)
 }
