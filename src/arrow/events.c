@@ -31,7 +31,7 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
   return 0;
 }
 
-typedef int (*submodule)(mqtt_event_t *, JsonNode *);
+typedef int (*submodule)(void *, JsonNode *);
 typedef struct {
   char *name;
   submodule proc;
@@ -71,7 +71,8 @@ int process_event(const char *str) {
 
   int ret = -1;
   submodule current_processor = NULL;
-  for (int i=0; i< sizeof(sub_list)/sizeof(sub_t); i++) {
+  int i = 0;
+  for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
     if ( strcmp(sub_list[i].name, event_name->string_) == 0 ) {
       current_processor = sub_list[i].proc;
     }

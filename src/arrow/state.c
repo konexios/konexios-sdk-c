@@ -177,6 +177,7 @@ int state_handler(char *str) {
 
 int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
+  SSP_PARAMETER_NOT_USED(ev);
   if ( !_device_hid ) return -1;
 
   JsonNode *device_hid = json_find_member(_parameters, "deviceHid");

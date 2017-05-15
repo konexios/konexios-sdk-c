@@ -82,6 +82,7 @@ int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
     return 0;
 }
 
+static int fill_string_from_json(JsonNode *_node, const char *name, char **str) __attribute__((used));
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
   JsonNode *tmp = json_find_member(_node, name);
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
@@ -90,7 +91,7 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
   return 0;
 }
 
-fp find_cmd_handler(char *cmd) {
+static fp find_cmd_handler(const char *cmd) {
   if ( __handlers ) {
     cmd_handler *h = __handlers;
     while(h) {
