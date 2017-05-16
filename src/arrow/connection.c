@@ -9,16 +9,12 @@
 #include "arrow/connection.h"
 #include <config.h>
 #include <debug.h>
-#include <time/time.h>
 #include <http/client.h>
 #include <json/json.h>
 #include <json/telemetry.h>
 #include <arrow/net.h>
 #include <arrow/storage.h>
 #include <arrow/mem.h>
-#include <time/watchdog.h>
-#include <arrow/events.h>
-#include <arrow/state.h>
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_init(gateway);
@@ -300,97 +296,4 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     save_device_info(device);
   }
   return 0;
-}
-
-static arrow_gateway_t _gateway;
-static arrow_gateway_config_t _gateway_config;
-static arrow_device_t _device;
-static int _init_done = 0;
-
-int arrow_initialize_routine() {
-  wdt_feed();
-  DBG("register gateway via API %p", &_gateway);
-  while ( arrow_connect_gateway(&_gateway) < 0 ) {
-    DBG("arrow gateway connection fail...");
-    msleep(3000);
-  }
-
-  wdt_feed();
-  while ( arrow_config(&_gateway, &_gateway_config) < 0 ) {
-    DBG("arrow gateway config fail...");
-    msleep(3000);
-  }
-
-  // device registaration
-  wdt_feed();
-  DBG("register device via API");
-  while ( arrow_connect_device(&_gateway, &_device) < 0 ) {
-    DBG("arrow: device connection fail...");
-    msleep(3000);
-  }
-  _init_done = 1;
-  return 0;
-}
-
-int arrow_update_state(const char *name, const char *value) {
-  add_state(name, value);
-  if ( _init_done ) {
-    arrow_post_state_update(&_device);
-    return 0;
-  }
-  return -1;
-}
-
-int arrow_send_telemetry_routine(void *data) {
-  if ( !_init_done ) return -1;
-  wdt_feed();
-  while ( arrow_send_telemetry(&_device, data) < 0) {
-    DBG("arrow: send telemetry fail...");
-    msleep(3000);
-  }
-  return 0;
-}
-
-int arrow_mqtt_connect_routine() {
-  if ( !_init_done ) return -1;
-  // init MQTT
-  DBG("mqtt connect...");
-  while ( mqtt_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-    DBG("mqtt connect fail...");
-    msleep(3000);
-  } //every 3sec try to connect
-
-  // FIXME just for a test
-  if ( arrow_state_mqtt_run(&_device) < 0 ) {
-    return -1;
-  } else {
-    mqtt_subscribe();
-  }
-  return 0;
-}
-
-void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done ) return;
-  while (1) {
-    if ( arrow_state_mqtt_is_running() < 0 ) {
-      msleep(TELEMETRY_DELAY);
-    } else {
-      mqtt_yield(TELEMETRY_DELAY);
-    }
-    if ( data_cb(data) < 0 ) continue;
-    wdt_feed();
-    if ( mqtt_publish(&_device, data) < 0 ) {
-      DBG("mqtt publish failure...");
-      mqtt_disconnect();
-      while (mqtt_connect(&_gateway, &_device, &_gateway_config) < 0) { msleep(3000);}
-      if ( arrow_state_mqtt_is_running() >= 0 ) mqtt_subscribe();
-    }
-  }
-}
-
-void arrow_close() {
-  if ( _init_done ) {
-    arrow_device_free(&_device);
-    arrow_gateway_free(&_gateway);
-  }
 }
