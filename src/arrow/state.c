@@ -17,11 +17,17 @@ void add_state(const char *name, const char *value) {
   json_append_member(state_tree, name, json_mkstring(value));
 }
 
-void arrow_state_mqtt_run(arrow_device_t *device) {
+int arrow_state_mqtt_is_running() {
+  if ( !state_tree ) return -1;
+  return 0;
+}
+
+int arrow_state_mqtt_run(arrow_device_t *device) {
   if ( !_device_hid ) {
     _device_hid = malloc(strlen(device->hid)+1);
     strcpy(_device_hid, device->hid);
   }
+  return arrow_state_mqtt_is_running();
 }
 
 int arrow_get_state(arrow_device_t *device) {

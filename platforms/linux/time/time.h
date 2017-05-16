@@ -12,4 +12,6 @@
 #include <sys/time.h>
 #include <time.h>
 
+#define msleep(ms) usleep(ms*1000)
+
 #endif // _LINUX_TIME_TIME_H_

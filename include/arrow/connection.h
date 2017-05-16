@@ -17,7 +17,9 @@ extern "C" {
 #include "device.h"
 #include "request.h"
 
-#include "bsd/socket.h"
+#include <bsd/socket.h>
+
+typedef int (*get_data_cb)(void *);
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway);
 int arrow_register_gateway(arrow_gateway_t *gateway);
@@ -31,6 +33,14 @@ int arrow_send_telemetry(arrow_device_t *device, void *data);
 
 int arrow_connect_gateway(arrow_gateway_t *gateway);
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device);
+
+int arrow_initialize_routine();
+int arrow_update_state(const char *name, const char *value);
+int arrow_send_telemetry_routine(void *data);
+int arrow_mqtt_connect_routine();
+
+void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
+void arrow_close();
 
 #if defined(__cplusplus)
 }
