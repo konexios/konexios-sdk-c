@@ -9,6 +9,7 @@
 #include "ntp/ntp.h"
 #include <debug.h>
 #include <time/time.h>
+#include <time/watchdog.h>
 #include <ntp/client.h>
 //#elif defined(__senseability__)
 //#define SLEEP CyDelay
@@ -23,6 +24,7 @@ int ntp_set_time_common(
         uint16_t port,
         int timeout,
         int try_times) {
+    wdt_feed();
     int i=0;
     do {
         while( ntp_set_time(server, port, timeout) != NTP_OK ) {
