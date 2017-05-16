@@ -32,6 +32,7 @@ int command_handler(const char *name,
                     JsonNode *payload,
                     JsonNode **error);
 
+int has_cmd_handler();
 int add_cmd_handler(const char *name, fp callback);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 

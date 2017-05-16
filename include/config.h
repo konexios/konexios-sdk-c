@@ -228,6 +228,8 @@
 #define TELEMETRY_MAGNETOMETER_X    "f|magnetometerX"
 #define TELEMETRY_MAGNETOMETER_Y    "f|magnetometerY"
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
+#if !defined(TELEMETRY_DELAY)
 #define TELEMETRY_DELAY             5000
+#endif
 
 #endif /* CONFIG_H_ */

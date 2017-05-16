@@ -24,6 +24,11 @@ static void __create_cmd_handler(cmd_handler *hd, const char *name, fp callback)
 }
 
 // handlers
+int has_cmd_handler() {
+	if ( __handlers ) return 0;
+	return -1;
+}
+
 int add_cmd_handler(const char *name, fp callback) {
   cmd_handler *h = malloc(sizeof(cmd_handler));
   __create_cmd_handler(h, name, callback);

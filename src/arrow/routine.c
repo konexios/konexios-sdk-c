@@ -70,18 +70,16 @@ int arrow_mqtt_connect_routine() {
   } //every 3sec try to connect
 
   // FIXME just for a test
-  if ( arrow_state_mqtt_run(&_device) < 0 ) {
-    return -1;
-  } else {
-    mqtt_subscribe();
-  }
+  arrow_state_mqtt_run(&_device);
+  if ( has_cmd_handler() >= 0 )  mqtt_subscribe();
+
   return 0;
 }
 
 void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done ) return;
   while (1) {
-    if ( arrow_state_mqtt_is_running() < 0 ) {
+    if ( has_cmd_handler() < 0 ) {
       msleep(TELEMETRY_DELAY);
     } else {
       mqtt_yield(TELEMETRY_DELAY);
@@ -92,7 +90,7 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
       DBG("mqtt publish failure...");
       mqtt_disconnect();
       while (mqtt_connect(&_gateway, &_device, &_gateway_config) < 0) { msleep(ARROW_RETRY_DELAY);}
-      if ( arrow_state_mqtt_is_running() >= 0 ) mqtt_subscribe();
+      if ( has_cmd_handler() >= 0 ) mqtt_subscribe();
     }
   }
 }
