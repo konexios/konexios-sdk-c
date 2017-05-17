@@ -9,12 +9,14 @@
 #include <time/watchdog.h>
 #include <arrow/events.h>
 #include <arrow/state.h>
+#include <arrow/mqtt.h>
 
 
 static arrow_gateway_t _gateway;
 static arrow_gateway_config_t _gateway_config;
 static arrow_device_t _device;
 static int _init_done = 0;
+static int _init_mqtt = 0;
 
 int arrow_initialize_routine() {
   wdt_feed();
@@ -69,15 +71,15 @@ int arrow_mqtt_connect_routine() {
     msleep(ARROW_RETRY_DELAY);
   } //every 3sec try to connect
 
-  // FIXME just for a test
   arrow_state_mqtt_run(&_device);
   if ( has_cmd_handler() >= 0 )  mqtt_subscribe();
+  _init_mqtt = 1;
 
   return 0;
 }
 
 void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done ) return;
+  if ( !_init_done || !_init_mqtt ) return;
   while (1) {
     if ( has_cmd_handler() < 0 ) {
       msleep(TELEMETRY_DELAY);
@@ -96,8 +98,13 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
 }
 
 void arrow_close() {
+  if ( _init_mqtt ) {
+    mqtt_disconnect();
+    _init_mqtt = 0;
+  }
   if ( _init_done ) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
+    _init_done = 0;
   }
 }

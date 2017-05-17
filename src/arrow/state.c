@@ -22,6 +22,11 @@ int arrow_state_mqtt_is_running() {
   return 0;
 }
 
+int arrow_state_mqtt_stop() {
+  if (state_tree) json_delete(state_tree);
+  if ( _device_hid ) free(_device_hid);
+}
+
 int arrow_state_mqtt_run(arrow_device_t *device) {
   if ( !_device_hid ) {
     _device_hid = malloc(strlen(device->hid)+1);
@@ -92,7 +97,9 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
       get_time(ts);
       json_append_member(_state, "timestamp", json_mkstring(ts));
     }
-    http_request_set_payload(&request, json_encode(_state));
+    char *pay = json_encode(_state);
+    http_request_set_payload(&request, pay);
+    free(pay);
     sign_request(&request);
     DBG("send: %s", request.payload.buf);
     http_client_do(&cli, &request, &response);
@@ -100,7 +107,10 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
     DBG("response %d", response.m_httpResponseCode);
     DBG("[%s]", response.payload.buf);
     http_client_free(&cli);
-    if (_state) json_delete(_state);
+    if (_state) {
+      json_remove_from_parent(state_tree);
+      json_delete(_state);
+    }
     free(uri);
     if ( response.m_httpResponseCode != 200 ) {
         http_response_free(&response);

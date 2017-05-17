@@ -125,7 +125,6 @@ void http_client_init(http_client_t *cli) {
     cli->_w_func = simple_write;
 #if !defined(__XCC__)
     wolfSSL_Init();
-    cli->method = wolfTLSv1_2_client_method();
 #endif
 #ifdef DEBUG_WOLFSSL
 //    wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
@@ -315,6 +314,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     HTTP_DBG("connect done");
 
     if ( req->is_cipher ) {
+      cli->method = wolfTLSv1_2_client_method();
 #if defined(__XCC__)
       cli->ctx = qcom_SSL_ctx_new(SSL_CLIENT, SSL_INBUF_SIZE, SSL_OUTBUF_SIZE, 0);
       if ( cli->ctx == NULL) {

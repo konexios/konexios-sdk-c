@@ -163,6 +163,7 @@ int arrow_checkin(arrow_gateway_t *gateway) {
 
   http_client_init(&cli);
   http_request_init(&request, PUT, uri);
+  free(uri);
 
   sign_request(&request);
   http_client_do(&cli, &request, &response);
@@ -190,6 +191,7 @@ int arrow_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {
 
   http_client_init(&cli);
   http_request_init(&request, GET, uri);
+  free(uri);
 
   sign_request(&request);
 
@@ -289,7 +291,6 @@ int arrow_connect_gateway(arrow_gateway_t *gateway){
 }
 
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
-  arrow_device_init(device);
   arrow_prepare_device(gateway, device);
   if ( restore_device_info(device) < 0 ) {
     if ( arrow_register_device(gateway, device) < 0 ) return -1;

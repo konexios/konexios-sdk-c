@@ -11,6 +11,7 @@ int arrow_post_state_update(arrow_device_t *device);
 
 int arrow_state_mqtt_run(arrow_device_t *device);
 int arrow_state_mqtt_is_running();
+int arrow_state_mqtt_stop();
 
 int ev_DeviceStateRequest(void *, JsonNode *_parameters);
 

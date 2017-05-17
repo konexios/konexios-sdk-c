@@ -24,7 +24,9 @@ void arrow_device_init(arrow_device_t *dev) {
 }
 
 void arrow_device_free(arrow_device_t *dev) {
-    json_delete(dev->main);
+  json_delete(dev->main);
+  if ( dev->hid ) free(dev->hid);
+  if ( dev->eid ) free(dev->eid);
 }
 
 #define DEVICE_ADD_PROPERTY(key, name) \

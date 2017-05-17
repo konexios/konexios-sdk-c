@@ -34,6 +34,7 @@ int command_handler(const char *name,
 
 int has_cmd_handler();
 int add_cmd_handler(const char *name, fp callback);
+void free_cmd_handler();
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);
