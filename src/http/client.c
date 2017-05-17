@@ -57,11 +57,11 @@ static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     http_client_t *cli = (http_client_t *)vp;
     //      tcp->set_blocking(true, 15000);
     if ( sz < 0 ) return sz;
-    int got = 0;
-    got = recv(cli->sock, buf, sz, 0);
+    uint32_t got = 0;
+    got = (uint32_t)recv(cli->sock, buf, (uint32_t)sz, 0);
     HTTP_DBG("recv ssl %d [%d]", got, sz);
     if (got == 0)  return -2;  // IO_ERR_WANT_READ;
-    return got;
+    return (int)got;
 }
 
 
@@ -69,12 +69,12 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     SSP_PARAMETER_NOT_USED(wsl);
     http_client_t *cli = (http_client_t *)vp;
     if ( sz < 0 ) return sz;
-    int sent = 0;
-    sent = send(cli->sock, buf, sz, 0);
+    uint32_t sent = 0;
+    sent = (uint32_t)send(cli->sock, buf, (uint32_t)sz, 0);
     HTTP_DBG("send ssl %d [%d]", sent, sz);
     if (sent == 0)
         return -2;  // IO_ERR_WANT_WRITE
-    return sent;
+    return (int)sent;
 }
 #endif
 
@@ -301,8 +301,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 //    serv.sin_addr.s_addr = serv.sin_addr.s_addr;
 
     struct timeval tv;
-    tv.tv_sec = cli->timeout / 1000;
-    tv.tv_usec =  ( cli->timeout % 1000 ) * 1000;
+    tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
+    tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);
     setsockopt(cli->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     ret = connect(cli->sock, (struct sockaddr*)&serv, sizeof(serv));

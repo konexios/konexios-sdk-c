@@ -113,7 +113,7 @@ static int sas_token_gen(char *sas, char *devname, char *key, char *time_exp) {
   return 0;
 }
 
-int mqtt_connect_azure(arrow_gateway_t *gateway,
+static int mqtt_connect_azure(arrow_gateway_t *gateway,
                        arrow_device_t *device,
                        arrow_gateway_config_t *config) {
   SSP_PARAMETER_NOT_USED(device);
@@ -180,7 +180,7 @@ int mqtt_connect_azure(arrow_gateway_t *gateway,
   return rc;
 }
 #else
-int mqtt_connect_iot(arrow_gateway_t *gateway) {
+static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   char username[100];
 
   strcpy(username, VHOST);

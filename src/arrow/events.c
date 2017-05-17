@@ -16,7 +16,7 @@
 #include <json/json.h>
 #include <arrow/mem.h>
 
-void free_mqtt_event(mqtt_event_t *mq) {
+static void free_mqtt_event(mqtt_event_t *mq) {
   if ( mq->gateway_hid ) free(mq->gateway_hid);
   if ( mq->device_hid ) free(mq->device_hid);
   if ( mq->cmd ) free(mq->cmd);
@@ -46,6 +46,7 @@ sub_t sub_list[] = {
 int process_event(const char *str) {
   DBG("ev: %s", str);
   mqtt_event_t mqtt_e;
+  int ret = -1;
   memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
@@ -69,7 +70,6 @@ int process_event(const char *str) {
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
 
-  int ret = -1;
   submodule current_processor = NULL;
   int i = 0;
   for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {

@@ -136,7 +136,7 @@ int NetworkConnect(Network* n, char* addr, int port) {
         bcopy((char *)serv_resolve->h_addr,
                 (char *)&serv.sin_addr.s_addr,
                 (size_t)serv_resolve->h_length);
-        serv.sin_port = htons(port);
+        serv.sin_port = htons((uint16_t)port);
     } else
         return -1;
 DBG("try socket");

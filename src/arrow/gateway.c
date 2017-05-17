@@ -7,6 +7,7 @@
  */
 
 #include "arrow/gateway.h"
+#include <unint.h>
 #if defined(__USE_STD__)
 #include <stdlib.h>
 #endif
@@ -17,7 +18,7 @@ void type##_add_##name(type##_t *gate, const char *name) { \
   if ( gate->name ) { \
     gate->name = (char*)realloc(gate->name, strlen(name)+1); \
   } else { \
-    int f = strlen(name)+1; \
+    uint32_t f = strlen(name)+1; \
     gate->name = (char*)malloc(f); \
   } \
   strcpy(gate->name, name); \

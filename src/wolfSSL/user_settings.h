@@ -3,7 +3,6 @@
 //    #define WOLFSSL_CMSIS_RTOS
 //#define HAVE_AESGCM
 #define NO_WOLFSSL_MEMORY
-#define WOLFSSL_BASE64_ENCODE
 
 //#define WOLFSSL_SHA384
 //#define WOLFSSL_SHA512

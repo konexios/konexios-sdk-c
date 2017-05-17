@@ -6,6 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
+#include "arrow/utf8.h"
 #include <arrow/mem.h>
 static int utf8_validate_cz(const char *s) {
   unsigned char c = (unsigned char) *s;
@@ -71,14 +72,14 @@ int utf8check(const char *s) {
 }
 
 void fix_urldecode(char *query) {
-    int len = strlen(query);
+    int len = (int)strlen(query);
     char *_perc = strstr(query, "%");
     if ( _perc ) {
         int val;
         int ret = sscanf(_perc+1, "%x", &val);
         if ( ret == 1 ) {
             *_perc = (char)val;
-            memmove(_perc+1, _perc+3, len - (_perc+3 - query) +1 );
+            memmove(_perc+1, _perc+3, (uint32_t) (len - (_perc+3 - query) +1) );
         }
     }
 }
@@ -87,7 +88,7 @@ void urlencode(char *dst, char *src, int len) {
   char *hex = "0123456789abcdef";
   char *src_p = src;
   char *dst_p = dst;
-  if (!len) len = strlen(src);
+  if (!len) len = (int)strlen(src);
 
   while( src_p && len-- ){
     if( ('a' <= *src_p && *src_p <= 'z')
