@@ -213,5 +213,5 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   } else {
     _arrow_put_state(_device_hid, st_complete, trans_hid->string_);
   }
-
+  return 0;
 }

@@ -32,6 +32,7 @@ void arrow_device_free(arrow_device_t *dev);
 char *arrow_device_get_type(arrow_device_t *dev);
 char *arrow_device_get_uid(arrow_device_t *dev);
 char *arrow_device_get_name(arrow_device_t *dev);
+char *arrow_device_get_gateway_hid(arrow_device_t *dev);
 
 void arrow_device_add_name(arrow_device_t *dev, const char *name);
 void arrow_device_add_gateway_hid(arrow_device_t *dev, const char *name);

@@ -42,7 +42,8 @@ int add_cmd_handler(const char *name, fp callback) {
   return 0;
 }
 
-void free_cmd_handler() {
+static void free_cmd_handler() __attribute__((used));
+static void free_cmd_handler() {
   // FIXME impl if it is needed
 }
 
@@ -112,7 +113,7 @@ static fp find_cmd_handler(const char *cmd) {
 int command_handler(const char *name,
                     JsonNode *payload,
                     JsonNode **error) {
-  int ret;
+  int ret = -1;
   fp callback = find_cmd_handler(name);
   if ( callback ) {
     ret = callback(payload->string_);
@@ -151,6 +152,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
     arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error));
     json_delete(_error);
   } else {
+    if ( ret < 0 ) {
+        DBG("command_handler fail %d", ret);
+    }
     arrow_send_event_ans(ev->gateway_hid, succeeded, NULL);
   }
 

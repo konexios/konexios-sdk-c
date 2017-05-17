@@ -9,9 +9,8 @@
 #ifndef ARROW_SIGN_H_
 #define ARROW_SIGN_H_
 
-//void sha256(char *shasum, char *buf, int size);
-//void hmac256(char *hmacdig, const char *key, int key_size, const char *buf, int buf_size);
 char *get_api_key();
+char *get_secret_key();
 void set_api_key(char *newkey);
 void set_secret_key(char *newkey);
 void sign(char *signature,
