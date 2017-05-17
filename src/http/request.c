@@ -51,7 +51,7 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
     strncpy((char*)req->host, host_start, (uint32_t)(host_end - host_start));
     req->host[host_end - host_start] = '\0';
 
-    int res = sscanf(host_end+1, "%hu", &req->port);
+    int res = sscanf(host_end+1, "%8hu", &req->port);
     if ( res!=1 ) { req->is_corrupt = 1; return; }
     char *uri_start = strstr(host_end+1, "/");
     req->uri = malloc(strlen(uri_start)+1);

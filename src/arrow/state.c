@@ -86,6 +86,7 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
         strcat(uri, "update");
       break;
       default:
+        free(uri);
         return -1;
     }
     http_client_init( &cli );
@@ -161,6 +162,7 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
       }
       break;
       default:
+        free(uri);
         return -1;
     }
     http_request_init(&request, PUT, uri);

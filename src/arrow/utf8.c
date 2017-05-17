@@ -8,6 +8,8 @@
 
 #include "arrow/utf8.h"
 #include <arrow/mem.h>
+#include <unint.h>
+
 static int utf8_validate_cz(const char *s) {
   unsigned char c = (unsigned char) *s;
 
@@ -76,7 +78,7 @@ void fix_urldecode(char *query) {
     char *_perc = strstr(query, "%");
     if ( _perc ) {
         int val;
-        int ret = sscanf(_perc+1, "%x", &val);
+        int ret = sscanf(_perc+1, "%2x", &val);
         if ( ret == 1 ) {
             *_perc = (char)val;
             memmove(_perc+1, _perc+3, (uint32_t) (len - (_perc+3 - query) +1) );

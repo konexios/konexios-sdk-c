@@ -258,7 +258,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     buf[crlfPos] = '\0';
     DBG("resp: {%s}", buf);
 
-    if( sscanf(buf, "HTTP/1.1 %d", &res->m_httpResponseCode) != 1 ) {
+    if( sscanf(buf, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
         DBG("Not a correct HTTP answer : %s\n", buf);
         return -1;
     }
@@ -439,11 +439,11 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         char key[CHUNK_SIZE];
         char value[CHUNK_SIZE];
 
-        int n = sscanf(buf, "%[^:]: %[^\r\n]", key, value);
+        int n = sscanf(buf, "%256[^:]: %256[^\r\n]", key, value);
         if ( n == 2 ) {
             HTTP_DBG("Read header : %s: %s", key, value);
             if( !strcmp(key, "Content-Length") ) {
-                sscanf(value, "%d", &recvContentLength);
+                sscanf(value, "%8d", &recvContentLength);
             } else if( !strcmp(key, "Transfer-Encoding") ) {
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
@@ -477,7 +477,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 if ( ret > 0 ) newTrfLen = (uint32_t)ret;
                 trfLen += newTrfLen;
             }
-            ret = sscanf(buf, "%x\r\n", (unsigned int*)&chunk_len);
+            ret = sscanf(buf, "%4x\r\n", (unsigned int*)&chunk_len);
             if ( ret != 1 ) {
                 memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
                 trfLen -= (uint32_t)crlfPos;

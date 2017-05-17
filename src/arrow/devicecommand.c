@@ -152,14 +152,14 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   DBG("ev msg: %s", pay->string_);
 
   ret = command_handler(cmd->string_, pay, &_error);
+  if ( ret < 0 ) {
+      DBG("command_handler fail %d", ret);
+  }
 
   if ( _error ) {
     arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error));
     json_delete(_error);
   } else {
-    if ( ret < 0 ) {
-        DBG("command_handler fail %d", ret);
-    }
     arrow_send_event_ans(ev->gateway_hid, succeeded, NULL);
   }
 
