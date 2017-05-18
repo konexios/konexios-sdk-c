@@ -15,7 +15,7 @@
 #if defined(HTTP_DEBUG)
 #define HTTP_DBG DBG
 #else
-#define HTTP_DBG
+#define HTTP_DBG(...)
 #endif
 
 #if defined(_ARIS_)

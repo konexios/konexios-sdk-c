@@ -13,10 +13,9 @@
 #include <bsd/inet.h>
 #include <bsd/struct_hostent.h>
 #include <platforms/default/bsd/sockdef.h>
+#include <platforms/default/bsd/sockdecl.h>
 
 # define htons _htons
 # define htonl _htonl
-struct hostent* gethostbyname(const char *name);
-
 
 #endif // _NUCLEO_BSD_SOCKET_H_
