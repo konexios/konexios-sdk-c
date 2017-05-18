@@ -10,6 +10,7 @@
 #include <arrow/mqtt.h>
 #include <arrow/events.h>
 #include <arrow/state.h>
+#include <arrow/devicecommand.h>
 #include <arrow/mqtt.h>
 
 

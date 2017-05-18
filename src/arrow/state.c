@@ -25,6 +25,7 @@ int arrow_state_mqtt_is_running() {
 int arrow_state_mqtt_stop() {
   if (state_tree) json_delete(state_tree);
   if ( _device_hid ) free(_device_hid);
+  return 0;
 }
 
 int arrow_state_mqtt_run(arrow_device_t *device) {
