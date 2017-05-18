@@ -25,6 +25,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 /* check old macros @wc_fips */
 #if defined(USE_CYASSL_MEMORY) && !defined(USE_WOLFSSL_MEMORY)

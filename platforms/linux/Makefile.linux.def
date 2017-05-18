@@ -11,11 +11,11 @@ RM 	= rm -f
 
 CPU = 
 COMMON_FLAGS = -c -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -MMD -fno-delete-null-pointer-checks -fomit-frame-pointer
-CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu99 -MP
+CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu11 -MP
 CPPC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu++98 -fno-rtti -MP
 ASM_FLAGS = -x assembler-with-cpp $(COMMON_FLAGS) -Os
 CC_SYMBOLS = -DTOOLCHAIN_GCC \
-       -DDEBUG -Wextra -Werror
+       -DDEBUG -Wextra -Werror -Wpedantic
 
 ifdef PROBOOK
 CC_SYMBOLS += -D__probook_4540s__

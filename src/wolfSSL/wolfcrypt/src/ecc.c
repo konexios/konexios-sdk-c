@@ -27,6 +27,7 @@
 
 /* in case user set HAVE_ECC there */
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 /*
 Possible ECC enable options:

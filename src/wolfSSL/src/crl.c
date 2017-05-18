@@ -27,6 +27,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifndef WOLFCRYPT_ONLY
 #ifdef HAVE_CRL
@@ -895,7 +896,6 @@ int LoadCRL(WOLFSSL_CRL* crl, const char* path, int type, int monitor)
 }
 
 #endif /* NO_FILESYSTEM */
-
 #endif /* HAVE_CRL */
 #endif /* !WOLFCRYPT_ONLY */
 

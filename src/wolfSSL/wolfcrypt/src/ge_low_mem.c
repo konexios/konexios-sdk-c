@@ -27,6 +27,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #if defined(CURVED25519_SMALL) /* use slower code that takes less memory */
 #if defined(HAVE_ED25519)

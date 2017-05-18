@@ -25,6 +25,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifndef WOLFCRYPT_ONLY
 #ifdef WOLFSSL_SNIFFER
@@ -3329,7 +3330,6 @@ int ssl_GetSessionStats(unsigned int* active,     unsigned int* total,
         return -1;
     }
 }
-
 
 
 #endif /* WOLFSSL_SNIFFER */

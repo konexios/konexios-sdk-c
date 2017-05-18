@@ -51,13 +51,13 @@ void arrow_device_free(arrow_device_t *dev) {
   }
 
 
-DEVICE_ADD_PROPERTY("name", name);
-DEVICE_ADD_PROPERTY("gatewayHid", gateway_hid);
-DEVICE_ADD_PROPERTY("type", type);
-DEVICE_ADD_PROPERTY("uid", uid);
+DEVICE_ADD_PROPERTY("name", name)
+DEVICE_ADD_PROPERTY("gatewayHid", gateway_hid)
+DEVICE_ADD_PROPERTY("type", type)
+DEVICE_ADD_PROPERTY("uid", uid)
 
-DEVICE_EXT_PROPERTY(hid);
-DEVICE_EXT_PROPERTY(eid);
+DEVICE_EXT_PROPERTY(hid)
+DEVICE_EXT_PROPERTY(eid)
 
 void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value) {
     json_append_member(dev->info, key, json_mkstring(value));

@@ -58,6 +58,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifdef HAVE_CAMELLIA
 

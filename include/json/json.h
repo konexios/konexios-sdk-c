@@ -47,7 +47,7 @@ typedef enum {
 	JSON_STRING,
 	JSON_NUMBER,
 	JSON_ARRAY,
-	JSON_OBJECT,
+  JSON_OBJECT
 } JsonTag;
 
 typedef struct JsonNode JsonNode;
@@ -62,7 +62,7 @@ struct JsonNode
 	char *key; /* Must be valid UTF-8. */
 	
 	JsonTag tag;
-	union {
+  union {
 		/* JSON_BOOL */
 		bool bool_;
 		
@@ -77,7 +77,7 @@ struct JsonNode
 		struct {
 			JsonNode *head, *tail;
 		} children;
-	};
+  };
 };
 
 /*** Encoding, decoding, and validation ***/

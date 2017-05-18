@@ -24,14 +24,14 @@ void type##_add_##name(type##_t *gate, const char *name) { \
   strcpy(gate->name, name); \
 }
 
-GATEWAY_ADD_PROPERTY(arrow_gateway, name);
-GATEWAY_ADD_PROPERTY(arrow_gateway, uid);
-GATEWAY_ADD_PROPERTY(arrow_gateway, os);
-GATEWAY_ADD_PROPERTY(arrow_gateway, type);
-GATEWAY_ADD_PROPERTY(arrow_gateway, software_name);
-GATEWAY_ADD_PROPERTY(arrow_gateway, software_version);
-GATEWAY_ADD_PROPERTY(arrow_gateway, sdkVersion);
-GATEWAY_ADD_PROPERTY(arrow_gateway, hid);
+GATEWAY_ADD_PROPERTY(arrow_gateway, name)
+GATEWAY_ADD_PROPERTY(arrow_gateway, uid)
+GATEWAY_ADD_PROPERTY(arrow_gateway, os)
+GATEWAY_ADD_PROPERTY(arrow_gateway, type)
+GATEWAY_ADD_PROPERTY(arrow_gateway, software_name)
+GATEWAY_ADD_PROPERTY(arrow_gateway, software_version)
+GATEWAY_ADD_PROPERTY(arrow_gateway, sdkVersion)
+GATEWAY_ADD_PROPERTY(arrow_gateway, hid)
 
 #if defined(__IBM__)
 GATEWAY_ADD_PROPERTY(arrow_gateway_config, organizationId);

@@ -28,6 +28,7 @@
 
 /* in case user set HAVE_ED25519 there */
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifdef HAVE_ED25519
 

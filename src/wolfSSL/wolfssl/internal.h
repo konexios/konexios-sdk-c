@@ -2231,7 +2231,7 @@ typedef struct Buffers {
 #endif /* HAVE_PK_CALLBACKS */
 } Buffers;
 
-typedef struct Options {
+__extension__ typedef struct Options {
 #ifndef NO_PSK
     wc_psk_client_callback client_psk_cb;
     wc_psk_server_callback server_psk_cb;
@@ -2478,7 +2478,7 @@ typedef struct DtlsMsg {
 
 
 /* Handshake messages received from peer (plus change cipher */
-typedef struct MsgsReceived {
+__extension__ typedef struct MsgsReceived {
     word16 got_hello_request:1;
     word16 got_client_hello:1;
     word16 got_server_hello:1;

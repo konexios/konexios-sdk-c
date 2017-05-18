@@ -26,6 +26,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifdef WOLFSSL_MD2
 

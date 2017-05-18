@@ -27,6 +27,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedantic_dummy;
 
 #ifndef WOLFCRYPT_ONLY
 #ifdef HAVE_OCSP
