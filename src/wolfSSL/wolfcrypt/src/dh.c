@@ -25,6 +25,7 @@
 #endif
 
 #include <wolfssl/wolfcrypt/settings.h>
+typedef int __pedanric_dummy;
 
 #ifndef NO_DH
 

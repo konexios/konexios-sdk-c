@@ -77,8 +77,8 @@ void fix_urldecode(char *query) {
     int len = (int)strlen(query);
     char *_perc = strstr(query, "%");
     if ( _perc ) {
-        int val;
-        int ret = sscanf(_perc+1, "%2x", &val);
+        uint32_t val;
+        int ret = sscanf(_perc+1, "%2x", (unsigned int*)&val);
         if ( ret == 1 ) {
             *_perc = (char)val;
             memmove(_perc+1, _perc+3, (uint32_t) (len - (_perc+3 - query) +1) );
