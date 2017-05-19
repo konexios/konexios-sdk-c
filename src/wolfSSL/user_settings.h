@@ -276,6 +276,7 @@
 #define NO_SKID
 //#define NO_CURVE25519
 //#define NO_ED25519
+//#define WOLFSSL_STATIC_RSA
 #define NO_WOLFSSL_SERVER
 //#define NO_CERTS
 #define SINGLE_THREADED

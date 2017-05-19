@@ -10109,6 +10109,10 @@ static const char* const cipher_names[] =
 #ifdef BUILD_TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256
     "DHE-PSK-CHACHA20-POLY1305",
 #endif
+
+#ifndef NO_CIPHER_PEDANTIC_DUMMY
+	""
+#endif
 };
 
 
@@ -10546,6 +10550,10 @@ static int cipher_name_idx[] =
 
 #ifdef BUILD_TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256
     TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256,
+#endif
+
+#ifndef NO_CIPHER_PEDANTIC_DUMMY
+	-1
 #endif
 };
 

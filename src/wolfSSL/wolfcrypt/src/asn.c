@@ -3466,6 +3466,7 @@ static int ConfirmSignature(const byte* buf, word32 bufSz,
     void* heap)
 {
     int  typeH = 0, digestSz = 0, ret = 0;
+    (void)(digestSz); // INFO if degestSz do not used
 #ifdef WOLFSSL_SMALL_STACK
     byte* digest;
 #else

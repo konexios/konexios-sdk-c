@@ -11,6 +11,13 @@
 
 #if defined(__cplusplus)
 extern "C" {
+#else
+#if !defined(htons)
+# define htons _htons
+#endif
+#if !defined(htonl)
+# define htonl _htonl
+#endif
 #endif
 
 
@@ -18,10 +25,7 @@ extern "C" {
 #include <bsd/inet.h>
 #include <bsd/struct_hostent.h>
 #include <platforms/default/bsd/sockdef.h>
-
-# define htons _htons
-# define htonl _htonl
-struct hostent* gethostbyname(const char *name);
+#include <platforms/default/bsd/sockdecl.h>
 
 #if defined(__cplusplus)
 }
