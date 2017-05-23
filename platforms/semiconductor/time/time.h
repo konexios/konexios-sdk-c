@@ -13,10 +13,17 @@
 extern "C" {
 #endif
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <sys/features.h>
 #include <config.h>
 #include <time.h>
 #include <sys/time.h>
 #include <platforms/default/time/time.h>
+
+int stime(time_t *timer);
 
 #if defined(__cplusplus)
 }

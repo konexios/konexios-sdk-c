@@ -14,7 +14,7 @@
 int msleep(int m_sec);
 void get_time(char *ts);
 time_t build_time();
-#if !defined(__MBED__)
+#if !defined(TARGET_NUCLEO_F401RE)
 void set_time(time_t t);
 #endif
 

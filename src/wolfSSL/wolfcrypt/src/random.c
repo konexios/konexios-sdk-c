@@ -1466,11 +1466,10 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
     }
 
 #elif defined(__semiconductor__)
-    #warning "write a real random seed!!!!, just for testing now"
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz) {
         int i;
         for (i = 0; i < (int)sz; i++ )
-            output[i] = i;
+            output[i] = rand()%256;
         return 0;
     }
 #elif defined(NO_DEV_RANDOM)
