@@ -15,6 +15,29 @@
 #include <arrow/net.h>
 #include <arrow/storage.h>
 #include <arrow/mem.h>
+#include <arrow/device_api.h>
+
+int __http_routine(response_init_f req_init, void *arg_init,
+                   response_proc_f resp_proc, void *arg_proc) {
+  int ret = 0;
+  http_client_t cli;
+  http_request_t request;
+  http_response_t response;
+  http_client_init(&cli);
+  req_init(&request, arg_init);
+
+  sign_request(&request);
+  http_client_do(&cli, &request, &response);
+  http_request_close(&request);
+  http_client_free(&cli);
+  if ( resp_proc ) {
+    ret = resp_proc(&response, arg_proc);
+  } else {
+    if ( response.m_httpResponseCode != 200 ) ret = -1;
+  }
+  http_response_free(&response);
+  return ret;
+}
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_init(gateway);
@@ -40,37 +63,35 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   return 0;
 }
 
+static void _gateway_register_init(http_request_t *request, void *arg) {
+  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
+  http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
+  char *payload = arrow_gateway_serialize(gateway);
+  DBG("payload %s", payload);
+  http_request_set_payload(request, payload);
+  free(payload);
+}
+
+static int _gateway_register_proc(http_response_t *response, void *arg) {
+  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
+  DBG("response gate reg %d", response->m_httpResponseCode);
+  if ( arrow_gateway_parse(gateway, (char*)response->payload.buf) < 0 ) {
+      DBG("parse error");
+      http_response_free(response);
+      return -1;
+  } else {
+      DBG("gateway hid: %s", gateway->hid);
+  }
+  return 0;
+}
+
 int arrow_register_gateway(arrow_gateway_t *gateway) {
-    http_client_t cli;
-    http_response_t response;
-    http_request_t request;
-
-    http_client_init(&cli);
-    http_request_init(&request, POST, ARROW_API_GATEWAY_ENDPOINT);
-
-    char *payload = arrow_gateway_serialize(gateway);
-    DBG("payload %s", payload);
-
-    http_request_set_payload(&request, payload);
-    sign_request(&request);
-    http_client_do(&cli, &request, &response);
-
-    free(payload);
-
-    http_request_close(&request);
-    DBG("response %d", response.m_httpResponseCode);
-
-    http_client_free(&cli);
-
-    if ( arrow_gateway_parse(gateway, (char*)response.payload.buf) < 0 ) {
-        DBG("parse error");
-        http_response_free(&response);
-        return -1;
-    } else {
-        DBG("gateway hid: %s", gateway->hid);
-    }
-    http_response_free(&response);
-    return 0;
+  int ret = 0;
+  ret = __http_routine(_gateway_register_init, gateway, _gateway_register_proc, gateway);
+  if ( ret < 0 ) {
+    DBG("Arrow Gateway register failed...");
+  }
+  return ret;
 }
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
@@ -93,89 +114,44 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   return 0;
 }
 
-int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device) {
-    http_client_t cli;
-    http_response_t response;
-    http_request_t request;
-
-    http_client_init(&cli);
-    http_request_init(&request, POST, ARROW_API_DEVICE_ENDPOINT);
-    arrow_prepare_device(gateway, device);
-
-    char *payload = arrow_device_serialize(device);
-    http_request_set_payload(&request, payload);
-    DBG("dev|%s|", payload);
-    free(payload);
-    sign_request(&request);
-    http_client_do(&cli, &request, &response);
-    http_request_close(&request);
-    DBG("response %d", response.m_httpResponseCode);
-
-    http_client_free(&cli);
-    if ( arrow_device_parse(device, (char*)response.payload.buf) < 0) {
-        DBG("device parse error");
-        http_response_free(&response);
-        return -1;
-    } else {
-        DBG("device hid: %s", device->hid);
-    }
-    http_response_free(&response);
-    return 0;
-}
-
-int arrow_heartbeat(arrow_gateway_t *gateway) {
-  http_client_t cli;
-  http_response_t response;
-  http_request_t request;
-
+static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
+  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   char *uri = (char *)malloc(strlen(ARROW_API_GATEWAY_ENDPOINT) + 50);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, gateway->hid);
   strcat(uri, "/heartbeat");
-
-  http_client_init(&cli);
-  http_request_init(&request, PUT, uri);
-
-  sign_request(&request);
-  http_client_do(&cli, &request, &response);
-  http_request_close(&request);
-  DBG("response %d", response.m_httpResponseCode);
-  http_client_free(&cli);
-  if ( response.m_httpResponseCode != 200 ) {
-    http_response_free(&response);
-    return -1;
-  }
-  http_response_free(&response);
-  return 0;
+  http_request_init(request, PUT, uri);
+  free(uri);
 }
 
-int arrow_checkin(arrow_gateway_t *gateway) {
-  http_client_t cli;
-  http_response_t response;
-  http_request_t request;
+int arrow_heartbeat(arrow_gateway_t *gateway) {
+  int ret = 0;
+  ret = __http_routine(_gateway_heartbeat_init, gateway, NULL, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow Gateway heartbeat failed...");
+  }
+  return ret;
+}
 
+static void _gateway_checkin_init(http_request_t *request, void *arg) {
+  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   char *uri = (char *)malloc(strlen(ARROW_API_GATEWAY_ENDPOINT) + 50);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, gateway->hid);
   strcat(uri, "/checkin");
-
-  http_client_init(&cli);
-  http_request_init(&request, PUT, uri);
+  http_request_init(request, PUT, uri);
   free(uri);
+}
 
-  sign_request(&request);
-  http_client_do(&cli, &request, &response);
-  http_request_close(&request);
-  DBG("response %d", response.m_httpResponseCode);
-  http_client_free(&cli);
-  if ( response.m_httpResponseCode != 200 ) {
-    http_response_free(&response);
-    return -1;
+int arrow_checkin(arrow_gateway_t *gateway) {
+  int ret = 0;
+  ret = __http_routine(_gateway_checkin_init, gateway, NULL, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow Gateway checkin failed...");
   }
-  http_response_free(&response);
-  return 0;
+  return ret;
 }
 
 int arrow_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {
@@ -251,26 +227,29 @@ int arrow_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {
   return 0;
 }
 
+typedef struct _device_telemetry {
+  arrow_device_t *device;
+  void *data;
+} device_telemetry_t;
+
+static void _telemetry_init(http_request_t *request, void *arg) {
+  device_telemetry_t *dt = (device_telemetry_t *)arg;
+  http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
+  request->is_chunked = 1;
+  char *tmp = telemetry_serialize(dt->device, dt->data);
+  DBG("set payload %s", tmp);
+  http_request_set_payload(request, tmp);
+  free(tmp);
+}
 
 int arrow_send_telemetry(arrow_device_t *device, void *d) {
-    http_client_t cli;
-    http_response_t response;
-    http_request_t request;
-
-    http_client_init(&cli);
-    http_request_init(&request, POST, ARROW_API_TELEMETRY_ENDPOINT);
-    request.is_chunked = 1;
-    char *tmp = telemetry_serialize(device, d);
-    DBG("set payload %s", tmp);
-    http_request_set_payload(&request, tmp);
-    free(tmp);
-    sign_request(&request);
-    http_client_do(&cli, &request, &response);
-    DBG("response %d", response.m_httpResponseCode);
-    http_request_close(&request);
-    http_client_free(&cli);
-    http_response_free(&response);
-    return 0;
+  int ret = 0;
+  device_telemetry_t dt = {device, d};
+  ret = __http_routine(_telemetry_init, &dt, NULL, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow Telemetry send failed...");
+  }
+  return ret;
 }
 
 int arrow_connect_gateway(arrow_gateway_t *gateway){

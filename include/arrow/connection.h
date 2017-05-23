@@ -20,11 +20,16 @@ extern "C" {
 #include <bsd/socket.h>
 
 typedef int (*get_data_cb)(void *);
+typedef void(*response_init_f)(http_request_t *request, void *arg);
+typedef int (*response_proc_f)(http_response_t *response, void *arg);
+int __http_routine(response_init_f req_init, void *arg_init,
+                   response_proc_f resp_proc, void *arg_proc);
+arrow_device_t *current_device();
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway);
 int arrow_register_gateway(arrow_gateway_t *gateway);
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device);
-int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
+
 int arrow_heartbeat(arrow_gateway_t *gateway);
 int arrow_checkin(arrow_gateway_t *gateway);
 int arrow_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config);

@@ -20,6 +20,11 @@ static arrow_device_t _device;
 static int _init_done = 0;
 static int _init_mqtt = 0;
 
+arrow_device_t *current_device() {
+  return &_device;
+}
+
+
 int arrow_initialize_routine() {
   wdt_feed();
   DBG("register gateway via API %p", &_gateway);
