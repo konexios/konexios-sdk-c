@@ -57,6 +57,10 @@ void set_secret_key(char *newkey) {
   set_key(&secret, newkey);
 }
 
+static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
+static char signKey[128];
+static char tmp[128];
+
 void sign(char *signature,
           const char *timestamp,
           const char *meth,
@@ -65,9 +69,6 @@ void sign(char *signature,
           const char *payload,
           const char *apiVersion) {
     int i;
-    static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
-    static char signKey[128];
-    static char tmp[128];
 
     strcpy(canonicalRequest, meth);
     strcat(canonicalRequest, "\n");
