@@ -1,0 +1,5 @@
+#if !defined(ARROW_TELEMETRY_API_H_)
+#define ARROW_TELEMETRY_API_H_
+
+
+#endif  // ARROW_TELEMETRY_API_H_
