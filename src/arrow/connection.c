@@ -16,6 +16,7 @@
 #include <arrow/storage.h>
 #include <arrow/mem.h>
 #include <arrow/device_api.h>
+#include <arrow/gateway_api.h>
 
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc) {
@@ -61,37 +62,6 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_add_uid(gateway, uid);
   free(uid);
   return 0;
-}
-
-static void _gateway_register_init(http_request_t *request, void *arg) {
-  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
-  char *payload = arrow_gateway_serialize(gateway);
-  DBG("payload %s", payload);
-  http_request_set_payload(request, payload);
-  free(payload);
-}
-
-static int _gateway_register_proc(http_response_t *response, void *arg) {
-  arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  DBG("response gate reg %d", response->m_httpResponseCode);
-  if ( arrow_gateway_parse(gateway, (char*)response->payload.buf) < 0 ) {
-      DBG("parse error");
-      http_response_free(response);
-      return -1;
-  } else {
-      DBG("gateway hid: %s", gateway->hid);
-  }
-  return 0;
-}
-
-int arrow_register_gateway(arrow_gateway_t *gateway) {
-  int ret = 0;
-  ret = __http_routine(_gateway_register_init, gateway, _gateway_register_proc, gateway);
-  if ( ret < 0 ) {
-    DBG("Arrow Gateway register failed...");
-  }
-  return ret;
 }
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {

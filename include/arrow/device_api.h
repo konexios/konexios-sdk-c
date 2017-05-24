@@ -5,40 +5,16 @@
 extern "C" {
 #endif
 
+#include <arrow/find_by.h>
 #include <arrow/connection.h>
-
-enum FindBy {
-  f_userHid,
-  f_uid,
-  f_type,
-  f_gatewayHid,
-  f_createdBefore,
-  f_createdAfter,
-  f_updatedBefore,
-  f_updatedAfter,
-  f_enabled,
-  f_page,
-  f_size
-};
-
-typedef struct _find_by {
-  int key;
-  const char *value;
-  struct _find_by *next;
-#if defined(__cplusplus)
-  _find_by(int k, const char *val) : key(k), value(val), next(NULL) {}
-#endif
-} find_by_t;
-
-#if defined(__cplusplus)
-#define find_by(x, y) find_by_t(x, (const char*)y)
-#else
-#define find_by(x, y) (find_by_t){ .key=x, .name=y, .next=NULL }
-#endif
 
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 int arrow_device_find_by(int n, ...);
 int arrow_device_find_by_hid(const char *hid);
+int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device);
+int arrow_list_device_events(arrow_device_t *device, int n, ...);
+int arrow_list_device_logs(arrow_device_t *device, int n, ...);
+int arrow_error_device(arrow_device_t *device, const char *error);
 
 #if defined(__cplusplus)
 }

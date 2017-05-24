@@ -25,9 +25,9 @@ typedef int (*response_proc_f)(http_response_t *response, void *arg);
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc);
 arrow_device_t *current_device();
+arrow_gateway_t *current_gateway();
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway);
-int arrow_register_gateway(arrow_gateway_t *gateway);
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device);
 
 int arrow_heartbeat(arrow_gateway_t *gateway);

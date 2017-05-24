@@ -32,48 +32,15 @@ int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     gate_dev_t gd = {gateway, device};
     int ret = __http_routine(_device_register_init, &gd, _device_register_proc, device);
     if ( ret < 0 ) {
-      DBG("Arrow Gateway register failed...");
+      DBG("Arrow Device register failed...");
     }
     return ret;
-}
-
-static void add_find_param(find_by_t **first, find_by_t *val) {
-  find_by_t *tmp = malloc(sizeof(find_by_t));
-  tmp->key = val->key;
-  tmp->value = val->value;
-  tmp->next = val->next;
-  if ( ! *first ) *first = tmp;
-  else {
-    find_by_t *t_first = *first;
-    while( t_first->next ) t_first = t_first->next;
-    t_first->next = tmp;
-  }
 }
 
 static void _device_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
   http_request_init(request, GET, ARROW_API_DEVICE_ENDPOINT);
-  if ( params ) {
-    do {
-      const char *key = NULL;
-      switch(params->key) {
-        case f_userHid: key = "userHid"; break;
-        case f_uid: key = "uid"; break;
-        case f_type: key = "type"; break;
-        case f_gatewayHid: key = "gatewayHid"; break;
-        case f_createdBefore: key = "createdBefore"; break;
-        case f_createdAfter: key = "createdAfter"; break;
-        case f_updatedBefore: key = "updatedBefore"; break;
-        case f_updatedAfter: key = "updatedAfter"; break;
-        case f_enabled: key = "enabled"; break;
-        case f_page: key = "_page"; break;
-        case f_size: key = "_size"; break;
-        default: break;
-      }
-      if (key) http_request_add_query(request, key, params->value);
-      params = params->next;
-    } while( params );
-  }
+  ADD_FIND_BY_TO_REQ(params, request);
 }
 
 static int _device_find_by_proc(http_response_t *response, void *arg) {
@@ -85,20 +52,12 @@ static int _device_find_by_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_device_find_by(int n, ...) {
-  find_by_t val;
   find_by_t *params = NULL;
-  va_list args;
-  va_start(args, n);
-  int i = 0;
-  for (i=0; i < n; i++) {
-    val = va_arg(args, find_by_t);
-    add_find_param(&params, &val);
-  }
-  va_end(args);
+  COLLECT_FIND_BY(params, n);
 
   int ret = __http_routine(_device_find_by_init, params, _device_find_by_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway find by failed...");
+    DBG("Arrow Device find by failed...");
   }
 
   return ret;
@@ -125,7 +84,136 @@ static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
 int arrow_device_find_by_hid(const char *hid) {
   int ret = __http_routine(_device_find_by_hid_init, (void *)hid, _device_find_by_hid_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway find by failed...");
+    DBG("Arrow Device find by failed...");
+  }
+  return ret;
+}
+
+static void _device_update_init(http_request_t *request, void *arg) {
+  gate_dev_t *gd = (gate_dev_t *)arg;
+  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+           "%s/%s", ARROW_API_DEVICE_ENDPOINT, gd->device->hid);
+  http_request_init(request, PUT, uri);
+  free(uri);
+  char *payload = arrow_device_serialize(gd->device);
+  http_request_set_payload(request, payload);
+  DBG("dev|%s|", payload);
+  free(payload);
+}
+
+static int _device_update_proc(http_response_t *response, void *arg) {
+  arrow_device_t *dev = (arrow_device_t *)arg;
+  if ( arrow_device_parse(dev, (char*)response->payload.buf) < 0) {
+      DBG("device parse error");
+      return -1;
+  } else {
+      DBG("device hid: %s", dev->hid);
+  }
+  return 0;
+}
+
+int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+  gate_dev_t gd = {gateway, device};
+  int ret = __http_routine(_device_update_init, &gd, _device_update_proc, device);
+  if ( ret < 0 ) {
+    DBG("Arrow Device update failed...");
+  }
+  return ret;
+}
+
+typedef struct _dev_params_ {
+  arrow_device_t *device;
+  find_by_t *params;
+} dev_param_t;
+
+static void _device_list_events_init(http_request_t *request, void *arg) {
+  dev_param_t *dp = (dev_param_t *)arg;
+  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+           "%s/%s/events", ARROW_API_DEVICE_ENDPOINT, dp->device->hid);
+  http_request_init(request, GET, uri);
+  free(uri);
+  find_by_t *params = dp->params;
+  ADD_FIND_BY_TO_REQ(params, request);
+}
+
+static int _device_list_events_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  DBG("dev list events: %s", response->payload.buf);
+  return 0;
+}
+
+int arrow_list_device_events(arrow_device_t *device, int n, ...) {
+  find_by_t *params = NULL;
+  COLLECT_FIND_BY(params, n);
+  dev_param_t dp = { device, params };
+  int ret = __http_routine(_device_list_events_init, &dp, _device_list_events_proc, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow list device events failed...");
+  }
+  return ret;
+}
+
+static void _device_list_logs_init(http_request_t *request, void *arg) {
+  dev_param_t *dp = (dev_param_t *)arg;
+  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+           "%s/%s/logs", ARROW_API_DEVICE_ENDPOINT, dp->device->hid);
+  http_request_init(request, GET, uri);
+  free(uri);
+  find_by_t *params = dp->params;
+  ADD_FIND_BY_TO_REQ(params, request);
+}
+
+static int _device_list_logs_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  DBG("dev list events: %s", response->payload.buf);
+  return 0;
+}
+
+int arrow_list_device_logs(arrow_device_t *device, int n, ...) {
+  find_by_t *params = NULL;
+  COLLECT_FIND_BY(params, n);
+  dev_param_t dp = { device, params };
+  int ret = __http_routine(_device_list_logs_init, &dp, _device_list_logs_proc, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow list device events failed...");
+  }
+  return ret;
+}
+
+typedef struct _device_error {
+  arrow_device_t *device;
+  const char *error;
+} device_error_t;
+
+static void _device_errors_init(http_request_t *request, void *arg) {
+  device_error_t *de = (device_error_t *)arg;
+  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+           "%s/%s/errors", ARROW_API_DEVICE_ENDPOINT, de->device->hid);
+  http_request_init(request, POST, uri);
+  free(uri);
+  JsonNode *error = json_mkobject();
+  json_append_member(error, "error", json_mkstring(de->error));
+  char *_error_str = json_encode(error);
+  http_request_set_payload(request, _error_str);
+  free(_error_str);
+  json_delete(error);
+}
+
+//static int _device_errors_proc(http_response_t *response, void *arg) {
+//  SSP_PARAMETER_NOT_USED(arg);
+//  DBG("dev list events: %s", response->payload.buf);
+//  return 0;
+//}
+
+int arrow_error_device(arrow_device_t *device, const char *error) {
+  device_error_t de = { device, error };
+  int ret = __http_routine(_device_errors_init, &de, NULL, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow Device error failed...");
   }
   return ret;
 }

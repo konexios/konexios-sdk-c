@@ -24,6 +24,9 @@ arrow_device_t *current_device() {
   return &_device;
 }
 
+arrow_gateway_t *current_gateway() {
+  return &_gateway;
+}
 
 int arrow_initialize_routine() {
   wdt_feed();
