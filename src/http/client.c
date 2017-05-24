@@ -14,11 +14,13 @@
 #include <bsd/socket.h>
 #include <time/time.h>
 #include <arrow/mem.h>
+#ifdef DEBUG_WOLFSSL
+#include <wolfcrypt/logging.h>
+#endif
 #if defined(_ARIS_)
 # if defined(ETH_MODE)
 #  include "nx_api.h"
 # endif
-#elif defined(__MBED__)
 #elif defined(__XCC__)
 #define WOLFSSL SSL
 #define WOLFSSL_CTX SSL_CTX
@@ -127,8 +129,8 @@ void http_client_init(http_client_t *cli) {
     wolfSSL_Init();
 #endif
 #ifdef DEBUG_WOLFSSL
-//    wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
-//    wolfSSL_Debugging_ON();
+    wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
+    wolfSSL_Debugging_ON();
 #endif
     cli->ctx = NULL;
     cli->ssl = NULL;

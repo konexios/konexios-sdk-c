@@ -38,6 +38,7 @@ typedef struct _find_by {
 
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 int arrow_device_find_by(int n, ...);
+int arrow_device_find_by_hid(const char *hid);
 
 #if defined(__cplusplus)
 }

@@ -103,3 +103,29 @@ int arrow_device_find_by(int n, ...) {
 
   return ret;
 }
+
+static void _device_find_by_hid_init(http_request_t *request, void *arg) {
+  char *hid = (char *)arg;
+  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+           "%s/%s", ARROW_API_DEVICE_ENDPOINT, hid);
+  http_request_init(request, GET, uri);
+  free(uri);
+}
+
+static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  if ( response->m_httpResponseCode == 200 ) {
+    DBG("find[%s]", response->payload.buf);
+  } else return -1;
+  return 0;
+}
+
+
+int arrow_device_find_by_hid(const char *hid) {
+  int ret = __http_routine(_device_find_by_hid_init, (void *)hid, _device_find_by_hid_proc, NULL);
+  if ( ret < 0 ) {
+    DBG("Arrow Gateway find by failed...");
+  }
+  return ret;
+}

@@ -15,7 +15,7 @@
 
 //#define IGNORE_KEY_EXTENSIONS
 #define NO_WOLFSSL_DIR
-#define DEBUG_WOLFSSL
+//#define DEBUG_WOLFSSL
 
 #define WOLFSSL_STATIC_RSA
 //#define HAVE_SUPPORTED_CURVES
@@ -73,28 +73,43 @@
 #define WOLFSSL_USER_IO
 #define NO_WRITEV
 #define NO_DEV_RANDOM
-//#define HAVE_ECC
-//#define HAVE_AESGCM
 #define WOLF_LINUX_OS
-
-//#define WOLFSSL_SHA384
-//#define WOLFSSL_SHA512
-//#define HAVE_CURVE25519
-//#define HAVE_ED25519   /* with HAVE_SHA512 */
+#define NO_WOLFSSL_DIR
+#define NO_SHA512
+#define NO_DH
+#define NO_DSA
+//#define NO_RSA
+#define NO_RC4
+#define NO_DES
+#define NO_DES3
+#define NO_RABBIT
+//#define NO_AES
+#define NO_ECC256
+#define NO_ECC_DHE
+#define NO_HC128
+#define NO_PSK
+#define NO_MD2
+#define NO_MD4
+#define NO_MD5
+#define NO_OLD_TLS
+#define NO_PWDBASED
+#define NO_SKID
+#define NO_WOLFSSL_SERVER
 
 //#define NO_SESSION_CACHE // For Small RAM
 #define NO_WOLFSSL_DIR
-//  #define DEBUG_WOLFSSL
+//#define DEBUG_WOLFSSL
 
 #define WOLFSSL_STATIC_RSA
 //#define HAVE_SUPPORTED_CURVES
 //#define HAVE_TLS_EXTENSIONS
 
 //#define SIZEOF_LONG_LONG  8
-/* Options for Sample program */
 //#define USE_CYASSL_MEMORY
 #define NO_WOLFSSL_MEMORY
 #define WOLFSSL_NO_VERIFYSERVER
+#define NO_SESSION_CACHE // For Small RAM
+#define NO_CERT
 //#define NO_FILESYSTEM
     #define HAVE_TM_TYPE
 #ifndef WOLFSSL_NO_VERIFYSERVER
@@ -205,12 +220,12 @@
 #define NO_SHA512
 #define NO_DH
 #define NO_DSA
-#define NO_RSA
+//#define NO_RSA
 #define NO_RC4
 #define NO_DES
 #define NO_DES3
 #define NO_RABBIT
-#define NO_AES
+//#define NO_AES
 #define NO_ECC256
 #define NO_ECC_DHE
 #define NO_HC128
@@ -239,7 +254,7 @@
 /* Options for Sample program */
 #define NO_SESSION_CACHE // For Small RAM
 //#define USE_CYASSL_MEMORY
-//#define NO_WOLFSSL_MEMORY
+#define NO_WOLFSSL_MEMORY
 #define WOLFSSL_NO_VERIFYSERVER
 #define NO_FILESYSTEM
 #define NO_CERT
@@ -258,12 +273,12 @@
 #define NO_SHA512
 #define NO_DH
 #define NO_DSA
-#define NO_RSA
+//#define NO_RSA
 #define NO_RC4
 #define NO_DES
 #define NO_DES3
 #define NO_RABBIT
-#define NO_AES
+//#define NO_AES
 #define NO_ECC256
 #define NO_ECC_DHE
 #define NO_HC128
