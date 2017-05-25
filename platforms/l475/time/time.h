@@ -9,9 +9,17 @@
 #ifndef STM32L475IOT_TIME_TIME_H_
 #define STM32L475IOT_TIME_TIME_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <config.h>
 #include <time.h>
 #include <sys/time.h>
 #include <platforms/default/time/time.h>
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif // STM32L475IOT_TIME_TIME_H_
