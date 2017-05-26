@@ -8,7 +8,7 @@
 
 #include "time/time.h"
 
-time_t build_time() {
+time_t build_time(void) {
   static const char *built = __DATE__" "__TIME__;
   struct tm t;
   const char *ret = (const char *)strptime(built, "%b %d %Y %H:%M:%S", &t);

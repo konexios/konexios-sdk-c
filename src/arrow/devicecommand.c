@@ -24,7 +24,7 @@ static void __create_cmd_handler(cmd_handler *hd, const char *name, fp callback)
 }
 
 // handlers
-int has_cmd_handler() {
+int has_cmd_handler(void) {
 	if ( __handlers ) return 0;
 	return -1;
 }
@@ -42,7 +42,7 @@ int add_cmd_handler(const char *name, fp callback) {
   return 0;
 }
 
-void free_cmd_handler() {
+void free_cmd_handler(void) {
   cmd_handler *curr = __handlers;
   while( curr ) {
     cmd_handler *rm = curr;

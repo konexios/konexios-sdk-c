@@ -22,6 +22,7 @@
 #include <bsd/socket.h>
 #include <time/time.h>
 #include <bsd/inet.h>
+#include <arrow/mem.h>
 
 #define NTP_TIMESTAMP_DELTA 2208988800ull //Diff btw a UNIX timestamp (Starting Jan, 1st 1970) and a NTP timestamp (Starting Jan, 1st 1900)
 

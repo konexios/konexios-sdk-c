@@ -364,8 +364,9 @@ int MQTTConnect(MQTTClient* c, MQTTPacket_connectData* options)
 #if defined(MQTT_TASK)
   MutexLock(&c->mutex);
 #endif
-  if (c->isconnected) /* don't send connect packet again if we are already connected */
+  if (c->isconnected) { /* don't send connect packet again if we are already connected */
     goto exit;
+  }
 
     TimerInit(&connect_timer);
     TimerCountdownMS(&connect_timer, c->command_timeout_ms);
@@ -415,8 +416,9 @@ int MQTTSubscribe(MQTTClient* c, const char* topicFilter, enum QoS qos, messageH
 #if defined(MQTT_TASK)
   MutexLock(&c->mutex);
 #endif
-  if (!c->isconnected)
+  if (!c->isconnected) {
     goto exit;
+  }
 
     TimerInit(&timer);
     TimerCountdownMS(&timer, c->command_timeout_ms);
@@ -470,8 +472,9 @@ int MQTTUnsubscribe(MQTTClient* c, const char* topicFilter)
 #if defined(MQTT_TASK)
   MutexLock(&c->mutex);
 #endif
-  if (!c->isconnected)
+  if (!c->isconnected) {
     goto exit;
+  }
 
     TimerInit(&timer);
     TimerCountdownMS(&timer, c->command_timeout_ms);
@@ -508,8 +511,9 @@ int MQTTPublish(MQTTClient* c, const char* topicName, MQTTMessage* message)
 #if defined(MQTT_TASK)
   MutexLock(&c->mutex);
 #endif
-  if (!c->isconnected)
+  if (!c->isconnected) {
     goto exit;
+  }
 
     TimerInit(&timer);
     TimerCountdownMS(&timer, c->command_timeout_ms);

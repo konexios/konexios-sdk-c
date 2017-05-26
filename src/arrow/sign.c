@@ -33,12 +33,12 @@ typedef struct {
 static iot_key_t api = {NULL};
 static iot_key_t secret = {NULL};
 
-char *get_api_key() {
+char *get_api_key(void) {
   if (api.key) return api.key;
   return (char*)default_api_key;
 }
 
-char *get_secret_key() {
+char *get_secret_key(void) {
   if (secret.key) return secret.key;
   return (char*)default_secret_key;
 }

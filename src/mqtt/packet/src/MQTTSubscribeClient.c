@@ -16,6 +16,7 @@
 
 #include <mqtt/packet/StackTrace.h>
 #include "mqtt/packet/MQTTPacket.h"
+#include "mqtt/packet/MQTTSubscribe.h"
 #include <string.h>
 
 /**
@@ -24,7 +25,7 @@
   * @param topicFilters the array of topic filter strings to be used in the publish
   * @return the length of buffer needed to contain the serialized version of the packet
   */
-int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[])
+static int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[])
 {
 	int i;
 	int len = 2; /* packetid */

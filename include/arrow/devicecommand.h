@@ -32,9 +32,9 @@ int command_handler(const char *name,
                     JsonNode *payload,
                     JsonNode **error);
 
-int has_cmd_handler();
+int has_cmd_handler(void);
 int add_cmd_handler(const char *name, fp callback);
-void free_cmd_handler();
+void free_cmd_handler(void);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);

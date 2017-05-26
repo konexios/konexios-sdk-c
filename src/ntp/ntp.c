@@ -15,7 +15,8 @@
 //#define SLEEP CyDelay
 //#endif
 
-int ntp_set_time_cycle() {
+
+int ntp_set_time_cycle(void) {
     return ntp_set_time_common(NTP_DEFAULT_SERVER, NTP_DEFAULT_PORT, NTP_DEFAULT_TIMEOUT, -1);
 }
 

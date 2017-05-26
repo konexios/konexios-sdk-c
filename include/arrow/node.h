@@ -16,7 +16,7 @@ typedef struct _arrow_node {
   char *hid;
 } arrow_node_t;
 
-int arrow_node_list();
+int arrow_node_list(void);
 int arrow_node_create(arrow_node_t *node);
 int arrow_node_update(arrow_node_t *node);
 

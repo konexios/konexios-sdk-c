@@ -27,7 +27,7 @@ void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, 
 
 void device_type_free(device_type_t *dev);
 
-int arrow_device_type_list();
+int arrow_device_type_list(void);
 int arrow_device_type_create(device_type_t *dev_type);
 int arrow_device_type_update(arrow_device_t *dev, device_type_t *dev_type);
 

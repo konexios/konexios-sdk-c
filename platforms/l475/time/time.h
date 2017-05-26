@@ -16,7 +16,6 @@ extern "C" {
 #include <config.h>
 #include <time.h>
 #include <sys/time.h>
-#include <time/timer_functions.h>
 #include <platforms/default/time/time.h>
 
 #if defined(__cplusplus)

@@ -1,7 +1,7 @@
 
 GCC4MBED_TOOLPATH1 ?= $(TL_PATH)
 GCC4MBED_TOOLPATH    := $(subst \,/,$(GCC4MBED_TOOLPATH1))
-# GCC     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-gcc)
+GCC     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-gcc)
 GPP     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-g++)
 AS      := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-as)
 AR      := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-ar)
@@ -71,12 +71,16 @@ ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
 DEFINES += -D__semiconductor__ -DDEBUG
 ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 
+# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror -Wpedantic
 # -Werror -Wpedantic
 
 #$(warning "$(PROJECT)")
 #$(warning "$(LIB_DIR)")
 
-all: $(ACN_SDK_C_LIB)
+all: version $(ACN_SDK_C_LIB)
+
+version:
+	$(GPP) -v
 
 $(ACN_SDK_C_LIB): $(ACN_SDK_C_OBJ)
 	@echo Extracting $@

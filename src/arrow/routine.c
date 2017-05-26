@@ -20,15 +20,15 @@ static arrow_device_t _device;
 static int _init_done = 0;
 static int _init_mqtt = 0;
 
-arrow_device_t *current_device() {
+arrow_device_t *current_device(void) {
   return &_device;
 }
 
-arrow_gateway_t *current_gateway() {
+arrow_gateway_t *current_gateway(void) {
   return &_gateway;
 }
 
-int arrow_initialize_routine() {
+int arrow_initialize_routine(void) {
   wdt_feed();
   DBG("register gateway via API %p", &_gateway);
   while ( arrow_connect_gateway(&_gateway) < 0 ) {
@@ -72,7 +72,7 @@ int arrow_send_telemetry_routine(void *data) {
   return 0;
 }
 
-int arrow_mqtt_connect_routine() {
+int arrow_mqtt_connect_routine(void) {
   if ( !_init_done ) return -1;
   // init MQTT
   DBG("mqtt connect...");
@@ -107,7 +107,7 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   }
 }
 
-void arrow_close() {
+void arrow_close(void) {
   if ( _init_mqtt ) {
     mqtt_disconnect();
     _init_mqtt = 0;

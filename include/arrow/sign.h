@@ -9,8 +9,8 @@
 #ifndef ARROW_SIGN_H_
 #define ARROW_SIGN_H_
 
-char *get_api_key();
-char *get_secret_key();
+char *get_api_key(void);
+char *get_secret_key(void);
 void set_api_key(char *newkey);
 void set_secret_key(char *newkey);
 void sign(char *signature,
