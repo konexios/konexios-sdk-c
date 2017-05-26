@@ -18,7 +18,10 @@ static const char *find_by_name[] = {
   "sortField",
   "sortDirection",
   "statuses",
-  "systemNames"
+  "systemNames",
+  "fromTimestamp",
+  "toTimestamp",
+  "telemetryNames"
 };
 
 const char *get_find_by_name(int num) {

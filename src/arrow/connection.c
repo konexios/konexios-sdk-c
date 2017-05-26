@@ -197,31 +197,6 @@ int arrow_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {
   return 0;
 }
 
-typedef struct _device_telemetry {
-  arrow_device_t *device;
-  void *data;
-} device_telemetry_t;
-
-static void _telemetry_init(http_request_t *request, void *arg) {
-  device_telemetry_t *dt = (device_telemetry_t *)arg;
-  http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
-  request->is_chunked = 1;
-  char *tmp = telemetry_serialize(dt->device, dt->data);
-  DBG("set payload %s", tmp);
-  http_request_set_payload(request, tmp);
-  free(tmp);
-}
-
-int arrow_send_telemetry(arrow_device_t *device, void *d) {
-  int ret = 0;
-  device_telemetry_t dt = {device, d};
-  ret = __http_routine(_telemetry_init, &dt, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry send failed...");
-  }
-  return ret;
-}
-
 int arrow_connect_gateway(arrow_gateway_t *gateway){
   arrow_prepare_gateway(gateway);
   int ret = restore_gateway_info(gateway);

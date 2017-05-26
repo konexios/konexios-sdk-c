@@ -1,6 +1,5 @@
 #include "arrow/device_api.h"
 #include <debug.h>
-#include <stdarg.h>
 
 typedef struct _gate_dev {
   arrow_gateway_t *gateway;

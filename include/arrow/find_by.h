@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 
 enum FindBy {
   f_userHid = 0,
@@ -24,6 +25,10 @@ enum FindBy {
   sortDirection,
   statuses,
   systemNames,
+  // telemetry
+  fromTimestamp,
+  toTimestamp,
+  telemetryNames,
   FindBy_count
 };
 

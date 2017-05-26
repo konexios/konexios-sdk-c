@@ -10,17 +10,20 @@
 #include <arrow/devicecommand.h>
 #include <arrow/state.h>
 
+#include <ctype.h>
 #include <debug.h>
 #include <http/client.h>
 #include <arrow/request.h>
 #include <json/json.h>
 #include <arrow/mem.h>
+#include <arrow/gateway_payload_sign.h>
 
 static void free_mqtt_event(mqtt_event_t *mq) {
   if ( mq->gateway_hid ) free(mq->gateway_hid);
   if ( mq->device_hid ) free(mq->device_hid);
   if ( mq->cmd ) free(mq->cmd);
   if ( mq->payload ) free(mq->payload);
+  if ( mq->name ) free(mq->name);
 }
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
@@ -42,6 +45,80 @@ sub_t sub_list[] = {
   { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest }
 };
 
+// checker
+
+typedef int(*sign_checker)(const char *, mqtt_event_t *, const char *);
+struct check_signature_t {
+  const char *version;
+  sign_checker check;
+};
+
+int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
+  char signature[65];
+  int err = gateway_payload_sign(signature,
+                                 ev->gateway_hid,
+                                 ev->name,
+                                 ev->encrypted,
+                                 can,
+                                 "1");
+  if ( err ) {
+    return -1;
+  }
+  DBG("cmp { %s, %s }", sign, signature);
+  return ( strcmp(sign, signature) == 0 ? 1 : 0 );
+}
+
+static struct check_signature_t checker_collection[] = {
+  {"1", check_sign_1},
+};
+
+static int check_signature(const char *vers, const char *sing, mqtt_event_t *ev, const char *canParamStr) {
+  unsigned int i = 0;
+  for ( i = 0; i< sizeof(checker_collection) / sizeof(struct check_signature_t); i++ ) {
+    if ( strcmp(vers, checker_collection[i].version ) == 0 ) {
+      DBG("check version %s", checker_collection[i].version);
+      return checker_collection[i].check(sing, ev, canParamStr);
+    }
+  }
+  return -1;
+}
+
+static int cmpstringp(const void *p1, const void *p2) {
+  return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
+
+char *form_canonical_prm(JsonNode *param) {
+  JsonNode *child;
+  char *canParam = NULL;
+  char *can_list[MAX_PARAM_LINE] = {0};
+  int count = 0;
+  json_foreach(child, param) {
+    DBG("get child {%s}", child->key);
+    can_list[count] = malloc(MAX_PARAM_LINE_SIZE);
+    unsigned int i;
+    for ( i=0; i<strlen(child->key); i++ ) *(can_list[count]+i) = tolower(child->key[i]);
+    *(can_list[count]+i) = '=';
+    switch(child->tag) {
+      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_); break;
+      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true":"false")); break;
+      default:
+        snprintf(can_list[count]+i+1, 50, "%f", child->number_);
+    }
+    count++;
+  }
+
+  canParam = malloc(count * MAX_PARAM_LINE_SIZE);
+  *canParam = 0;
+  qsort(can_list, count, sizeof(char *), cmpstringp);
+  for (int i=0; i<count; i++) {
+    strcat(canParam, can_list[i]);
+    if ( i < count-1 ) strcat(canParam, "\n");
+    free(can_list[i]);
+  }
+
+  return canParam;
+}
+
 
 int process_event(const char *str) {
   DBG("ev: %s", str);
@@ -60,20 +137,37 @@ int process_event(const char *str) {
   }
   DBG("ev ghid: %s", mqtt_e.gateway_hid);
 
-  JsonNode *event_name = json_find_member(_main, "name");
-  if ( !event_name || event_name->tag != JSON_STRING ) {
+  if ( fill_string_from_json(_main, "name", &mqtt_e.name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
-  DBG("ev name: %s", event_name->string_);
+  DBG("ev name: %s", mqtt_e.name);
+
+  JsonNode *_encrypted = json_find_member(_main, "encrypted");
+  if ( !_encrypted ) goto error;
+  mqtt_e.encrypted = _encrypted->bool_;
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
 
+  JsonNode *sign_version = json_find_member(_main, "signatureVersion");
+  if ( sign_version ) {
+    DBG("signature vertsion: %s", sign_version->string_);
+    JsonNode *sign = json_find_member(_main, "signature");
+    if ( !sign ) goto error;
+    char *can = form_canonical_prm(_parameters);
+    if ( !check_signature(sign_version->string_, sign->string_, &mqtt_e, can) ) {
+      DBG("Alarm! signature is failed...");
+      free(can);
+      goto error;
+    }
+    free(can);
+  }
+
   submodule current_processor = NULL;
   int i = 0;
   for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-    if ( strcmp(sub_list[i].name, event_name->string_) == 0 ) {
+    if ( strcmp(sub_list[i].name, mqtt_e.name) == 0 ) {
       current_processor = sub_list[i].proc;
     }
   }
@@ -81,7 +175,7 @@ int process_event(const char *str) {
   if ( current_processor ) {
     ret = current_processor(&mqtt_e, _parameters);
   } else {
-    DBG("No event processor for %s", event_name->string_);
+    DBG("No event processor for %s", mqtt_e.name);
     goto error;
   }
 

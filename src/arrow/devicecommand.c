@@ -115,7 +115,7 @@ static fp find_cmd_handler(const char *cmd) {
   return NULL;
 }
 
-int command_handler(const char *name,
+int __attribute__((weak)) command_handler(const char *name,
                     JsonNode *payload,
                     JsonNode **error) {
   int ret = -1;
@@ -131,7 +131,7 @@ int command_handler(const char *name,
     json_append_member(*error, "error", json_mkstring("there is no a command handler"));
   }
   return ret;
-} __attribute__((weak))
+}
 
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;

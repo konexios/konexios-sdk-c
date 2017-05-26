@@ -32,4 +32,11 @@ char *strncat(char *dest, const char *src, size_t n);
 void *realloc(void *ptrmem, size_t size);
 #endif
 #endif
+
+#define X_STR_COPY(dst, src) \
+{ (dst) = malloc(strlen(src) + 1); \
+  strcpy((dst), (src)); }
+
+#define X_STR_FREE(str) if ( str ) free(str);
+
 #endif  // _ARROW_KRONOS_C_SDK_MEM_H_

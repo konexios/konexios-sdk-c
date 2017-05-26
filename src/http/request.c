@@ -17,6 +17,7 @@
 # include <stdlib.h>
 #endif
 #include <arrow/mem.h>
+#include <arrow/utf8.h>
 
 static const char *meth_str[5] = {"GET", "POST", "PUT", "DELETE", "HEAD"};
 
@@ -153,10 +154,14 @@ void http_request_add_query(http_request_t *req, const char *key, const char *va
   while ( head && head->next )
     head = head->next;
   http_query_t *head_new = (http_query_t *)malloc(sizeof(http_query_t));
+
   head_new->key = (uint8_t*)malloc(strlen(key)+1);
+//  char *enc_value = (char *)value;//malloc(strlen(value) * 3);
+//  urlencode(enc_value, (char *)value, strlen(value));
   head_new->value = (uint8_t*)malloc(strlen(value)+1);
   strcpy((char*)head_new->key, key);
   strcpy((char*)head_new->value, value);
+//  free(enc_value);
   head_new->next = NULL;
   if ( head ) head->next = head_new;
   else req->query = head_new;

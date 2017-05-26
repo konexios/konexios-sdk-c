@@ -3,3 +3,4 @@ gcc*
 *.d
 *private.h
 *.qbs
+*.sh

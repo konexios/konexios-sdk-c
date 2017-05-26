@@ -2,6 +2,7 @@
 #include "arrow/sign.h"
 #include "crypt/crypt.h"
 #include <arrow/mem.h>
+#include <debug.h>
 
 #define INIT_CANONICAL_REQUEST
 
@@ -33,7 +34,7 @@ int gateway_payload_sign(char *signature,
   sha256(hash_canonical_req, canonicalRequest, (int)strlen(canonicalRequest));
   hex_encode(hex_hash_canonical_req, hash_canonical_req, 32);
   hex_hash_canonical_req[64] = '\0';
-  printf("can: %s\r\n", hex_hash_canonical_req);
+  DBG("can: %s", hex_hash_canonical_req);
 
   // step 2
   char *stringtoSign = GET_ADDR;
@@ -43,25 +44,25 @@ int gateway_payload_sign(char *signature,
   strcat(stringtoSign, "\n");
   strcat(stringtoSign, signatureVersion);
 
+  DBG("strToSign:\r\n[%s]", stringtoSign);
+
   // step 3
   char tmp[128];
   char hex_tmp[128];
 
-  printf("api: %s\r\n", get_api_key());
-  printf("sec: %s\r\n", get_secret_key());
+  DBG("api: %s", get_api_key());
+  DBG("sec: %s", get_secret_key());
   hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), get_secret_key(), (int)strlen(get_secret_key()));
   hex_encode(hex_tmp, tmp, 32);
-  printf("hex1: %s\r\n", hex_tmp);
+  DBG("hex1: %s", hex_tmp);
   memset(tmp, 0, 128);
   hmac256(tmp, signatureVersion, (int)strlen(signatureVersion), hex_tmp, (int)strlen(hex_tmp));
   hex_encode(hex_tmp, tmp, 32);
-  printf("hex2: [%d]%s\r\n", strlen(hex_tmp), hex_tmp);
-
-  printf("sig str: [%d][\n%s\n]\r\n", strlen(stringtoSign), stringtoSign);
+  DBG("hex2: [%d]%s", strlen(hex_tmp), hex_tmp);
 
   hmac256(tmp, hex_tmp, strlen(hex_tmp), stringtoSign, strlen(stringtoSign));
   hex_encode(signature, tmp, 32);
-  printf("sig: [%d]%s\r\n", strlen(signature), signature);
+  DBG("sig: [%d]%s", strlen(signature), signature);
 
   return 0;
 }
