@@ -27,7 +27,7 @@ extern "C" {
 
 #include <unint.h>
 
-int ntp_set_time_cycle();
+int ntp_set_time_cycle(void);
 int ntp_set_time_common(const char *server, uint16_t port, int timeout, int try_times);
 
 #if defined(__cplusplus)

@@ -19,9 +19,9 @@ extern "C" {
 int mqtt_connect(arrow_gateway_t *gateway,
                  arrow_device_t *device,
                  arrow_gateway_config_t *config);
-void mqtt_disconnect();
+void mqtt_disconnect(void);
 
-int mqtt_subscribe();
+int mqtt_subscribe(void);
 int mqtt_yield(int timeout_ms);
 int mqtt_publish(arrow_device_t *device, void *data);
 

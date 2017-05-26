@@ -1,7 +1,7 @@
 
 GCC4MBED_TOOLPATH1 ?= $(TL_PATH)
 GCC4MBED_TOOLPATH    := $(subst \,/,$(GCC4MBED_TOOLPATH1))
-# GCC     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-gcc)
+GCC     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-gcc)
 GPP     := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-g++)
 AS      := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-as)
 AR      := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-ar)
@@ -33,6 +33,7 @@ ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/http/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/json/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/platforms/default/wolf/crypt/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/src/*.c)
+ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/aes.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/asm.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/asn.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/coding.c)
@@ -50,6 +51,7 @@ ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/memory.c
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/misc.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/random.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/sha.c)
+ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/rsa.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/sha256.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/signature.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/wc_encrypt.c)
@@ -69,12 +71,16 @@ ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
 DEFINES += -D__semiconductor__ -DDEBUG
 ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 
+# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror -Wpedantic
 # -Werror -Wpedantic
 
 #$(warning "$(PROJECT)")
 #$(warning "$(LIB_DIR)")
 
-all: $(ACN_SDK_C_LIB)
+all: version $(ACN_SDK_C_LIB)
+
+version:
+	$(GPP) -v
 
 $(ACN_SDK_C_LIB): $(ACN_SDK_C_OBJ)
 	@echo Extracting $@

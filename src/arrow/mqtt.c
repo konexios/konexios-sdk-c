@@ -237,12 +237,12 @@ int mqtt_connect(arrow_gateway_t *gateway,
 
 }
 
-void mqtt_disconnect() {
+void mqtt_disconnect(void) {
     MQTTDisconnect(&mqtt_client);
     NetworkDisconnect(&mqtt_net);
 }
 
-int mqtt_subscribe() {
+int mqtt_subscribe(void) {
     DBG("Subscribing to %s", s_topic);
     int rc = MQTTSubscribe(&mqtt_client, s_topic, QOS2, messageArrived);
     DBG("Subscribed %d\n", rc);

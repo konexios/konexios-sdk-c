@@ -66,7 +66,7 @@ static int _device_type_list_proc(http_response_t *response, void *arg) {
 }
 
 
-int arrow_device_type_list() {
+int arrow_device_type_list(void) {
   int ret = __http_routine(_device_type_list_init, NULL, _device_type_list_proc, NULL);
   if ( ret < 0 ) {
     DBG("Arrow Device Type list failed...");

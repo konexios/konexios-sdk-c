@@ -3,6 +3,7 @@
 #include <bsd/socket.h>
 #include <debug.h>
 #include <bsd/inet.h>
+#include <arrow/mem.h>
 #if defined(__USE_STD__)
 # include <errno.h>
 #endif

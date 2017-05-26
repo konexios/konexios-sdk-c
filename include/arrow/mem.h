@@ -15,6 +15,7 @@
 # include <string.h>
 # include <stdlib.h>
 # include <stdio.h>
+# include <strings.h>
 #endif
 #if defined(__XCC__)
 #include <qcom_common.h>

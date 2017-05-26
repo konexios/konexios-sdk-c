@@ -22,6 +22,9 @@ extern "C" {
 #include <time.h>
 #include <sys/time.h>
 #include <platforms/default/time/time.h>
+#if !defined(timerclear)
+#include <time/timer_functions.h>
+#endif
 
 int stime(time_t *timer);
 

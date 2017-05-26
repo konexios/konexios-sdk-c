@@ -105,7 +105,7 @@ static int _action_type_list_process(http_response_t *response, void *arg) {
 }
 
 
-int arrow_list_action_type() {
+int arrow_list_action_type(void) {
   int ret = __http_routine(_action_type_list_init, NULL, _action_type_list_process, NULL);
   if ( ret < 0 ) {
     DBG("Arrow Action types list failed...");

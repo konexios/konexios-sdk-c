@@ -16,6 +16,7 @@
 
 #include <mqtt/packet/StackTrace.h>
 #include "mqtt/packet/MQTTPacket.h"
+#include "mqtt/packet/MQTTPublish.h"
 #include <string.h>
 
 #define min(a, b) ((a < b) ? 1 : 0)

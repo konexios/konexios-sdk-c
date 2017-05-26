@@ -15,7 +15,7 @@ typedef struct _dev_action_model {
 int arrow_create_device_action(arrow_device_t *dev, dev_action_model_t *model);
 int arrow_delete_device_action(arrow_device_t *dev, dev_action_model_t *model);
 int arrow_list_device_action(arrow_device_t *dev);
-int arrow_list_action_type();
+int arrow_list_action_type(void);
 int arrow_update_device_action(arrow_device_t *dev, dev_action_model_t *model);
 
 #endif  // ARROW_DEVICE_ACTION_H_

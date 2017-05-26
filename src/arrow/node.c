@@ -15,7 +15,7 @@ static int _node_list_proc(http_response_t *response, void *arg) {
   return 0;
 }
 
-int arrow_node_list() {
+int arrow_node_list(void) {
   int ret = __http_routine(_node_list_init, NULL, _node_list_proc, NULL);
   if ( ret < 0 ) {
     DBG("Arrow Node list failed...");

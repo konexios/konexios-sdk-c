@@ -17,12 +17,12 @@ void add_state(const char *name, const char *value) {
   json_append_member(state_tree, name, json_mkstring(value));
 }
 
-int arrow_state_mqtt_is_running() {
+int arrow_state_mqtt_is_running(void) {
   if ( !state_tree ) return -1;
   return 0;
 }
 
-int arrow_state_mqtt_stop() {
+int arrow_state_mqtt_stop(void) {
   if (state_tree) json_delete(state_tree);
   if ( _device_hid ) free(_device_hid);
   return 0;
