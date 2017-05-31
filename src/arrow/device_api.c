@@ -11,9 +11,8 @@ static void _device_register_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
   arrow_prepare_device(gd->gateway, gd->device);
   char *payload = arrow_device_serialize(gd->device);
-  http_request_set_payload(request, payload);
+  http_request_set_payload_ptr(request, payload);
   DBG("dev|%s|", payload);
-  free(payload);
 }
 
 static int _device_register_proc(http_response_t *response, void *arg) {

@@ -28,14 +28,19 @@ int __http_routine(response_init_f req_init, void *arg_init,
   req_init(&request, arg_init);
 
   sign_request(&request);
-  http_client_do(&cli, &request, &response);
+  ret = http_client_do(&cli, &request, &response);
   http_request_close(&request);
   http_client_free(&cli);
+  if ( ret < 0 ) goto http_error;
   if ( resp_proc ) {
     ret = resp_proc(&response, arg_proc);
   } else {
-    if ( response.m_httpResponseCode != 200 ) ret = -1;
+    if ( response.m_httpResponseCode != 200 ) {
+    	ret = -1;
+    	goto http_error;
+    }
   }
+http_error:
   http_response_free(&response);
   return ret;
 }
@@ -86,7 +91,7 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
 
 static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_GATEWAY_ENDPOINT) + 50);
+  char *uri = (char *)malloc(sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, gateway->hid);
@@ -106,7 +111,7 @@ int arrow_heartbeat(arrow_gateway_t *gateway) {
 
 static void _gateway_checkin_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_GATEWAY_ENDPOINT) + 50);
+  char *uri = (char *)malloc(sizeof(ARROW_API_GATEWAY_ENDPOINT) + strlen(gateway->hid) + 20);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, gateway->hid);
@@ -118,6 +123,7 @@ static void _gateway_checkin_init(http_request_t *request, void *arg) {
 int arrow_checkin(arrow_gateway_t *gateway) {
   int ret = 0;
   ret = __http_routine(_gateway_checkin_init, gateway, NULL, NULL);
+  DBG("routine done");
   if ( ret < 0 ) {
     DBG("Arrow Gateway checkin failed...");
   }

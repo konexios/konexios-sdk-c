@@ -93,6 +93,7 @@ void http_request_set_content_type(http_request_t *req, const char *value);
 http_header_t *http_request_first_header(http_request_t *req);
 http_header_t *http_request_next_header(http_request_t *req, http_header_t *head);
 void http_request_set_payload(http_request_t *req, char *payload);
+void http_request_set_payload_ptr(http_request_t *req, char *payload);
 
 void http_response_free(http_response_t *res);
 void http_response_add_header(http_response_t *req, const char *key, const char *value);

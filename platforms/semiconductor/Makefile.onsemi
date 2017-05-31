@@ -56,6 +56,7 @@ ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/sha256.c
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/signature.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/wc_encrypt.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/wc_port.c)
+ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/logging.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/mqtt/client/src/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/mqtt/packet/src/*.c)
 ACN_SDK_C_SRC += $(wildcard $(PLATFORM_FILES)/time/*.c)
@@ -70,7 +71,7 @@ ACN_SDK_C_LIB := $(OUTDIR)/libacnsdkc.a
 ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
 DEFINES += -D__semiconductor__ -DDEBUG
-ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 
+ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 -Os # -Wl,--wrap=malloc -Wl,--wrap=free
 # -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror -Wpedantic
 # -Werror -Wpedantic
 

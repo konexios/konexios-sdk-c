@@ -291,7 +291,8 @@
 #define NO_SKID
 //#define NO_CURVE25519
 //#define NO_ED25519
-//#define WOLFSSL_STATIC_RSA
+
+#define WOLFSSL_STATIC_RSA
 #define NO_WOLFSSL_SERVER
 //#define NO_CERTS
 #define SINGLE_THREADED
@@ -301,14 +302,15 @@
 //#define SHA256_DIGEST_SIZE 32
 #define WOLFSSL_BASE64_ENCODE
 //#define DEBUG_WOLFSSL
-#define WOLFSSL_STATIC_RSA
 //#define HAVE_SUPPORTED_CURVES
 //#define HAVE_TLS_EXTENSIONS
 //#define SIZEOF_LONG_LONG  8
 /* Options for Sample program */
 #define NO_SESSION_CACHE // For Small RAM
+#define WOLFSSL_LOW_MEMORY
+#define NO_WOLFSSL_SMALL_STACK
 //#define USE_CYASSL_MEMORY
-//#define NO_WOLFSSL_MEMORY
+#define NO_WOLFSSL_MEMORY
 #define WOLFSSL_NO_VERIFYSERVER
 #define NO_FILESYSTEM
 #define NO_CERT

@@ -70,6 +70,9 @@
     #define FALSE 0
 #endif
 
+int ssl_malloc = 0;
+int ssl_free = 0;
+
 #ifdef _MSC_VER
     /* disable for while(0) cases at the .c level for now */
     #pragma warning(disable:4127)

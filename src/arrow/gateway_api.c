@@ -8,8 +8,7 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
   char *payload = arrow_gateway_serialize(gateway);
   DBG("payload %s", payload);
-  http_request_set_payload(request, payload);
-  free(payload);
+  http_request_set_payload_ptr(request, payload);
 }
 
 static int _gateway_register_proc(http_response_t *response, void *arg) {
@@ -26,9 +25,10 @@ static int _gateway_register_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_register_gateway(arrow_gateway_t *gateway) {
+	static int count = 0;
   int ret = __http_routine(_gateway_register_init, gateway, _gateway_register_proc, gateway);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway register failed...");
+    DBG("Arrow Gateway register failed... %d", count++);
   }
   return ret;
 }

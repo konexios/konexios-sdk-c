@@ -52,12 +52,24 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
     strncpy((char*)req->host, host_start, (uint32_t)(host_end - host_start));
     req->host[host_end - host_start] = '\0';
 
-    int res = sscanf(host_end+1, "%8hu", &req->port);
+    unsigned long port = 0;
+    int res = sscanf(host_end+1, "%8hu", &port);
     if ( res!=1 ) { req->is_corrupt = 1; return; }
+    req->port = port;
     char *uri_start = strstr(host_end+1, "/");
-    req->uri = malloc(strlen(uri_start)+1);
-    strncpy((char*)req->uri, uri_start, strlen(uri_start));
-    req->uri[strlen(uri_start)] = '\0';
+    req->uri = (uint8_t*)malloc(strlen(uri_start)+1);
+//    req->uri = (uint8_t*)strdup(uri_start);
+//    DBG("uri start len %s", req->uri);
+    DBG("req uri ptr %p", req->uri);
+    if ( !req->uri ) {
+    	req->is_corrupt = 1;
+    	DBG("uri malloc fail!");
+    	return;
+    }
+    strcpy(req->uri, uri_start);
+    DBG("uri: %s", uri_start);
+    DBG("uri: %s", (char*)req->uri);
+
 
     if (strcmp((char*)req->scheme, "https")==0) req->is_cipher = 1;
     else req->is_cipher = 0;
@@ -198,8 +210,21 @@ static int set_payload(http_payload_t *pay, const char *buf, uint32_t size) {
     return 0;
 }
 
+static int set_payload_ptr(http_payload_t *pay, char *buf, uint32_t size) {
+    pay->size = size;
+    if ( pay->buf ) {
+        free(pay->buf);
+    }
+    pay->buf = (uint8_t*)buf;
+    return 0;
+}
+
 void http_request_set_payload(http_request_t *req, char *payload) {
     set_payload(&req->payload, payload, strlen(payload));
+}
+
+void http_request_set_payload_ptr(http_request_t *req, char *payload) {
+    set_payload_ptr(&req->payload, payload, strlen(payload));
 }
 
 void http_response_add_header(http_response_t *req, const char *key, const char *value) {

@@ -18,6 +18,9 @@ extern "C" {
 #if !defined(htonl)
 # define htonl _htonl
 #endif
+#if !defined(ntohl)
+# define ntohl _ntohl
+#endif
 #endif
 
 

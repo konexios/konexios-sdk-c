@@ -19,12 +19,18 @@
 #include <debug.h>
 #include <crypt/crypt.h>
 
+#if defined(SIGN_DEBUG)
+# define DBG_SIGN DBG
+#else
+# define DBG_SIGN(...)
+#endif
+
 // by default keys
 static const char *default_api_key = DEFAULT_API_KEY;
 static const char *default_secret_key = DEFAULT_SECRET_KEY;
 
-static char api_key[sizeof(DEFAULT_API_KEY) + 10];
-static char secret_key[sizeof(DEFAULT_SECRET_KEY) + 10];
+static char api_key[sizeof(DEFAULT_API_KEY) + 20];
+static char secret_key[sizeof(DEFAULT_SECRET_KEY) + 20];
 
 typedef struct {
   char *key;
@@ -75,21 +81,24 @@ void sign(char *signature,
     strcat(canonicalRequest, uri);
     strcat(canonicalRequest, "\n");
     if (canQueryString) strcat(canonicalRequest, canQueryString);
+    DBG_SIGN("can %s", canonicalRequest);
+
     char hex_hash_payload[66];
     char hash_payload[34];
     if (payload) {
       sha256(hash_payload, (char*)payload, (int)strlen(payload));
-      for (i=0; i<32; i++) sprintf(hex_hash_payload+i*2, "%02x", (unsigned char)hash_payload[i]);
+      hex_encode(hex_hash_payload, hash_payload, 32);
       hex_hash_payload[64] = '\0';
     } else {
       strcpy(hex_hash_payload, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"); // pre calculated null string hash
     }
     strncat(canonicalRequest, hex_hash_payload, 64);
-//    DBG("<caninical request>%s<end>", canonicalRequest);
+    DBG_SIGN("<caninical request>%s<end>", canonicalRequest);
+
     sha256(hash_payload, canonicalRequest, (int)strlen(canonicalRequest));
     for (i=0; i<32; i++) sprintf(hex_hash_payload+i*2, "%02x", (unsigned char)(hash_payload[i]));
     hex_hash_payload[64] = '\0';
-//    DBG("hashed canonical request: %s", hex_hash_payload);
+    DBG_SIGN("hashed canonical request: %s", hex_hash_payload);
 //    stringToSign := hashedCanonicalRequest +"\n"+apiKey+"\n"+timestamp+"\n"+apiVersion
 
     strncpy(canonicalRequest, hex_hash_payload, 64);
@@ -100,21 +109,21 @@ void sign(char *signature,
     strcat(canonicalRequest, timestamp);
     strcat(canonicalRequest, "\n");
     strcat(canonicalRequest, apiVersion);
-//    DBG("<string to sign>%s<end>", canonicalRequest);
+    DBG_SIGN("<string to sign>%s<end>", canonicalRequest);
 
     strcpy(signKey, get_secret_key());
 
     hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), signKey, (int)strlen(signKey));
     for (i=0; i<32; i++) sprintf(signKey+i*2, "%02x", (unsigned char)(tmp[i]));
-//    DBG("step 1: %s", signKey);
+    DBG_SIGN("step 1: %s", signKey);
     hmac256(tmp, timestamp, (int)strlen(timestamp), signKey, 64);
     for (i=0; i<32; i++) sprintf(signKey+i*2, "%02x", (unsigned char)(tmp[i]));
-//    DBG("step 2: %s", signKey);
+    DBG_SIGN("step 2: %s", signKey);
     hmac256(tmp, apiVersion, (int)strlen(apiVersion), signKey, 64);
     for (i=0; i<32; i++) sprintf(signKey+i*2, "%02x", (unsigned char)(tmp[i]));
-//    DBG("step 3: %s", signKey);
+    DBG_SIGN("step 3: %s", signKey);
     hmac256(tmp, signKey, 64, canonicalRequest, (int)strlen(canonicalRequest));
     for (i=0; i<32; i++) sprintf(signature+i*2, "%02x", (unsigned char)(tmp[i]));
     signature[64] = '\0';
-//    DBG("sign: %s", signature);
+    DBG_SIGN("sign: %s", signature);
 }
