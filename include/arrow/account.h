@@ -9,6 +9,8 @@
 #ifndef ARROW_ACCOUNT_H_
 #define ARROW_ACCOUNT_H_
 
+ #include <arrow/connection.h>
+
 int arrow_create_account(const char *name, const char *email, const char *pass);
 
 #define arrow_login_account arrow_create_account
