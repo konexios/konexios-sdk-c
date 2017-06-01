@@ -58,18 +58,12 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
     req->port = port;
     char *uri_start = strstr(host_end+1, "/");
     req->uri = (uint8_t*)malloc(strlen(uri_start)+1);
-//    req->uri = (uint8_t*)strdup(uri_start);
-//    DBG("uri start len %s", req->uri);
-    DBG("req uri ptr %p", req->uri);
     if ( !req->uri ) {
     	req->is_corrupt = 1;
     	DBG("uri malloc fail!");
     	return;
     }
-    strcpy(req->uri, uri_start);
-    DBG("uri: %s", uri_start);
-    DBG("uri: %s", (char*)req->uri);
-
+    strcpy((char *)req->uri, uri_start);
 
     if (strcmp((char*)req->scheme, "https")==0) req->is_cipher = 1;
     else req->is_cipher = 0;

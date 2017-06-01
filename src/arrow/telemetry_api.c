@@ -104,7 +104,7 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
     else strcat(_main, "]");
     free(tmp);
   }
-  printf("main: %s", _main);
+  DBG("main: %s", _main);
   http_request_set_payload(request, _main);
   free(_main);
 }
@@ -162,7 +162,8 @@ static void _telemetry_find_by_device_hid_init(http_request_t *request, void *ar
 
 static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *arg) {
   telemetry_response_data_list_t* t = (telemetry_response_data_list_t*)arg;
-  printf("telem appl: %s\r\n", response->payload.buf);
+  if ( response->m_httpResponseCode != 200 ) return -1;
+  DBG("telem appl: %s", response->payload.buf);
   JsonNode *_main = json_decode((char *)response->payload.buf);
   JsonNode *size  = json_find_member(_main, "size");
   if ( !size ) return -1;

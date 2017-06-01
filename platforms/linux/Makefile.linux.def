@@ -15,7 +15,8 @@ CC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu11 -MP
 CPPC_FLAGS = $(COMMON_FLAGS) -Os -std=gnu++98 -fno-rtti -MP
 ASM_FLAGS = -x assembler-with-cpp $(COMMON_FLAGS) -Os
 CC_SYMBOLS = -DTOOLCHAIN_GCC \
-       -DDEBUG -Wextra -Werror -Wpedantic -Wno-variadic-macros
+       -DDEBUG -Wextra 
+       # -Werror -Wpedantic -Wno-variadic-macros -O0 -g
 
 ifdef PROBOOK
 CC_SYMBOLS += -D__probook_4540s__
@@ -40,5 +41,8 @@ sdk_path := $(abspath $(mkfile_path)/../../)
 
 INCLUDES += -I$(sdk_path) \
 	    -I$(sdk_path)/include \
-	    -I$(mkfile_path)
+	    -I$(mkfile_path) \
+	    -I$(sdk_path)/src \
+	    -I$(sdk_path)/src/axTLS/crypto \
+	    -I$(sdk_path)/src/axTLS/ssl 
 

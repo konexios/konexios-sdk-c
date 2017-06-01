@@ -56,7 +56,7 @@
 
 static char http_buffer[CHUNK_SIZE];
 
-#if !defined(__XCC__)
+#if !defined(__XCC__) && defined(wolfssl)
 static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     SSP_PARAMETER_NOT_USED(wsl);
     http_client_t *cli = (http_client_t *)vp;
@@ -100,7 +100,7 @@ static int simple_write(uint8_t *buf, uint16_t len, void *c) {
 
 static int ssl_read(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
-    int ret = ssl_recv(cli->sock, buf, len);//wolfSSL_read(cli->ssl, buf, (int)len);
+    int ret = ssl_recv(cli->sock, (char*)buf, len);//wolfSSL_read(cli->ssl, buf, (int)len);
 //    if (ret > 0) buf[ret] = 0x00;
     HTTP_DBG("[%d]{%s}", ret, buf);
     return ret;
@@ -110,7 +110,7 @@ static int ssl_write(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
     if ( !len && buf ) len = (uint16_t)strlen((char*)buf);
     HTTP_DBG("[%d]|%s|",len, buf);
-    int ret = ssl_send(cli->sock, buf, len);//wolfSSL_write(cli->ssl, buf, (int)len);
+    int ret = ssl_send(cli->sock, (char*)buf, len);//wolfSSL_write(cli->ssl, buf, (int)len);
     return ret;
 }
 
@@ -132,8 +132,10 @@ void http_client_init(http_client_t *cli) {
     wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
     wolfSSL_Debugging_ON();
 #endif
+#if 0
     cli->ctx = NULL;
     cli->ssl = NULL;
+#endif
 }
 
 void http_client_free(http_client_t *cli) {
@@ -143,14 +145,18 @@ void http_client_free(http_client_t *cli) {
     qcom_SSL_ctx_free(cli->ctx);
   }
 #else
+#if 0
     if (cli->ssl) {
     	wolfSSL_free(cli->ssl);
         wolfSSL_CTX_free(cli->ctx);
         wolfSSL_Cleanup();
     }
 #endif
+#endif
+#if 0
     cli->ssl = NULL;
     cli->ctx = NULL;
+#endif
     if ( cli->sock >= 0 ) soc_close(cli->sock);
 }
 
@@ -165,7 +171,7 @@ static int send_start(http_client_t *cli, http_request_t *req) {
         strcpy(queryString, "?");
         http_query_t *query = req->query;
         while ( query ) {
-        	if ( strlen(query->key) + strlen(query->value) + 3 < CHUNK_SIZE ) break;
+          if ( (int)strlen((char*)query->key) + (int)strlen((char*)query->value) + 3 < (int)CHUNK_SIZE ) break;
             strcat(queryString, (char*)query->key);
             strcat(queryString, "=");
             strcat(queryString, (char*)query->value);
@@ -371,7 +377,10 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
           HTTP_DBG("SSL connect done");
       }
 #endif
-      ssl_connect(cli->sock);
+      if ( ssl_connect(cli->sock) < 0 ) {
+        HTTP_DBG("SSL connect done");
+        return -1;
+      }
 #endif
         cli->_r_func = ssl_read;
         cli->_w_func = ssl_write;
@@ -379,9 +388,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         cli->_r_func = simple_read;
         cli->_w_func = simple_write;
     }
-
-
-    msleep(3000);
 
     if ( send_start(cli, req) < 0 ) {
         soc_close(cli->sock);

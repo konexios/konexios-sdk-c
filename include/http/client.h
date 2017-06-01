@@ -11,7 +11,7 @@
 
 #include "request.h"
 #if !defined(__XCC__)
-#include "wolfssl/ssl.h"
+// #include "wolfssl/ssl.h"
 #else
 #include <qcom_ssl.h>
 #define SSL_INBUF_SIZE               6000
@@ -40,9 +40,9 @@ typedef struct {
     uint32_t timeout;
     int response_code;
 #if !defined(__XCC__)
-    WOLFSSL_METHOD  *method;
+    /*WOLFSSL_METHOD  *method;
     WOLFSSL_CTX     *ctx;
-    WOLFSSL         *ssl;
+    WOLFSSL         *ssl;*/
 #else
     SSL_CTX *ctx;
     SSL *ssl;

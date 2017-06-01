@@ -1,0 +1,9 @@
+AXTLS_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/src/axTLS
+
+SRC += $(wildcard $(PWD)/src/axTLS/ssl/*.c)
+SRC += $(wildcard $(PWD)/src/axTLS/crypto/*.c)
+
+INCLUDES += \
+    -I$(AXTLS_PATH)/../ \
+    -I$(AXTLS_PATH)/ssl \
+    -I$(AXTLS_PATH)/crypto
