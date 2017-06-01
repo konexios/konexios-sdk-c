@@ -308,9 +308,13 @@
 /* Options for Sample program */
 #define NO_SESSION_CACHE // For Small RAM
 #define WOLFSSL_LOW_MEMORY
-#define NO_WOLFSSL_SMALL_STACK
+#define WOLFSSL_SMALL_STACK
+#define TFM_TIMING_RESISTANT
+#define RSA_LOW_MEM
 //#define USE_CYASSL_MEMORY
 #define NO_WOLFSSL_MEMORY
+//#define STATIC_CHUNKS_ONLY
+//#define LARGE_STATIC_BUFFERS
 #define WOLFSSL_NO_VERIFYSERVER
 #define NO_FILESYSTEM
 #define NO_CERT

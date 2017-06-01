@@ -51,7 +51,7 @@ typedef struct {
     rw_func         _w_func;
 } http_client_t;
 
-void http_client_init(http_client_t *cli);
+void http_client_init(http_client_t *cli, int newsession);
 void http_client_free(http_client_t *cli);
 
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res);
