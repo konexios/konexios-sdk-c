@@ -8,8 +8,7 @@
 
 #include "arrow/devicecommand.h"
 #include <debug.h>
-#include <http/client.h>
-#include <arrow/request.h>
+#include <arrow/connection.h>
 #include <json/json.h>
 #include <arrow/mem.h>
 #include <arrow/events.h>
@@ -55,7 +54,7 @@ void free_cmd_handler(void) {
 
 // events
 static char *form_evetns_url(const char *hid, cmd_type ev) {
-    char *uri = (char *)malloc(strlen(ARROW_API_EVENTS_ENDPOINT) + strlen(hid) + 15);
+    char *uri = (char *)malloc(sizeof(ARROW_API_EVENTS_ENDPOINT) + strlen(hid) + 15);
     strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
     strcat(uri, "/");
     strcat(uri, hid);
@@ -67,30 +66,29 @@ static char *form_evetns_url(const char *hid, cmd_type ev) {
     return uri;
 }
 
+typedef struct _event_data {
+	char *hid;
+	cmd_type ev;
+	char *payload;
+} event_data_t;
+
+static int _event_ans_init(http_request_t *request, void *arg) {
+    event_data_t *data = (event_data_t *)arg;
+	char *uri = form_evetns_url(data->hid, data->ev);
+	http_request_init(&request, PUT, uri);
+	free(uri);
+	if ( data->payload ) {
+		http_request_set_payload(&request, data->payload);
+	}
+}
+
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
-    http_client_t cli;
-    http_response_t response;
-    http_request_t request;
-    
-    char *uri = form_evetns_url(hid, ev);
-    http_client_init( &cli );
-    http_request_init(&request, PUT, uri);
-    if ( payload ) {
-        http_request_set_payload(&request, (char *)payload);
-    }    
-    sign_request(&request);
-    http_client_do(&cli, &request, &response);
-    http_request_close(&request);
-    DBG("response %d", response.m_httpResponseCode);
-    
-    http_client_free(&cli);
-    free(uri);
-    if ( response.m_httpResponseCode != 200 ) {
-        http_response_free(&response);
-        return -1;
-    }
-    http_response_free(&response);
-    return 0;
+	event_data_t edata = {hid, ev, payload};
+	int ret = __http_routine(_event_ans_init, &edata, NULL, NULL);
+	if ( ret < 0 ) {
+		DBG("Arrow Event answer failed...");
+	}
+	return ret;
 }
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) __attribute__((used));

@@ -9,6 +9,7 @@ extern "C" {
 #include <arrow/connection.h>
 
 int arrow_register_gateway(arrow_gateway_t *gateway);
+int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config);
 
 int arrow_gateway_find(const char *hid);
 int arrow_gateway_find_by(int n, ...);

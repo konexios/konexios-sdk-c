@@ -2,6 +2,89 @@
 #include <debug.h>
 #include <stdarg.h>
 
+#define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
+
+//#define USE_HEAP
+
+static void _gateway_config_init(http_request_t *request, void *arg) {
+	arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
+#if defined(USE_HEAD)
+	char *uri = (char *)malloc(URI_LEN);
+#else
+	char uri[URI_LEN];
+#endif
+	strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
+	strcat(uri, "/");
+	strcat(uri, gateway->hid);
+	strcat(uri, "/config");
+
+	http_request_init(request, GET, uri);
+#if defined(USE_HEAD)
+	free(uri);
+#endif
+}
+
+static int _gateway_config_proc(http_response_t *response, void *arg) {
+	arrow_gateway_config_t *config = (arrow_gateway_config_t *)arg;
+	DBG("response %d", response->m_httpResponseCode);
+	if ( response->m_httpResponseCode != 200 ) {
+		return -1;
+	}
+	DBG("pay: {%s}\r\n", response->payload.buf);
+
+	JsonNode *_main = json_decode((char*)response->payload.buf);
+	JsonNode *tmp;
+	JsonNode *_main_key = json_find_member(_main, "key");
+	if ( _main_key ) {
+		tmp = json_find_member(_main_key, "apiKey");
+		if (tmp) {
+			DBG("(%d) api key: %s", strlen(tmp->string_), tmp->string_);
+			set_api_key(tmp->string_);
+		}
+		tmp = json_find_member(_main_key, "secretKey");
+		if (tmp) {
+			DBG("(%d) secret key: %s", strlen(tmp->string_), tmp->string_);
+			set_secret_key(tmp->string_);
+		}
+	} else return -1;
+	arrow_gateway_config_init(config);
+#if defined(__IBM__)
+	JsonNode *_main_ibm = json_find_member(_main, "ibm");
+	if ( _main_ibm ) {
+		config->type = 1;
+		tmp = json_find_member(_main_ibm, "organizationId");
+		if ( tmp ) arrow_gateway_config_add_organizationId(config, tmp->string_);
+		tmp = json_find_member(_main_ibm, "gatewayType");
+		if ( tmp ) arrow_gateway_config_add_gatewayType(config, tmp->string_);
+		tmp = json_find_member(_main_ibm, "gatewayId");
+		if ( tmp ) arrow_gateway_config_add_gatewayId(config, tmp->string_);
+		tmp = json_find_member(_main_ibm, "authToken");
+		if ( tmp ) arrow_gateway_config_add_authToken(config, tmp->string_);
+		tmp = json_find_member(_main_ibm, "authMethod");
+		if ( tmp ) arrow_gateway_config_add_authMethod(config, tmp->string_);
+	}
+#elif defined(__AZURE__)
+	JsonNode *_main_azure = json_find_member(_main, "azure");
+	if ( _main_azure ) {
+		config->type = 3;
+		tmp = json_find_member(_main_azure, "host");
+		if ( tmp ) arrow_gateway_config_add_host(config, tmp->string_);
+		tmp = json_find_member(_main_azure, "accessKey");
+		if ( tmp ) arrow_gateway_config_add_accessKey(config, tmp->string_);
+	}
+#endif
+	json_delete(_main);
+	return 0;
+}
+
+int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {
+	int ret = __http_routine(_gateway_config_init, gateway, _gateway_config_proc, config);
+	if ( ret < 0 ) {
+		DBG("Arrow Gateway config failed...");
+	}
+	return ret;
+}
+
 
 static void _gateway_register_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
@@ -16,7 +99,6 @@ static int _gateway_register_proc(http_response_t *response, void *arg) {
   DBG("response gate reg %d", response->m_httpResponseCode);
   if ( arrow_gateway_parse(gateway, (char*)response->payload.buf) < 0 ) {
       DBG("parse error");
-      http_response_free(response);
       return -1;
   } else {
       DBG("gateway hid: %s", gateway->hid);

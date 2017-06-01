@@ -46,7 +46,7 @@ int arrow_get_state(arrow_device_t *device) {
     strcat(uri, "/");
     strcat(uri, device->hid);
     strcat(uri, "/state");
-    http_client_init( &cli );
+    http_client_init( &cli, 1 );
     http_request_init(&request, GET, uri);
     sign_request(&request);
     http_client_do(&cli, &request, &response);
@@ -90,7 +90,7 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
         free(uri);
         return -1;
     }
-    http_client_init( &cli );
+    http_client_init( &cli, 1 );
     http_request_init(&request, POST, uri);
     {
       _state = json_mkobject();
@@ -142,7 +142,7 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
     http_request_t request;
     JsonNode *_error = NULL;
 
-    http_client_init( &cli );
+    http_client_init( &cli, 1 );
     char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + strlen(device_hid) + strlen(trans_hid) + 50);
     strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
     strcat(uri, "/");

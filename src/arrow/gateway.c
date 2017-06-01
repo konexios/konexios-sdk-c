@@ -15,13 +15,8 @@
 
 #define GATEWAY_ADD_PROPERTY(type, name) \
 void type##_add_##name(type##_t *gate, const char *name) { \
-  if ( gate->name ) { \
-    gate->name = (char*)realloc(gate->name, strlen(name)+1); \
-  } else { \
-    uint32_t f = strlen(name)+1; \
-    gate->name = (char*)malloc(f); \
-  } \
-  strcpy(gate->name, name); \
+  if ( gate->name ) free(gate->name); \
+  gate->name = strdup(name); \
 }
 
 GATEWAY_ADD_PROPERTY(arrow_gateway, name)

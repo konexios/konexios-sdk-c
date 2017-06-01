@@ -30,19 +30,16 @@ arrow_gateway_t *current_gateway(void) {
 
 int arrow_initialize_routine(void) {
   wdt_feed();
+
+  dont_close_session();
   DBG("register gateway via API");
   while ( arrow_connect_gateway(&_gateway) < 0 ) {
     DBG("arrow gateway connection fail...");
     msleep(ARROW_RETRY_DELAY);
   }
 
-//  arrow_gateway_add_hid(&_gateway, "f2b679efc189ac1c3ee021aa720e5c2538db7e59");
-//  arrow_checkin(&_gateway);
-//  arrow_checkin(&_gateway);
-//  arrow_checkin(&_gateway);
-
   wdt_feed();
-  while ( arrow_config(&_gateway, &_gateway_config) < 0 ) {
+  while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
     DBG("arrow gateway config fail...");
     msleep(ARROW_RETRY_DELAY);
   }
@@ -55,6 +52,7 @@ int arrow_initialize_routine(void) {
     msleep(ARROW_RETRY_DELAY);
   }
   _init_done = 1;
+  do_close_session();
 
   return 0;
 }

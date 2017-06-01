@@ -8,15 +8,12 @@
 
 #define MODULE_NAME "HTTP_Client"
 
-#include <http/client.h>
+#include "http/client.h"
 #include <config.h>
 #include <debug.h>
 #include <bsd/socket.h>
 #include <time/time.h>
 #include <arrow/mem.h>
-#ifdef DEBUG_WOLFSSL
-#include <wolfcrypt/logging.h>
-#endif
 #if defined(_ARIS_)
 # if defined(ETH_MODE)
 #  include "nx_api.h"
@@ -47,7 +44,6 @@
 #define PRTCL_ERR() \
   { \
     DBG("Protocol error"); \
-    soc_close(cli->sock); \
     return -1; \
   }
 
@@ -55,32 +51,6 @@
 #define client_recv(buf, size, cli) (*(cli->_r_func))((uint8_t*)(buf), (uint16_t)(size), (cli))
 
 static char http_buffer[CHUNK_SIZE];
-
-#if !defined(__XCC__) && defined(wolfssl)
-static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
-    SSP_PARAMETER_NOT_USED(wsl);
-    http_client_t *cli = (http_client_t *)vp;
-    if ( sz < 0 ) return sz;
-    uint32_t got = 0;
-    got = (uint32_t)recv(cli->sock, buf, (uint32_t)sz, 0);
-    HTTP_DBG("recv ssl %d [%d]", got, sz);
-    if (got == 0)  return -2;  // IO_ERR_WANT_READ;
-    return (int)got;
-}
-
-
-static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
-    SSP_PARAMETER_NOT_USED(wsl);
-    http_client_t *cli = (http_client_t *)vp;
-    if ( sz < 0 ) return sz;
-    uint32_t sent = 0;
-    sent = (uint32_t)send(cli->sock, buf, (uint32_t)sz, 0);
-    HTTP_DBG("send ssl %d [%d]", sent, sz);
-    if (sent == 0)
-        return -2;  // IO_ERR_WANT_WRITE
-    return (int)sent;
-}
-#endif
 
 static int simple_read(uint8_t *buf, uint16_t len, void *c) {
     http_client_t *cli = (http_client_t *)c;
@@ -114,28 +84,14 @@ static int ssl_write(uint8_t *buf, uint16_t len, void *c) {
     return ret;
 }
 
-#ifdef DEBUG_WOLFSSL
-static void cli_wolfSSL_Logging_cb(const int logLevel,
-                                  const char *const logMessage) {
-    DBG("[http]:%d (%s)", logLevel, logMessage);
-}
-#endif
-
-void http_client_init(http_client_t *cli) {
-    cli->sock = -1;
-    cli->response_code = 0;
-    cli->timeout = 5000;
-    cli->_r_func = simple_read;
-    cli->_w_func = simple_write;
-
-#ifdef DEBUG_WOLFSSL
-    wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
-    wolfSSL_Debugging_ON();
-#endif
-#if 0
-    cli->ctx = NULL;
-    cli->ssl = NULL;
-#endif
+void http_client_init(http_client_t *cli, int newsession) {
+	cli->response_code = 0;
+	if ( newsession ) {
+	    cli->sock = -1;
+		cli->timeout = 5000;
+		cli->_r_func = simple_read;
+		cli->_w_func = simple_write;
+	}
 }
 
 void http_client_free(http_client_t *cli) {
@@ -144,19 +100,8 @@ void http_client_free(http_client_t *cli) {
     qcom_SSL_shutdown(cli->ssl);
     qcom_SSL_ctx_free(cli->ctx);
   }
-#else
-#if 0
-    if (cli->ssl) {
-    	wolfSSL_free(cli->ssl);
-        wolfSSL_CTX_free(cli->ctx);
-        wolfSSL_Cleanup();
-    }
 #endif
-#endif
-#if 0
-    cli->ssl = NULL;
-    cli->ctx = NULL;
-#endif
+    ssl_close(cli->sock);
     if ( cli->sock >= 0 ) soc_close(cli->sock);
 }
 
@@ -297,106 +242,59 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
     int ret;
     memset(res, 0x00, sizeof(http_response_t));
-    ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if ( ret < 0 ) return ret;
-    cli->sock = ret;
-    struct sockaddr_in serv;
-    struct hostent *serv_resolve;
-    serv_resolve = gethostbyname((char*)req->host);
-    if (serv_resolve == NULL) {
-        DBG("ERROR, no such host");
-        return -1;
-    }
-    memset(&serv, 0, sizeof(serv));
-    serv.sin_family = PF_INET;
-    bcopy((char *)serv_resolve->h_addr,
-            (char *)&serv.sin_addr.s_addr,
-            (uint32_t)serv_resolve->h_length);
-    serv.sin_port = htons(req->port);
+    if ( cli->sock < 0 ) {
+    	ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    	if ( ret < 0 ) return ret;
+    	cli->sock = ret;
+    	struct sockaddr_in serv;
+    	struct hostent *serv_resolve;
+    	serv_resolve = gethostbyname((char*)req->host);
+    	if (serv_resolve == NULL) {
+    		DBG("ERROR, no such host");
+    		return -1;
+    	}
+    	memset(&serv, 0, sizeof(serv));
+    	serv.sin_family = PF_INET;
+    	bcopy((char *)serv_resolve->h_addr,
+    			(char *)&serv.sin_addr.s_addr,
+				(uint32_t)serv_resolve->h_length);
+    	serv.sin_port = htons(req->port);
 
-    struct timeval tv;
-    tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
-    tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);
-    setsockopt(cli->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+    	struct timeval tv;
+    	tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
+    	tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);
+    	setsockopt(cli->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
-    ret = connect(cli->sock, (struct sockaddr*)&serv, sizeof(serv));
-    if ( ret < 0 ) {
-        DBG("connect fail");
-        soc_close(cli->sock);
-        cli->sock = -1;
-        return -1;
-    }
-    HTTP_DBG("connect done");
-
-    if ( req->is_cipher ) {
-#if defined(__XCC__)
-      cli->ctx = qcom_SSL_ctx_new(SSL_CLIENT, SSL_INBUF_SIZE, SSL_OUTBUF_SIZE, 0);
-      if ( cli->ctx == NULL) {
-          DBG("unable to get ctx");
-          soc_close(cli->sock);
-          return -1;
-      }
-      cli->ssl = qcom_SSL_new(cli->ctx);
-      qcom_SSL_set_fd(cli->ssl, cli->sock);
-      if (cli->ssl == NULL) {
-          DBG("oops, bad SSL ptr");
-          soc_close(cli->sock);
-          return -1;
-      }
-      int err = qcom_SSL_connect(cli->ssl);
-      if (err < 0) {
-          DBG("SSL connect fail %d", ret);
-          soc_close(cli->sock);
-          return err;
-      }
-
-#else
-#if 0
-      wolfSSL_Init();
-      cli->method = wolfTLSv1_2_client_method();
-      cli->ctx = wolfSSL_CTX_new(cli->method);
-      if ( cli->ctx == NULL) {
-          DBG("unable to get ctx");
-      }
-      wolfSSL_CTX_set_verify(cli->ctx, SSL_VERIFY_NONE, NULL);
-      wolfSSL_SetIORecv(cli->ctx, recv_ssl);
-      wolfSSL_SetIOSend(cli->ctx, send_ssl);
-
-      cli->ssl = wolfSSL_new(cli->ctx);
-      if (cli->ssl == NULL) {
-          DBG("oops, bad SSL ptr");
-      }
-      wolfSSL_SetIOReadCtx(cli->ssl, (void*)cli);
-      wolfSSL_SetIOWriteCtx(cli->ssl, (void*)cli);
-      //        wolfSSL_Debugging_ON();
-      int err = wolfSSL_connect(cli->ssl);
-      if (err != SSL_SUCCESS) {
-          DBG("SSL connect fail");
-          return -1;
-      } else {
-          HTTP_DBG("SSL connect done");
-      }
-#endif
-      if ( ssl_connect(cli->sock) < 0 ) {
-        HTTP_DBG("SSL connect done");
-        return -1;
-      }
-#endif
-        cli->_r_func = ssl_read;
-        cli->_w_func = ssl_write;
-    } else {
-        cli->_r_func = simple_read;
-        cli->_w_func = simple_write;
+    	ret = connect(cli->sock, (struct sockaddr*)&serv, sizeof(serv));
+    	if ( ret < 0 ) {
+    		DBG("connect fail");
+    		soc_close(cli->sock);
+    		cli->sock = -1;
+    		return -1;
+    	}
+    	HTTP_DBG("connect done");
+    	if ( req->is_cipher ) {
+    		if ( ssl_connect(cli->sock) < 0 ) {
+    			HTTP_DBG("SSL connect fail");
+    			ssl_close(cli->sock);
+    			soc_close(cli->sock);
+    			cli->sock = -1;
+    			return -1;
+    		}
+    		cli->_r_func = ssl_read;
+    		cli->_w_func = ssl_write;
+    	} else {
+    		cli->_r_func = simple_read;
+    		cli->_w_func = simple_write;
+    	}
     }
 
     if ( send_start(cli, req) < 0 ) {
-        soc_close(cli->sock);
         DBG("send start fail");
         return -1;
     }
 
     if ( send_header(cli, req) < 0 ) {
-        soc_close(cli->sock);
         DBG("send header fail");
         return -1;
     }
@@ -404,7 +302,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     if ( req->payload.buf ) {
         if ( send_payload(cli, req) < 0 ) {
             DBG("send payload fail");
-            soc_close(cli->sock);
             return -1;
         }
     }
@@ -415,7 +312,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     ret = receive_response(cli, res, http_buffer, &trfLen);
     if ( ret < 0 ) {
         DBG("Connection error (%d)", ret);
-        soc_close(cli->sock);
         return -1;
     }
 
@@ -549,6 +445,5 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     } while(1);
 
     HTTP_DBG("body{%s}", res->payload.buf);
-    soc_close(cli->sock);
     return 0;
 }

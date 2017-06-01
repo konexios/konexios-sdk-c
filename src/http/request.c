@@ -146,10 +146,8 @@ void http_request_add_header(http_request_t *req, const char *key, const char *v
         head = head->next;
     }
     http_header_t *head_new = (http_header_t *)malloc(sizeof(http_header_t));
-    head_new->key = (uint8_t*)malloc(strlen(key)+1);
-    head_new->value = (uint8_t*)malloc(strlen(value)+1);
-    strcpy((char*)head_new->key, key);
-    strcpy((char*)head_new->value, value);
+    head_new->key = (uint8_t*)strdup(key);
+    head_new->value = (uint8_t*)strdup(value);
     head_new->next = NULL;
     if ( head ) head->next = head_new;
     else req->header = head_new;

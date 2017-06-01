@@ -12,6 +12,7 @@
 #if !defined(__XCC__)
 #include <string.h>
 #endif
+#include <debug.h>
 
 void get_canonical_string(char *buffer, http_request_t *req){
     http_query_t *query = req->query;
@@ -26,8 +27,8 @@ void get_canonical_string(char *buffer, http_request_t *req){
 }
 
 void sign_request(http_request_t *req) {
-    char ts[25];
-    char signature[70];
+    static char ts[25];
+    static char signature[70];
     char *canonicalQuery = NULL;
     if ( req->query ) {
       canonicalQuery = (char*)malloc(CANONICAL_QUERY_LEN);

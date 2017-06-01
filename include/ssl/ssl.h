@@ -12,5 +12,6 @@
 int ssl_connect(int sock);
 int ssl_recv(int sock, char *data, int len);
 int ssl_send(int sock, char* data, int length);
+int ssl_close(int sock);
 
 #endif
