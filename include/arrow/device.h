@@ -10,6 +10,7 @@
 #define ARROW_DEVICE_H_
 
 #include "json/json.h"
+#include <arrow/gateway.h>
 
 typedef struct {
 #if defined(__XCC__)
@@ -46,5 +47,7 @@ void arrow_device_add_property(arrow_device_t *dev, const char *key, const char 
 
 char *arrow_device_serialize(arrow_device_t *dev);
 int arrow_device_parse(arrow_device_t *dev, const char *str);
+
+int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device);
 
 #endif /* ARROW_DEVICE_H_ */

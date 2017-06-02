@@ -63,11 +63,14 @@ void add_find_param(find_by_t **first, find_by_t *val);
     va_end(args); \
   } while(0)
 
+// FIXME if value is property, rm p_stack
 #define ADD_FIND_BY_TO_REQ(params, request) \
   if ( params ) { \
     do { \
       if ( params->key < FindBy_count ) { \
-        http_request_add_query(request, get_find_by_name(params->key), params->value); \
+        http_request_add_query(request, \
+                p_const(get_find_by_name(params->key)), \
+                p_stack(params->value)); \
       } \
       params = params->next; \
     } while( params ); \

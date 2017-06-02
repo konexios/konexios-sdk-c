@@ -42,7 +42,5 @@ sdk_path := $(abspath $(mkfile_path)/../../)
 INCLUDES += -I$(sdk_path) \
 	    -I$(sdk_path)/include \
 	    -I$(mkfile_path) \
-	    -I$(sdk_path)/src \
-	    -I$(sdk_path)/src/axTLS/crypto \
-	    -I$(sdk_path)/src/axTLS/ssl 
+	    -I$(sdk_path)/src
 

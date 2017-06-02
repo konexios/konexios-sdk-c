@@ -14,14 +14,14 @@
 #include <json/json.h>
 
 typedef struct {
-  char *name;
-  char *uid;
-  char *os;
-  char *type;
-  char *hid;
-  char *software_name;
-  char *software_version;
-  char *sdkVersion;
+  property_t name;
+  property_t uid;
+  property_t os;
+  property_t type;
+  property_t hid;
+  property_t software_name;
+  property_t software_version;
+  property_t sdkVersion;
 } arrow_gateway_t;
 
 enum account_type {
@@ -35,27 +35,27 @@ enum account_type {
 typedef struct {
   int type;    // enum account_type
 #if defined(__IBM__)
-  char *organizationId;
-  char *authMethod;
-  char *authToken;
-  char *gatewayId;
-  char *gatewayType;
+  property_t organizationId;
+  property_t authMethod;
+  property_t authToken;
+  property_t gatewayId;
+  property_t gatewayType;
 #elif defined(__AZURE__)
-  char *host;
-  char *accessKey;
+  property_t host;
+  property_t accessKey;
 #else
 #endif
 } arrow_gateway_config_t;
 
 void arrow_gateway_init(arrow_gateway_t *gate);
-void arrow_gateway_add_name(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_uid(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_os(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_type(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_software_name(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_software_version(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_hid(arrow_gateway_t *gate, const char *name);
-void arrow_gateway_add_sdkVersion(arrow_gateway_t *gate, const char *name);
+P_ADD_PROTO(arrow_gateway, name)
+P_ADD_PROTO(arrow_gateway, uid)
+P_ADD_PROTO(arrow_gateway, os)
+P_ADD_PROTO(arrow_gateway, type)
+P_ADD_PROTO(arrow_gateway, software_name)
+P_ADD_PROTO(arrow_gateway, software_version)
+P_ADD_PROTO(arrow_gateway, sdkVersion)
+P_ADD_PROTO(arrow_gateway, hid)
 
 char *arrow_gateway_serialize(arrow_gateway_t *gate);
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str);
@@ -73,4 +73,6 @@ void arrow_gateway_config_add_organizationId(arrow_gateway_config_t *conf, const
 void arrow_gateway_config_add_host(arrow_gateway_config_t *conf, const char *host);
 void arrow_gateway_config_add_accessKey(arrow_gateway_config_t *conf, const char *accessKey);
 #endif
+
+int arrow_prepare_gateway(arrow_gateway_t *gateway);
 #endif /* ARROW_GATEWAY_H_ */

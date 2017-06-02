@@ -11,6 +11,7 @@
 
 #include <config.h>
 #include <unint.h>
+#include <arrow/mem.h>
 
 #if defined(HTTP_DEBUG)
 #define HTTP_DBG DBG
@@ -39,21 +40,28 @@
 #define HEAD_FIELD_LEN 100
 
 enum METH {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-    HEAD
+  GET,
+  POST,
+  PUT,
+  DELETE,
+  HEAD,
+  METH_count
 };
 
-int cmp_meth(const char *str);
-char *get_meth(int i);
+enum Scheme {
+  http,
+  https,
+  Scheme_count
+};
 
 typedef struct http_header_ {
-    uint8_t *key;
-    uint8_t *value;
+    property_t key;
+    property_t value;
     struct http_header_ *next;
 } http_header_t;
+
+P_ADD_PROTO(http_header, key)
+P_ADD_PROTO(http_header, value)
 
 typedef struct http_header_ http_query_t;
 
@@ -63,10 +71,10 @@ typedef struct {
 } http_payload_t;
 
 typedef struct {
-    uint8_t *meth;
-    uint8_t *scheme;
-    uint8_t *host;
-    uint8_t *uri;
+    property_t meth;
+    property_t scheme;
+    property_t host;
+    property_t uri;
     uint16_t port;
     int is_corrupt;
     int is_cipher;
@@ -87,17 +95,17 @@ typedef struct {
 
 void http_request_init(http_request_t *req, int meth, const char *url);
 void http_request_close(http_request_t *req);
-void http_request_add_header(http_request_t *req, const char *key, const char *value);
-void http_request_add_query(http_request_t *req, const char *key, const char *value);
-void http_request_set_content_type(http_request_t *req, const char *value);
+void http_request_add_header(http_request_t *req, property_t key, property_t value);
+void http_request_add_query(http_request_t *req, property_t key, property_t value);
+void http_request_set_content_type(http_request_t *req, property_t value);
 http_header_t *http_request_first_header(http_request_t *req);
 http_header_t *http_request_next_header(http_request_t *req, http_header_t *head);
 void http_request_set_payload(http_request_t *req, char *payload);
 void http_request_set_payload_ptr(http_request_t *req, char *payload);
 
 void http_response_free(http_response_t *res);
-void http_response_add_header(http_response_t *req, const char *key, const char *value);
-void http_response_set_content_type(http_response_t *req, const char *value);
+void http_response_add_header(http_response_t *req, property_t key, property_t value);
+void http_response_set_content_type(http_response_t *req, property_t value);
 void http_response_set_payload(http_response_t *req, char *payload, uint32_t size);
 void http_response_add_payload(http_response_t *req, char *payload, uint32_t size);
 

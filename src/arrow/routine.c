@@ -12,6 +12,8 @@
 #include <arrow/state.h>
 #include <arrow/devicecommand.h>
 #include <arrow/mqtt.h>
+#include <arrow/gateway_api.h>
+#include <arrow/device_api.h>
 
 
 static arrow_gateway_t _gateway;

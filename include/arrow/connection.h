@@ -31,12 +31,6 @@ int __http_routine(response_init_f req_init, void *arg_init,
 arrow_device_t *current_device(void);
 arrow_gateway_t *current_gateway(void);
 
-int arrow_prepare_gateway(arrow_gateway_t *gateway);
-int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device);
-
-int arrow_heartbeat(arrow_gateway_t *gateway);
-int arrow_checkin(arrow_gateway_t *gateway);
-
 int arrow_send_telemetry(arrow_device_t *device, void *data);
 
 int arrow_connect_gateway(arrow_gateway_t *gateway);

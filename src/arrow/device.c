@@ -87,3 +87,23 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     json_delete(_main);
     return 0;
 }
+
+int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+  arrow_device_init(device);
+  arrow_device_add_gateway_hid(device, P_VALUE(gateway->hid) );
+  arrow_device_add_name(device, DEVICE_NAME);
+  arrow_device_add_type(device, DEVICE_TYPE);
+//    FIXME info property extra param?
+//    arrow_device_add_info(device, "info1", "value1");
+//    arrow_device_add_info(device, "info2", "value2");
+//    arrow_device_add_property(device, "prop1", "value1");
+//    arrow_device_add_property(device, "prop2", "value2");
+  if ( IS_EMPTY(gateway->uid) ) return -1;
+  char *uid = (char*)malloc(strlen(P_VALUE(gateway->uid))+sizeof(DEVICE_UID_SUFFIX)+2);
+  strcpy(uid, P_VALUE(gateway->uid) );
+  strcat(uid, "-");
+  strcat(uid, DEVICE_UID_SUFFIX);
+  arrow_device_add_uid(device, uid);
+  free(uid);
+  return 0;
+}

@@ -184,19 +184,19 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   char username[100];
 
   strcpy(username, VHOST);
-  strcat(username, gateway->hid);
+  strcat(username, P_VALUE(gateway->hid));
   DBG("qmtt.username %s", username);
 
   strcpy(s_topic, "krs/cmd/stg/");
-  strcat(s_topic, gateway->hid);
+  strcat(s_topic, P_VALUE(gateway->hid));
 
   strcpy(p_topic, "krs.tel.gts.");
-  strcat(p_topic, gateway->hid);
+  strcat(p_topic, P_VALUE(gateway->hid));
 
   MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
   data.willFlag = 0;
   data.MQTTVersion = 3;
-  data.clientID.cstring = gateway->hid;
+  data.clientID.cstring = P_VALUE(gateway->hid);
   data.username.cstring = username;
   data.password.cstring = (char*)get_api_key();
   data.keepAliveInterval = 10;

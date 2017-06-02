@@ -72,18 +72,18 @@ typedef struct _event_data {
 	char *payload;
 } event_data_t;
 
-static int _event_ans_init(http_request_t *request, void *arg) {
+static void _event_ans_init(http_request_t *request, void *arg) {
     event_data_t *data = (event_data_t *)arg;
 	char *uri = form_evetns_url(data->hid, data->ev);
-	http_request_init(&request, PUT, uri);
+  http_request_init(request, PUT, uri);
 	free(uri);
 	if ( data->payload ) {
-		http_request_set_payload(&request, data->payload);
+    http_request_set_payload(request, data->payload);
 	}
 }
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
-	event_data_t edata = {hid, ev, payload};
+  event_data_t edata = {(char*)hid, ev, payload};
 	int ret = __http_routine(_event_ans_init, &edata, NULL, NULL);
 	if ( ret < 0 ) {
 		DBG("Arrow Event answer failed...");

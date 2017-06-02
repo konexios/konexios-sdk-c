@@ -1,16 +1,17 @@
 -include Makefile.static
--include Makefile.axtls
+# -include Makefile.axtls
+-include Makefile.wolf
 -include $(PWD)/platforms/linux/Makefile.linux.def
 
 LIBDIR ?= .
 C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 
-SRC += $(PWD)/platforms/default/wolf/crypt/crypt.c
-SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha256.c
-SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/hmac.c
-SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha.c
+# SRC += $(PWD)/platforms/default/wolf/crypt/crypt.c
+# SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha256.c
+# SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/hmac.c
+# SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha.c
 
-INCLUDES += -I$(PWD)/src/wolfSSL/
+# INCLUDES += -I$(PWD)/src/wolfSSL/
 
 OBJ = $(SRC:.c=.o)
 

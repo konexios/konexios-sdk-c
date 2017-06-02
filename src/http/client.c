@@ -109,17 +109,17 @@ void http_client_free(http_client_t *cli) {
 static int send_start(http_client_t *cli, http_request_t *req) {
     char *buf = http_buffer;
     int ret;
-    ret = snprintf(buf, CHUNK_SIZE-1, "%s %s", req->meth, req->uri);
+    ret = snprintf(buf, CHUNK_SIZE-1, "%s %s", P_VALUE(req->meth), P_VALUE(req->uri));
     buf[ret] = '\0';
     if ( req->query ) {
         char queryString[CHUNK_SIZE];
         strcpy(queryString, "?");
         http_query_t *query = req->query;
         while ( query ) {
-          if ( (int)strlen((char*)query->key) + (int)strlen((char*)query->value) + 3 < (int)CHUNK_SIZE ) break;
-            strcat(queryString, (char*)query->key);
+          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)CHUNK_SIZE ) break;
+            strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
-            strcat(queryString, (char*)query->value);
+            strcat(queryString, P_VALUE(query->value));
             if ( CHUNK_SIZE - strlen(buf) - sizeof(HTTP_VERS)-1 < strlen(queryString) ) break;
             strcat(buf, queryString);
             strcpy(queryString, "&");
@@ -130,7 +130,7 @@ static int send_start(http_client_t *cli, http_request_t *req) {
     if ( (ret = client_send(buf, 0, cli)) < 0 ) {
         return ret;
     }
-    ret = snprintf(buf, CHUNK_SIZE-1, "Host: %s:%d\r\n", req->host, req->port);
+    ret = snprintf(buf, CHUNK_SIZE-1, "Host: %s:%d\r\n", P_VALUE(req->host), req->port);
     buf[ret] = '\0';
     if ( (ret = client_send(buf, 0, cli)) < 0 ) {
         return ret;
@@ -151,7 +151,7 @@ static int send_header(http_client_t *cli, http_request_t *req) {
             ret = client_send(buf, ret, cli);
         }
         if ( ret < 0 ) return ret;
-        ret = snprintf(buf, sizeof(http_buffer)-1, "Content-Type: %s\r\n", req->content_type.value);
+        ret = snprintf(buf, sizeof(http_buffer)-1, "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
         if ( ret < 0 ) return ret;
         buf[ret] = '\0';
         if ( (ret = client_send(buf, ret, cli)) < 0 ) return ret;
@@ -159,7 +159,7 @@ static int send_header(http_client_t *cli, http_request_t *req) {
 
     http_header_t *head = req->header;
     while( head ) {
-    	ret = snprintf(buf, sizeof(http_buffer)-1, "%s: %s\r\n", (char*)head->key, (char*)head->value);
+      ret = snprintf(buf, sizeof(http_buffer)-1, "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
     	if ( ret < 0 ) return ret;
     	buf[ret] = '\0';
         if ( (ret = client_send(buf, ret, cli)) < 0 ) return ret;
@@ -248,7 +248,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     	cli->sock = ret;
     	struct sockaddr_in serv;
     	struct hostent *serv_resolve;
-    	serv_resolve = gethostbyname((char*)req->host);
+      serv_resolve = gethostbyname(P_VALUE(req->host));
     	if (serv_resolve == NULL) {
     		DBG("ERROR, no such host");
     		return -1;
@@ -319,11 +319,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     char *crlfPtr;
     int crlfPos;
     res->header = NULL;
-    res->content_type.value = NULL;
-    req->content_type.key = NULL;
-    req->content_type.next = NULL;
-    res->payload.size = 0;
-    res->payload.buf = 0;
+    memset(&res->content_type, 0x0, sizeof(http_header_t));
+    memset(&res->payload, 0x0, sizeof(http_payload_t));
     res->is_chunked = 0;
 
     int recvContentLength = -1;
@@ -370,9 +367,11 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
             } else if( !strcmp(key, "Content-Type") ) {
-                http_response_set_content_type(res, value);
+                http_response_set_content_type(res, property(value, is_stack));
             } else {
-                http_response_add_header(res, key, value);
+                http_response_add_header(res,
+                                         property(key, is_stack),
+                                         property(value, is_stack));
             }
             memmove(buf, crlfPtr+2, trfLen - (uint32_t)(crlfPos + 2) + 1);
             trfLen -= (uint32_t)(crlfPos + 2);
