@@ -42,9 +42,9 @@ void *realloc(void *ptrmem, size_t size);
 #define X_STR_FREE(str) if ( str ) free(str);
 
 enum prop_flags {
-  is_stack = 0x0,
-  is_dynamic = 0x1,
-  is_const = 0x2
+  is_stack    = 0x0,
+  is_dynamic  = 0x1,
+  is_const    = 0x2
 };
 
 typedef struct _property {
@@ -63,6 +63,7 @@ typedef struct _property {
 
 #define p_const(x) property(x, is_const)
 #define p_stack(x) property(x, is_stack)
+#define p_heap(x)  property(x, is_dynamic)
 
 #define P_FREE(prop) \
 { if ((prop).flags == is_dynamic && (prop).value) free((prop).value); \
