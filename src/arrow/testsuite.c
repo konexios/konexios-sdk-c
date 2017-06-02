@@ -10,9 +10,7 @@ static void _test_gateway_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/gateways/test", ARROW_API_TESTSUITE_ENDPOINT);
   http_request_init(request, POST, uri);
   free(uri);
-  char *payload = arrow_gateway_serialize(gate);
-  http_request_set_payload_ptr(request, payload);
-  DBG("gate|%s|", payload);
+  http_request_set_payload(request, p_heap(arrow_gateway_serialize(gate)));
 }
 
 static int _test_gateway_proc(http_response_t *response, void *arg) {
@@ -36,9 +34,7 @@ static void _test_device_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/devices/test", ARROW_API_TESTSUITE_ENDPOINT);
   http_request_init(request, POST, uri);
   free(uri);
-  char *payload = arrow_device_serialize(dev);
-  http_request_set_payload_ptr(request, payload);
-  DBG("dev|%s|", payload);
+  http_request_set_payload(request, p_heap(arrow_device_serialize(dev)));
 }
 
 int arrow_test_device(arrow_device_t *device) {

@@ -108,7 +108,8 @@ void type##_set_##field(type##_t *date, const char *field) { \
   } \
 }
 
-#define IS_EMPTY(field) ( (field).value ? 1 : 0 )
+#define IS_EMPTY(field) ( (field).value ? 0 : 1 )
 #define P_VALUE(field) ( (field).value )
+#define P_SIZE(field) ( (field).value ? strlen((field).value) : 0 )
 
 #endif  // _ARROW_KRONOS_C_SDK_MEM_H_

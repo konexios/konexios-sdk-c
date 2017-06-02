@@ -52,7 +52,7 @@ int arrow_get_state(arrow_device_t *device) {
     http_client_do(&cli, &request, &response);
     http_request_close(&request);
     DBG("response %d", response.m_httpResponseCode);
-    DBG("[%s]", response.payload.buf);
+    DBG("[%s]", P_VALUE(response.payload.buf));
     http_client_free(&cli);
     free(uri);
     if ( response.m_httpResponseCode != 200 ) {
@@ -99,15 +99,13 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
       get_time(ts);
       json_append_member(_state, "timestamp", json_mkstring(ts));
     }
-    char *pay = json_encode(_state);
-    http_request_set_payload(&request, pay);
-    free(pay);
+    http_request_set_payload(&request, p_heap(json_encode(_state)));
     sign_request(&request);
-    DBG("send: %s", request.payload.buf);
+    DBG("send: %s", P_VALUE(request.payload.buf));
     http_client_do(&cli, &request, &response);
     http_request_close(&request);
     DBG("response %d", response.m_httpResponseCode);
-    DBG("[%s]", response.payload.buf);
+    DBG("[%s]", P_VALUE(response.payload.buf));
     http_client_free(&cli);
     if (_state) {
       json_remove_from_parent(state_tree);
@@ -169,15 +167,15 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
     http_request_init(&request, PUT, uri);
 
     if ( _error ) {
-      http_request_set_payload(&request, json_encode(_error));
+      http_request_set_payload(&request, p_heap(json_encode(_error)));
       json_delete(_error);
     }
     sign_request(&request);
-    DBG("send: %s", request.payload.buf);
+    DBG("send: %s", P_VALUE(request.payload.buf));
     http_client_do(&cli, &request, &response);
     http_request_close(&request);
     DBG("response %d", response.m_httpResponseCode);
-    DBG("[%s]", response.payload.buf);
+    DBG("[%s]", P_VALUE(response.payload.buf));
     http_client_free(&cli);
     free(uri);
     if ( response.m_httpResponseCode != 200 ) {

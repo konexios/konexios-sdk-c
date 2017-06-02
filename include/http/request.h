@@ -67,7 +67,7 @@ typedef struct http_header_ http_query_t;
 
 typedef struct {
     uint32_t size;
-    uint8_t *buf;
+    property_t buf;
 } http_payload_t;
 
 typedef struct {
@@ -100,13 +100,12 @@ void http_request_add_query(http_request_t *req, property_t key, property_t valu
 void http_request_set_content_type(http_request_t *req, property_t value);
 http_header_t *http_request_first_header(http_request_t *req);
 http_header_t *http_request_next_header(http_request_t *req, http_header_t *head);
-void http_request_set_payload(http_request_t *req, char *payload);
-void http_request_set_payload_ptr(http_request_t *req, char *payload);
+void http_request_set_payload(http_request_t *req, property_t payload);
 
 void http_response_free(http_response_t *res);
 void http_response_add_header(http_response_t *req, property_t key, property_t value);
 void http_response_set_content_type(http_response_t *req, property_t value);
-void http_response_set_payload(http_response_t *req, char *payload, uint32_t size);
-void http_response_add_payload(http_response_t *req, char *payload, uint32_t size);
+void http_response_set_payload(http_response_t *req, property_t payload, uint32_t size);
+void http_response_add_payload(http_response_t *req, property_t payload, uint32_t size);
 
 #endif /* HTTPCLIENT_REQUEST_H_ */

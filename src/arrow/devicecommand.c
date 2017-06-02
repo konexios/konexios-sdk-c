@@ -69,7 +69,7 @@ static char *form_evetns_url(const char *hid, cmd_type ev) {
 typedef struct _event_data {
 	char *hid;
 	cmd_type ev;
-	char *payload;
+  char *payload; // FIXME property
 } event_data_t;
 
 static void _event_ans_init(http_request_t *request, void *arg) {
@@ -78,12 +78,12 @@ static void _event_ans_init(http_request_t *request, void *arg) {
   http_request_init(request, PUT, uri);
 	free(uri);
 	if ( data->payload ) {
-    http_request_set_payload(request, data->payload);
+    http_request_set_payload(request, p_stack(data->payload));
 	}
 }
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
-  event_data_t edata = {(char*)hid, ev, payload};
+  event_data_t edata = {(char*)hid, ev, (char *)payload};
 	int ret = __http_routine(_event_ans_init, &edata, NULL, NULL);
 	if ( ret < 0 ) {
 		DBG("Arrow Event answer failed...");

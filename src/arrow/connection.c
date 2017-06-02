@@ -12,7 +12,6 @@
 #include <http/client.h>
 #include <json/json.h>
 #include <json/telemetry.h>
-#include <arrow/net.h>
 #include <arrow/storage.h>
 #include <arrow/mem.h>
 #include <arrow/device_api.h>

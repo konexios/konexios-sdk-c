@@ -60,7 +60,7 @@ static void _device_type_list_init(http_request_t *request, void *arg) {
 static int _device_type_list_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("types[%s]", response->payload.buf);
+    DBG("types[%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -104,11 +104,7 @@ static void _device_type_create_init(http_request_t *request, void *arg) {
            "%s/types", ARROW_API_DEVICE_ENDPOINT);
   http_request_init(request, POST, uri);
   free(uri);
-
-  char *payload = device_type_serialize(dev_type);
-  http_request_set_payload(request, payload);
-  free(payload);
-
+  http_request_set_payload(request, p_heap(device_type_serialize(dev_type)));
 }
 
 //static int _device_type_create_proc(http_response_t *response, void *arg) {
@@ -140,9 +136,7 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
            "%s/types/%s", ARROW_API_DEVICE_ENDPOINT, ddt->dev->hid);
   http_request_init(request, PUT, uri);
   free(uri);
-  char *payload = device_type_serialize(ddt->type);
-  http_request_set_payload(request, payload);
-  free(payload);
+  http_request_set_payload(request, p_heap(device_type_serialize(ddt->type)));
 }
 
 int arrow_device_type_update(arrow_device_t *dev, device_type_t *dev_type) {

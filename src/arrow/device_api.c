@@ -11,13 +11,13 @@ static void _device_register_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
   arrow_prepare_device(gd->gateway, gd->device);
   char *payload = arrow_device_serialize(gd->device);
-  http_request_set_payload_ptr(request, payload);
+  http_request_set_payload(request, p_heap(payload));
   DBG("dev|%s|", payload);
 }
 
 static int _device_register_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  if ( arrow_device_parse(dev, (char*)response->payload.buf) < 0) {
+  if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
       DBG("device parse error");
       return -1;
   } else {
@@ -44,7 +44,7 @@ static void _device_find_by_init(http_request_t *request, void *arg) {
 static int _device_find_by_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("find[%s]", response->payload.buf);
+    DBG("find[%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -73,7 +73,7 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("find[%s]", response->payload.buf);
+    DBG("find[%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -95,14 +95,13 @@ static void _device_update_init(http_request_t *request, void *arg) {
   http_request_init(request, PUT, uri);
   free(uri);
   char *payload = arrow_device_serialize(gd->device);
-  http_request_set_payload(request, payload);
+  http_request_set_payload(request, p_heap(payload));
   DBG("dev|%s|", payload);
-  free(payload);
 }
 
 static int _device_update_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  if ( arrow_device_parse(dev, (char*)response->payload.buf) < 0) {
+  if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
       DBG("device parse error");
       return -1;
   } else {
@@ -138,7 +137,7 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
 
 static int _device_list_events_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("dev list events: %s", response->payload.buf);
+  DBG("dev list events: %s", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -166,7 +165,7 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
 
 static int _device_list_logs_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("dev list events: %s", response->payload.buf);
+  DBG("dev list events: %s", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -195,9 +194,7 @@ static void _device_errors_init(http_request_t *request, void *arg) {
   free(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, "error", json_mkstring(de->error));
-  char *_error_str = json_encode(error);
-  http_request_set_payload(request, _error_str);
-  free(_error_str);
+  http_request_set_payload(request, p_heap(json_encode(error)));
   json_delete(error);
 }
 

@@ -30,9 +30,9 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-	DBG("pay: {%s}\r\n", response->payload.buf);
+  DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
 
-	JsonNode *_main = json_decode((char*)response->payload.buf);
+  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
 	JsonNode *tmp;
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
@@ -91,13 +91,13 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
   char *payload = arrow_gateway_serialize(gateway);
   DBG("payload %s", payload);
-  http_request_set_payload_ptr(request, payload);
+  http_request_set_payload(request, p_heap(payload));
 }
 
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   DBG("response gate reg %d", response->m_httpResponseCode);
-  if ( arrow_gateway_parse(gateway, (char*)response->payload.buf) < 0 ) {
+  if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
       DBG("parse error");
       return -1;
   } else {
@@ -164,7 +164,7 @@ static void _gateway_find_init(http_request_t *request, void *arg) {
 static int _gateway_find_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("find [%s]", response->payload.buf);
+    DBG("find [%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -186,7 +186,7 @@ static void _gateway_find_by_init(http_request_t *request, void *arg) {
 static int _gateway_find_by_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("gw find [%s]", response->payload.buf);
+    DBG("gw find [%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -219,7 +219,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
 
 static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("gateway list logs: %s", response->payload.buf);
+  DBG("gateway list logs: %s", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -245,7 +245,7 @@ static void _gateway_devices_list_init(http_request_t *request, void *arg) {
 static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("devices [%s]", response->payload.buf);
+    DBG("devices [%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -276,16 +276,14 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   json_append_member(_main, "command", json_mkstring(gdc->cmd));
   json_append_member(_main, "deviceHid", json_mkstring(gdc->d_hid));
   json_append_member(_main, "payload", json_mkstring(gdc->payload));
-  char *str = json_encode(_main);
+  http_request_set_payload(request, p_heap(json_encode(_main)));
   json_delete(_main);
-  http_request_set_payload(request, str);
-  free(str);
 }
 
 static int _gateway_device_cmd_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("devices [%s]", response->payload.buf);
+    DBG("devices [%s]", P_VALUE(response->payload.buf));
   } else return -1;
   return 0;
 }
@@ -312,9 +310,7 @@ static void _gateway_errors_init(http_request_t *request, void *arg) {
   free(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, "error", json_mkstring(de->error));
-  char *_error_str = json_encode(error);
-  http_request_set_payload(request, _error_str);
-  free(_error_str);
+  http_request_set_payload(request, p_heap(json_encode(error)));
   json_delete(error);
 }
 
@@ -333,10 +329,7 @@ static void _gateway_update_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_DEVICE_ENDPOINT, P_VALUE(gate->hid) );
   http_request_init(request, PUT, uri);
   free(uri);
-  char *payload = arrow_gateway_serialize(gate);
-  http_request_set_payload(request, payload);
-  DBG("dev|%s|", payload);
-  free(payload);
+  http_request_set_payload(request, p_heap(arrow_gateway_serialize(gate)));
 }
 
 static int _gateway_update_proc(http_response_t *response, void *arg) {

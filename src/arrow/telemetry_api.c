@@ -68,10 +68,7 @@ static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
   request->is_chunked = 1;
-  char *tmp = telemetry_serialize(dt->device, dt->data);
-  DBG("set payload %s", tmp);
-  http_request_set_payload(request, tmp);
-  free(tmp);
+  http_request_set_payload(request, p_heap(telemetry_serialize(dt->device, dt->data)));
 }
 
 int arrow_send_telemetry(arrow_device_t *device, void *d) {
@@ -105,8 +102,7 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
     free(tmp);
   }
   DBG("main: %s", _main);
-  http_request_set_payload(request, _main);
-  free(_main);
+  http_request_set_payload(request, p_heap(_main));
 }
 
 int arrow_telemetry_batch_create(arrow_device_t *device, void *data, int size) {
@@ -135,7 +131,7 @@ static void _telemetry_find_by_application_hid_init(http_request_t *request, voi
 
 static int _telemetry_find_by_application_hid_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("telem appl: %s", response->payload.buf);
+  DBG("telem appl: %s", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -163,8 +159,8 @@ static void _telemetry_find_by_device_hid_init(http_request_t *request, void *ar
 static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *arg) {
   telemetry_response_data_list_t* t = (telemetry_response_data_list_t*)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("telem appl: %s", response->payload.buf);
-  JsonNode *_main = json_decode((char *)response->payload.buf);
+  DBG("telem appl: %s", P_VALUE(response->payload.buf));
+  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
   JsonNode *size  = json_find_member(_main, "size");
   if ( !size ) return -1;
   JsonNode *page  = json_find_member(_main, "page");
@@ -234,7 +230,7 @@ static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg)
 
 static int _telemetry_find_by_node_hid_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("telem appl: %s", response->payload.buf);
+  DBG("telem appl: %s", P_VALUE(response->payload.buf));
   return 0;
 }
 

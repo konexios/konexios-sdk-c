@@ -18,6 +18,7 @@
 #endif
 #include <arrow/mem.h>
 #include <arrow/utf8.h>
+#include <arrow/net.h>
 
 #define CONTENT_TYPE "Content-Type"
 
@@ -98,39 +99,37 @@ void http_request_close(http_request_t *req) {
   P_FREE(req->scheme);
   P_FREE(req->host);
   P_FREE(req->uri);
+  P_FREE(req->payload.buf);
+  req->payload.size = 0;
+  http_header_t *head = req->header;
+  http_header_t *head_next = NULL;
+  do {
+    if (head) {
+      head_next = head->next;
+      P_FREE(head->key);
+      P_FREE(head->value);
+      free(head);
+    }
+    head = head_next;
+  } while(head);
+  http_query_t *query = req->query;
+  http_query_t *query_next = NULL;
+  do {
+    if (query) {
+      query_next = query->next;
+      P_FREE(query->key);
+      P_FREE(query->value);
+      free(query);
+    }
+    query = query_next;
+  } while(query);
 
-    if (req->payload.buf) free(req->payload.buf);
-    req->payload.size = 0;
-    http_header_t *head = req->header;
-    http_header_t *head_next = NULL;
-    do {
-        if (head) {
-            head_next = head->next;
-            P_FREE(head->key);
-            P_FREE(head->value);
-            free(head);
-        }
-        head = head_next;
-    } while(head);
-
-    http_query_t *query = req->query;
-    http_query_t *query_next = NULL;
-    do {
-        if (query) {
-            query_next = query->next;
-            P_FREE(query->key);
-            P_FREE(query->value);
-            free(query);
-        }
-        query = query_next;
-    } while(query);
-
-    P_FREE(req->content_type.value);
-    P_FREE(req->content_type.key);
+  P_FREE(req->content_type.value);
+  P_FREE(req->content_type.key);
 }
 
 void http_response_free(http_response_t *res) {
-    if (res->payload.buf) free(res->payload.buf);
+    P_FREE(res->payload.buf);
     res->payload.size = 0;
     http_header_t *head = res->header;
     http_header_t *head_next = NULL;
@@ -190,37 +189,12 @@ http_header_t *http_request_next_header(http_request_t *req, http_header_t *head
     return head->next;
 }
 
-static int set_payload(http_payload_t *pay, const char *buf, uint32_t size) {
-    pay->size = size;
-    if ( pay->buf ) {
-        pay->buf = (uint8_t*)realloc(pay->buf, size+1);
-    } else {
-        pay->buf = (uint8_t*)malloc(size+1);
-    }
-    if ( !pay->buf ) {
-      DBG("[http] set_payload: fail");
-      return -1;
-    }
-    memcpy(pay->buf, buf, size);
-    pay->buf[pay->size] = '\0';
-    return 0;
-}
-
-static int set_payload_ptr(http_payload_t *pay, char *buf, uint32_t size) {
-    pay->size = size;
-    if ( pay->buf ) {
-        free(pay->buf);
-    }
-    pay->buf = (uint8_t*)buf;
-    return 0;
-}
-
-void http_request_set_payload(http_request_t *req, char *payload) {
-    set_payload(&req->payload, payload, strlen(payload));
-}
-
-void http_request_set_payload_ptr(http_request_t *req, char *payload) {
-    set_payload_ptr(&req->payload, payload, strlen(payload));
+void http_request_set_payload(http_request_t *req, property_t payload) {
+  req->payload.size = P_SIZE(payload);
+  P_COPY(req->payload.buf, payload);
+  if ( IS_EMPTY(req->payload.buf) ) {
+    DBG("[http] set_payload: fail");
+  }
 }
 
 void http_response_add_header(http_response_t *req, property_t key, property_t value) {
@@ -239,23 +213,36 @@ void http_response_set_content_type(http_response_t *res, property_t value) {
   P_COPY(res->content_type.value, value);
 }
 
-void http_response_set_payload(http_response_t *res, char *payload, uint32_t size) {
-    if ( !size ) size = strlen(payload);
-    set_payload(&res->payload, payload, size);
+void http_response_set_payload(http_response_t *res, property_t payload, uint32_t size) {
+  if ( ! size ) size = P_SIZE(payload);
+  res->payload.size = size;
+  P_COPY(res->payload.buf, payload);
+  if ( IS_EMPTY(res->payload.buf) ) {
+    DBG("[http] set_payload: fail");
+  }
 }
 
-void http_response_add_payload(http_response_t *res, char *payload, uint32_t size) {
-    if ( !size ) size = strlen(payload);
-    if ( !res->payload.buf ) {
-        set_payload(&res->payload, payload, size);
-        return;
-    } else {
+void http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
+  if ( !size ) size = P_SIZE(payload);
+  if ( IS_EMPTY(res->payload.buf) ) {
+    P_COPY(res->payload.buf, payload);
+    return;
+  } else {
+    switch(res->payload.buf.flags) {
+      case is_dynamic:
         res->payload.size += size;
-        uint8_t *old_buf = res->payload.buf;
-        res->payload.buf = (uint8_t*)malloc(res->payload.size+1);
-        memcpy(res->payload.buf, old_buf, res->payload.size - size);
-        free(old_buf);
-        memcpy(res->payload.buf + res->payload.size - size, payload, size);
-        res->payload.buf[res->payload.size] = '\0';
+        res->payload.buf.value = realloc(res->payload.buf.value, res->payload.size);
+        if ( IS_EMPTY(res->payload.buf) ) {
+          DBG("[add payload] out of memory ERROR");
+          return;
+        }
+        memcpy(res->payload.buf.value + res->payload.size - size, payload.value, size);
+        P_VALUE(res->payload.buf)[res->payload.size] = '\0';
+      break;
+      default:
+        // error
+        return;
     }
+    if ( payload.flags == is_dynamic ) P_FREE(payload);
+  }
 }

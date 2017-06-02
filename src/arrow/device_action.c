@@ -26,9 +26,8 @@ static void _device_action_create_init(http_request_t *request, void *arg) {
   json_append_member(_main, "systemName", json_mkstring(dm->model->systemName));
   char *payload = json_encode(_main);
   json_minify(payload);
+  http_request_set_payload(request, p_heap(payload));
   json_delete(_main);
-  http_request_set_payload(request, payload);
-  free(payload);
 }
 
 int arrow_create_device_action(arrow_device_t *dev, dev_action_model_t *model) {
@@ -74,7 +73,7 @@ static int _device_action_list_process(http_response_t *response, void *arg) {
   DBG("dev list", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
-  DBG("[%s]", response->payload.buf);
+  DBG("[%s]", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -100,7 +99,7 @@ static int _action_type_list_process(http_response_t *response, void *arg) {
   DBG("act list", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
-  DBG("[%s]", response->payload.buf);
+  DBG("[%s]", P_VALUE(response->payload.buf));
   return 0;
 }
 
@@ -130,9 +129,8 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
   json_append_member(_main, "systemName", json_mkstring(dm->model->systemName));
   char *payload = json_encode(_main);
   json_minify(payload);
+  http_request_set_payload(request, p_heap(payload));
   json_delete(_main);
-  http_request_set_payload(request, payload);
-  free(payload);
 }
 
 

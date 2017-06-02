@@ -141,7 +141,7 @@ static int send_start(http_client_t *cli, http_request_t *req) {
 static int send_header(http_client_t *cli, http_request_t *req) {
     char *buf = http_buffer;
     int ret;
-    if ( req->payload.buf && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
         if ( req->is_chunked ) {
             ret = client_send("Transfer-Encoding: chunked\r\n", 0, cli);
         } else {
@@ -169,9 +169,9 @@ static int send_header(http_client_t *cli, http_request_t *req) {
 }
 
 static int send_payload(http_client_t *cli, http_request_t *req) {
-    if ( req->payload.buf && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
         if ( req->is_chunked ) {
-            char *data = (char*)req->payload.buf;
+            char *data = P_VALUE(req->payload.buf);
             int len = (int)req->payload.size;
             int trData = 0;
             while ( len >= 0 ) {
@@ -187,7 +187,7 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
             }
             return 0;
         } else {
-          int ret = client_send(req->payload.buf, req->payload.size, cli);
+          int ret = client_send(P_VALUE(req->payload.buf), req->payload.size, cli);
           return ret;
         }
     }
@@ -299,7 +299,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         return -1;
     }
 
-    if ( req->payload.buf ) {
+    if ( !IS_EMPTY(req->payload.buf) ) {
         if ( send_payload(cli, req) < 0 ) {
             DBG("send payload fail");
             return -1;
@@ -431,7 +431,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 buf[trfLen] = 0;
             }
             HTTP_DBG("add payload{%d:%s}", need_to_read, buf);
-            http_response_add_payload(res, buf, need_to_read);
+            http_response_add_payload(res, p_stack(buf), need_to_read);
             if ( trfLen == need_to_read ) {
                 trfLen = 0;
                 buf[0] = 0;
@@ -443,6 +443,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         }
     } while(1);
 
-    HTTP_DBG("body{%s}", res->payload.buf);
+    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
 }
