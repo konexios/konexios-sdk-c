@@ -872,7 +872,7 @@ enum Misc {
     ENCRYPT_LEN     = 512,      /* allow 4096 bit static buffer */
     SIZEOF_SENDER   =  4,       /* clnt or srvr           */
     FINISHED_SZ     = 36,       /* MD5_DIGEST_SIZE + SHA_DIGEST_SIZE */
-    MAX_RECORD_SIZE = 4096,    /* 2^14, max size by standard */
+    MAX_RECORD_SIZE = 3596,    /* 2^14, max size by standard */
     MAX_MSG_EXTRA   = 38 + MAX_DIGEST_SIZE,
                                 /* max added to msg, mac + pad  from */
                                 /* RECORD_HEADER_SZ + BLOCK_SZ (pad) + Max
