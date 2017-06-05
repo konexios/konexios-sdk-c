@@ -54,7 +54,7 @@ int arrow_initialize_routine(void) {
     msleep(ARROW_RETRY_DELAY);
   }
   _init_done = 1;
-  do_close_session();
+  if ( !has_cmd_handler() ) do_close_session();
 
   return 0;
 }
