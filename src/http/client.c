@@ -369,9 +369,11 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             } else if( !strcmp(key, "Content-Type") ) {
                 http_response_set_content_type(res, property(value, is_stack));
             } else {
+#if defined(HTTP_PARSE_HEADER)
                 http_response_add_header(res,
-                                         property(key, is_stack),
-                                         property(value, is_stack));
+                                         p_stack(key),
+                                         p_stack(value);
+#endif
             }
             memmove(buf, crlfPtr+2, trfLen - (uint32_t)(crlfPos + 2) + 1);
             trfLen -= (uint32_t)(crlfPos + 2);

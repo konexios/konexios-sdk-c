@@ -105,11 +105,11 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
 //    arrow_device_add_property(device, "prop1", "value1");
 //    arrow_device_add_property(device, "prop2", "value2");
   if ( IS_EMPTY(gateway->uid) ) return -1;
-  char *uid = (char*)malloc(strlen(P_VALUE(gateway->uid))+sizeof(DEVICE_UID_SUFFIX)+2);
+  CREATE_CHUNK(uid, P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
   strcpy(uid, P_VALUE(gateway->uid) );
   strcat(uid, "-");
   strcat(uid, DEVICE_UID_SUFFIX);
   arrow_device_add_uid(device, uid);
-  free(uid);
+  FREE_CHUNK(uid);
   return 0;
 }

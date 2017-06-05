@@ -109,13 +109,13 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_set_software_version(gateway, GATEWAY_SOFTWARE_VERSION);
   arrow_gateway_set_type(gateway, GATEWAY_TYPE);
   arrow_gateway_set_sdkVersion(gateway, xstr(SDK_VERSION));
-  char *uid = (char*)malloc(strlen(GATEWAY_UID_PREFIX) + 20);
+  char *uid = (char*)malloc(sizeof(GATEWAY_UID_PREFIX) + 14); // 6*2 for mac + 2
   strcpy(uid, GATEWAY_UID_PREFIX);
   strcat(uid, "-");
-  uint32_t uidlen = strlen(uid);
+  uint32_t uidlen = sizeof(GATEWAY_UID_PREFIX);
   char mac[7];
   get_mac_address(mac);
-  int i;
+  int i = 0;
   for(i=0; i<6; i++) sprintf(uid+uidlen+2*i, "%02x", (uint8_t)(mac[i]));
   uidlen += 12;
   uid[uidlen] = '\0';

@@ -84,7 +84,7 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   DBG("scheme: %s", P_VALUE(req->scheme));
   DBG("host: %s", P_VALUE(req->host));
   DBG("port: %d", req->port);
-  DBG("uri: %s", req->uri);
+  DBG("uri: %s", P_VALUE(req->uri));
   DBG("res: %d", res);
 
   req->header = NULL;
@@ -144,7 +144,6 @@ void http_response_free(http_response_t *res) {
     } while(head);
     P_FREE(res->content_type.value);
     P_FREE(res->content_type.key);
-
 }
 
 void http_request_add_header(http_request_t *req, property_t key, property_t value) {
