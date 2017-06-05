@@ -44,9 +44,11 @@ void sign_request(http_request_t *req) {
     http_request_add_header(req,
                             p_const("x-arrow-version"),
                             p_const("1"));
+
     sign(signature, ts, P_VALUE(req->meth),
          P_VALUE(req->uri), canonicalQuery,
          P_VALUE(req->payload.buf), "1");
+
     if (canonicalQuery) free(canonicalQuery);
     http_request_add_header(req,
                             p_const("x-arrow-signature"),

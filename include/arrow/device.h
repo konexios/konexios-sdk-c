@@ -12,7 +12,7 @@
 #include "json/json.h"
 #include <arrow/gateway.h>
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
 #if defined(__XCC__)
   struct json_t  *main;
   struct json_t *info;
@@ -22,8 +22,10 @@ typedef struct {
     JsonNode *info;
     JsonNode *prop;
 #endif
-    char *hid;
-    char *eid;
+    property_t hid;
+#if defined(__IBM__)
+    property_t eid;
+#endif
 } arrow_device_t;
 
 
@@ -40,8 +42,10 @@ void arrow_device_add_gateway_hid(arrow_device_t *dev, const char *name);
 void arrow_device_add_type(arrow_device_t *dev, const char *name);
 void arrow_device_add_uid(arrow_device_t *dev, const char *name);
 
-void arrow_device_set_hid(arrow_device_t *dev, const char *hid);
-void arrow_device_set_eid(arrow_device_t *dev, const char *eid);
+P_ADD_PROTO(arrow_device, hid)
+#if defined(__IBM__)
+P_ADD_PROTO(arrow_device, eid)
+#endif
 void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value);
 void arrow_device_add_property(arrow_device_t *dev, const char *key, const char *value);
 

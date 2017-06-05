@@ -149,12 +149,7 @@ void http_response_free(http_response_t *res) {
 
 void http_request_add_header(http_request_t *req, property_t key, property_t value) {
     http_header_t *head = req->header;
-    while( head && head->next ) {
-//        if ( head ) {
-//            DBG("--:{%s}", head->value);
-//        }
-        head = head->next;
-    }
+    while( head && head->next ) head = head->next;
     http_header_t *head_new = (http_header_t *)malloc(sizeof(http_header_t));
     head_new->key = key;
     head_new->value = value;

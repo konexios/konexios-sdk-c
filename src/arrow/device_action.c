@@ -1,6 +1,9 @@
 #include "arrow/device_action.h"
 #include <arrow/connection.h>
+#include <arrow/mem.h>
 #include <debug.h>
+
+#define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
 
 struct _dev_model {
   arrow_device_t *device;
@@ -9,13 +12,13 @@ struct _dev_model {
 
 static void _device_action_create_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
+  CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
   strcat(uri, "/");
-  strcat(uri, dm->device->hid);
+  strcat(uri, P_VALUE(dm->device->hid));
   strcat(uri, "/actions");
   http_request_init(request, POST, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, "criteria", json_mkstring(dm->model->criteria));
   json_append_member(_main, "description", json_mkstring(dm->model->description));
@@ -42,11 +45,12 @@ int arrow_create_device_action(arrow_device_t *dev, dev_action_model_t *model) {
 
 static void _device_action_delete_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT, dm->device->hid, dm->model->index);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(dm->device->hid), dm->model->index);
   http_request_init(request, DELETE, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 int arrow_delete_device_action(arrow_device_t *dev, dev_action_model_t *model) {
@@ -61,11 +65,12 @@ int arrow_delete_device_action(arrow_device_t *dev, dev_action_model_t *model) {
 
 static void _device_action_list_init(http_request_t *request, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/actions", ARROW_API_DEVICE_ENDPOINT, dev->hid);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/actions", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(dev->hid));
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 static int _device_action_list_process(http_response_t *response, void *arg) {
@@ -87,11 +92,11 @@ int arrow_list_device_action(arrow_device_t *dev) {
 
 static void _action_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
            "%s/actions/types", ARROW_API_DEVICE_ENDPOINT);
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 static int _action_type_list_process(http_response_t *response, void *arg) {
@@ -114,11 +119,12 @@ int arrow_list_action_type(void) {
 
 static void _device_action_update_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT, dm->device->hid, dm->model->index);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(dm->device->hid), dm->model->index);
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, "criteria", json_mkstring(dm->model->criteria));
   json_append_member(_main, "description", json_mkstring(dm->model->description));

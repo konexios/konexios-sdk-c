@@ -19,14 +19,18 @@ void arrow_device_init(arrow_device_t *dev) {
     json_append_member(dev->main, "info", dev->info);
     dev->prop = json_mkobject();
     json_append_member(dev->main, "properties", dev->prop);
-    dev->hid = NULL;
-    dev->eid = NULL;
+    P_CLEAR(dev->hid);
+#if defined(__IBM__)
+    P_CLEAR(dev->eid);
+#endif
 }
 
 void arrow_device_free(arrow_device_t *dev) {
   json_delete(dev->main);
-  if ( dev->hid ) free(dev->hid);
-  if ( dev->eid ) free(dev->eid);
+  P_FREE(dev->hid);
+#if defined(__IBM__)
+  P_FREE(dev->eid);
+#endif
 }
 
 #define DEVICE_ADD_PROPERTY(key, name) \
@@ -56,8 +60,10 @@ DEVICE_ADD_PROPERTY("gatewayHid", gateway_hid)
 DEVICE_ADD_PROPERTY("type", type)
 DEVICE_ADD_PROPERTY("uid", uid)
 
-DEVICE_EXT_PROPERTY(hid)
-DEVICE_EXT_PROPERTY(eid)
+P_ADD(arrow_device, hid)
+#if defined(__IBM__)
+P_ADD(arrow_device, eid)
+#endif
 
 void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value) {
     json_append_member(dev->info, key, json_mkstring(value));
@@ -78,11 +84,11 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, "hid");
     if ( !hid || hid->tag != JSON_STRING ) return -1;
-    arrow_device_set_hid(dev, hid->string_);
+    arrow_device_set_hid_dup(dev, hid->string_);
 #if defined(__IBM__)
     JsonNode *eid = json_find_member(_main, "externalId");
     if ( !eid || eid->tag != JSON_STRING ) return -1;
-    arrow_device_set_eid(dev, eid->string_);
+    arrow_device_set_eid_dup(dev, eid->string_);
 #endif
     json_delete(_main);
     return 0;

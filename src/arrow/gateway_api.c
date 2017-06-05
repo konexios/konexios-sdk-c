@@ -4,24 +4,16 @@
 
 #define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
 
-//#define USE_HEAP
-
 static void _gateway_config_init(http_request_t *request, void *arg) {
 	arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-#if defined(USE_HEAD)
-	char *uri = (char *)malloc(URI_LEN);
-#else
-	char uri[URI_LEN];
-#endif
+  CREATE_CHUNK(uri, URI_LEN);
 	strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
 	strcat(uri, "/");
   strcat(uri, P_VALUE(gateway->hid) );
 	strcat(uri, "/config");
 
 	http_request_init(request, GET, uri);
-#if defined(USE_HEAD)
-	free(uri);
-#endif
+  FREE_CHUNK(uri);
 }
 
 static int _gateway_config_proc(http_response_t *response, void *arg) {
@@ -117,13 +109,13 @@ int arrow_register_gateway(arrow_gateway_t *gateway) {
 
 static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  char *uri = (char *)malloc(sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50);
+  CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(gateway->hid) );
   strcat(uri, "/heartbeat");
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 int arrow_gateway_heartbeat(arrow_gateway_t *gateway) {
@@ -136,13 +128,13 @@ int arrow_gateway_heartbeat(arrow_gateway_t *gateway) {
 
 static void _gateway_checkin_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  char *uri = (char *)malloc(sizeof(ARROW_API_GATEWAY_ENDPOINT) + strlen(P_VALUE(gateway->hid)) + 20);
+  CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(gateway->hid));
   strcat(uri, "/checkin");
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 int arrow_gateway_checkin(arrow_gateway_t *gateway) {
@@ -155,10 +147,10 @@ int arrow_gateway_checkin(arrow_gateway_t *gateway) {
 
 static void _gateway_find_init(http_request_t *request, void *arg) {
   char *hid = (char *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_GATEWAY_ENDPOINT, hid);
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 static int _gateway_find_proc(http_response_t *response, void *arg) {
@@ -209,10 +201,10 @@ typedef struct _gate_param_ {
 
 static void _gateway_list_logs_init(http_request_t *request, void *arg) {
   gate_param_t *dp = (gate_param_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,"%s/%s/logs", ARROW_API_GATEWAY_ENDPOINT, P_VALUE(dp->gate->hid) );
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   find_by_t *params = dp->params;
   ADD_FIND_BY_TO_REQ(params, request);
 }
@@ -236,10 +228,10 @@ int arrow_gateway_logs_list(arrow_gateway_t *gateway, int n, ...) {
 
 static void _gateway_devices_list_init(http_request_t *request, void *arg) {
   char *hid = (char *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s/devices", ARROW_API_GATEWAY_ENDPOINT, hid);
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
@@ -267,11 +259,11 @@ typedef struct _gate_dev_cmd_ {
 
 static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   gate_dev_cmd_t *gdc = (gate_dev_cmd_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s/devices/%s/actions/command", ARROW_API_GATEWAY_ENDPOINT,
            gdc->g_hid, gdc->d_hid);
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, "command", json_mkstring(gdc->cmd));
   json_append_member(_main, "deviceHid", json_mkstring(gdc->d_hid));
@@ -304,10 +296,10 @@ typedef struct _gateway_error {
 
 static void _gateway_errors_init(http_request_t *request, void *arg) {
   gateway_error_t *de = (gateway_error_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s/errors", ARROW_API_GATEWAY_ENDPOINT, P_VALUE(de->gateway->hid) );
   http_request_init(request, POST, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, "error", json_mkstring(de->error));
   http_request_set_payload(request, p_heap(json_encode(error)));
@@ -325,10 +317,10 @@ int arrow_gateway_error(arrow_gateway_t *gateway, const char *error) {
 
 static void _gateway_update_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gate = (arrow_gateway_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_DEVICE_ENDPOINT, P_VALUE(gate->hid) );
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   http_request_set_payload(request, p_heap(arrow_gateway_serialize(gate)));
 }
 

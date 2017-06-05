@@ -1,6 +1,8 @@
 #include "arrow/device_api.h"
 #include <debug.h>
 
+#define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
+
 typedef struct _gate_dev {
   arrow_gateway_t *gateway;
   arrow_device_t *device;
@@ -21,7 +23,7 @@ static int _device_register_proc(http_response_t *response, void *arg) {
       DBG("device parse error");
       return -1;
   } else {
-      DBG("device hid: %s", dev->hid);
+      DBG("device hid: %s", P_VALUE(dev->hid));
   }
   return 0;
 }
@@ -63,11 +65,11 @@ int arrow_device_find_by(int n, ...) {
 
 static void _device_find_by_hid_init(http_request_t *request, void *arg) {
   char *hid = (char *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
            "%s/%s", ARROW_API_DEVICE_ENDPOINT, hid);
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
 }
 
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
@@ -89,11 +91,11 @@ int arrow_device_find_by_hid(const char *hid) {
 
 static void _device_update_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s", ARROW_API_DEVICE_ENDPOINT, gd->device->hid);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s", ARROW_API_DEVICE_ENDPOINT, P_VALUE(gd->device->hid));
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   char *payload = arrow_device_serialize(gd->device);
   http_request_set_payload(request, p_heap(payload));
   DBG("dev|%s|", payload);
@@ -105,7 +107,7 @@ static int _device_update_proc(http_response_t *response, void *arg) {
       DBG("device parse error");
       return -1;
   } else {
-      DBG("device hid: %s", dev->hid);
+      DBG("device hid: %s", P_VALUE(dev->hid));
   }
   return 0;
 }
@@ -126,11 +128,12 @@ typedef struct _dev_params_ {
 
 static void _device_list_events_init(http_request_t *request, void *arg) {
   dev_param_t *dp = (dev_param_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/events", ARROW_API_DEVICE_ENDPOINT, dp->device->hid);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/events", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(dp->device->hid));
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   find_by_t *params = dp->params;
   ADD_FIND_BY_TO_REQ(params, request);
 }
@@ -154,11 +157,12 @@ int arrow_list_device_events(arrow_device_t *device, int n, ...) {
 
 static void _device_list_logs_init(http_request_t *request, void *arg) {
   dev_param_t *dp = (dev_param_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/logs", ARROW_API_DEVICE_ENDPOINT, dp->device->hid);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/logs", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(dp->device->hid));
   http_request_init(request, GET, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   find_by_t *params = dp->params;
   ADD_FIND_BY_TO_REQ(params, request);
 }
@@ -187,11 +191,12 @@ typedef struct _device_error {
 
 static void _device_errors_init(http_request_t *request, void *arg) {
   device_error_t *de = (device_error_t *)arg;
-  char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
-  snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/%s/errors", ARROW_API_DEVICE_ENDPOINT, de->device->hid);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN,
+           "%s/%s/errors", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(de->device->hid));
   http_request_init(request, POST, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, "error", json_mkstring(de->error));
   http_request_set_payload(request, p_heap(json_encode(error)));

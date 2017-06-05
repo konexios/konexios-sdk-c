@@ -30,8 +30,7 @@ int arrow_state_mqtt_stop(void) {
 
 int arrow_state_mqtt_run(arrow_device_t *device) {
   if ( !_device_hid ) {
-    _device_hid = malloc(strlen(device->hid)+1);
-    strcpy(_device_hid, device->hid);
+    _device_hid = strdup(P_VALUE(device->hid));
   }
   return arrow_state_mqtt_is_running();
 }
@@ -41,10 +40,10 @@ int arrow_get_state(arrow_device_t *device) {
     http_response_t response;
     http_request_t request;
 
-    char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + strlen(device->hid) + 10);
+    char *uri = (char *)malloc(sizeof(ARROW_API_DEVICE_ENDPOINT) + P_SIZE(device->hid) + 10);
     strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
     strcat(uri, "/");
-    strcat(uri, device->hid);
+    strcat(uri, P_VALUE(device->hid));
     strcat(uri, "/state");
     http_client_init( &cli, 1 );
     http_request_init(&request, GET, uri);
@@ -74,10 +73,10 @@ static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
     http_request_t request;
     JsonNode *_state = NULL;
 
-    char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + strlen(device->hid) + 20);
+    char *uri = (char *)malloc(sizeof(ARROW_API_DEVICE_ENDPOINT) + P_SIZE(device->hid) + 20);
     strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
     strcat(uri, "/");
-    strcat(uri, device->hid);
+    strcat(uri, P_VALUE(device->hid));
     strcat(uri, "/state/");
     switch( post_type ) {
       case st_request:
@@ -141,7 +140,7 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
     JsonNode *_error = NULL;
 
     http_client_init( &cli, 1 );
-    char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + strlen(device_hid) + strlen(trans_hid) + 50);
+    char *uri = (char *)malloc(sizeof(ARROW_API_DEVICE_ENDPOINT) + strlen(device_hid) + strlen(trans_hid) + 50);
     strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
     strcat(uri, "/");
     strcat(uri, device_hid);

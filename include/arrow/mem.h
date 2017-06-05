@@ -47,7 +47,7 @@ enum prop_flags {
   is_const    = 0x2
 };
 
-typedef struct _property {
+typedef struct __attribute__((__packed__)) _property {
   char *value;
   uint8_t flags;
 #if defined(__cplusplus)
@@ -111,5 +111,18 @@ void type##_set_##field(type##_t *date, const char *field) { \
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )
 #define P_VALUE(field) ( (field).value )
 #define P_SIZE(field) ( (field).value ? strlen((field).value) : 0 )
+#define P_CLEAR(field) memset(&(field), 0x0, sizeof(property_t))
+
+#if defined(USE_HEAP)
+#define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50)
+#else
+#define CREATE_CHUNK(ptr, size) char ptr[size]
+#endif
+
+# if defined(USE_HEAP)
+#define FREE_CHUNK(ptr) free(uri)
+#else
+#define FREE_CHUNK(ptr)
+# endif
 
 #endif  // _ARROW_KRONOS_C_SDK_MEM_H_

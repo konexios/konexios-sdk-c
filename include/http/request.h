@@ -54,7 +54,8 @@ enum Scheme {
   Scheme_count
 };
 
-typedef struct http_header_ {
+
+typedef struct __attribute__((__packed__)) http_header_ {
     property_t key;
     property_t value;
     struct http_header_ *next;
@@ -65,20 +66,20 @@ P_ADD_PROTO(http_header, value)
 
 typedef struct http_header_ http_query_t;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
     uint32_t size;
     property_t buf;
 } http_payload_t;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
     property_t meth;
     property_t scheme;
     property_t host;
     property_t uri;
     uint16_t port;
-    int is_corrupt;
-    int is_cipher;
-    int is_chunked;
+    int8_t is_corrupt;
+    int8_t is_cipher;
+    int8_t is_chunked;
     http_header_t *header;
     http_header_t content_type;
     http_query_t *query;

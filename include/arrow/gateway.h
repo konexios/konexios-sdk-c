@@ -13,7 +13,7 @@
 #include <config.h>
 #include <json/json.h>
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
   property_t name;
   property_t uid;
   property_t os;
@@ -32,7 +32,7 @@ enum account_type {
   Azure
 };
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
   int type;    // enum account_type
 #if defined(__IBM__)
   property_t organizationId;

@@ -133,7 +133,8 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
   device_device_type_t *ddt = (device_device_type_t *)arg;
   char *uri = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50);
   snprintf(uri, strlen(ARROW_API_DEVICE_ENDPOINT) + 50,
-           "%s/types/%s", ARROW_API_DEVICE_ENDPOINT, ddt->dev->hid);
+           "%s/types/%s", ARROW_API_DEVICE_ENDPOINT,
+           P_VALUE(ddt->dev->hid));
   http_request_init(request, PUT, uri);
   free(uri);
   http_request_set_payload(request, p_heap(device_type_serialize(ddt->type)));
