@@ -229,12 +229,12 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     memmove(buf, buf+crlfPos+2, *len - (uint32_t)(crlfPos + 2) + 1 ); //Be sure to move NULL-terminating char as well
     *len -= (uint32_t)(crlfPos + 2);
 
-    if( (res->m_httpResponseCode < 200) || (res->m_httpResponseCode >= 300) ) {
+//    if( (res->m_httpResponseCode < 200) || (res->m_httpResponseCode >= 300) ) {
         //Did not return a 2xx code; TODO fetch headers/(&data?) anyway and implement a mean of writing/reading headers
         DBG("Response code %d", res->m_httpResponseCode);
-        HTTP_DBG("Protocol error");
-        return -1;
-    }
+//        HTTP_DBG("Protocol error");
+//        return -1;
+//    }
     cli->response_code = res->m_httpResponseCode;
     return 0;
 }
