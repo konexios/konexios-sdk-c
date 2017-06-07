@@ -23,8 +23,8 @@ typedef int (*get_data_cb)(void *);
 typedef void(*response_init_f)(http_request_t *request, void *arg);
 typedef int (*response_proc_f)(http_response_t *response, void *arg);
 
-void do_close_session();
-void dont_close_session();
+void do_close_session(void);
+void dont_close_session(void);
 
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc);

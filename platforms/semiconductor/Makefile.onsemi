@@ -80,9 +80,10 @@ ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
 DEFINES += -D__semiconductor__ -DDEBUG
 ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 -Os 
-# -Wl,--wrap=calloc  #-Wl,--wrap=free
-# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror -Wpedantic
-# -Werror -Wpedantic
+# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration 
+# -Werror -Wpedantic 
+# -Wl,--wrap=calloc  
+# -Wl,--wrap=free
 
 #$(warning "$(PROJECT)")
 #$(warning "$(LIB_DIR)")

@@ -16,6 +16,7 @@
 # include <string.h>
 # include <stdlib.h>
 # include <stdio.h>
+# include <string.h>
 # include <strings.h>
 #endif
 #if defined(__XCC__)
@@ -70,11 +71,11 @@ typedef struct __attribute__((__packed__)) _property {
   (prop).value = NULL; \
 }
 
-#define P_ADD_PROTO(type, name) \
-void type##_set_##name##_dup(type##_t *gate, const char *name); \
+#define P_ADD_PROTO(type, field) \
+void type##_set_##field##_dup(type##_t *date, const char *field); \
 void type##_set_##field##_copy(type##_t *date, const char *field, int n); \
-void type##_set_##name##_own(type##_t *gate, const char *name); \
-void type##_set_##name(type##_t *gate, const char *name);
+void type##_set_##field##_own(type##_t *date, const char *field); \
+void type##_set_##field(type##_t *date, const char *field);
 
 #define P_ADD(type, field) \
 void type##_set_##field##_dup(type##_t *date, const char *field) { \
@@ -101,11 +102,21 @@ void type##_set_##field(type##_t *date, const char *field) { \
 
 #define P_COPY(dst, src) \
 { \
+  P_FREE(dst); \
   switch((src).flags) { \
     case is_stack:    (dst) = property(strdup((src).value), is_dynamic); break; \
     case is_dynamic:  (dst) = property((src).value, is_dynamic); break; \
     case is_const:    (dst) = property((src).value, is_const); break; \
   } \
+}
+
+#define P_NCOPY(dst, str, n) \
+{ \
+	P_FREE(dst); \
+	dst.value = (char*)malloc(n+1); \
+	strncpy(dst.value, str, n); \
+	dst.value[n] = 0x0; \
+	dst.flags = is_dynamic; \
 }
 
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )

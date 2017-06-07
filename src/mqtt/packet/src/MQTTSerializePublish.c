@@ -18,6 +18,7 @@
 #include <mqtt/packet/StackTrace.h>
 #include "mqtt/packet/MQTTPacket.h"
 #include "mqtt/packet/MQTTSubscribe.h"
+#include "mqtt/packet/MQTTPublish.h"
 #include <string.h>
 
 
@@ -134,7 +135,7 @@ exit:
   * @param packetid integer - the MQTT packet identifier
   * @return serialized length, or error if 0
   */
-static int __attribute__((used)) MQTTSerialize_puback(unsigned char* buf, int buflen, unsigned short packetid)
+int MQTTSerialize_puback(unsigned char* buf, int buflen, unsigned short packetid)
 {
 	return MQTTSerialize_ack(buf, buflen, PUBACK, 0, packetid);
 }
@@ -148,7 +149,7 @@ static int __attribute__((used)) MQTTSerialize_puback(unsigned char* buf, int bu
   * @param packetid integer - the MQTT packet identifier
   * @return serialized length, or error if 0
   */
-static int __attribute__((used)) MQTTSerialize_pubrel(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid)
+int MQTTSerialize_pubrel(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid)
 {
 	return MQTTSerialize_ack(buf, buflen, PUBREL, dup, packetid);
 }
@@ -161,7 +162,7 @@ static int __attribute__((used)) MQTTSerialize_pubrel(unsigned char* buf, int bu
   * @param packetid integer - the MQTT packet identifier
   * @return serialized length, or error if 0
   */
-static int __attribute__((used)) MQTTSerialize_pubcomp(unsigned char* buf, int buflen, unsigned short packetid)
+int MQTTSerialize_pubcomp(unsigned char* buf, int buflen, unsigned short packetid)
 {
 	return MQTTSerialize_ack(buf, buflen, PUBCOMP, 0, packetid);
 }

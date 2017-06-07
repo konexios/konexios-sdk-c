@@ -9,6 +9,10 @@
 #ifndef KRONOS_C_SDK_ARROW_NET_H_
 #define KRONOS_C_SDK_ARROW_NET_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 int get_mac_address(char *mac);
 
 #if defined(_ARIS_)
@@ -21,6 +25,10 @@ int get_mac_address(char *mac);
 //# include <type>
 #elif defined(__linux__)
 # include <stdlib.h>
+#endif
+
+#if defined(__cplusplus)
+}
 #endif
 
 #endif  // KRONOS_C_SDK_ARROW_NET_H_

@@ -20,11 +20,11 @@
 static int __close_session = 1;
 static int __newsession = 1;
 
-void dont_close_session() {
+void dont_close_session(void) {
 	__close_session = 0;
 }
 
-void do_close_session() {
+void do_close_session(void) {
 	__close_session = 1;
 }
 

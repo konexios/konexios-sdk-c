@@ -26,21 +26,21 @@ static const char *METH_str[] = { "GET", "POST", "PUT", "DELETE", "HEAD"};
 static const char *Scheme_str[] = { "http", "https" };
 
 #define CMP_INIT(type) \
-int cmp_##type(const char *str) { \
+static int __attribute__((used)) cmp_##type(const char *str) { \
   int i; \
   for(i=0; i<type##_count; i++) { \
     if ( strcmp(str, type##_str[i]) == 0 ) return i; \
   } \
   return -1; \
 } \
-int cmp_n_##type(const char *str, int n) { \
+static int __attribute__((used)) cmp_n_##type(const char *str, int n) { \
   int i; \
   for(i=0; i<type##_count; i++) { \
     if ( strncmp(str, type##_str[i], n) == 0 ) return i; \
   } \
   return -1; \
 } \
-char *get_##type(int i) { \
+static char * __attribute__((used)) get_##type(int i) { \
     if ( i>=0 && i<type##_count ) { \
         return (char*)type##_str[i]; \
     } \
@@ -53,32 +53,27 @@ CMP_INIT(Scheme)
 P_ADD(http_header, key)
 P_ADD(http_header, value)
 
-P_ADD(http_request, meth)
-P_ADD(http_request, scheme)
-P_ADD(http_request, host)
-P_ADD(http_request, uri)
-
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
-  http_request_set_meth(req, get_METH(meth));
+  P_COPY(req->meth, p_const(get_METH(meth)));
   char *sch_end = strstr((char*)url, "://");
   if ( !sch_end ) { req->is_corrupt = 1; return; }
   int sch = cmp_n_Scheme(url, (int)(sch_end - url));
-  http_request_set_scheme(req, get_Scheme(sch));
+  P_COPY(req->scheme, p_const(get_Scheme(sch)));
   req->is_cipher = sch;
 
   char *host_start = sch_end + 3; //sch_end + strlen("://");
   char *host_end = strstr(host_start, ":");
   if ( !host_end ) { req->is_corrupt = 1; return; }
-  http_request_set_host_copy(req, host_start, (host_end - host_start));
+  P_NCOPY(req->host, host_start, (host_end - host_start));
 
-  unsigned long port = 0;
+  uint16_t port = 0;
   int res = sscanf(host_end+1, "%8hu", &port);
   if ( res!=1 ) { req->is_corrupt = 1; return; }
   req->port = port;
 
   char *uri_start = strstr(host_end+1, "/");
-  http_request_set_uri_dup(req, uri_start);
+  P_COPY(req->uri, p_stack(uri_start));
 
   DBG("meth: %s", P_VALUE(req->meth) );
   DBG("scheme: %s", P_VALUE(req->scheme));

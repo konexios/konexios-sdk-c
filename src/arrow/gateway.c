@@ -8,6 +8,7 @@
 
 #include "arrow/gateway.h"
 #include <unint.h>
+#include <arrow/net.h>
 #if defined(__USE_STD__)
 #include <stdlib.h>
 #endif
@@ -91,11 +92,11 @@ void arrow_gateway_config_init(arrow_gateway_config_t *config) {
 
 void arrow_gateway_config_free(arrow_gateway_config_t *config) {
 #if defined(__IBM__)
-  FREE_PROP ( config->authMethod );
-  FREE_PROP ( config->authToken );
-  FREE_PROP ( config->gatewayId );
-  FREE_PROP ( config->gatewayType );
-  FREE_PROP ( config->organizationId );
+	P_FREE ( config->authMethod );
+	P_FREE ( config->authToken );
+	P_FREE ( config->gatewayId );
+	P_FREE ( config->gatewayType );
+	P_FREE ( config->organizationId );
 #else
   SSP_PARAMETER_NOT_USED(config);
 #endif
