@@ -57,7 +57,7 @@ typedef struct __attribute__((__packed__)) _property {
 } property_t;
 
 #if defined(__cplusplus)
-#define property(x, y) property_t(x, y)
+#define property(x, y) _property(x, y)
 #else
 #define property(x, y) (property_t){ .value=(char*)x, .flags=y }
 #endif
@@ -65,6 +65,7 @@ typedef struct __attribute__((__packed__)) _property {
 #define p_const(x) property(x, is_const)
 #define p_stack(x) property(x, is_stack)
 #define p_heap(x)  property(x, is_dynamic)
+#define p_null()  property(NULL, 0)
 
 #define P_FREE(prop) \
 { if ((prop).flags == is_dynamic && (prop).value) free((prop).value); \
