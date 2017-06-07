@@ -14,15 +14,6 @@
 #endif
 #include <debug.h>
 
-P_ADD(arrow_gateway, name)
-P_ADD(arrow_gateway, uid)
-P_ADD(arrow_gateway, os)
-P_ADD(arrow_gateway, type)
-P_ADD(arrow_gateway, software_name)
-P_ADD(arrow_gateway, software_version)
-P_ADD(arrow_gateway, sdkVersion)
-P_ADD(arrow_gateway, hid)
-
 #if defined(__IBM__)
 P_ADD(arrow_gateway_config, organizationId);
 P_ADD(arrow_gateway_config, authMethod);
@@ -67,20 +58,20 @@ int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
   JsonNode *hid = json_find_member(_main, "hid");
   if ( !hid ) return -1;
   if ( hid->tag != JSON_STRING ) return -1;
-  arrow_gateway_set_hid_dup(gate, hid->string_);
+  property_copy( &gate->hid, p_stack(hid->string_));
   json_delete(_main);
   return 0;
 }
 
 void arrow_gateway_free(arrow_gateway_t *gate) {
-  P_FREE( gate->name );
-  P_FREE( gate->uid );
-  P_FREE( gate->os );
-  P_FREE( gate->type );
-  P_FREE( gate->hid );
-  P_FREE( gate->software_name );
-  P_FREE( gate->software_version );
-  P_FREE( gate->sdkVersion );
+  property_free( &gate->name );
+  property_free( &gate->uid );
+  property_free( &gate->os );
+  property_free( &gate->type );
+  property_free( &gate->hid );
+  property_free( &gate->software_name );
+  property_free( &gate->software_version );
+  property_free( &gate->sdkVersion );
 }
 
 
@@ -92,11 +83,11 @@ void arrow_gateway_config_init(arrow_gateway_config_t *config) {
 
 void arrow_gateway_config_free(arrow_gateway_config_t *config) {
 #if defined(__IBM__)
-	P_FREE ( config->authMethod );
-	P_FREE ( config->authToken );
-	P_FREE ( config->gatewayId );
-	P_FREE ( config->gatewayType );
-	P_FREE ( config->organizationId );
+	property_free ( &config->authMethod );
+	property_free ( &config->authToken );
+	property_free ( &config->gatewayId );
+	property_free ( &config->gatewayType );
+	property_free ( &config->organizationId );
 #else
   SSP_PARAMETER_NOT_USED(config);
 #endif
@@ -104,12 +95,12 @@ void arrow_gateway_config_free(arrow_gateway_config_t *config) {
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   arrow_gateway_init(gateway);
-  arrow_gateway_set_name(gateway, GATEWAY_NAME);
-  arrow_gateway_set_os(gateway, GATEWAY_OS);
-  arrow_gateway_set_software_name(gateway, GATEWAY_SOFTWARE_NAME);
-  arrow_gateway_set_software_version(gateway, GATEWAY_SOFTWARE_VERSION);
-  arrow_gateway_set_type(gateway, GATEWAY_TYPE);
-  arrow_gateway_set_sdkVersion(gateway, xstr(SDK_VERSION));
+  property_copy( &gateway->name, p_const(GATEWAY_NAME));
+  property_copy( &gateway->os, p_const(GATEWAY_OS));
+  property_copy( &gateway->software_name, p_const(GATEWAY_SOFTWARE_NAME));
+  property_copy( &gateway->software_version, p_const(GATEWAY_SOFTWARE_VERSION));
+  property_copy( &gateway->type, p_const(GATEWAY_TYPE));
+  property_copy( &gateway->sdkVersion, p_const(xstr(SDK_VERSION)));
   char *uid = (char*)malloc(sizeof(GATEWAY_UID_PREFIX) + 14); // 6*2 for mac + 2
   strcpy(uid, GATEWAY_UID_PREFIX);
   strcat(uid, "-");
@@ -121,6 +112,6 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   uidlen += 12;
   uid[uidlen] = '\0';
   DBG("uid: [%s]", uid);
-  arrow_gateway_set_uid_own(gateway, uid);
+  property_copy( &gateway->uid, p_heap(uid));
   return 0;
 }

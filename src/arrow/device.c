@@ -60,7 +60,6 @@ DEVICE_ADD_PROPERTY("gatewayHid", gateway_hid)
 DEVICE_ADD_PROPERTY("type", type)
 DEVICE_ADD_PROPERTY("uid", uid)
 
-P_ADD(arrow_device, hid)
 #if defined(__IBM__)
 P_ADD(arrow_device, eid)
 #endif
@@ -84,7 +83,7 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, "hid");
     if ( !hid || hid->tag != JSON_STRING ) return -1;
-    arrow_device_set_hid_dup(dev, hid->string_);
+    P_COPY(dev->hid, p_stack(hid->string_));
 #if defined(__IBM__)
     JsonNode *eid = json_find_member(_main, "externalId");
     if ( !eid || eid->tag != JSON_STRING ) return -1;
