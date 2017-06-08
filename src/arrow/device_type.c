@@ -2,12 +2,7 @@
 
 #include <debug.h>
 #include <stdarg.h>
-
-#define X_STR_COPY(dst, src) \
-{ (dst) = malloc(strlen(src) + 1); \
-  strcpy((dst), (src)); }
-
-#define X_STR_FREE(str) if ( str ) free(str);
+#include <arrow/mem.h>
 
 void device_type_init(device_type_t *dev, int enable, const char *name, const char *dec) {
   dev->enabled = enable;

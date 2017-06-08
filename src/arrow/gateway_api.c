@@ -6,14 +6,13 @@
 
 static void _gateway_config_init(http_request_t *request, void *arg) {
 	arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  CREATE_CHUNK(uri, URI_LEN);
+	CREATE_CHUNK(uri, URI_LEN);
 	strcpy(uri, ARROW_API_GATEWAY_ENDPOINT);
 	strcat(uri, "/");
-  strcat(uri, P_VALUE(gateway->hid) );
+	strcat(uri, P_VALUE(gateway->hid) );
 	strcat(uri, "/config");
-
 	http_request_init(request, GET, uri);
-  FREE_CHUNK(uri);
+	FREE_CHUNK(uri);
 }
 
 static int _gateway_config_proc(http_response_t *response, void *arg) {
@@ -99,10 +98,9 @@ static int _gateway_register_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_register_gateway(arrow_gateway_t *gateway) {
-	static int count = 0;
   int ret = __http_routine(_gateway_register_init, gateway, _gateway_register_proc, gateway);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway register failed... %d", count++);
+    DBG("Gateway register failed...");
   }
   return ret;
 }
@@ -121,7 +119,7 @@ static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
 int arrow_gateway_heartbeat(arrow_gateway_t *gateway) {
   int ret = __http_routine(_gateway_heartbeat_init, gateway, NULL, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway heartbeat failed...");
+    DBG("Gateway heartbeat failed...");
   }
   return ret;
 }
@@ -140,7 +138,7 @@ static void _gateway_checkin_init(http_request_t *request, void *arg) {
 int arrow_gateway_checkin(arrow_gateway_t *gateway) {
   int ret = __http_routine(_gateway_checkin_init, gateway, NULL, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway checkin failed...");
+    DBG("Gateway checkin failed...");
   }
   return ret;
 }
@@ -164,7 +162,7 @@ static int _gateway_find_proc(http_response_t *response, void *arg) {
 int arrow_gateway_find(const char *hid) {
   int ret = __http_routine(_gateway_find_init, (void*)hid, _gateway_find_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway register failed...");
+    DBG("Gateway register failed...");
   }
   return ret;
 }
@@ -189,7 +187,7 @@ int arrow_gateway_find_by(int n, ...) {
   COLLECT_FIND_BY(params, n);
   int ret = __http_routine(_gateway_find_by_init, params, _gateway_find_by_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway find by failed...");
+    DBG("Gateway find by failed...");
   }
   return ret;
 }
@@ -221,7 +219,7 @@ int arrow_gateway_logs_list(arrow_gateway_t *gateway, int n, ...) {
   gate_param_t dp = { gateway, params };
   int ret = __http_routine(_gateway_list_logs_init, &dp, _gateway_list_logs_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway logs failed...");
+    DBG("Gateway logs failed...");
   }
   return ret;
 }
@@ -245,7 +243,7 @@ static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
 int arrow_gateway_devices_list(const char *hid) {
   int ret = __http_routine(_gateway_devices_list_init, (void*)hid, _gateway_devices_list_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway devices list failed...");
+    DBG("Gateway devices list failed...");
   }
   return ret;
 }
@@ -284,7 +282,7 @@ int arrow_gateway_device_send_command(const char *gHid, const char *dHid, const 
   gate_dev_cmd_t gdc = {gHid, dHid, cmd, payload};
   int ret = __http_routine(_gateway_device_cmd_init, &gdc, _gateway_device_cmd_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway devices list failed...");
+    DBG("Gateway devices list failed...");
   }
   return ret;
 }
@@ -310,7 +308,7 @@ int arrow_gateway_error(arrow_gateway_t *gateway, const char *error) {
   gateway_error_t de = { gateway, error };
   int ret = __http_routine(_gateway_errors_init, &de, NULL, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Gateway   error failed...");
+    DBG("Gateway error failed...");
   }
   return ret;
 }
@@ -333,7 +331,7 @@ static int _gateway_update_proc(http_response_t *response, void *arg) {
 int arrow_gateway_update(arrow_gateway_t *gateway) {
   int ret = __http_routine(_gateway_update_init, gateway, _gateway_update_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Device update failed...");
+    DBG("Gateway update failed...");
   }
   return ret;
 }

@@ -53,7 +53,7 @@ struct check_signature_t {
   sign_checker check;
 };
 
-int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
+static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
   char signature[65];
   int err = gateway_payload_sign(signature,
                                  ev->gateway_hid,
@@ -87,7 +87,7 @@ static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-char *form_canonical_prm(JsonNode *param) {
+static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};

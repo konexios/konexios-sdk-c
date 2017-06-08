@@ -42,7 +42,6 @@ void arrow_device_add_gateway_hid(arrow_device_t *dev, const char *name);
 void arrow_device_add_type(arrow_device_t *dev, const char *name);
 void arrow_device_add_uid(arrow_device_t *dev, const char *name);
 
-P_ADD_PROTO(arrow_device, hid)
 #if defined(__IBM__)
 P_ADD_PROTO(arrow_device, eid)
 #endif

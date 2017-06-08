@@ -12,10 +12,18 @@
 #include <config.h>
 #include <unint.h>
 #if defined(__USE_STD__)
+#if !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+#if GCC_VERSION <= 50201
+# include <sys/cdefs.h>
+#endif
+# include <sys/features.h>
 # include <stddef.h>
 # include <string.h>
 # include <stdlib.h>
 # include <stdio.h>
+# include <string.h>
 # include <strings.h>
 #endif
 #if defined(__XCC__)
@@ -35,9 +43,7 @@ void *realloc(void *ptrmem, size_t size);
 #endif
 #endif
 
-#define X_STR_COPY(dst, src) \
-{ (dst) = malloc(strlen(src) + 1); \
-  strcpy((dst), (src)); }
+#define X_STR_COPY(dst, src) (dst) = strdup(src)
 
 #define X_STR_FREE(str) if ( str ) free(str);
 
@@ -66,16 +72,20 @@ typedef struct __attribute__((__packed__)) _property {
 #define p_heap(x)  property(x, is_dynamic)
 #define p_null()  property(NULL, 0)
 
-#define P_FREE(prop) \
-{ if ((prop).flags == is_dynamic && (prop).value) free((prop).value); \
-  (prop).value = NULL; \
-}
+void property_copy(property_t *dst, const property_t src);
+void property_n_copy(property_t *dst, const char *src, int n);
+void property_free(property_t *dst);
 
-#define P_ADD_PROTO(type, name) \
-void type##_set_##name##_dup(type##_t *gate, const char *name); \
+#define P_COPY(dst, src) property_copy(&dst, src)
+#define P_NCOPY(dst, str, n)  property_n_copy(&dst, str, n)
+#define P_FREE(prop) property_free(&prop)
+
+
+#define P_ADD_PROTO(type, field) \
+void type##_set_##field##_dup(type##_t *date, const char *field); \
 void type##_set_##field##_copy(type##_t *date, const char *field, int n); \
-void type##_set_##name##_own(type##_t *gate, const char *name); \
-void type##_set_##name(type##_t *gate, const char *name);
+void type##_set_##field##_own(type##_t *date, const char *field); \
+void type##_set_##field(type##_t *date, const char *field);
 
 #define P_ADD(type, field) \
 void type##_set_##field##_dup(type##_t *date, const char *field) { \
@@ -98,15 +108,6 @@ void type##_set_##field##_own(type##_t *date, const char *field) { \
 void type##_set_##field(type##_t *date, const char *field) { \
   date->field.value = (char *)field; \
   date->field.flags = is_const;\
-}
-
-#define P_COPY(dst, src) \
-{ \
-  switch((src).flags) { \
-    case is_stack:    (dst) = property(strdup((src).value), is_dynamic); break; \
-    case is_dynamic:  (dst) = property((src).value, is_dynamic); break; \
-    case is_const:    (dst) = property((src).value, is_const); break; \
-  } \
 }
 
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )

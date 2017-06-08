@@ -78,14 +78,22 @@ ACN_SDK_C_LIB := $(OUTDIR)/libacnsdkc.a
 
 ACN_SDK_C_OBJ = $(ACN_SDK_C_SRC:.c=.o)
 
-DEFINES += -D__semiconductor__ -DDEBUG
-ACNSDK_DEF = -D__semiconductor__ -DDEBUG -I. -std=gnu11 -Os 
-# -Wl,--wrap=calloc  #-Wl,--wrap=free
-# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror -Wpedantic
-# -Werror -Wpedantic
+DEFINES += -D__semiconductor__
+ACNSDK_DEF := -D__semiconductor__ -std=gnu11 -Os 
+# -fno-inline-functions
+
+ifneq (,$(findstring DDEBUG,$(DEFINES)))
+ACNSDK_DEF += -DDEBUG
+endif
+
+# -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration 
+# -Werror -Wpedantic 
+# -Wl,--wrap=calloc  
+# -Wl,--wrap=free
 
 #$(warning "$(PROJECT)")
 #$(warning "$(LIB_DIR)")
+$(info $(ACNSDK_DEF))
 
 all: version $(ACN_SDK_C_LIB)
 

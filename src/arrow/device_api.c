@@ -32,7 +32,7 @@ int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     gate_dev_t gd = {gateway, device};
     int ret = __http_routine(_device_register_init, &gd, _device_register_proc, device);
     if ( ret < 0 ) {
-      DBG("Arrow Device register failed...");
+      DBG("Device register failed...");
     }
     return ret;
 }
@@ -57,7 +57,7 @@ int arrow_device_find_by(int n, ...) {
 
   int ret = __http_routine(_device_find_by_init, params, _device_find_by_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Device find by failed...");
+    DBG("Device find by failed...");
   }
 
   return ret;
@@ -84,7 +84,7 @@ static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
 int arrow_device_find_by_hid(const char *hid) {
   int ret = __http_routine(_device_find_by_hid_init, (void *)hid, _device_find_by_hid_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Device find by failed...");
+    DBG("Device find by failed...");
   }
   return ret;
 }
@@ -116,7 +116,7 @@ int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   gate_dev_t gd = {gateway, device};
   int ret = __http_routine(_device_update_init, &gd, _device_update_proc, device);
   if ( ret < 0 ) {
-    DBG("Arrow Device update failed...");
+    DBG("Device update failed...");
   }
   return ret;
 }
@@ -150,7 +150,7 @@ int arrow_list_device_events(arrow_device_t *device, int n, ...) {
   dev_param_t dp = { device, params };
   int ret = __http_routine(_device_list_events_init, &dp, _device_list_events_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow list device events failed...");
+    DBG("list device events failed...");
   }
   return ret;
 }
@@ -179,7 +179,7 @@ int arrow_list_device_logs(arrow_device_t *device, int n, ...) {
   dev_param_t dp = { device, params };
   int ret = __http_routine(_device_list_logs_init, &dp, _device_list_logs_proc, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow list device events failed...");
+    DBG("Device list events failed...");
   }
   return ret;
 }
@@ -213,7 +213,7 @@ int arrow_error_device(arrow_device_t *device, const char *error) {
   device_error_t de = { device, error };
   int ret = __http_routine(_device_errors_init, &de, NULL, NULL);
   if ( ret < 0 ) {
-    DBG("Arrow Device error failed...");
+    DBG("Device error failed...");
   }
   return ret;
 }

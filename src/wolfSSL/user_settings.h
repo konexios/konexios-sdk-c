@@ -308,7 +308,7 @@
 /* Options for Sample program */
 #define NO_SESSION_CACHE // For Small RAM
 #define WOLFSSL_LOW_MEMORY
-#define WOLFSSL_SMALL_STACK
+//#define WOLFSSL_SMALL_STACK
 #define TFM_TIMING_RESISTANT
 #define RSA_LOW_MEM
 //#define USE_CYASSL_MEMORY

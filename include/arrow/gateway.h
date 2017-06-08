@@ -48,15 +48,6 @@ typedef struct __attribute__((__packed__)) {
 } arrow_gateway_config_t;
 
 void arrow_gateway_init(arrow_gateway_t *gate);
-P_ADD_PROTO(arrow_gateway, name)
-P_ADD_PROTO(arrow_gateway, uid)
-P_ADD_PROTO(arrow_gateway, os)
-P_ADD_PROTO(arrow_gateway, type)
-P_ADD_PROTO(arrow_gateway, software_name)
-P_ADD_PROTO(arrow_gateway, software_version)
-P_ADD_PROTO(arrow_gateway, sdkVersion)
-P_ADD_PROTO(arrow_gateway, hid)
-
 char *arrow_gateway_serialize(arrow_gateway_t *gate);
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str);
 void arrow_gateway_free(arrow_gateway_t *gate);
