@@ -285,7 +285,7 @@
 #define NO_PSK
 #define NO_MD2
 #define NO_MD4
-#define NO_MD5
+//#define NO_MD5
 #define NO_OLD_TLS
 #define NO_PWDBASED
 #define NO_SKID
