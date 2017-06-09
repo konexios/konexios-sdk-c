@@ -64,8 +64,6 @@ void set_secret_key(char *newkey) {
 }
 
 static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
-static char signKey[128];
-static char tmp[128];
 
 void sign(char *signature,
           const char *timestamp,
@@ -83,8 +81,8 @@ void sign(char *signature,
     if (canQueryString) strcat(canonicalRequest, canQueryString);
     DBG_SIGN("can %s", canonicalRequest);
 
-    char hex_hash_payload[66];
-    char hash_payload[34];
+    CREATE_CHUNK(hex_hash_payload, 66);
+    CREATE_CHUNK(hash_payload, 34);
     if (payload) {
       sha256(hash_payload, (char*)payload, (int)strlen(payload));
       hex_encode(hex_hash_payload, hash_payload, 32);
@@ -96,12 +94,15 @@ void sign(char *signature,
     DBG_SIGN("<caninical request>%s<end>", canonicalRequest);
 
     sha256(hash_payload, canonicalRequest, (int)strlen(canonicalRequest));
-    for (i=0; i<32; i++) sprintf(hex_hash_payload+i*2, "%02x", (unsigned char)(hash_payload[i]));
+    hex_encode(hex_hash_payload, hash_payload, 32);
     hex_hash_payload[64] = '\0';
     DBG_SIGN("hashed canonical request: %s", hex_hash_payload);
 //    stringToSign := hashedCanonicalRequest +"\n"+apiKey+"\n"+timestamp+"\n"+apiVersion
 
     strncpy(canonicalRequest, hex_hash_payload, 64);
+    FREE_CHUNK(hex_hash_payload);
+    FREE_CHUNK(hash_payload);
+
     canonicalRequest[64] = 0x0;
     strcat(canonicalRequest, "\n");
     strcat(canonicalRequest, get_api_key());
@@ -111,8 +112,10 @@ void sign(char *signature,
     strcat(canonicalRequest, apiVersion);
     DBG_SIGN("<string to sign>%s<end>", canonicalRequest);
 
+    CREATE_CHUNK(signKey, 128);
     strcpy(signKey, get_secret_key());
 
+    CREATE_CHUNK(tmp, 128);
     hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), signKey, (int)strlen(signKey));
     for (i=0; i<32; i++) sprintf(signKey+i*2, "%02x", (unsigned char)(tmp[i]));
     DBG_SIGN("step 1: %s", signKey);
@@ -125,5 +128,6 @@ void sign(char *signature,
     hmac256(tmp, signKey, 64, canonicalRequest, (int)strlen(canonicalRequest));
     for (i=0; i<32; i++) sprintf(signature+i*2, "%02x", (unsigned char)(tmp[i]));
     signature[64] = '\0';
+    FREE_CHUNK(tmp);
     DBG_SIGN("sign: %s", signature);
 }
