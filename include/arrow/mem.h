@@ -84,36 +84,6 @@ void property_free(property_t *dst);
 #define P_NCOPY(dst, str, n)  property_n_copy(&dst, str, n)
 #define P_FREE(prop) property_free(&prop)
 
-
-#define P_ADD_PROTO(type, field) \
-void type##_set_##field##_dup(type##_t *date, const char *field); \
-void type##_set_##field##_copy(type##_t *date, const char *field, int n); \
-void type##_set_##field##_own(type##_t *date, const char *field); \
-void type##_set_##field(type##_t *date, const char *field);
-
-#define P_ADD(type, field) \
-void type##_set_##field##_dup(type##_t *date, const char *field) { \
-  P_FREE(date->field); \
-  date->field.value = strdup(field); \
-  date->field.flags = is_dynamic;\
-} \
-void type##_set_##field##_copy(type##_t *date, const char *field, int n) { \
-  P_FREE(date->field); \
-  date->field.value = (char*)malloc(n+1); \
-  strncpy(date->field.value, field, n); \
-  date->field.value[n] = 0x0; \
-  date->field.flags = is_dynamic;\
-} \
-void type##_set_##field##_own(type##_t *date, const char *field) { \
-  P_FREE(date->field); \
-  date->field.value = (char *)field; \
-  date->field.flags = is_dynamic;\
-} \
-void type##_set_##field(type##_t *date, const char *field) { \
-  date->field.value = (char *)field; \
-  date->field.flags = is_const;\
-}
-
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )
 #define P_VALUE(field) ( (field).value )
 #define P_SIZE(field) ( (field).value ? strlen((field).value) : 0 )
@@ -121,6 +91,8 @@ void type##_set_##field(type##_t *date, const char *field) { \
 
 #if defined(USE_HEAP)
 #define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50)
+#elif defined(USE_STATIC)
+#define CREATE_CHUNK(ptr, size) static char ptr[size]
 #else
 #define CREATE_CHUNK(ptr, size) char ptr[size]
 #endif

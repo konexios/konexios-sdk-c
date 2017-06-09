@@ -50,9 +50,6 @@ static char * __attribute__((used)) get_##type(int i) { \
 CMP_INIT(METH)
 CMP_INIT(Scheme)
 
-P_ADD(http_header, key)
-P_ADD(http_header, value)
-
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
   P_COPY(req->meth, p_const(get_METH(meth)));

@@ -12,5 +12,6 @@
 int utf8check(const char *s);
 void fix_urldecode(char *query);
 void urlencode(char *dst, char *src, int len);
+void hex_encode(char *dst, const char *src, int size);
 
 #endif

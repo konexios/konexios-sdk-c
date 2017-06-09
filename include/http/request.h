@@ -61,9 +61,6 @@ typedef struct __attribute__((__packed__)) http_header_ {
     struct http_header_ *next;
 } http_header_t;
 
-P_ADD_PROTO(http_header, key)
-P_ADD_PROTO(http_header, value)
-
 typedef struct http_header_ http_query_t;
 
 typedef struct __attribute__((__packed__)) {

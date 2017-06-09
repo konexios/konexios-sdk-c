@@ -10,7 +10,6 @@ C_SDK_LIB = $(LIBDIR)/libacnsdkc.a
 # SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha256.c
 # SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/hmac.c
 # SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/sha.c
-
 # INCLUDES += -I$(PWD)/src/wolfSSL/
 
 OBJ = $(SRC:.c=.o)

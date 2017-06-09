@@ -17,7 +17,7 @@
 # include <config.h>
 #endif
 #include <debug.h>
-#include <crypt/crypt.h>
+#include <ssl/crypt.h>
 
 #if defined(SIGN_DEBUG)
 # define DBG_SIGN DBG

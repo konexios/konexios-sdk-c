@@ -109,3 +109,9 @@ void urlencode(char *dst, char *src, int len) {
   }
   *dst_p = '\0';
 }
+
+void hex_encode(char *dst, const char *src, int size) {
+  int i;
+  for (i=0; i<size; i++)
+    sprintf(dst+i*2, "%02x", (unsigned char)(src[i]));
+}

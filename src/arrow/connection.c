@@ -25,7 +25,7 @@ void dont_close_session(void) {
 }
 
 void do_close_session(void) {
-	__close_session = 1;
+  __close_session = 1;
 }
 
 static http_client_t _cli;

@@ -101,6 +101,7 @@ void http_client_free(http_client_t *cli) {
     qcom_SSL_ctx_free(cli->ctx);
   }
 #endif
+    DBG("------------ close socket %d", cli->sock);
     ssl_close(cli->sock);
     if ( cli->sock >= 0 ) soc_close(cli->sock);
 }

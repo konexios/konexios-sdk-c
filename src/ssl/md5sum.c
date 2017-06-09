@@ -6,10 +6,10 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "crypt/md5sum.h"
+#include "ssl/md5sum.h"
 #include "wolfcrypt/md5.h"
 
-int md5sum(char *hash, const char *data, int len) {
+int __attribute__((weak)) md5sum(char *hash, const char *data, int len) {
   Md5 md5;
   wc_InitMd5(&md5);
   wc_Md5Update(&md5, (const byte*)data, (word32)len);
@@ -19,14 +19,14 @@ int md5sum(char *hash, const char *data, int len) {
 
 static Md5 md5;
 
-void md5_chunk_init() {
+void __attribute__((weak)) md5_chunk_init() {
   wc_InitMd5(&md5);
 }
 
-void md5_chunk(const char *data, int len) {
+void __attribute__((weak)) md5_chunk(const char *data, int len) {
   wc_Md5Update(&md5, (const byte*)data, (word32)len);
 }
 
-void md5_chunk_hash(char *hash) {
+void __attribute__((weak)) md5_chunk_hash(char *hash) {
   wc_Md5Final(&md5, (byte*) hash);
 }
