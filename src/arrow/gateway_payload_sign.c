@@ -3,6 +3,7 @@
 #include <ssl/crypt.h>
 #include <arrow/mem.h>
 #include <debug.h>
+#include <arrow/utf8.h>
 
 int gateway_payload_sign(char *signature,
                          const char *hid,

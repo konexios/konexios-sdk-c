@@ -20,10 +20,6 @@ INCLUDES += -I$(ACN_SDK_C_PATH)/src/wolfSSL
 INCLUDES += -I$(ACN_SDK_C_PATH)/src/wolfSSL/wolfssl
 INCLUDES += -I$(ACN_SDK_C_PATH)/platforms
 INCLUDES += -I$(ACN_SDK_C_PATH)/platforms/semiconductor
-# INCLUDES += \
-#    -I$(ACN_SDK_C_PATH)/src \
-#    -I$(ACN_SDK_C_PATH)/src/axTLS/ssl \
-#    -I$(ACN_SDK_C_PATH)/src/axTLS/crypto
 
 INCDIRS += $(patsubst -I%,%,$(INCLUDES))
 
@@ -35,7 +31,7 @@ ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/time/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/arrow/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/http/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/json/*.c)
-ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/platforms/default/wolf/crypt/*.c)
+ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/ssl/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/src/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/aes.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/asm.c)
@@ -61,10 +57,6 @@ ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/signatur
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/wc_encrypt.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/wc_port.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/wolfSSL/wolfcrypt/src/logging.c)
-
-# ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/axTLS/ssl/*.c)
-# ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/axTLS/crypto/*.c)
-
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/mqtt/client/src/*.c)
 ACN_SDK_C_SRC += $(wildcard $(ACN_SDK_C_PATH)/src/mqtt/packet/src/*.c)
 ACN_SDK_C_SRC += $(wildcard $(PLATFORM_FILES)/time/*.c)

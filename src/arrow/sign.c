@@ -9,12 +9,10 @@
 #include <config.h>
 #include <arrow/sign.h>
 #include <arrow/mem.h>
+#include <arrow/utf8.h>
 #if defined(__USE_STD__)
 # include <inttypes.h>
 # include <stdbool.h>
-# include <string.h>
-# include <stdio.h>
-# include <config.h>
 #endif
 #include <debug.h>
 #include <ssl/crypt.h>
