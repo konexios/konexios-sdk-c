@@ -8,11 +8,11 @@
 
 #include "arrow/mem.h"
 
-void property_copy(property_t *dst, const property_t const src) {
+void property_copy(property_t *dst, const property_t src) {
 	if ( !dst ) return;
 	P_FREE(*dst);
 	switch(src.flags) {
-	case is_stack:
+  case is_stack:
 		dst->value = strdup(src.value);
 		dst->flags = is_dynamic;
 	break;
@@ -24,12 +24,12 @@ void property_copy(property_t *dst, const property_t const src) {
 		dst->value = src.value;
 		dst->flags = is_dynamic;
     break;
-	}
+  }
 }
 
 void property_n_copy(property_t *dst, const char *src, int n) {
 	P_FREE(*dst);
-	dst->value = strndup(src, n);
+  dst->value = strndup(src, n);
 	dst->flags = is_dynamic;
 }
 

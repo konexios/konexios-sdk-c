@@ -44,7 +44,8 @@ CC_SYMBOLS = -DTOOLCHAIN_GCC \
 	     -DUSE_STM32L475E_IOT01 \
 	     -DUSE_IOEXPANDER \
 	     -D__stm32l475iot__ \
-	     -DDEBUG
+       -DDEBUG
+# -Werror
 
 ifdef API_KEY
 CC_SYMBOLS += -DDEFAULT_API_KEY=\"$(API_KEY)\"

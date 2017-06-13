@@ -232,7 +232,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
 
 //    if( (res->m_httpResponseCode < 200) || (res->m_httpResponseCode >= 300) ) {
         //Did not return a 2xx code; TODO fetch headers/(&data?) anyway and implement a mean of writing/reading headers
-        DBG("Response code %d", res->m_httpResponseCode);
+    DBG("Response code %d", res->m_httpResponseCode);
 //        HTTP_DBG("Protocol error");
 //        return -1;
 //    }
@@ -395,6 +395,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                     trfLen -= 10;
                 }
                 uint32_t newTrfLen = 0;
+                HTTP_DBG("try to get chunk");
                 ret = client_recv(buf+trfLen, 10, cli);
                 if ( ret > 0 ) newTrfLen = (uint32_t)ret;
                 trfLen += newTrfLen;
@@ -407,7 +408,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 chunk_len = 0;
                 return -1; // fail
             }
-            HTTP_DBG("detect chunk %d, %d", chunk_len, ret);
+            HTTP_DBG("detect chunk %d", chunk_len);
             crlfPtr = strstr(buf, "\r\n");
             crlfPos = crlfPtr + 2 - buf;
             memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
@@ -443,6 +444,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 trfLen -= need_to_read;
             }
             chunk_len -= need_to_read;
+            HTTP_DBG("%d %d", chunk_len, need_to_read);
         }
     } while(1);
 

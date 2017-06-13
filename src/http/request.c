@@ -52,17 +52,21 @@ CMP_INIT(Scheme)
 
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
-  P_COPY(req->meth, p_const(get_METH(meth)));
+  P_CLEAR(req->meth);
+  P_CLEAR(req->scheme);
+  P_CLEAR(req->host);
+  P_CLEAR(req->uri);
+  P_CLEAR(req->payload.buf);
+  property_copy(&req->meth, p_const(get_METH(meth)));
   char *sch_end = strstr((char*)url, "://");
   if ( !sch_end ) { req->is_corrupt = 1; return; }
   int sch = cmp_n_Scheme(url, (int)(sch_end - url));
   P_COPY(req->scheme, p_const(get_Scheme(sch)));
   req->is_cipher = sch;
-
   char *host_start = sch_end + 3; //sch_end + strlen("://");
   char *host_end = strstr(host_start, ":");
   if ( !host_end ) { req->is_corrupt = 1; return; }
-  P_NCOPY(req->host, host_start, (host_end - host_start));
+  property_n_copy(&req->host, host_start, (host_end - host_start));
 
   uint16_t port = 0;
   int res = sscanf(host_end+1, "%8hu", &port);
@@ -211,7 +215,8 @@ void http_response_set_payload(http_response_t *res, property_t payload, uint32_
 void http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
   if ( !size ) size = P_SIZE(payload);
   if ( IS_EMPTY(res->payload.buf) ) {
-    P_COPY(res->payload.buf, payload);
+    DBG("copy %s", payload.value);
+    property_copy(&res->payload.buf, payload);
     return;
   } else {
     switch(res->payload.buf.flags) {

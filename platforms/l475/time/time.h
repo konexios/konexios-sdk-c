@@ -18,6 +18,8 @@ extern "C" {
 #include <sys/time.h>
 #include <platforms/default/time/time.h>
 
+int stime (const time_t *__when);
+
 #if defined(__cplusplus)
 }
 #endif
