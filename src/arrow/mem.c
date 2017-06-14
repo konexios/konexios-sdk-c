@@ -7,10 +7,11 @@
  */
 
 #include "arrow/mem.h"
+#include <debug.h>
 
 void property_copy(property_t *dst, const property_t src) {
 	if ( !dst ) return;
-	P_FREE(*dst);
+  property_free(dst);
 	switch(src.flags) {
   case is_stack:
 		dst->value = strdup(src.value);
@@ -28,13 +29,13 @@ void property_copy(property_t *dst, const property_t src) {
 }
 
 void property_n_copy(property_t *dst, const char *src, int n) {
-	P_FREE(*dst);
+  property_free(dst);
   dst->value = strndup(src, n);
 	dst->flags = is_dynamic;
 }
 
 void property_free(property_t *dst) {
-	if (dst->flags == is_dynamic && dst->value)
+  if ( dst && dst->flags == is_dynamic && dst->value)
 		free(dst->value);
 	  dst->value = NULL;
 	  dst->flags = 0x0;

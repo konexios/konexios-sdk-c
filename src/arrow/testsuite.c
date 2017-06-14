@@ -141,7 +141,7 @@ static void _test_step_begin_init(http_request_t *request, void *arg) {
 }
 
 int arrow_test_step_begin(test_procedure_t *proc, int number) {
-  test_step_t st = {proc, number};
+  test_step_t st = { proc, number, SUCCESS, NULL };
   int ret = __http_routine(_test_step_begin_init, &st, NULL, NULL);
   if ( ret < 0 ) {
     DBG("Arrow TEST begin step failed...");
@@ -201,7 +201,7 @@ static void _test_step_skip_init(http_request_t *request, void *arg) {
 }
 
 int arrow_test_step_skip(test_procedure_t *proc, int number) {
-  test_step_t st = {proc, number};
+  test_step_t st = {proc, number, SUCCESS, NULL};
   int ret = __http_routine(_test_step_skip_init, &st, NULL, NULL);
   if ( ret < 0 ) {
     DBG("Arrow TEST skip step failed...");

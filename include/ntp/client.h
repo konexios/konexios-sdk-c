@@ -66,7 +66,7 @@ NTP Client header file
 #if defined (__ICCARM__)
   };
 #else
-  } __attribute__ ((packed));
+  } __attribute_packed__;
 #endif
 
 ///NTP client results

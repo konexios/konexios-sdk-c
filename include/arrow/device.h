@@ -11,8 +11,9 @@
 
 #include "json/json.h"
 #include <arrow/gateway.h>
+#include <arrow/mem.h>
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute_packed__ {
   property_t name;
   property_t type;
   property_t uid;

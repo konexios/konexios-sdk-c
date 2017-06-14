@@ -56,8 +56,13 @@ enum prop_flags {
   is_dynamic  = 0x1,
   is_const    = 0x2
 };
+#if defined(__XCC__)
+# define __attribute_packed__
+#else
+# define __attribute_packed__ __attribute__((__packed__))
+#endif
 
-typedef struct __attribute__((__packed__)) _property {
+typedef struct __attribute_packed__ _property {
   char *value;
   uint8_t flags;
 #if defined(__cplusplus)
@@ -82,7 +87,7 @@ void property_free(property_t *dst);
 
 #define P_COPY(dst, src) property_copy(&dst, src)
 #define P_NCOPY(dst, str, n)  property_n_copy(&dst, str, n)
-#define P_FREE(prop) property_free(&prop)
+#define P_FREE(prop) property_free(&(prop))
 
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )
 #define P_VALUE(field) ( (field).value )

@@ -22,6 +22,7 @@ static void _account_request(http_request_t *request, void *arg) {
 }
 
 static int _account_process(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
   DBG("account res", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;

@@ -55,7 +55,7 @@ enum Scheme {
 };
 
 
-typedef struct __attribute__((__packed__)) http_header_ {
+typedef struct __attribute_packed__ http_header_ {
     property_t key;
     property_t value;
     struct http_header_ *next;
@@ -63,12 +63,12 @@ typedef struct __attribute__((__packed__)) http_header_ {
 
 typedef struct http_header_ http_query_t;
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute_packed__ {
     uint32_t size;
     property_t buf;
 } http_payload_t;
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute_packed__ {
     property_t meth;
     property_t scheme;
     property_t host;

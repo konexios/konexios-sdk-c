@@ -95,7 +95,7 @@ static void _state_post_init(http_request_t *request, void *arg) {
   }
   http_request_set_payload(request, p_heap(json_encode(_state)));
   if (_state) {
-    json_remove_from_parent(state_tree);
+    json_remove_from(_state, state_tree);
     json_delete(_state);
   }
 }

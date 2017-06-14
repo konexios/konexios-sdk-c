@@ -11,9 +11,7 @@
 
 #include "request.h"
 #if !defined(__XCC__)
-// #include "wolfssl/ssl.h"
 #else
-#include <qcom_ssl.h>
 #define SSL_INBUF_SIZE               6000
 #define SSL_OTA_INBUF_SIZE           20000
 #define SSL_OUTBUF_SIZE              3500
@@ -22,11 +20,6 @@
 #if defined(_ARIS_) && defined(ETH_MODE)
 #include "nx_api.h"
 #include "nxd_dns.h"
-#endif
-
-#if defined(__XCC__)
-# include <qcom_security.h>
-# include <qcom_common.h>
 #endif
 
 typedef int (*rw_func)(uint8_t *, uint16_t, void *);
@@ -39,14 +32,6 @@ typedef struct {
 #endif
     uint32_t timeout;
     int response_code;
-#if !defined(__XCC__)
-    /*WOLFSSL_METHOD  *method;
-    WOLFSSL_CTX     *ctx;
-    WOLFSSL         *ssl;*/
-#else
-    SSL_CTX *ctx;
-    SSL *ssl;
-#endif
     rw_func         _r_func;
     rw_func         _w_func;
 } http_client_t;

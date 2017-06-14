@@ -11,7 +11,9 @@
 #include <arrow/software_update.h>
 #include <arrow/state.h>
 
+#if defined(__USE_STD__)
 #include <ctype.h>
+#endif
 #include <debug.h>
 #include <http/client.h>
 #include <arrow/request.h>
@@ -89,22 +91,34 @@ static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
+#if defined(__XCC__)
+typedef int (*__compar_fn_t) (const void *, const void *);
+extern void qsort(void *__base, size_t __nmemb, size_t __size, __compar_fn_t __compar);
+#endif
+
 static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
   int count = 0;
   json_foreach(child, param) {
-    DBG("get child {%s}", child->key);
+    DBG("get child {%s}", json_key(child));
     can_list[count] = malloc(MAX_PARAM_LINE_SIZE);
     unsigned int i;
-    for ( i=0; i<strlen(child->key); i++ ) *(can_list[count]+i) = tolower(child->key[i]);
+    for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower(json_key(child)[i]);
     *(can_list[count]+i) = '=';
     switch(child->tag) {
       case JSON_STRING: strcpy(can_list[count]+i+1, child->string_); break;
+#if defined(__XCC__)
+      case json_True: strcpy(can_list[count]+i+1, "true"); break;
+      case json_False: strcpy(can_list[count]+i+1, "false"); break;
+      default:
+        snprintf(can_list[count]+i+1, 50, "%d", child->valueint);
+#else
       case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true":"false")); break;
       default:
         snprintf(can_list[count]+i+1, 50, "%f", child->number_);
+#endif
     }
     count++;
   }
@@ -112,7 +126,8 @@ static char *form_canonical_prm(JsonNode *param) {
   canParam = malloc(count * MAX_PARAM_LINE_SIZE);
   *canParam = 0;
   qsort(can_list, count, sizeof(char *), cmpstringp);
-  for (int i=0; i<count; i++) {
+  int i = 0;
+  for (i=0; i<count; i++) {
     strcat(canParam, can_list[i]);
     if ( i < count-1 ) strcat(canParam, "\n");
     free(can_list[i]);
@@ -147,7 +162,11 @@ int process_event(const char *str) {
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
+#if defined(__XCC__)
+  mqtt_e.encrypted = _encrypted->type == json_True? 1 : 0;
+#else
   mqtt_e.encrypted = _encrypted->bool_;
+#endif
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;

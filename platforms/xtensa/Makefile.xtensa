@@ -13,10 +13,10 @@ CC = xt-xcc
 AR = xt-ar
 RM = rm -f
 
-INCLUDES += -I$(PWD)/platforms/xtensa/
+INCLUDES += -I$(PWD)/platforms/xtensa/ -I$(PWD)/platforms/default/
 
 SRC += $(PWD)/src/wolfSSL/wolfcrypt/src/coding.c
-SRC := $(filter-out ./src/json/json.c, $(SRC))
+SRC := $(filter-out $(PWD)/src/json/json.c, $(SRC))
  
 OBJ = $(SRC:.c=.o)
 

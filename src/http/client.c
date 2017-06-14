@@ -18,13 +18,6 @@
 # if defined(ETH_MODE)
 #  include "nx_api.h"
 # endif
-#elif defined(__XCC__)
-#define WOLFSSL SSL
-#define WOLFSSL_CTX SSL_CTX
-#define wolfSSL_write qcom_SSL_write
-#define wolfSSL_read qcom_SSL_read
-#define IPPROTO_TCP 0
-#define SSL_SUCCESS 0
 #endif
 
 #include <ssl/ssl.h>
@@ -95,12 +88,6 @@ void http_client_init(http_client_t *cli, int newsession) {
 }
 
 void http_client_free(http_client_t *cli) {
-#if defined(__XCC__)
-  if (cli->ssl) {
-    qcom_SSL_shutdown(cli->ssl);
-    qcom_SSL_ctx_free(cli->ctx);
-  }
-#endif
     DBG("------------ close socket %d", cli->sock);
     ssl_close(cli->sock);
     if ( cli->sock >= 0 ) soc_close(cli->sock);

@@ -169,7 +169,10 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
   if ( !totalSize ) return -1;
   JsonNode *totalPages  = json_find_member(_main, "totalPages");
   if ( !totalPages ) return -1;
-  telemetry_response_data_list_init(t, size->number_, page->number_, totalSize->number_, totalPages->number_);
+  telemetry_response_data_list_init(t, json_number(size),
+                                    json_number(page),
+                                    json_number(totalSize),
+                                    json_number(totalPages));
   JsonNode *data  = json_find_member(_main, "data");
   if ( !data ) return 0;
   int i = 0;
@@ -192,8 +195,8 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
                             deviceHid->string_,
                             name->string_,
                             type->string_,
-                            timestamp->number_,
-                            floatValue->number_);
+                            json_number(timestamp),
+                            json_number(floatValue));
   }
   json_delete(_main);
   return 0;
