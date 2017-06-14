@@ -157,6 +157,49 @@ related defines in the config.h file (sensors depends):
 #define TELEMETRY_DELAY             5000
 
 
+### Test Suite ###
+
+For a test suite creation you need to know the testProcedureHid.
+Example:
+
+CREATE_TEST_SUITE(gate_test, "384f9d6832ce2272f18f3ee8597e0f108f6a8109");
+arrow_test_gateway(current_gateway(), &gate_test);
+
+    sleep(60);
+
+CREATE_TEST_SUITE(p, "a53f0aa3e8bf7806ff5b8770ad4d9d3477d534c9");
+arrow_test_device(current_device(), &p);
+printf("test device result hid {%s}\r\n", P_VALUE(p.result_hid));
+
+arrow_test_begin(&p);
+// start test procedure
+arrow_test_step_begin(&p, 1);
+//test temperature
+get_telemetry_data(&data);
+if ( sizeof(data) > 1 ) {
+  arrow_test_step_success(&p, 1);
+} else {
+  arrow_test_step_fail(&p, 1, "no temp sensor");
+}
+
+#if !defined(SKIP_LED)
+// where is no LED, skiping...
+arrow_test_step_skip(&p, 2);
+#else
+arrow_test_step_begin(&p, 2);
+arrow_test_step_fail(&p, 2, "no LED");
+#endif
+
+arrow_test_step_begin(&p, 3);
+// check ARM
+#if defined(__arm__)
+arrow_test_step_success(&p, 3);
+#else
+arrow_test_step_fail(&p, 3, "not ARM");
+#endif
+// end test
+arrow_test_end(&p);
+
 
 ### OTA firmware upgrade ###
 

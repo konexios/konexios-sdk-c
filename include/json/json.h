@@ -53,7 +53,7 @@
 # define json_minify(t) (void)(t)
 # define json_key(x)  (x)->key
 # define json_number(x) (x)->number_
-# define json_remove_from(obj, x) json_remove_from_parent(obj, x->string_)
+# define json_remove_from(obj, x) json_remove_from_parent(x)
 # include <stdbool.h>
 # include <stddef.h>
 
