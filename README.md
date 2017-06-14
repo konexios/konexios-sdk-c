@@ -155,4 +155,51 @@ related defines in the config.h file (sensors depends):
 #define TELEMETRY_MAGNETOMETER_Y    "f|magnetometerY"
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
-```
+
+
+
+### OTA firmware upgrade ###
+
+There is a capability to update the firmware via an SDK. It's sufficiantly to implement the int arrow_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
+For example for the linux:
+#include <stdio.h>
+#include <curl/curl.h>
+
+static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
+  size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
+  return written;
+}
+int arrow_gateway_software_update(const char *url) {
+  CURL *curl;
+  static const char *pagefilename = "update.file";
+  FILE *pagefile;
+
+  curl_global_init(CURL_GLOBAL_ALL);
+  curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+  pagefile = fopen(pagefilename, "wb");
+  if(pagefile) {
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, pagefile);
+    curl_easy_perform(curl);
+    fclose(pagefile);
+  }
+  curl_easy_cleanup(curl);
+  return 0;
+}
+
+
+This function for the QCA4010 board is more complicated. You can find it into acn-embedded  xtensa directory.
+The JSON message for a QCA update should be like this:
+{
+  "url": "http://192.168.83.129:80/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
+}
+or
+{
+  "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
+}
+
+
+
