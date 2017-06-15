@@ -1,4 +1,4 @@
-DBG=-g3
+# DBG=-g3
 
 COPTS := $(DBG) -Os -Wall -Wextra -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -ffunction-sections
 DEFINES := \

@@ -2,6 +2,8 @@
 #include <debug.h>
 #include <arrow/events.h>
 
+__update_cb __attribute__((weak)) __update;
+
 int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(_ev);
   DBG("start software update processing");
@@ -14,6 +16,11 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
 }
 
 int __attribute__((weak)) arrow_gateway_software_update(const char *url) {
-  SSP_PARAMETER_NOT_USED(url);
+  if ( __update ) __update(url);
+  return 0;
+}
+
+int arrow_gateway_software_update_set_cb(__update_cb cb) {
+  __update = cb;
   return 0;
 }

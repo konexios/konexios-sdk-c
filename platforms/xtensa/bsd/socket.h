@@ -21,6 +21,8 @@ typedef int ssize_t;
 
 #define IPPROTO_TCP 0
 
+A_UINT32 _inet_addr(A_CHAR *str);
+
 
 #endif // _XTENSA_BSD_SOCKET_H_
 
