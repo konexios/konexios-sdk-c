@@ -160,12 +160,26 @@ related defines in the config.h file (sensors depends):
 ### Test Suite ###
 
 For a test suite creation you need to know the testProcedureHid.
-Example:
+
+The gateway example:
 
 CREATE_TEST_SUITE(gate_test, "384f9d6832ce2272f18f3ee8597e0f108f6a8109");
 arrow_test_gateway(current_gateway(), &gate_test);
 
-    sleep(60);
+arrow_test_begin(&gate_test);
+// start test procedure
+arrow_test_step_begin(&gate_test, 1);
+//test temperature
+if ( 1 ) {
+  arrow_test_step_success(&gate_test, 1);
+} else {
+  arrow_test_step_fail(&gate_test, 1, "no temp sensor");
+}
+// end test
+arrow_test_end(&gate_test);
+
+
+The device example: 
 
 CREATE_TEST_SUITE(p, "a53f0aa3e8bf7806ff5b8770ad4d9d3477d534c9");
 arrow_test_device(current_device(), &p);
@@ -203,7 +217,27 @@ arrow_test_end(&p);
 
 ### OTA firmware upgrade ###
 
-There is a capability to update the firmware via an SDK. It's sufficiantly to implement the int arrow_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
+There is a capability to update the firmware via an SDK. It's sufficiantly to implement the callback function for an upgrade procedure and set this one:
+
+// somewere in the main function:
+#include <arrow/software_update.h>
+
+int qca_gateway_software_update(const char *url) {
+  // upgrade procedure
+  return 0;
+}
+
+// ...
+
+int main() {
+  // ...
+  arrow_gateway_software_update_set_cb(qca_gateway_software_update);
+  // ...
+}
+
+Or reimplement the arrow_gateway_software_update function:
+
+int arrow_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
 For example for the linux:
 #include <stdio.h>
 #include <curl/curl.h>
