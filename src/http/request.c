@@ -50,6 +50,11 @@ static char * __attribute__((used)) get_##type(int i) { \
 CMP_INIT(METH)
 CMP_INIT(Scheme)
 
+#if defined(_ARIS_)
+int cmp_meth(const char *str) { return cmp_METH(str); }
+char *get_meth(int i) { return get_METH(i); }
+#endif
+
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
   P_CLEAR(req->meth);

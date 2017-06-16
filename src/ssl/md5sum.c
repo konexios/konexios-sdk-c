@@ -7,7 +7,7 @@
  */
 
 #include "ssl/md5sum.h"
-#include "wolfcrypt/md5.h"
+#include <wolfssl/wolfcrypt/md5.h>
 
 int __attribute__((weak)) md5sum(char *hash, const char *data, int len) {
   Md5 md5;

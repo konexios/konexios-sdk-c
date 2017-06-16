@@ -19,7 +19,7 @@
 WOLFSSL_METHOD  *method;
 WOLFSSL_CTX     *ctx;
 WOLFSSL         *ssl;
-static int _socket = -1;
+static int __socket = -1;
 
 #ifdef DEBUG_WOLFSSL
 static void cli_wolfSSL_Logging_cb(const int logLevel,
@@ -34,7 +34,7 @@ static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 //    int *sock = (int *)vp;
     if ( sz < 0 ) return sz;
     uint32_t got = 0;
-    got = (uint32_t)recv(_socket, buf, (uint32_t)sz, 0);
+    got = (uint32_t)recv(__socket, buf, (uint32_t)sz, 0);
 //    DBG("recv ssl %d [%d]", got, sz);
     if (got == 0)  return -2;  // IO_ERR_WANT_READ;
     return (int)got;
@@ -46,7 +46,7 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 //    int *sock = (int *)vp;
     if ( sz < 0 ) return sz;
     uint32_t sent = 0;
-    sent = (uint32_t)send(_socket, buf, (uint32_t)sz, 0);
+    sent = (uint32_t)send(__socket, buf, (uint32_t)sz, 0);
 //    DBG("send ssl %d [%d]", sent, sz);
     if (sent == 0)
         return -2;  // IO_ERR_WANT_WRITE
@@ -55,7 +55,7 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 
 int __attribute__((weak)) ssl_connect(int sock) {
 	wolfSSL_Init();
-	_socket = sock;
+	__socket = sock;
 	DBG("init ssl connect %d", sock)
 	method = wolfTLSv1_2_client_method();
 	ctx = wolfSSL_CTX_new(method);
@@ -70,8 +70,8 @@ int __attribute__((weak)) ssl_connect(int sock) {
 	if (ssl == NULL) {
 		DBG("oops, bad SSL ptr");
 	}
-	wolfSSL_SetIOReadCtx(ssl, (void*)&_socket);
-	wolfSSL_SetIOWriteCtx(ssl, (void*)&_socket);
+	wolfSSL_SetIOReadCtx(ssl, (void*)&__socket);
+	wolfSSL_SetIOWriteCtx(ssl, (void*)&__socket);
 #ifdef DEBUG_WOLFSSL
     wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
     wolfSSL_Debugging_ON();
