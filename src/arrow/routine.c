@@ -30,29 +30,39 @@ arrow_gateway_t *current_gateway(void) {
   return &_gateway;
 }
 
+#define GATEWAY_CONNECT "Gateway connection [%s]"
+#define GATEWAY_CONFIG "Gateway config [%s]"
+#define DEVICE_CONNECT "Device connection [%s]"
+#define DEVICE_TELEMETRY "Device telemetry [%s]"
+#define DEVICE_MQTT_CONNECT "Device mqtt connection [%s]"
+#define DEVICE_MQTT_TELEMETRY "Device mqtt telemetry [%s]"
+
 int arrow_initialize_routine(void) {
   wdt_feed();
 
   dont_close_session();
   DBG("register gateway via API");
   while ( arrow_connect_gateway(&_gateway) < 0 ) {
-    DBG("arrow gateway connection fail...");
+    DBG(GATEWAY_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
+  DBG(GATEWAY_CONNECT, "ok");
 
   wdt_feed();
   while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
-    DBG("arrow gateway config fail...");
+    DBG(GATEWAY_CONFIG, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
+  DBG(GATEWAY_CONFIG, "ok");
 
   // device registaration
   wdt_feed();
   DBG("register device via API");
   while ( arrow_connect_device(&_gateway, &_device) < 0 ) {
-    DBG("arrow: device connection fail...");
+    DBG(DEVICE_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
+  DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
   if ( !has_cmd_handler() ) do_close_session();
 
@@ -72,9 +82,10 @@ int arrow_send_telemetry_routine(void *data) {
   if ( !_init_done ) return -1;
   wdt_feed();
   while ( arrow_send_telemetry(&_device, data) < 0) {
-    DBG("arrow: send telemetry fail...");
+    DBG(DEVICE_TELEMETRY, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
+  DBG(DEVICE_TELEMETRY, "ok");
   return 0;
 }
 
@@ -83,9 +94,10 @@ int arrow_mqtt_connect_routine(void) {
   // init MQTT
   DBG("mqtt connect...");
   while ( mqtt_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-    DBG("mqtt connect fail...");
+    DBG(DEVICE_MQTT_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
-  } //every 3sec try to connect
+  }
+  DBG(DEVICE_MQTT_CONNECT, "ok");
 
   arrow_state_mqtt_run(&_device);
   if ( has_cmd_handler() >= 0 )  mqtt_subscribe();
@@ -105,11 +117,16 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
     if ( data_cb(data) < 0 ) continue;
     wdt_feed();
     if ( mqtt_publish(&_device, data) < 0 ) {
-      DBG("mqtt publish failure...");
+      DBG(DEVICE_MQTT_TELEMETRY, "fail");
       mqtt_disconnect();
       while (mqtt_connect(&_gateway, &_device, &_gateway_config) < 0) { msleep(ARROW_RETRY_DELAY);}
       if ( has_cmd_handler() >= 0 ) mqtt_subscribe();
     }
+#if defined(DEBUG)
+    else {
+      DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    }
+#endif
   }
 }
 
