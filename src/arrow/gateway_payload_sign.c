@@ -51,8 +51,8 @@ int gateway_payload_sign(char *signature,
   hex_encode(hex_tmp, tmp, 32);
 //  DBG("hex2: [%d]%s", strlen(hex_tmp), hex_tmp);
   hmac256(tmp, hex_tmp, strlen(hex_tmp), stringtoSign, strlen(stringtoSign));
-//  hex_encode(signature, tmp, 32);
-  DBG("sig: [%d]%s", strlen(signature), signature);
+  hex_encode(signature, tmp, 32);
+//  DBG("sig: [%d]%s", strlen(signature), signature);
   FREE_CHUNK(canonicalRequest);
   FREE_CHUNK(tmp);
   FREE_CHUNK(hex_tmp);
