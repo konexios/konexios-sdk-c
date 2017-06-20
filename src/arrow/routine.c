@@ -108,6 +108,9 @@ int arrow_mqtt_connect_routine(void) {
 
 void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done || !_init_mqtt ) return;
+  if ( has_cmd_handler() >= 0 ) {
+    DBG("MQTT wait commands");
+  }
   while (1) {
     if ( has_cmd_handler() < 0 ) {
       msleep(TELEMETRY_DELAY);

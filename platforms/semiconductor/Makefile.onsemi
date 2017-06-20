@@ -11,6 +11,7 @@ OBJDUMP := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-objdump)
 SIZE    := $(call convert-slash,$(GCC4MBED_TOOLPATH)/arm-none-eabi-size)
 
 $(info "$(PROJECT)")
+$(info "$(ACN_SDK_C_PATH)")
 
 ACN_SDK_C_PATH := $(GCC4MBED_DIR)/acn-embedded/acn-sdk-c
 
