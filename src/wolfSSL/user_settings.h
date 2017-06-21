@@ -82,7 +82,8 @@
 #define NO_RABBIT
 //#define NO_AES
 #define NO_ECC256
-#define NO_ECC_DHE
+#define HAVE_ECC
+//#define NO_ECC_DHE
 #define NO_HC128
 #define NO_PSK
 #define NO_MD2
@@ -104,6 +105,8 @@
 #define WOLFSSL_NO_VERIFYSERVER
 #define NO_SESSION_CACHE // For Small RAM
 #define NO_CERT
+//#define NO_ECC_DHE
+//#define HAVE_AESGCM
 //#define NO_FILESYSTEM
     #define HAVE_TM_TYPE
 #ifndef WOLFSSL_NO_VERIFYSERVER

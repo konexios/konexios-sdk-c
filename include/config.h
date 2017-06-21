@@ -39,6 +39,7 @@
 #else // for IoT
 #  if !defined(DEV_ENV)
 #   define HTTP_CIPHER
+#   define MQTT_CIPHER
 #  endif
 //#define MQTT_CIPHER
 #endif
