@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.2.5
+#define SDK_VERSION 1.2.6
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -39,6 +39,7 @@
 #else // for IoT
 #  if !defined(DEV_ENV)
 #   define HTTP_CIPHER
+#   define MQTT_CIPHER
 #  endif
 //#define MQTT_CIPHER
 #endif
