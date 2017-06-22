@@ -296,7 +296,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     HTTP_DBG("Receiving response");
 
-    uint32_t trfLen;
+    memset(http_buffer, 0x0, sizeof(http_buffer));
+    uint32_t trfLen = 0;
     ret = receive_response(cli, res, http_buffer, &trfLen);
     if ( ret < 0 ) {
         DBG("Connection error (%d)", ret);
