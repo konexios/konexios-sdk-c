@@ -40,7 +40,9 @@ int __http_routine(response_init_f req_init, void *arg_init,
   sign_request(&request);
   ret = http_client_do(&_cli, &request, &response);
   http_request_close(&request);
-  if (__close_session) {
+  DBG(" close session %d", __close_session);
+  DBG(" new   session %d", __newsession);
+  if (__close_session ) { // || ret < 0) {
 	  http_client_free(&_cli);
 	  __newsession = 1;
   } else {

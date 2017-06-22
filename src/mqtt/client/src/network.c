@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <bsd/inet.h>
 #include <arrow/mem.h>
+#include <ssl/ssl.h>
 #if defined(__USE_STD__)
 # include <errno.h>
 #endif
@@ -32,12 +33,13 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     int bytes = 0;
     int rc;
     while (bytes < len) {
+//    	if (rc) DBG("mqtt recv ---%d", timeout_ms);
 #if defined(MQTT_CIPHER)
-      rc = wolfSSL_read(n->ssl, buffer + bytes, (uint16_t)(len - bytes));
+    	rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));
 #else
-      rc = recv(n->my_socket, (char*) buffer +bytes, (uint16_t)(len - bytes), 0);
+    	rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
 #endif
-//         if (rc) DBG("mqtt recv %d/%d", rc, len);
+//      if (rc) DBG("mqtt recv %d/%d", rc, len);
         if (rc < 0) {
 #if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
             DBG("error(%d): %s", rc, strerror(errno));
@@ -55,12 +57,12 @@ static int _write(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     struct timeval tv = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
 
     setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-//    DBG("mqtt send %d", len);
     int rc = 0;
 #if defined(MQTT_CIPHER)
-    rc = wolfSSL_write(n->ssl, buffer, len);
+//    DBG("mqtt send %d", len);
+     rc = ssl_send(n->my_socket, (char*)buffer, len);
 #else
-    rc = send(n->my_socket, (void*)buffer, (size_t)len, 0);
+     rc = send(n->my_socket, (char*)buffer, len, 0);
 #endif
     return rc;
 }
@@ -70,56 +72,14 @@ void NetworkInit(Network* n) {
     n->my_socket = -1;
     n->mqttread = _read;
     n->mqttwrite = _write;
-#if !defined(__XCC__)
-# if defined(MQTT_CIPHER)
-    wolfSSL_Init();
-//    wolfSSL_Debugging_ON();
-    n->method = wolfTLSv1_2_client_method();
-# endif
-#endif
 }
 
 void NetworkDisconnect(Network* n) {
+# if defined(MQTT_CIPHER)
+    ssl_close(n->my_socket);
+#endif
     soc_close(n->my_socket);
-#if defined(__XCC__)
-# if defined(MQTT_CIPHER)
-    if (n->ssl) {
-      qcom_SSL_shutdown(n->ssl);
-      qcom_SSL_ctx_free(n->ctx);
-    }
-# endif
-#else
-# if defined(MQTT_CIPHER)
-    if ( n->ctx ) wolfSSL_CTX_free(n->ctx);
-    if ( n->ssl ) wolfSSL_free(n->ssl);
-# endif
-#endif
 }
-
-#if !defined(__XCC__) && defined(MQTT_CIPHER)
-static int recv_ssl(WOLFSSL *wssl, char* buf, int sz, void* vp) {
-  int *tcp = (int *)(vp);
-//  DBG("ssl recv %d - %d", *tcp, sz);
-  int timeout_ms = 5000;
-  struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
-  setsockopt(*tcp, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
-  int got = recv(*tcp, buf, sz, 0);
-//  DBG("ssl got %d", got);
-  if (got == 0)  return -2;  // IO_ERR_WANT_READ;
-  return got;
-}
-
-
-static int send_ssl(WOLFSSL *wssl, char* buf, int sz, void* vp) {
-  int *tcp = (int *)(vp);
-//  DBG("ssl send %d - %d", *tcp, sz);
-  int sent = send(*tcp, buf, sz, 0);
-//  DBG("ssl sent %d", sent);
-  if (sent == 0)
-    return -2;  // IO_ERR_WANT_WRITE
-  return sent;
-}
-#endif
 
 int NetworkConnect(Network* n, char* addr, int port) {
     struct sockaddr_in serv;
@@ -140,7 +100,7 @@ int NetworkConnect(Network* n, char* addr, int port) {
         serv.sin_port = htons((uint16_t)port);
     } else
         return -1;
-DBG("try socket");
+
     n->my_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if ( n->my_socket < 0 ) {
         DBG("MQTT connetion fail %d", n->my_socket);
@@ -150,67 +110,12 @@ DBG("try socket");
         soc_close(n->my_socket);
         return -2;
     }
-
-
+    DBG("cipher socket %d", n->my_socket);
 #if defined(MQTT_CIPHER)
-#if defined(__XCC__)
-    n->ctx = qcom_SSL_ctx_new(SSL_CLIENT, SSL_INBUF_SIZE, SSL_OUTBUF_SIZE, 0);
-    if ( n->ctx  == NULL) {
-      DBG("unable to get ctx");
-      soc_close(n->my_socket);
-      return -1;
+    if ( ssl_connect(n->my_socket) < 0 ) {
+    	soc_close(n->my_socket);
+    	return -3;
     }
-    n->ssl = qcom_SSL_new(n->ctx);
-    if (n->ssl == 0) {
-      DBG("oops, bad SSL ptr")
-      soc_close(n->my_socket);
-      return -4;
-    }
-    int ret = qcom_SSL_set_fd(n->ssl, n->my_socket);
-    if (ret < A_OK) {
-      DBG("ERROR: Unable to add socket handle to SSL");
-      soc_close(n->my_socket);
-      return ret;
-    }
-    ret = qcom_SSL_connect(n->ssl);
-    if (ret < 0) {
-      DBG("SSL connect fail %d", ret);
-      soc_close(n->my_socket);
-      return ret;
-    }
-#else
-    DBG("start cipher");
-    n->ctx = wolfSSL_CTX_new(n->method);
-    if ( n->ctx  == NULL) {
-      DBG("unable to get ctx");
-      soc_close(n->my_socket);
-      return -1;
-    }
-    wolfSSL_CTX_set_verify(n->ctx, SSL_VERIFY_NONE, 0);
-    wolfSSL_SetIORecv(n->ctx, recv_ssl);
-    wolfSSL_SetIOSend(n->ctx, send_ssl);
-
-    n->ssl = wolfSSL_new(n->ctx);
-    if (n->ssl == 0) {
-      DBG("oops, bad SSL ptr");
-      soc_close(n->my_socket);
-      return -1;
-    }
-    wolfSSL_SetIOReadCtx(n->ssl, (void*)&n->my_socket);
-    wolfSSL_SetIOWriteCtx(n->ssl, (void*)&n->my_socket);
-    DBG("set SSL rdwr context");
-//    wolfSSL_Debugging_ON();
-    int err = wolfSSL_connect(n->ssl);
-    if (err != SSL_SUCCESS) {
-      DBG("SSL connect fail %d", err);
-      soc_close(n->my_socket);
-      return -1;
-    } else {
-        DBG("SSL connect done");
-    }
-
-# endif
 #endif
-
     return n->my_socket;
 }

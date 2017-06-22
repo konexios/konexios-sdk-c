@@ -19,7 +19,8 @@ typedef struct {
   char ssid[64];
   char pass[64];
   int sec;
-  char padding[120];
+  int type;
+  char padding[116];
   char gateway_hid[64];
   char device_hid[64];
   char device_eid[64];

@@ -267,7 +267,8 @@
 #define NO_RABBIT
 //#define NO_AES
 #define NO_ECC256
-#define NO_ECC_DHE
+#define HAVE_ECC
+//#define NO_ECC_DHE
 #define NO_HC128
 #define NO_PSK
 #define NO_MD2

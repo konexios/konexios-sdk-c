@@ -14,15 +14,6 @@
 # define USHRT_MAX 0xFFFFU
 #endif
 
-#if defined(MQTT_CIPHER)
-# if !defined(__XCC__)
-#  include <wolfssl/ssl.h>
-# else
-#  include <qcom_common.h>
-#  include <qcom_ssl.h>
-# endif
-#endif
-
 #if defined(WIN32_DLL) || defined(WIN64_DLL)
   #define DLLImport __declspec(dllimport)
   #define DLLExport __declspec(dllexport)
@@ -50,16 +41,6 @@ typedef struct Network {
     int my_socket;
     int (*mqttread) (struct Network*, unsigned char*, int, int);
     int (*mqttwrite) (struct Network*, unsigned char*, int, int);
-#if defined(MQTT_CIPHER)
-# if defined(__XCC__)
-    SSL_CTX *ctx;
-    SSL *ssl;
-# else
-    WOLFSSL_METHOD *method;
-    WOLFSSL_CTX *ctx;
-    WOLFSSL *ssl;
-# endif
-#endif
 } Network;
 
 typedef struct TimerInterval {

@@ -64,7 +64,7 @@ int arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-  if ( !has_cmd_handler() ) do_close_session();
+  if ( has_cmd_handler() < 0 ) do_close_session();
 
   return 0;
 }
