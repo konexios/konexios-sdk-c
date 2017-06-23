@@ -150,10 +150,11 @@ int __attribute__((weak)) ssl_send(int sock, char* data, int length) {
 int __attribute__((weak)) ssl_close(int sock) {
 	socket_ssl_t *s = find_ssl_sock(sock);
 	DBG("close ssl");
-	wolfSSL_free(s->ssl);
-	wolfSSL_CTX_free(s->ctx);
-	remove_ssl_sock(sock);
-	if ( !__sock ) wolfSSL_Cleanup();
-	DBG("close done");
+  if ( s ) {
+    wolfSSL_free(s->ssl);
+    wolfSSL_CTX_free(s->ctx);
+    remove_ssl_sock(sock);
+    if ( !__sock ) wolfSSL_Cleanup();
+  }
 	return 0;
 }

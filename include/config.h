@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.2.6
+#define SDK_VERSION 1.2.7
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -121,16 +121,17 @@
 # endif
 #endif
 
-#define ARROW_API_BASE_URL              ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
-#define ARROW_API_GATEWAY_ENDPOINT      ARROW_API_BASE_URL "/api/v1/kronos/gateways"
-#define ARROW_API_DEVICE_ENDPOINT       ARROW_API_BASE_URL "/api/v1/kronos/devices"
-#define ARROW_API_TELEMETRY_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
-#define ARROW_API_EVENTS_ENDPOINT       ARROW_API_BASE_URL "/api/v1/core/events"
-#define ARROW_API_ACCOUNT_ENDPOINT      ARROW_API_BASE_URL "/api/v1/kronos/accounts"
-#define ARROW_API_NODE_ENDPOINT         ARROW_API_BASE_URL "/api/v1/kronos/nodes"
-#define ARROW_API_NODE_TYPE_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/nodes/types"
-#define ARROW_API_TESTSUITE_ENDPOINT    ARROW_API_BASE_URL "/api/v1/kronos/testsuite"
-#define ARROW_MQTT_URL                  MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
+#define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
+#define ARROW_API_GATEWAY_ENDPOINT          ARROW_API_BASE_URL "/api/v1/kronos/gateways"
+#define ARROW_API_DEVICE_ENDPOINT           ARROW_API_BASE_URL "/api/v1/kronos/devices"
+#define ARROW_API_TELEMETRY_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
+#define ARROW_API_EVENTS_ENDPOINT           ARROW_API_BASE_URL "/api/v1/core/events"
+#define ARROW_API_ACCOUNT_ENDPOINT          ARROW_API_BASE_URL "/api/v1/kronos/accounts"
+#define ARROW_API_NODE_ENDPOINT             ARROW_API_BASE_URL "/api/v1/kronos/nodes"
+#define ARROW_API_NODE_TYPE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/nodes/types"
+#define ARROW_API_TESTSUITE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/testsuite"
+#define ARROW_API_SOFTWARE_RELEASE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/transactions"
+#define ARROW_MQTT_URL                      MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
 
 /* gateway and device configuration */
 

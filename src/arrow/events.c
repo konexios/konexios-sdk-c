@@ -9,6 +9,7 @@
 #include "arrow/events.h"
 #include <arrow/devicecommand.h>
 #include <arrow/software_update.h>
+#include <arrow/software_release.h>
 #include <arrow/state.h>
 
 #if defined(__USE_STD__)
@@ -44,9 +45,10 @@ typedef struct {
 } sub_t;
 
 sub_t sub_list[] = {
-  { "ServerToGateway_DeviceCommand", ev_DeviceCommand},
+  { "ServerToGateway_DeviceCommand", ev_DeviceCommand },
   { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest },
-  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate }
+  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate },
+  { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease }
 };
 
 // checker

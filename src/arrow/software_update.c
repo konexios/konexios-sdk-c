@@ -16,8 +16,8 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
 }
 
 int __attribute__((weak)) arrow_gateway_software_update(const char *url) {
-  if ( __update ) __update(url);
-  return 0;
+  if ( __update ) return __update(url);
+  return -1;
 }
 
 int arrow_gateway_software_update_set_cb(__update_cb cb) {
