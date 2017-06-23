@@ -56,7 +56,20 @@ This connect function automatically fill the gateway structure according a defin
 Gateway UID scheme: GATEWAY_UIP_PREFIX-<MAC>
 where MAC is device MAC-address
 
+### Default Initialization ###
+The Default Initialization include establishing a Gateway Connection and Configuration and Device Connection if it's necessary. This function implemeted all logic to initialize your device in a cloud. 
+
+```c
+arrow_initialize_routine();
+```
+
+To access the Gateway and Device objects you can use following function:
+arrow_gateway_t *current_gateway();
+arrow_device_t *current_device();
+
 ### Checkin Gateway ###
+
+It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
 
 simple example:
 
@@ -78,6 +91,9 @@ arrow_gateway_free(&gateway);
 ```
 
 ### Get Gateway Configuration ###
+
+It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
+
 simple example:
 
 ```c
@@ -90,6 +106,8 @@ arrow_gateway_free(&gateway);
 ```
 
 ### Register Device ###
+
+It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
 
 simple example:
 
@@ -114,9 +132,24 @@ This arrow_connect_device function automatically fill the gateway structure acco
 Device UID scheme: GATEWAY_UIP_PREFIX-<MAC>-DEVICE_UID_SUFFIX
 where MAC is device MAC-address
 
+### Commands ###
+
+You can to set your own command handler. At first you need to declare the handler function: int (*)(const char *str), where str - string with a JSON body. If the command processing are succeeded this handler shoud return 0.
+After this you should register the command handler before the gateway initializing.
+
+Example:
+```c
+static int test_cmd_proc(const char *str) {
+  printf("test: [%s]", str);
+  return 0;
+}
+// ... in the main function:
+add_cmd_handler("test", &test_cmd_proc);
+```
+
 ### Telemetry API ###
 
-simple example:
+Simple example:
 
 ```c
 arrow_gateway_t gateway;
@@ -155,7 +188,26 @@ related defines in the config.h file (sensors depends):
 #define TELEMETRY_MAGNETOMETER_Y    "f|magnetometerY"
 #define TELEMETRY_MAGNETOMETER_Z    "f|magnetometerZ"
 #define TELEMETRY_DELAY             5000
+```
 
+Or you can to replace this code by:
+```c
+arrow_send_telemetry_routine(&data);
+```
+
+Also you may initialize the MQTT processor and run the telemetry loop.
+For MQTT initializing:
+```c
+arrow_mqtt_connect_routine();
+```
+After that you can run loop:
+```c
+arrow_mqtt_send_telemetry_routine(get_telemetry_data, &data);
+```
+where get_telemetry_data - function that fill a telemetry data object;
+data - argument for this function
+
+And if the command handler was installed loop will wait the mqtt commands between telemetry sending activities.
 
 ### Test Suite ###
 
@@ -214,6 +266,28 @@ arrow_test_step_fail(&p, 3, "not ARM");
 // end test
 arrow_test_end(&p);
 
+### Software Update ###
+
+You can set the callback for a Software Update ability.
+Just implement this function somewhere:
+
+```c
+int arrow_software_update(const char *url,
+                          const char *checksum,
+                          const char *from,
+                          const char *to)
+```
+where url - is an address of the new firmware
+checksum is the md5sum of the new firmware
+from - old firmware version
+to - new firmware version
+
+This function should to return 0 if the update process succeeded.
+
+And in the main function you chould to install this callback this way:
+```c
+arrow_software_release_set_cb(&arrow_software_update);
+```
 
 ### OTA firmware upgrade ###
 
