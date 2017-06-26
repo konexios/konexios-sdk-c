@@ -1,7 +1,7 @@
 #if !defined(ARROW_DEVICE_ACTION_H_)
 #define ARROW_DEVICE_ACTION_H_
 
-#include "arrow/device.h"
+#include <arrow/device.h>
 
 typedef struct _dev_action_model {
   char *criteria;

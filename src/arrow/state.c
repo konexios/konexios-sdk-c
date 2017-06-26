@@ -1,12 +1,11 @@
 #include "arrow/state.h"
-#include <debug.h>
+#include <time/time.h>
 #include <http/client.h>
-#include <arrow/request.h>
 #include <json/json.h>
 #include <arrow/mem.h>
-#include <time/time.h>
-#include <arrow/connection.h>
+#include <http/routine.h>
 #include <arrow/events.h>
+#include <debug.h>
 
 static JsonNode *state_tree = NULL;
 static char *_device_hid = NULL;
@@ -48,11 +47,7 @@ static void _state_get_init(http_request_t *request, void *arg) {
 }
 
 int arrow_get_state(arrow_device_t *device) {
-  int ret = __http_routine(_state_get_init, device, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow State get failed...");
-  }
-  return ret;
+  STD_ROUTINE(_state_get_init, device, NULL, NULL, "State get failed...");
 }
 
 typedef enum {
@@ -102,11 +97,7 @@ static void _state_post_init(http_request_t *request, void *arg) {
 
 static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
   post_dev_t pd = {device, post_type};
-  int ret = __http_routine(_state_post_init, &pd, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow State post failed...");
-  }
-  return ret;
+  STD_ROUTINE(_state_post_init, &pd, NULL, NULL, "State post failed...");
 }
 
 int arrow_post_state_request(arrow_device_t *device) {
@@ -168,11 +159,7 @@ static void _state_put_init(http_request_t *request, void *arg) {
 
 static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const char *trans_hid) {
     put_dev_t pd = {device_hid, trans_hid, put_type};
-    int ret = __http_routine(_state_put_init, &pd, NULL, NULL);
-    if ( ret < 0 ) {
-      DBG("Arrow State put failed...");
-    }
-    return ret;
+    STD_ROUTINE(_state_put_init, &pd, NULL, NULL, "State put failed...");
 }
 
 int state_handler(char *str) {

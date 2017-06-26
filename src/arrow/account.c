@@ -1,4 +1,5 @@
 #include "arrow/account.h"
+#include <http/routine.h>
 #include <arrow/connection.h>
 #include <debug.h>
 

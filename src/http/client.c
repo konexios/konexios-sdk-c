@@ -22,6 +22,14 @@
 
 #include <ssl/ssl.h>
 
+void http_session_close_set(http_client_t *cli, bool mode) {
+  cli->flags._close = mode;
+}
+
+bool http_session_close(http_client_t *cli) {
+  return cli->flags._close;
+}
+
 #if !defined(MAX_BUFFER_SIZE)
 #define MAX_BUFFER_SIZE 1024
 #endif
@@ -77,10 +85,10 @@ static int ssl_write(uint8_t *buf, uint16_t len, void *c) {
     return ret;
 }
 
-void http_client_init(http_client_t *cli, int newsession) {
+void http_client_init(http_client_t *cli) {
 	cli->response_code = 0;
-	if ( newsession ) {
-	    cli->sock = -1;
+  if ( cli->flags._new ) {
+    cli->sock = -1;
 		cli->timeout = 5000;
 		cli->_r_func = simple_read;
 		cli->_w_func = simple_write;
@@ -88,9 +96,15 @@ void http_client_init(http_client_t *cli, int newsession) {
 }
 
 void http_client_free(http_client_t *cli) {
-    DBG("------------ close socket %d", cli->sock);
+  if ( cli->flags._close ) {
+#if defined(HTTP_CIPHER)
     ssl_close(cli->sock);
+#endif
     if ( cli->sock >= 0 ) soc_close(cli->sock);
+    cli->flags._new = 1;
+  } else {
+    cli->flags._new = 0;
+  }
 }
 
 #define HTTP_VERS " HTTP/1.1\r\n"

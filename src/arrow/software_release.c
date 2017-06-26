@@ -1,13 +1,6 @@
 #include "arrow/software_release.h"
+#include <http/routine.h>
 #include <debug.h>
-
-#define STD_ROUTINE(init, i_arg, proc, p_arg, fail_msg) { \
-  int ret = __http_routine(init, i_arg, proc, p_arg); \
-  if ( ret < 0 ) { \
-    if (fail_msg) DBG(fail_msg); \
-  } \
-  return ret; \
-}
 
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 60
 

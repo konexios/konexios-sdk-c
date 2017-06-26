@@ -1,6 +1,7 @@
 #include "arrow/telemetry_api.h"
 #include <arrow/find_by.h>
 #include <json/telemetry.h>
+#include <http/routine.h>
 #include <debug.h>
 
 #define URI_LEN sizeof(ARROW_API_TELEMETRY_ENDPOINT) + 50

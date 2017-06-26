@@ -22,21 +22,26 @@
 #include "nxd_dns.h"
 #endif
 
+typedef struct __session_flags {
+  int _new   : 16;
+  int _close : 16;
+} __session_flags_t;
+
 typedef int (*rw_func)(uint8_t *, uint16_t, void *);
 
 typedef struct {
-#if defined(_ARIS_)
-    INT sock;
-#else
   int sock;
-#endif
-    uint32_t timeout;
-    int response_code;
-    rw_func         _r_func;
-    rw_func         _w_func;
+  uint32_t timeout;
+  int response_code;
+  __session_flags_t flags;
+  rw_func         _r_func;
+  rw_func         _w_func;
 } http_client_t;
 
-void http_client_init(http_client_t *cli, int newsession);
+void http_session_close_set(http_client_t *cli, bool mode);
+bool http_session_close(http_client_t *cli);
+
+void http_client_init(http_client_t *cli);
 void http_client_free(http_client_t *cli);
 
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res);

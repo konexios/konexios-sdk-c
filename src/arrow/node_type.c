@@ -1,4 +1,5 @@
 #include "arrow/node_type.h"
+#include <http/routine.h>
 #include <debug.h>
 
 #define URI_LEN sizeof(ARROW_API_NODE_TYPE_ENDPOINT) + 50

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <arrow/connection.h>
+#include <arrow/routine.h>
 
 typedef struct _arrow_node {
   char *description;

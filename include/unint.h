@@ -39,4 +39,8 @@ typedef unsigned int size_t;
 # include <sys/types.h>
 #endif
 
+#if defined(__USE_STD__)
+#include <stdbool.h>
+#endif
+
 #endif // KRONOS_C_SDK_UNINT_H_

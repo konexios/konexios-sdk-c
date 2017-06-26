@@ -1,6 +1,6 @@
 #include "arrow/gateway_api.h"
+#include <http/routine.h>
 #include <debug.h>
-#include <stdarg.h>
 
 #define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
 

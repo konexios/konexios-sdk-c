@@ -2,6 +2,9 @@
 #include <debug.h>
 #include <arrow/events.h>
 
+#if defined(NO_SOFTWARE_UPDATE)
+typedef void __dummy__;
+#else
 __update_cb __attribute__((weak)) __update;
 
 int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
@@ -24,3 +27,4 @@ int arrow_gateway_software_update_set_cb(__update_cb cb) {
   __update = cb;
   return 0;
 }
+#endif

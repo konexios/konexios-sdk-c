@@ -2,7 +2,7 @@
 #define ARROW_RETRY_DELAY 3000
 #endif
 
-#include "arrow/connection.h"
+#include "arrow/routine.h"
 #include <config.h>
 #include <debug.h>
 #include <time/time.h>
@@ -14,7 +14,15 @@
 #include <arrow/mqtt.h>
 #include <arrow/gateway_api.h>
 #include <arrow/device_api.h>
+#include <arrow/telemetry_api.h>
+#include <arrow/storage.h>
 
+#define GATEWAY_CONNECT "Gateway connection [%s]"
+#define GATEWAY_CONFIG "Gateway config [%s]"
+#define DEVICE_CONNECT "Device connection [%s]"
+#define DEVICE_TELEMETRY "Device telemetry [%s]"
+#define DEVICE_MQTT_CONNECT "Device mqtt connection [%s]"
+#define DEVICE_MQTT_TELEMETRY "Device mqtt telemetry [%s]"
 
 static arrow_gateway_t _gateway;
 static arrow_gateway_config_t _gateway_config;
@@ -30,17 +38,36 @@ arrow_gateway_t *current_gateway(void) {
   return &_gateway;
 }
 
-#define GATEWAY_CONNECT "Gateway connection [%s]"
-#define GATEWAY_CONFIG "Gateway config [%s]"
-#define DEVICE_CONNECT "Device connection [%s]"
-#define DEVICE_TELEMETRY "Device telemetry [%s]"
-#define DEVICE_MQTT_CONNECT "Device mqtt connection [%s]"
-#define DEVICE_MQTT_TELEMETRY "Device mqtt telemetry [%s]"
+int arrow_connect_gateway(arrow_gateway_t *gateway){
+  arrow_prepare_gateway(gateway);
+  int ret = restore_gateway_info(gateway);
+  if ( ret < 0 ) {
+    // new registration
+    if ( arrow_register_gateway(gateway) < 0 ) {
+      return -1;
+    }
+    save_gateway_info(gateway);
+  } else {
+    // hid already set
+    DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
+    return arrow_gateway_checkin(gateway);
+  }
+  return 0;
+}
+
+int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+  arrow_prepare_device(gateway, device);
+  if ( restore_device_info(device) < 0 ) {
+    if ( arrow_register_device(gateway, device) < 0 ) return -1;
+    save_device_info(device);
+  }
+  return 0;
+}
 
 int arrow_initialize_routine(void) {
   wdt_feed();
 
-  dont_close_session();
+  http_session_close_set(current_client(), false);
   DBG("register gateway via API");
   while ( arrow_connect_gateway(&_gateway) < 0 ) {
     DBG(GATEWAY_CONNECT, "fail");
@@ -64,7 +91,7 @@ int arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-  if ( has_cmd_handler() < 0 ) do_close_session();
+  if ( has_cmd_handler() < 0 ) http_session_close_set(current_client(), true);
 
   return 0;
 }

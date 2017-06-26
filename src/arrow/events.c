@@ -8,9 +8,12 @@
 
 #include "arrow/events.h"
 #include <arrow/devicecommand.h>
-#include <arrow/software_update.h>
 #include <arrow/software_release.h>
 #include <arrow/state.h>
+
+#if !defined(NO_SOFTWARE_UPDATE)
+# include <arrow/software_update.h>
+#endif
 
 #if defined(__USE_STD__)
 #include <ctype.h>
@@ -47,7 +50,9 @@ typedef struct {
 sub_t sub_list[] = {
   { "ServerToGateway_DeviceCommand", ev_DeviceCommand },
   { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest },
+#if !defined(NO_SOFTWARE_UPDATE)
   { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate },
+#endif
   { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease }
 };
 

@@ -7,11 +7,12 @@
  */
 
 #include "arrow/devicecommand.h"
-#include <debug.h>
+#include <http/routine.h>
 #include <arrow/connection.h>
 #include <json/json.h>
 #include <arrow/mem.h>
 #include <arrow/events.h>
+#include <debug.h>
 
 static cmd_handler *__handlers = NULL;
 
