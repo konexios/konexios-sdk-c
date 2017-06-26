@@ -12,8 +12,8 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-#include <http/routine.h>
-#include <arrow/connection.h>
+#include <arrow/gateway.h>
+#include <arrow/device.h>
 
 typedef int (*get_data_cb)(void *);
 

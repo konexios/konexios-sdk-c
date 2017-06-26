@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-#include <arrow/connection.h>
+#include <arrow/gateway.h>
+#include <arrow/device.h>
 
 typedef int (*__release_cb)(const char *url,
                            const char *chsum,

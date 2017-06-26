@@ -8,7 +8,6 @@
 
 #include "arrow/devicecommand.h"
 #include <http/routine.h>
-#include <arrow/connection.h>
 #include <json/json.h>
 #include <arrow/mem.h>
 #include <arrow/events.h>

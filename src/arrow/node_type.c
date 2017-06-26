@@ -1,4 +1,5 @@
 #include "arrow/node_type.h"
+#include <json/json.h>
 #include <http/routine.h>
 #include <debug.h>
 

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <arrow/connection.h>
+#include <arrow/device.h>
 
 typedef struct _device_type_telemetry {
   int controllable;

@@ -6,7 +6,8 @@ extern "C" {
 #endif
 
 #include <arrow/find_by.h>
-#include <arrow/connection.h>
+#include <arrow/gateway.h>
+#include <arrow/device.h>
 
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 int arrow_device_find_by(int n, ...);

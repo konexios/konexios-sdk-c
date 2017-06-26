@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <arrow/connection.h>
+#include <json/json.h>
 
 typedef int (*__update_cb)(const char *url);
 

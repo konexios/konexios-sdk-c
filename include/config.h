@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.2.7
+#define SDK_VERSION 1.2.8
 
 #if !defined(_KEYS_)
 #include "private.h"

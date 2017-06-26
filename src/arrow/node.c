@@ -1,4 +1,6 @@
 #include "arrow/node.h"
+#include <http/routine.h>
+#include <json/json.h>
 #include <debug.h>
 
 #define URI_LEN sizeof(ARROW_API_NODE_ENDPOINT) + 50

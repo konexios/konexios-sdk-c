@@ -1,7 +1,8 @@
 #if !defined(ARROW_TESTSUITE_H_)
 #define ARROW_TESTSUITE_H_
 
-#include <arrow/connection.h>
+#include <arrow/gateway.h>
+#include <arrow/device.h>
 
 typedef struct _procedure_ {
   property_t hid;

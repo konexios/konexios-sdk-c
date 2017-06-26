@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-#include <arrow/routine.h>
-
 typedef struct _arrow_node {
   char *description;
   int enabled;

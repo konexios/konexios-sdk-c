@@ -9,6 +9,8 @@
 #ifndef KRONOS_C_SDK_UNINT_H_
 #define KRONOS_C_SDK_UNINT_H_
 
+#include <config.h>
+
 #if defined(_ARIS_)
 # include <inttypes.h>
 # include <sys/types.h>
@@ -41,6 +43,10 @@ typedef unsigned int size_t;
 
 #if defined(__USE_STD__)
 #include <stdbool.h>
+#else
+typedef int bool;
+#define false 0
+#define true 1
 #endif
 
 #endif // KRONOS_C_SDK_UNINT_H_

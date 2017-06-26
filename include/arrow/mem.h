@@ -47,6 +47,7 @@ void *realloc(void *ptrmem, size_t size);
 #endif
 #endif
 
+// FIXME remove this def
 #define X_STR_COPY(dst, src) (dst) = strdup(src)
 
 #define X_STR_FREE(str) if ( str ) free(str);

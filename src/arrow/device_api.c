@@ -1,4 +1,5 @@
 #include "arrow/device_api.h"
+#include <http/routine.h>
 #include <debug.h>
 
 #define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
