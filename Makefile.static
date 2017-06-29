@@ -1,19 +1,51 @@
-SRC += $(wildcard $(PWD)/src/*.c)
-SRC += $(wildcard $(PWD)/src/ntp/*.c)
-SRC += $(wildcard $(PWD)/src/http/*.c)
-SRC += $(wildcard $(PWD)/src/json/*.c)
-SRC += $(wildcard $(PWD)/src/bsd/*.c) 
-SRC += $(wildcard $(PWD)/src/time/*.c)
-SRC += $(wildcard $(PWD)/src/arrow/*.c)
-SRC += $(wildcard $(PWD)/src/mqtt/client/src/*.c)
-SRC += $(wildcard $(PWD)/src/mqtt/packet/src/*.c)
+# GCC_PREFIX = arm
+# GCC_BIN = /home/danila/bin
+fix_pref = $(if $(1),$(1)-,$(1))
+fix_path = $(if $(1),$(abspath $(1))/$(call fix_pref,$(2)),$(call fix_pref,$(2)))
 
-ACN_SDK_C_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+CC_NAME ?= gcc
+
+AS      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))as
+AR      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))ar
+CC      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))$(CC_NAME)
+CPP     = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))g++
+LD      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))gcc
+OBJCOPY = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))objcopy
+OBJDUMP = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))objdump
+SIZE    = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))size
+RM      = rm -f
+MAKEDIR = mkdir -p
+RMDIR   = rm -rf
+
+$(info GCC: $(GCC_PREFIX))
+$(info GCC: $(GCC_BIN))
+$(info GCC: $(CC))
+
+get_make_path = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/
+SDK_PATH ?= $(call get_make_path)
 # $(info $(ACN_SDK_C_PATH))
 
-INCLUDES += \
-    -I$(ACN_SDK_C_PATH) \
-    -I$(ACN_SDK_C_PATH)/include
+SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/ntp/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/http/*.c)
+ifeq ($(CJSON),yes)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/json/*.c)
+endif
+SDK_SRC += $(wildcard $(SDK_PATH)/src/bsd/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/time/*.c)
+SDK_SRC += $(shell find $(SDK_PATH)/src/arrow -name "*.c")
+SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/src/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)
+
+SDK_INCLUDES += \
+    -I$(SDK_PATH) \
+    -I$(SDK_PATH)/include \
+    -I$(SDK_PATH)/src
+
+ifneq ($(PLATFORM),)
+SDK_INCLUDES += -I$(SDK_PATH)/platforms/$(PLATFORM)
+endif
+SDK_INCLUDES += -I$(SDK_PATH)/platforms/default
 
 PRIV_INC = private.h
 

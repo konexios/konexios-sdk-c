@@ -23,9 +23,9 @@ static void add_to_tail(telemetry_data_info_t **info,
                         int flval) {
   if (! *info ) {
     *info = malloc(sizeof(telemetry_data_info_t));
-    X_STR_COPY((*info)->deviceHid, deviceHid);
-    X_STR_COPY((*info)->name, name);
-    X_STR_COPY((*info)->type, type);
+    (*info)->deviceHid = strdup(deviceHid);
+    (*info)->name = strdup(name);
+    (*info)->type = strdup(type);
     (*info)->timestamp = timestamp;
     (*info)->floatValue = flval;
     (*info)->next = NULL;
@@ -36,9 +36,9 @@ static void add_to_tail(telemetry_data_info_t **info,
 
 static void free_at_last(telemetry_data_info_t *info) {
   if ( info->next ) free_at_last(info->next);
-  X_STR_FREE(info->deviceHid);
-  X_STR_FREE(info->name);
-  X_STR_FREE(info->type);
+  if ( info->deviceHid ) free(info->deviceHid);
+  if ( info->name ) free(info->name);
+  if ( info->type ) free(info->type);
   free(info);
 }
 

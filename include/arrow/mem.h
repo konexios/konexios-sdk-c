@@ -47,11 +47,6 @@ void *realloc(void *ptrmem, size_t size);
 #endif
 #endif
 
-// FIXME remove this def
-#define X_STR_COPY(dst, src) (dst) = strdup(src)
-
-#define X_STR_FREE(str) if ( str ) free(str);
-
 enum prop_flags {
   is_stack    = 0x0,
   is_dynamic  = 0x1,

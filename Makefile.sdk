@@ -1,0 +1,40 @@
+-include $(SDK_PATH)/Makefile.static
+-include $(SDK_PATH)/Makefile.wolf
+
+$(info SDK: $(SDK_PATH))
+
+LIBDIR ?= .
+SDK_TARGET = $(abspath $(LIBDIR))/libacnsdkc.a
+
+ifeq ($(WOLFSSL),yes)
+SDK_SRC += $(WOLF_SRC)
+SDK_INCLUDES += $(WOLF_INCLUDES)
+endif
+
+OBJ = $(SDK_SRC:.c=.o)
+
+$(info $(OS))
+$(info $(SDK_PATH))
+
+AR_PRM = rcs
+
+default: private $(SDK_TARGET)
+
+$(SDK_PATH)src/%.o : $(SDK_PATH)src/%.c
+	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) -c $< -o $@
+
+$(SDK_TARGET): private $(OBJ)
+	@if [ ! -e $(abspath $(LIBDIR)) ]; then $(MAKEDIR) $(LIBDIR); fi
+	$(AR) $(AR_PRM) $(SDK_TARGET) $(OBJ)
+
+private:
+	$(call check_private)
+	
+depend: dep
+
+dep:
+	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
+
+clean::
+	$(RM) $(OBJ) $(SDK_TARGET)
+	@find $(PWD) -name "*.d" -delete >/dev/null

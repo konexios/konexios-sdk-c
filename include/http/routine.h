@@ -25,7 +25,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
 #define STD_ROUTINE(init, i_arg, proc, p_arg, fail_msg) { \
   int ret = __http_routine(init, i_arg, proc, p_arg); \
   if ( ret < 0 ) { \
-    if (fail_msg) DBG(fail_msg); \
+    if (fail_msg) DBG("Error:" fail_msg); \
   } \
   return ret; \
 }

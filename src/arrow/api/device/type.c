@@ -1,4 +1,4 @@
-#include "arrow/device_type.h"
+#include "arrow/api/device/type.h"
 #include <http/routine.h>
 #include <debug.h>
 #include <stdarg.h>
@@ -6,8 +6,8 @@
 
 void device_type_init(device_type_t *dev, int enable, const char *name, const char *dec) {
   dev->enabled = enable;
-  X_STR_COPY(dev->description, dec);
-  X_STR_COPY(dev->name, name);
+  dev->description = strdup(dec);
+  dev->name = strdup(name);
   dev->telemetries = NULL;
 }
 
@@ -15,9 +15,9 @@ void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, 
   device_type_telemetry_t *telemetry;
   telemetry = malloc(sizeof(device_type_telemetry_t));
   telemetry->controllable = contr;
-  X_STR_COPY(telemetry->description, desc);
-  X_STR_COPY(telemetry->name, name);
-  X_STR_COPY(telemetry->type, type);
+  telemetry->description = strdup(desc);
+  telemetry->name = strdup(name);
+  telemetry->type = strdup(type);
   telemetry->next = NULL;
   device_type_telemetry_t *last = dev->telemetries;
   while( last && last->next )
@@ -30,13 +30,13 @@ void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, 
 }
 
 void device_type_free(device_type_t *dev) {
-  X_STR_FREE(dev->description);
-  X_STR_FREE(dev->name);
+  if (dev->description) free(dev->description);
+  if (dev->name) free(dev->name);
   device_type_telemetry_t *telemetry = dev->telemetries;
   while ( telemetry ) {
-    X_STR_FREE(telemetry->description);
-    X_STR_FREE(telemetry->name);
-    X_STR_FREE(telemetry->type);
+    if ( telemetry->description ) free(telemetry->description);
+    if ( telemetry->name ) free(telemetry->name);
+    if ( telemetry->type ) free(telemetry->type);
     device_type_telemetry_t *t_free = telemetry;
     telemetry = telemetry->next;
     free(t_free);
@@ -62,11 +62,7 @@ static int _device_type_list_proc(http_response_t *response, void *arg) {
 
 
 int arrow_device_type_list(void) {
-  int ret = __http_routine(_device_type_list_init, NULL, _device_type_list_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Type list failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_type_list_init, NULL, _device_type_list_proc, NULL, "Device Type list");
 }
 
 static char  *device_type_serialize(device_type_t *dev) {
@@ -111,11 +107,7 @@ static void _device_type_create_init(http_request_t *request, void *arg) {
 //}
 
 int arrow_device_type_create(device_type_t *dev_type) {
-  int ret = __http_routine(_device_type_create_init, dev_type, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Type create failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_type_create_init, dev_type, NULL, NULL,"Device Type create");
 }
 
 typedef struct _device_device_type_ {
@@ -137,9 +129,5 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
 
 int arrow_device_type_update(arrow_device_t *dev, device_type_t *dev_type) {
   device_device_type_t ddt = { dev, dev_type };
-  int ret = __http_routine(_device_type_update_init, &ddt, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Type update failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_type_update_init, &ddt, NULL, NULL, "Device Type update");
 }

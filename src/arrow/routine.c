@@ -11,10 +11,10 @@
 #include <arrow/mqtt.h>
 #include <arrow/events.h>
 #include <arrow/state.h>
-#include <arrow/devicecommand.h>
+#include <arrow/device_command.h>
 #include <arrow/mqtt.h>
 #include <arrow/gateway_api.h>
-#include <arrow/device_api.h>
+#include <arrow/api/device/device.h>
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
 

@@ -1,4 +1,4 @@
-#include "arrow/device_api.h"
+#include "arrow/api/device/device.h"
 #include <http/routine.h>
 #include <debug.h>
 

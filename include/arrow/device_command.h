@@ -1,5 +1,5 @@
-#if !defined(ARROW_DEVICECOMMAND_H_)
-#define ARROW_DEVICECOMMAND_H_
+#if !defined(ARROW_DEVICE_COMMAND_H_)
+#define ARROW_DEVICE_COMMAND_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -43,4 +43,4 @@ int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);
 }
 #endif
 
-#endif // ARROW_DEVICECOMMAND_H_
+#endif // ARROW_DEVICE_COMMAND_H_

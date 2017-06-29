@@ -13,7 +13,7 @@
 #endif
 
 #if defined(_TIMEVAL_DEFINED)
-#include <nxd_bsd.h>
+//#include <nxd_bsd.h>
 #else
 # include <sys/time.h>
 #endif

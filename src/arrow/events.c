@@ -7,7 +7,7 @@
  */
 
 #include "arrow/events.h"
-#include <arrow/devicecommand.h>
+#include <arrow/device_command.h>
 #include <arrow/software_release.h>
 #include <arrow/state.h>
 

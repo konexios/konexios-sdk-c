@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "arrow/devicecommand.h"
+#include "arrow/device_command.h"
 #include <http/routine.h>
 #include <json/json.h>
 #include <arrow/mem.h>

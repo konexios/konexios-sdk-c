@@ -1,9 +1,9 @@
 WOLFSSL_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/src/wolfSSL
 
-SRC += $(wildcard $(PWD)/platforms/default/wolf/crypt/*.c)
-SRC += $(shell find $(PWD)/src/wolfSSL -name "*.c")
-SRC += $(wildcard $(PWD)/src/ssl/*.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/platforms/default/wolf/crypt/*.c)
+WOLF_SRC += $(shell find $(WOLFSSL_PATH) -name "*.c")
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/ssl/*.c)
 
-INCLUDES += \
+WOLF_INCLUDES += \
     -I$(WOLFSSL_PATH) \
     -I$(WOLFSSL_PATH)/wolfssl
