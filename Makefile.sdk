@@ -35,6 +35,7 @@ depend: dep
 dep:
 	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
 
-clean::
+sdk_clean:
 	$(RM) $(OBJ) $(SDK_TARGET)
 	@find $(PWD) -name "*.d" -delete >/dev/null
+	$(RMDIR) $(LIBDIR)
