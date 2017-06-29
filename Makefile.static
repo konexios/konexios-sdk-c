@@ -47,7 +47,7 @@ SDK_INCLUDES += -I$(SDK_PATH)/platforms/$(PLATFORM)
 endif
 SDK_INCLUDES += -I$(SDK_PATH)/platforms/default
 
-PRIV_INC = private.h
+PRIV_INC = $(SDK_PATH)/private.h
 
 define check_private
     @if [ ! -e $(PRIV_INC) ]; then echo -e "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC); fi
