@@ -148,9 +148,9 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
   arrow_software_releases_trans_received(trans_hid);
-  tmp = json_find_member(_parameters, "url");
+  tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
-  char *_url = tmp->string_;
+  char *_token = tmp->string_;
   DBG("release url: %s", tmp->string_);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
@@ -161,7 +161,8 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   tmp = json_find_member(_parameters, "md5checksum");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_checksum = tmp->string_;
-  int ret = arrow_software_release(_url, _checksum, _from, _to);
+  arrow_software_release_download(_token, trans_hid);
+  int ret = arrow_software_release(_token, _checksum, _from, _to);
   if ( ret < 0 ) {
     arrow_software_releases_trans_fail(trans_hid, "failed");
   } else {
@@ -181,7 +182,7 @@ void free_release_schedule(release_sched_t *rs) {
   property_free(&rs->trans_hid);
 }
 
-int __attribute__((weak)) arrow_software_release(const char *url,
+int __attribute__((weak)) arrow_software_release(const char *token,
                                                  const char *chsum,
                                                  const char *from,
                                                  const char *to) {
@@ -192,4 +193,23 @@ int __attribute__((weak)) arrow_software_release(const char *url,
 int arrow_software_release_set_cb(__release_cb cb) {
   __release = cb;
   return 0;
+}
+
+typedef struct _token_hid_ {
+  const char *token;
+  const char *hid;
+} token_hid_t;
+
+static void _software_releases_download_init(http_request_t *request, void *arg) {
+  token_hid_t *th = (token_hid_t *)arg;
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  http_request_init(request, POST, uri);
+  FREE_CHUNK(uri);
+}
+
+
+int arrow_software_release_download(const char *token, const char *tr_hid) {
+  token_hid_t th = { token, tr_hid };
+  STD_ROUTINE(_software_releases_download_init, &th, NULL, NULL, "File download fail");
 }

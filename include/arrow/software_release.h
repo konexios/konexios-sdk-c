@@ -33,7 +33,9 @@ int arrow_software_releases_trans_start(const char *hid);
 
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters);
 
-int arrow_software_release(const char *url,
+int arrow_software_release_download(const char *token, const char *tr_hid);
+
+int arrow_software_release(const char *token,
                            const char *chsum,
                            const char *from,
                            const char *to);
