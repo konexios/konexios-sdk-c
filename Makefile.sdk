@@ -4,7 +4,9 @@
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
-SDK_TARGET = $(abspath $(LIBDIR))/libacnsdkc.a
+$(info DIR:   $(LIBDIR))
+$(info $(SDK_INCLUDES))
+SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
 
 ifeq ($(WOLFSSL),yes)
 SDK_SRC += $(WOLF_SRC)
@@ -12,30 +14,36 @@ SDK_INCLUDES += $(WOLF_INCLUDES)
 endif
 
 OBJ = $(SDK_SRC:.c=.o)
+DEPS = $(SDK_SRC:.c=.d)
 
-$(info $(OS))
-$(info $(SDK_PATH))
+$(info OS:   $(OS))
+$(info TARGET:   $(SDK_TARGET))
 
-AR_PRM = rcs
+CC_SYMBOLS += -DDEBUG
 
-default: private $(SDK_TARGET)
+ifneq ($(call file_exist,$(PRIV_INC)),yes)
+	__dummy = $(shell echo "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC))
+endif
 
-$(SDK_PATH)src/%.o : $(SDK_PATH)src/%.c
-	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) -c $< -o $@
+AR_PRM = -rcs
 
-$(SDK_TARGET): private $(OBJ)
-	@if [ ! -e $(abspath $(LIBDIR)) ]; then $(MAKEDIR) $(LIBDIR); fi
+default: $(SDK_TARGET)
+
+$(info PATH --- $(SDK_PATH))
+
+$(SDK_PATH)/src/%.o : $(SDK_PATH)/src/%.c
+	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) -Os -c $< -o $@
+
+$(SDK_TARGET): $(OBJ)
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
 	$(AR) $(AR_PRM) $(SDK_TARGET) $(OBJ)
-
-private:
-	$(call check_private)
 	
 depend: dep
 
 dep:
-	makedepend -- $(CFLAGS) -- $(INCLUDES) $(SRC)
+	makedepend -- $(CFLAGS) -- $(SDK_INCLUDES) $(SDK_SRC)
 
 sdk_clean:
-	$(RM) $(OBJ) $(SDK_TARGET)
-	@find $(PWD) -name "*.d" -delete >/dev/null
-	$(RMDIR) $(LIBDIR)
+	$(RM) $(call fix_slash,$(OBJ)) $(QUIET)
+	$(RM) $(call fix_slash,$(SDK_TARGET)) $(QUIET)
+	$(RM) $(call fix_slash,$(DEPS)) $(QUIET)

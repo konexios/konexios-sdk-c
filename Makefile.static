@@ -1,9 +1,28 @@
-# GCC_PREFIX = arm
-# GCC_BIN = /home/danila/bin
-fix_pref = $(if $(1),$(1)-,$(1))
-fix_path = $(if $(1),$(abspath $(1))/$(call fix_pref,$(2)),$(call fix_pref,$(2)))
+ifeq ($(OS),Windows_NT)
+dots = :
+  cross_abspath = $(if $(findstring $(dots),$(1)),$(1),$(abspath $(1)))
+else
+  cross_abspath = $(abspath $1)
+endif
 
 CC_NAME ?= gcc
+
+ifeq ($(OS),Windows_NT)
+  RM		= del
+  RMDIR   	= rd /s /q
+  MAKEDIR 	= mkdir
+  fix_slash  = $(subst /,\,$1)
+  QUIET=>nul 2>nul & exit 0
+else
+  RM      = rm -f
+  MAKEDIR = mkdir -p
+  RMDIR   = rm -rf
+  fix_slash  = $1
+  QUIET=> /dev/null 2>&1 ; exit 0
+endif
+
+fix_pref = $(if $(1),$(1)-,$(1))
+fix_path = $(call fix_slash,$(if $(1),$(call cross_abspath,$(1))/$(call fix_pref,$(2)),$(call fix_pref,$(2))))
 
 AS      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))as
 AR      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))ar
@@ -13,17 +32,14 @@ LD      = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))gcc
 OBJCOPY = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))objcopy
 OBJDUMP = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))objdump
 SIZE    = $(call fix_path,$(GCC_BIN),$(GCC_PREFIX))size
-RM      = rm -f
-MAKEDIR = mkdir -p
-RMDIR   = rm -rf
+
 
 $(info GCC: $(GCC_PREFIX))
 $(info GCC: $(GCC_BIN))
 $(info GCC: $(CC))
 
-get_make_path = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/
+get_make_path = $(dir $(call, cross_abspath,$(lastword $(MAKEFILE_LIST))))/
 SDK_PATH ?= $(call get_make_path)
-# $(info $(ACN_SDK_C_PATH))
 
 SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/ntp/*.c)
@@ -33,7 +49,9 @@ SDK_SRC += $(wildcard $(SDK_PATH)/src/json/*.c)
 endif
 SDK_SRC += $(wildcard $(SDK_PATH)/src/bsd/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/time/*.c)
-SDK_SRC += $(shell find $(SDK_PATH)/src/arrow -name "*.c")
+SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/**/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/api/device/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)
 
@@ -44,11 +62,16 @@ SDK_INCLUDES += \
 
 ifneq ($(PLATFORM),)
 SDK_INCLUDES += -I$(SDK_PATH)/platforms/$(PLATFORM)
+CC_SYMBOLS += -D__$(PLATFORM)__
 endif
 SDK_INCLUDES += -I$(SDK_PATH)/platforms/default
 
 PRIV_INC = $(SDK_PATH)/private.h
 
-define check_private
+ifeq ($(OS),Windows_NT)
+  file_exist = $(shell if exist $(1) (echo yes) else (echo no))
+else
+ define check_private
     @if [ ! -e $(PRIV_INC) ]; then echo -e "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC); fi
-endef
+ endef
+endif

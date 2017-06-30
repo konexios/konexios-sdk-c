@@ -1,8 +1,35 @@
-WOLFSSL_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/src/wolfSSL
+WOLFSSL_PATH := $(SDK_PATH)/src/wolfSSL
 
 WOLF_SRC += $(wildcard $(SDK_PATH)/platforms/default/wolf/crypt/*.c)
-WOLF_SRC += $(shell find $(WOLFSSL_PATH) -name "*.c")
+# WOLF_SRC += $(wildcard $(WOLFSSL_PATH)/**/*.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/ssl/*.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/ssl/*.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/src/*.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/aes.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/asm.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/asn.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/ecc.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/coding.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/compress.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/error.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/fe_low_mem.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/fe_operations.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/ge_low_mem.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/ge_operations.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/hash.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/hmac.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/integer.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/md5.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/memory.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/misc.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/random.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/sha.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/rsa.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/sha256.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/signature.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/wc_encrypt.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/wc_port.c)
+WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/logging.c)
 
 WOLF_INCLUDES += \
     -I$(WOLFSSL_PATH) \
