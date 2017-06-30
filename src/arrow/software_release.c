@@ -186,7 +186,7 @@ int __attribute__((weak)) arrow_software_release(const char *token,
                                                  const char *chsum,
                                                  const char *from,
                                                  const char *to) {
-  if ( __release ) return __release(url, chsum, from, to);
+  if ( __release ) return __release(token, chsum, from, to);
   return -1;
 }
 
@@ -203,13 +203,30 @@ typedef struct _token_hid_ {
 static void _software_releases_download_init(http_request_t *request, void *arg) {
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
-  http_request_init(request, POST, uri);
+  SSP_PARAMETER_NOT_USED(th);
+  //snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  strcpy(uri, "http://mirror.tochlab.net:80/pub/gnu/hello/hello-1.3.tar.gz");
+  http_request_init(request, GET, uri);
   FREE_CHUNK(uri);
 }
 
+static int _software_releases_download_proc(http_response_t *response, void *arg) {
+//  release_sched_t *rs = (release_sched_t *)arg;
+  SSP_PARAMETER_NOT_USED(arg);
+  if ( IS_EMPTY(response->payload.buf) )  return -1;
+  FILE *test;
+  test=fopen("test.tar.gz","wb");
+  if (!test) {
+    DBG("Unable to open file!");
+    return -1;
+  }
+  DBG("file size : %d", response->payload.size);
+  fwrite(P_VALUE(response->payload.buf), 1, response->payload.size, test);
+  fclose(test);
+  return 0;
+}
 
 int arrow_software_release_download(const char *token, const char *tr_hid) {
   token_hid_t th = { token, tr_hid };
-  STD_ROUTINE(_software_releases_download_init, &th, NULL, NULL, "File download fail");
+  STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, NULL, "File download fail");
 }

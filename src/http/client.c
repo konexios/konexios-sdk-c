@@ -416,7 +416,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
             trfLen -= (uint32_t)crlfPos;
         } else {
-            chunk_len = MAX_BUFFER_SIZE - trfLen;
+            chunk_len = recvContentLength;// - trfLen;
+            DBG("Con-Len %d", recvContentLength);
         }
         if ( !chunk_len ) break;
         while ( chunk_len ) {
@@ -432,6 +433,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                     need_to_read = trfLen;
                     chunk_len = need_to_read;
                     newTrfLen = 0;
+                    DBG("No data");
                 }
                 trfLen += newTrfLen;
                 buf[trfLen] = 0;
@@ -448,8 +450,9 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             chunk_len -= need_to_read;
             HTTP_DBG("%d %d", chunk_len, need_to_read);
         }
+        if ( !req->is_chunked ) break;
     } while(1);
 
-    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
+//    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
 }
