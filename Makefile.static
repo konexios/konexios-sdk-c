@@ -71,7 +71,5 @@ PRIV_INC = $(SDK_PATH)/private.h
 ifeq ($(OS),Windows_NT)
   file_exist = $(shell if exist $(1) (echo yes) else (echo no))
 else
- define check_private
-    @if [ ! -e $(PRIV_INC) ]; then echo -e "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC); fi
- endef
+  file_exist = $(shell if [ -e $(PRIV_INC) ]; then echo yes; else echo no; fi)
 endif

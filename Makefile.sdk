@@ -5,7 +5,6 @@ $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
 $(info DIR:   $(LIBDIR))
-$(info $(SDK_INCLUDES))
 SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
 
 ifeq ($(WOLFSSL),yes)
@@ -21,15 +20,15 @@ $(info TARGET:   $(SDK_TARGET))
 
 CC_SYMBOLS += -DDEBUG
 
+$(info PRIVATE: $(call file_exist,$(PRIV_INC)))
+
 ifneq ($(call file_exist,$(PRIV_INC)),yes)
-	__dummy = $(shell echo "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC))
+ __dummy = $(shell echo "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC))
 endif
 
 AR_PRM = -rcs
 
 default: $(SDK_TARGET)
-
-$(info PATH --- $(SDK_PATH))
 
 $(SDK_PATH)/src/%.o : $(SDK_PATH)/src/%.c
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) -Os -c $< -o $@
