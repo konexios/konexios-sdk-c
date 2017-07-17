@@ -197,12 +197,11 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
 }
 
 static int receive_response(http_client_t *cli, http_response_t *res, char *buf, uint32_t *len) {
-    int ret;
-    if ( (ret = client_recv(buf, 20, cli)) < 0 ) return ret;
-    *len = (uint32_t)ret;
+    int ret = len ? *len : 0;
+    if ( (ret = client_recv(buf + ret, 20, cli)) < 0 ) return ret;
+    *len += (uint32_t)ret;
     buf[*len] = 0;
     char* crlfPtr = strstr(buf, "\r\n");
-
     while( crlfPtr == NULL ) {
         if( *len < CHUNK_SIZE - 1 ) {
             if ( (ret = client_recv(buf + *len, 1, cli)) < 0 ) return ret;
@@ -221,7 +220,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     DBG("resp: {%s}", buf);
 
     if( sscanf(buf, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
-        DBG("Not a correct HTTP answer : %s\n", buf);
+        DBG("Not a correct HTTP answer : %s", buf);
         return -1;
     }
 
@@ -312,6 +311,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     memset(http_buffer, 0x0, sizeof(http_buffer));
     uint32_t trfLen = 0;
+
     ret = receive_response(cli, res, http_buffer, &trfLen);
     if ( ret < 0 ) {
         DBG("Connection error (%d)", ret);
@@ -452,6 +452,8 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         }
         if ( !req->is_chunked ) break;
     } while(1);
+    while( client_recv(http_buffer, sizeof(http_buffer), cli) > 0 )
+      ;
 
 //    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
