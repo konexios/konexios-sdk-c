@@ -13,6 +13,8 @@ typedef int (*__release_cb)(const char *url,
                            const char *from,
                            const char *to);
 
+typedef int (*__download_complete_cb)(const char *buffer, int size);
+
 typedef struct _release_sched_ {
   property_t trans_hid;
   const char *schedule_hid;
@@ -33,7 +35,10 @@ int arrow_software_releases_trans_start(const char *hid);
 
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters);
 
-int arrow_software_release(const char *url,
+int arrow_software_release_download(const char *token, const char *tr_hid);
+int arrow_software_release_dowload_complete_set(__download_complete_cb cb);
+
+int arrow_software_release(const char *token,
                            const char *chsum,
                            const char *from,
                            const char *to);

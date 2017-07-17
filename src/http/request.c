@@ -220,19 +220,21 @@ void http_response_set_payload(http_response_t *res, property_t payload, uint32_
 void http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
   if ( !size ) size = P_SIZE(payload);
   if ( IS_EMPTY(res->payload.buf) ) {
-    DBG("copy %s", payload.value);
-    property_copy(&res->payload.buf, payload);
+    res->payload.size = size;
+    res->payload.buf.value = (char*)malloc(size+1);
+    memcpy(res->payload.buf.value, payload.value, size);
+    res->payload.buf.flags = is_dynamic;
     return;
   } else {
     switch(res->payload.buf.flags) {
       case is_dynamic:
-        res->payload.size += size;
-        res->payload.buf.value = realloc(res->payload.buf.value, res->payload.size);
+        res->payload.buf.value = realloc(res->payload.buf.value, res->payload.size + size + 1);
         if ( IS_EMPTY(res->payload.buf) ) {
           DBG("[add payload] out of memory ERROR");
           return;
         }
-        memcpy(res->payload.buf.value + res->payload.size - size, payload.value, size);
+        memcpy(res->payload.buf.value + res->payload.size, payload.value, size);
+        res->payload.size += size;
         P_VALUE(res->payload.buf)[res->payload.size] = '\0';
       break;
       default:
