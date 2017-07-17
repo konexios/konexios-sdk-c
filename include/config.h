@@ -237,5 +237,6 @@
 #if !defined(TELEMETRY_DELAY)
 #define TELEMETRY_DELAY             5000
 #endif
+#define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
 
 #endif /* CONFIG_H_ */
