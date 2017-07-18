@@ -14,6 +14,7 @@
 
 #define FLASH_MAGIC_NUMBER 0xdeadbeaf
 
+// default structure for the device information
 typedef struct {
   int magic;
   char ssid[64];
@@ -27,13 +28,22 @@ typedef struct {
   char unused[64];
 } flash_mem_t;
 
+// restore the gateway information (hid)
 int restore_gateway_info(arrow_gateway_t *gateway);
+
+// save the gateway information (hid)
 void save_gateway_info(const arrow_gateway_t *gateway);
 
+// restore the device information (hid for all and eid for IBM account)
 int restore_device_info(arrow_device_t *device);
+
+// save the device information (hid for all and eid for IBM account)
 void save_device_info(arrow_device_t *device);
 
-void save_wifi_setting(const char *ssid, const char *pass, int sec);
+// restore the wifi settings (SSID, password, secure mode)
 int restore_wifi_setting(char *ssid, char *pass, int *sec);
+
+// save the wifi settings (SSID, password, secure mode)
+void save_wifi_setting(const char *ssid, const char *pass, int sec);
 
 #endif

@@ -12,9 +12,11 @@
 #include "http/request.h"
 #include "sign.h"
 
+#if !defined(CANONICAL_QUERY_LEN)
 #define CANONICAL_QUERY_LEN 256
+#endif
 
-void get_canonical_string(char *buffer, http_request_t *req);
+// Add needed headers for the Arrow cloud
 void sign_request(http_request_t *req);
 
 #endif /* ARROW_REQUEST_H_ */

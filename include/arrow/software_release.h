@@ -27,21 +27,30 @@ void free_release_schedule(release_sched_t *rs);
 int arrow_gateway_software_releases_trans(arrow_gateway_t *gate, release_sched_t *rs);
 int arrow_device_software_releases_trans(arrow_device_t *gate, release_sched_t *rs);
 
+// mark software release transaction as failed
 int arrow_software_releases_trans_fail(const char *hid, const char *error);
+// mark software release transaction as received
 int arrow_software_releases_trans_received(const char *hid);
+// mark software release transaction as succeeded
 int arrow_software_releases_trans_success(const char *hid);
 
+// start software release transaction
 int arrow_software_releases_trans_start(const char *hid);
 
+// DeviceSoftwareRelease event handler
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters);
 
 int arrow_software_release_download(const char *token, const char *tr_hid);
+
+// set software release download callback
+// will be executed when download complete
 int arrow_software_release_dowload_complete_set(__download_complete_cb cb);
 
 int arrow_software_release(const char *token,
                            const char *chsum,
                            const char *from,
                            const char *to);
+
 int arrow_software_release_set_cb(__release_cb cb);
 
 #if defined(__cplusplus)
