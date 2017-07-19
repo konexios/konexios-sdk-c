@@ -242,7 +242,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
 
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
     int ret;
-    memset(res, 0x00, sizeof(http_response_t));
+    http_response_init(res, &req->_response_payload_meth);
     if ( cli->sock < 0 ) {
     	ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     	if ( ret < 0 ) return ret;
@@ -452,8 +452,11 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         }
         if ( !req->is_chunked ) break;
     } while(1);
+
+    // flush the socket buffer
     while( client_recv(http_buffer, sizeof(http_buffer), cli) > 0 )
       ;
+
 
 //    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;

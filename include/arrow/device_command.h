@@ -28,15 +28,24 @@ typedef struct __cmd_handler {
   struct __cmd_handler *next;
 } cmd_handler;
 
+// Find and execute 'name' command handler for this 'payload'
 int command_handler(const char *name,
                     JsonNode *payload,
                     JsonNode **error);
 
+// Is there any command handler was added
 int has_cmd_handler(void);
+
+// Add a new command handler ( set the callback )
 int add_cmd_handler(const char *name, fp callback);
+
+// erase all command handlers
 void free_cmd_handler(void);
+
+// DeviceCommand event handler
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
+// send the answer by DeviceCommand: failed, received or succeeded (cmd_type)
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);
 
 #if defined(__cplusplus)

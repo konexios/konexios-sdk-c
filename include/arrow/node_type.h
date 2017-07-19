@@ -12,8 +12,11 @@ typedef struct _arrow_node_type {
   char *hid;
 } arrow_node_type_t;
 
+// list existing node types
 int arrow_node_type_list(void);
+// create new node type
 int arrow_node_type_create(arrow_node_type_t *node);
+// update existing node type
 int arrow_node_type_update(arrow_node_type_t *node);
 
 

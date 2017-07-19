@@ -13,7 +13,8 @@ typedef int (*__release_cb)(const char *url,
                            const char *from,
                            const char *to);
 
-typedef int (*__download_complete_cb)(const char *buffer, int size);
+typedef int (*__download_payload_cb)(property_t *,const char *,int);
+typedef int (*__download_complete_cb)(property_t *);
 
 typedef struct _release_sched_ {
   property_t trans_hid;
@@ -44,7 +45,7 @@ int arrow_software_release_download(const char *token, const char *tr_hid);
 
 // set software release download callback
 // will be executed when download complete
-int arrow_software_release_dowload_complete_set(__download_complete_cb cb);
+int arrow_software_release_dowload_set_cb(__download_payload_cb pcb, __download_complete_cb ccb);
 
 int arrow_software_release(const char *token,
                            const char *chsum,

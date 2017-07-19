@@ -5,6 +5,7 @@
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 60
 
 __release_cb __attribute__((weak)) __release;
+__download_payload_cb __attribute__((weak)) __payload;
 __download_complete_cb __attribute__((weak)) __download;
 
 static char *serialize_software_trans(const char *hid, release_sched_t *rs) {
@@ -201,9 +202,23 @@ typedef struct _token_hid_ {
   const char *hid;
 } token_hid_t;
 
-int arrow_software_release_dowload_complete_set(__download_complete_cb cb) {
-  __download = cb;
+
+// set the callback for update file processing
+int arrow_software_release_dowload_set_cb(
+    __download_payload_cb pcb,
+    __download_complete_cb ccb) {
+  __payload = pcb;
+  __download = ccb;
   return 0;
+}
+
+// this is a special payload handler for the OTA
+int arrow_software_release_payload_handler(void *r,
+                                           property_t payload,
+                                           int size) {
+  http_response_t *res = (http_response_t *)r;
+  property_t *response_buffer = &res->payload.buf;
+  return __payload(response_buffer, payload.value, size);
 }
 
 static void _software_releases_download_init(http_request_t *request, void *arg) {
@@ -213,6 +228,7 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
 //  strcpy(uri, "http://mirror.tochlab.net:80/pub/gnu/hello/hello-1.3.tar.gz");
   http_request_init(request, GET, uri);
+  request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
 }
 
@@ -221,7 +237,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
   SSP_PARAMETER_NOT_USED(arg);
   if ( IS_EMPTY(response->payload.buf) )  return -1;
   DBG("file size : %d", response->payload.size);
-  if ( __download ) __download(P_VALUE(response->payload.buf), response->payload.size);
+  if ( __download ) __download(&response->payload.buf);
   return 0;
 }
 

@@ -53,6 +53,7 @@ char *arrow_gateway_serialize(arrow_gateway_t *gate) {
 
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
   if (!str) return -1;
+  DBG("parse this: %s", str);
   JsonNode *_main = json_decode(str);
   if ( !_main ) return -1;
   JsonNode *hid = json_find_member(_main, "hid");
