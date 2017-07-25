@@ -128,7 +128,9 @@ int arrow_mqtt_connect_routine(void) {
   DBG(DEVICE_MQTT_CONNECT, "ok");
 
   arrow_state_mqtt_run(&_device);
-  if ( has_cmd_handler() >= 0 )  mqtt_subscribe();
+#if !defined(NO_EVENTS)
+  mqtt_subscribe();
+#endif
   _init_mqtt = 1;
 
   return 0;
@@ -140,18 +142,20 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
     DBG("MQTT wait commands");
   }
   while (1) {
-    if ( has_cmd_handler() < 0 ) {
+#if defined(NO_EVENTS)
       msleep(TELEMETRY_DELAY);
-    } else {
+#else
       mqtt_yield(TELEMETRY_DELAY);
-    }
+#endif
     if ( data_cb(data) < 0 ) continue;
     wdt_feed();
     if ( mqtt_publish(&_device, data) < 0 ) {
       DBG(DEVICE_MQTT_TELEMETRY, "fail");
       mqtt_disconnect();
       while (mqtt_connect(&_gateway, &_device, &_gateway_config) < 0) { msleep(ARROW_RETRY_DELAY);}
-      if ( has_cmd_handler() >= 0 ) mqtt_subscribe();
+#if !defined(NO_EVENTS)
+      mqtt_subscribe();
+#endif
     }
 #if defined(DEBUG)
     else {

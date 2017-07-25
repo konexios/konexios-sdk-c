@@ -1,12 +1,13 @@
 #include "arrow/software_release.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <time/watchdog.h>
 
-#define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 60
+#define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
-__release_cb __attribute__((weak)) __release;
-__download_payload_cb __attribute__((weak)) __payload;
-__download_complete_cb __attribute__((weak)) __download;
+static __release_cb  __release = NULL;
+static __download_payload_cb  __payload = NULL;
+static __download_complete_cb __download = NULL;
 
 static char *serialize_software_trans(const char *hid, release_sched_t *rs) {
   JsonNode *_main = json_mkobject();
@@ -153,7 +154,9 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_token = tmp->string_;
-  DBG("release url: %s", tmp->string_);
+  DBG("FW TOKEN: %s", tmp->string_);
+  DBG("FW HID: %s", trans_hid);
+//  msleep(100000);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_from = tmp->string_;
@@ -163,8 +166,13 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   tmp = json_find_member(_parameters, "md5checksum");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_checksum = tmp->string_;
-  arrow_software_release_download(_token, trans_hid);
-  int ret = arrow_software_release(_token, _checksum, _from, _to);
+  wdt_feed();
+  int ret = arrow_software_release_download(_token, trans_hid);
+  wdt_feed();
+  SSP_PARAMETER_NOT_USED(_checksum);
+  SSP_PARAMETER_NOT_USED(_to);
+  SSP_PARAMETER_NOT_USED(_from);
+//  int ret = arrow_software_release(_token, _checksum, _from, _to);
   if ( ret < 0 ) {
     arrow_software_releases_trans_fail(trans_hid, "failed");
   } else {
@@ -222,6 +230,7 @@ int arrow_software_release_payload_handler(void *r,
 }
 
 static void _software_releases_download_init(http_request_t *request, void *arg) {
+
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   SSP_PARAMETER_NOT_USED(th);
@@ -230,12 +239,14 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   http_request_init(request, GET, uri);
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
+  wdt_feed();
 }
 
 static int _software_releases_download_proc(http_response_t *response, void *arg) {
 //  release_sched_t *rs = (release_sched_t *)arg;
   SSP_PARAMETER_NOT_USED(arg);
-  if ( IS_EMPTY(response->payload.buf) )  return -1;
+  wdt_feed();
+//  if ( IS_EMPTY(response->payload.buf) )  return -1;
   DBG("file size : %d", response->payload.size);
   if ( __download ) __download(&response->payload.buf);
   return 0;

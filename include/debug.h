@@ -22,6 +22,8 @@ extern "C" {
 void dbg_line(const char *fmt, ...);
 #define DBG(...) dbg_line(__VA_ARGS__);
 
+void hex_dump(const char *data, int size);
+
 #else
 # define DBG(...)
 # define WARN(...)

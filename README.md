@@ -352,5 +352,6 @@ or
   "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
 }
 
-
+### Defines ###
+define NO_EVENTS to switch off the event handlers for a mqtt connection
 
