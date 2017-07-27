@@ -2,6 +2,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <time/watchdog.h>
+#include <arrow/sys.h>
 
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
@@ -96,18 +97,20 @@ typedef struct _ans_ {
 
 static void _software_releases_ans_init(http_request_t *request, void *arg) {
   ans_t *ans = (ans_t *)arg;
+  int n = 0;
   CREATE_CHUNK(uri, URI_LEN);
   switch(ans->state) {
     case received:
-      snprintf(uri, URI_LEN, "%s/%s/received", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/received", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
     case success:
-      snprintf(uri, URI_LEN, "%s/%s/succeeded", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/succeeded", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
     case fail:
-      snprintf(uri, URI_LEN, "%s/%s/failed", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/failed", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
   }
+  uri[n] = 0x0;
   DBG("uri %s", uri);
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
@@ -136,7 +139,8 @@ int arrow_software_releases_trans_success(const char *hid) {
 static void _software_releases_start_init(http_request_t *request, void *arg) {
   const char *hid = (const char *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  uri[n] = 0x0;
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
 }
@@ -177,8 +181,8 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
     arrow_software_releases_trans_fail(trans_hid, "failed");
   } else {
     arrow_software_releases_trans_success(trans_hid);
+    reboot();
   }
-
   return ret;
 }
 
@@ -234,7 +238,8 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   SSP_PARAMETER_NOT_USED(th);
-  snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  uri[n] = 0x0;
 //  strcpy(uri, "http://mirror.tochlab.net:80/pub/gnu/hello/hello-1.3.tar.gz");
   http_request_init(request, GET, uri);
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
@@ -248,7 +253,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
   wdt_feed();
 //  if ( IS_EMPTY(response->payload.buf) )  return -1;
   DBG("file size : %d", response->payload.size);
-  if ( __download ) __download(&response->payload.buf);
+  if ( __download ) return __download(&response->payload.buf);
   return 0;
 }
 
