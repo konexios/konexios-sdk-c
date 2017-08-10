@@ -38,6 +38,7 @@
 #endif
 
 #define HEAD_FIELD_LEN 100
+#define CONTENT_TYPE "Content-Type"
 
 enum METH {
   GET,
@@ -68,6 +69,15 @@ typedef struct __attribute_packed__ {
     property_t buf;
 } http_payload_t;
 
+// the payload handler for response
+// for OTA firmware update
+// if it's impossible to allocate memory for binary file
+typedef int(*__payload_handler)(void *,property_t,int);
+typedef struct __payload_meth {
+  __payload_handler _p_set_handler;
+  __payload_handler _p_add_handler;
+} _payload_meth_t;
+
 typedef struct __attribute_packed__ {
     property_t meth;
     property_t scheme;
@@ -81,6 +91,7 @@ typedef struct __attribute_packed__ {
     http_header_t content_type;
     http_query_t *query;
     http_payload_t payload;
+    _payload_meth_t _response_payload_meth;
 } http_request_t;
 
 typedef struct {
@@ -89,6 +100,7 @@ typedef struct {
     http_header_t *header;
     http_header_t content_type;
     http_payload_t payload;
+    _payload_meth_t _p_meth;
 } http_response_t;
 
 void http_request_init(http_request_t *req, int meth, const char *url);
@@ -100,6 +112,7 @@ http_header_t *http_request_first_header(http_request_t *req);
 http_header_t *http_request_next_header(http_request_t *req, http_header_t *head);
 void http_request_set_payload(http_request_t *req, property_t payload);
 
+void http_response_init(http_response_t *req, _payload_meth_t *handler);
 void http_response_free(http_response_t *res);
 void http_response_add_header(http_response_t *req, property_t key, property_t value);
 void http_response_set_content_type(http_response_t *req, property_t value);

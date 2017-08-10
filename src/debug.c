@@ -21,3 +21,15 @@ __attribute__((weak)) void dbg_line(const char *fmt, ...) {
   // dammy printf; do nothing
 }
 #endif
+
+__attribute__((weak)) void hex_dump(const char *data, int size) {
+  size -= size%8;
+  int i=0;
+  for (i=0; i<size/8; i++) {
+    DBG("%02x %02x %02x %02x %02x %02x %02x %02x",
+        data[0+i*8], data[1+i*8],
+        data[2+i*8], data[3+i*8],
+        data[4+i*8], data[5+i*8],
+        data[6+i*8], data[7+i*8]);
+  }
+}

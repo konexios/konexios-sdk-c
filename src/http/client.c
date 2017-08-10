@@ -89,7 +89,7 @@ void http_client_init(http_client_t *cli) {
 	cli->response_code = 0;
   if ( cli->flags._new ) {
     cli->sock = -1;
-		cli->timeout = 5000;
+    cli->timeout = 3000;
 		cli->_r_func = simple_read;
 		cli->_w_func = simple_write;
 	}
@@ -197,12 +197,11 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
 }
 
 static int receive_response(http_client_t *cli, http_response_t *res, char *buf, uint32_t *len) {
-    int ret;
-    if ( (ret = client_recv(buf, 20, cli)) < 0 ) return ret;
-    *len = (uint32_t)ret;
+    int ret = len ? *len : 0;
+    if ( (ret = client_recv(buf + ret, 20, cli)) < 0 ) return ret;
+    *len += (uint32_t)ret;
     buf[*len] = 0;
     char* crlfPtr = strstr(buf, "\r\n");
-
     while( crlfPtr == NULL ) {
         if( *len < CHUNK_SIZE - 1 ) {
             if ( (ret = client_recv(buf + *len, 1, cli)) < 0 ) return ret;
@@ -221,7 +220,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     DBG("resp: {%s}", buf);
 
     if( sscanf(buf, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
-        DBG("Not a correct HTTP answer : %s\n", buf);
+        DBG("Not a correct HTTP answer : %s", buf);
         return -1;
     }
 
@@ -241,10 +240,17 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     return 0;
 }
 
+static char *wait_payload(http_client_t *cli,
+                          const char *pattern,
+                          char *buf,
+                          uint32_t *trfLen);
+static int shift_payload(char *buf, uint32_t *trfLen, int shift);
+
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
     int ret;
-    memset(res, 0x00, sizeof(http_response_t));
+    http_response_init(res, &req->_response_payload_meth);
     if ( cli->sock < 0 ) {
+      DBG("new TCP connection needed %d", cli->sock);
     	ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     	if ( ret < 0 ) return ret;
     	cli->sock = ret;
@@ -312,11 +318,13 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     memset(http_buffer, 0x0, sizeof(http_buffer));
     uint32_t trfLen = 0;
+
     ret = receive_response(cli, res, http_buffer, &trfLen);
     if ( ret < 0 ) {
         DBG("Connection error (%d)", ret);
         return -1;
     }
+    if ( res->m_httpResponseCode != 200 ) goto last_wait;
 
     HTTP_DBG("Reading headers %d", trfLen);
     char *crlfPtr;
@@ -391,18 +399,10 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     HTTP_DBG("get payload form buf: [%s]", buf);
     do {
         if ( res->is_chunked ) {
-            while( (crlfPtr = strstr(buf, "\r\n")) == NULL ) {
-                if ( trfLen + 10 > CHUNK_SIZE ) {
-                    memmove(buf, buf+10, trfLen-10);
-                    trfLen -= 10;
-                }
-                uint32_t newTrfLen = 0;
-                HTTP_DBG("try to get chunk");
-                ret = client_recv(buf+trfLen, 10, cli);
-                if ( ret > 0 ) newTrfLen = (uint32_t)ret;
-                trfLen += newTrfLen;
-                buf[trfLen] = 0;
-            }
+            // find the \r\n in the payload
+            // next string shoud start at HEX chunk size
+            crlfPtr = wait_payload(cli, "\r\n", buf, &trfLen);
+            if ( !crlfPtr ) return -1; // no \r\n - wrong string
             ret = sscanf(buf, "%4x\r\n", (unsigned int*)&chunk_len);
             if ( ret != 1 ) {
                 memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
@@ -410,13 +410,12 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 chunk_len = 0;
                 return -1; // fail
             }
-            HTTP_DBG("detect chunk %d", chunk_len);
-            crlfPtr = strstr(buf, "\r\n");
-            crlfPos = crlfPtr + 2 - buf;
-            memmove(buf, crlfPtr+2, trfLen - (uint32_t)crlfPos);
-            trfLen -= (uint32_t)crlfPos;
+//            HTTP_
+                DBG("detect chunk %d", chunk_len);
+            shift_payload(buf, &trfLen, crlfPtr - buf + 2);
         } else {
-            chunk_len = MAX_BUFFER_SIZE - trfLen;
+            chunk_len = recvContentLength;// - trfLen;
+            DBG("Con-Len %d", recvContentLength);
         }
         if ( !chunk_len ) break;
         while ( chunk_len ) {
@@ -432,11 +431,12 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                     need_to_read = trfLen;
                     chunk_len = need_to_read;
                     newTrfLen = 0;
+                    DBG("No data");
                 }
                 trfLen += newTrfLen;
                 buf[trfLen] = 0;
             }
-            HTTP_DBG("add payload{%d:%s}", need_to_read, buf);
+            HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
             http_response_add_payload(res, p_stack(buf), need_to_read);
             if ( trfLen == need_to_read ) {
                 trfLen = 0;
@@ -448,8 +448,52 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
             chunk_len -= need_to_read;
             HTTP_DBG("%d %d", chunk_len, need_to_read);
         }
+        if ( !res->is_chunked ) { break; }
+        else {
+          crlfPtr = wait_payload(cli, "\r\n", buf, &trfLen);
+          if ( crlfPtr ) shift_payload(buf, &trfLen, crlfPtr - buf + 2);
+        }
     } while(1);
+
+last_wait:
+    // flush the socket buffer
+//    while( client_recv(http_buffer, sizeof(http_buffer), cli) == sizeof(http_buffer) )
+//      ;
+    DBG("end -------------------- ");
 
     HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
+}
+
+static char *wait_payload(http_client_t *cli,
+                          const char *pattern,
+                          char *buf,
+                          uint32_t *trfLen) {
+  const uint32_t chunk = 10;
+  char *crlfPtr = NULL;
+  while( (crlfPtr = strstr(buf, pattern)) == NULL ) {
+    // if there is not enough space in a buffer
+    if ( *trfLen + chunk > CHUNK_SIZE ) {
+      memmove(buf, buf + chunk, *trfLen - chunk);
+      *trfLen -= chunk;
+    }
+    uint32_t newTrfLen = 0;
+    HTTP_DBG("try to get chunk");
+    int ret = client_recv( buf + *trfLen, chunk, cli);
+    HTTP_DBG("ret %d / %d", ret, *trfLen);
+    if ( ret > 0 ) newTrfLen = (uint32_t)ret;
+    else {
+      crlfPtr = NULL;
+      break;
+    }
+    *trfLen += newTrfLen;
+    buf[*trfLen] = 0;
+  }
+  return crlfPtr;
+}
+
+static int shift_payload(char *buf, uint32_t *trfLen, int shift) {
+  memmove(buf, buf + shift, *trfLen - shift);
+  *trfLen -= shift;
+  return 0;
 }

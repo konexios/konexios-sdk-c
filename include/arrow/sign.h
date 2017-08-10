@@ -9,10 +9,19 @@
 #ifndef ARROW_SIGN_H_
 #define ARROW_SIGN_H_
 
+// API key
 char *get_api_key(void);
+
+// secret key
 char *get_secret_key(void);
+
+// set a new API key
 void set_api_key(char *newkey);
+
+// set a new secret key
 void set_secret_key(char *newkey);
+
+// create a signature by the Arrow algorithm
 void sign(char *signature,
           const char* timestamp,
           const char *meth,

@@ -1,10 +1,14 @@
 #include "arrow/software_release.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <time/watchdog.h>
+#include <arrow/sys.h>
 
-#define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 60
+#define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
-__release_cb __attribute__((weak)) __release;
+static __release_cb  __release = NULL;
+static __download_payload_cb  __payload = NULL;
+static __download_complete_cb __download = NULL;
 
 static char *serialize_software_trans(const char *hid, release_sched_t *rs) {
   JsonNode *_main = json_mkobject();
@@ -93,18 +97,20 @@ typedef struct _ans_ {
 
 static void _software_releases_ans_init(http_request_t *request, void *arg) {
   ans_t *ans = (ans_t *)arg;
+  int n = 0;
   CREATE_CHUNK(uri, URI_LEN);
   switch(ans->state) {
     case received:
-      snprintf(uri, URI_LEN, "%s/%s/received", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/received", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
     case success:
-      snprintf(uri, URI_LEN, "%s/%s/succeeded", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/succeeded", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
     case fail:
-      snprintf(uri, URI_LEN, "%s/%s/failed", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, "%s/%s/failed", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
     break;
   }
+  uri[n] = 0x0;
   DBG("uri %s", uri);
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
@@ -133,7 +139,8 @@ int arrow_software_releases_trans_success(const char *hid) {
 static void _software_releases_start_init(http_request_t *request, void *arg) {
   const char *hid = (const char *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  uri[n] = 0x0;
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
 }
@@ -148,10 +155,12 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
   arrow_software_releases_trans_received(trans_hid);
-  tmp = json_find_member(_parameters, "url");
+  tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
-  char *_url = tmp->string_;
-  DBG("release url: %s", tmp->string_);
+  char *_token = tmp->string_;
+  DBG("FW TOKEN: %s", tmp->string_);
+  DBG("FW HID: %s", trans_hid);
+//  msleep(100000);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_from = tmp->string_;
@@ -161,13 +170,19 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   tmp = json_find_member(_parameters, "md5checksum");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_checksum = tmp->string_;
-  int ret = arrow_software_release(_url, _checksum, _from, _to);
+  wdt_feed();
+  int ret = arrow_software_release_download(_token, trans_hid);
+  wdt_feed();
+  SSP_PARAMETER_NOT_USED(_checksum);
+  SSP_PARAMETER_NOT_USED(_to);
+  SSP_PARAMETER_NOT_USED(_from);
+//  int ret = arrow_software_release(_token, _checksum, _from, _to);
   if ( ret < 0 ) {
     arrow_software_releases_trans_fail(trans_hid, "failed");
   } else {
     arrow_software_releases_trans_success(trans_hid);
+    reboot();
   }
-
   return ret;
 }
 
@@ -181,15 +196,68 @@ void free_release_schedule(release_sched_t *rs) {
   property_free(&rs->trans_hid);
 }
 
-int __attribute__((weak)) arrow_software_release(const char *url,
+int __attribute__((weak)) arrow_software_release(const char *token,
                                                  const char *chsum,
                                                  const char *from,
                                                  const char *to) {
-  if ( __release ) return __release(url, chsum, from, to);
+  if ( __release ) return __release(token, chsum, from, to);
   return -1;
 }
 
 int arrow_software_release_set_cb(__release_cb cb) {
   __release = cb;
   return 0;
+}
+
+typedef struct _token_hid_ {
+  const char *token;
+  const char *hid;
+} token_hid_t;
+
+
+// set the callback for update file processing
+int arrow_software_release_dowload_set_cb(
+    __download_payload_cb pcb,
+    __download_complete_cb ccb) {
+  __payload = pcb;
+  __download = ccb;
+  return 0;
+}
+
+// this is a special payload handler for the OTA
+int arrow_software_release_payload_handler(void *r,
+                                           property_t payload,
+                                           int size) {
+  http_response_t *res = (http_response_t *)r;
+  property_t *response_buffer = &res->payload.buf;
+  return __payload(response_buffer, payload.value, size);
+}
+
+static void _software_releases_download_init(http_request_t *request, void *arg) {
+
+  token_hid_t *th = (token_hid_t *)arg;
+  CREATE_CHUNK(uri, URI_LEN);
+  SSP_PARAMETER_NOT_USED(th);
+  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  uri[n] = 0x0;
+//  strcpy(uri, "http://mirror.tochlab.net:80/pub/gnu/hello/hello-1.3.tar.gz");
+  http_request_init(request, GET, uri);
+  request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
+  FREE_CHUNK(uri);
+  wdt_feed();
+}
+
+static int _software_releases_download_proc(http_response_t *response, void *arg) {
+//  release_sched_t *rs = (release_sched_t *)arg;
+  SSP_PARAMETER_NOT_USED(arg);
+  wdt_feed();
+//  if ( IS_EMPTY(response->payload.buf) )  return -1;
+  DBG("file size : %d", response->payload.size);
+  if ( __download ) return __download(&response->payload.buf);
+  return 0;
+}
+
+int arrow_software_release_download(const char *token, const char *tr_hid) {
+  token_hid_t th = { token, tr_hid };
+  STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, NULL, "File download fail");
 }

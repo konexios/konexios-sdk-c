@@ -14,7 +14,7 @@
 #endif
 #include <debug.h>
 
-void get_canonical_string(char *buffer, http_request_t *req){
+static void get_canonical_string(char *buffer, http_request_t *req){
     http_query_t *query = req->query;
     buffer[0] = '\0';
     while (query) {

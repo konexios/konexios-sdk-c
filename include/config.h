@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.2.8
+#define SDK_VERSION 1.3.1
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -237,5 +237,6 @@
 #if !defined(TELEMETRY_DELAY)
 #define TELEMETRY_DELAY             5000
 #endif
+#define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
 
 #endif /* CONFIG_H_ */

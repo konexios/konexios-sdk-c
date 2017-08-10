@@ -89,6 +89,8 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   DBG("response gate reg %d", response->m_httpResponseCode);
+  // convert to null-terminate string
+  P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
   if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
       DBG("parse error");
       return -1;
@@ -317,7 +319,7 @@ int arrow_gateway_error(arrow_gateway_t *gateway, const char *error) {
 static void _gateway_update_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gate = (arrow_gateway_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/%s", ARROW_API_DEVICE_ENDPOINT, P_VALUE(gate->hid) );
+  snprintf(uri, URI_LEN, "%s/%s", ARROW_API_GATEWAY_ENDPOINT, P_VALUE(gate->hid) );
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
   http_request_set_payload(request, p_heap(arrow_gateway_serialize(gate)));

@@ -14,8 +14,11 @@ typedef struct _arrow_node {
   char *hid;
 } arrow_node_t;
 
+// list existing nodes
 int arrow_node_list(void);
+// create new node
 int arrow_node_create(arrow_node_t *node);
+// update existing node
 int arrow_node_update(arrow_node_t *node);
 
 #if defined(__cplusplus)
