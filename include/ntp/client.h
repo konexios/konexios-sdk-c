@@ -72,11 +72,11 @@ NTP Client header file
 ///NTP client results
 enum NTPResult
 {
+  NTP_OK = 0, ///<Success
   NTP_DNS, ///<Could not resolve name
   NTP_PRTCL, ///<Protocol error
   NTP_TIMEOUT, ///<Connection timeout
   NTP_CONN, ///<Connection error
-  NTP_OK = 0, ///<Success
 };
 
 
