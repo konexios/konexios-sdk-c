@@ -15,7 +15,7 @@
 # include <inttypes.h>
 # include <sys/types.h>
 
-#elif defined(__MBED__)
+#elif defined(__MBED__) && !defined(__semiconductor__)
 # include <inttypes.h>
 # include <sys/types.h>
 

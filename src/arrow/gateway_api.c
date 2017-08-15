@@ -22,9 +22,14 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-  DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
+	P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
+	DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
 
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
+	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
+	if ( !_main ) {
+		DBG("Parse error");
+		return -1;
+	}
 	JsonNode *tmp;
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
@@ -38,7 +43,10 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 			DBG("(%d) secret key: %s", strlen(tmp->string_), tmp->string_);
 			set_secret_key(tmp->string_);
 		}
-	} else return -1;
+	} else {
+		DBG("There is no keys!");
+		return -1;
+	}
 	arrow_gateway_config_init(config);
 #if defined(__IBM__)
 	JsonNode *_main_ibm = json_find_member(_main, "ibm");

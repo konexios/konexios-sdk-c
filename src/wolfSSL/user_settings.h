@@ -263,7 +263,9 @@
 #endif
 
 #elif defined(__semiconductor__)
+//#define DEBUG_WOLFSSL
 #define WOLFSSL_USER_IO
+#define NO_ERROR_STRINGS
 #define NO_WRITEV
 #define NO_DEV_RANDOM
 #define NO_WOLFSSL_DIR
@@ -287,8 +289,6 @@
 #define NO_OLD_TLS
 #define NO_PWDBASED
 #define NO_SKID
-//#define NO_CURVE25519
-//#define NO_ED25519
 
 #define WOLFSSL_STATIC_RSA
 #define NO_WOLFSSL_SERVER
@@ -299,7 +299,6 @@
 //#define XMALLOC_USER
 //#define SHA256_DIGEST_SIZE 32
 #define WOLFSSL_BASE64_ENCODE
-//#define DEBUG_WOLFSSL
 //#define HAVE_SUPPORTED_CURVES
 //#define HAVE_TLS_EXTENSIONS
 //#define SIZEOF_LONG_LONG  8

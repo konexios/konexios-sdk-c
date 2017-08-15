@@ -9,10 +9,16 @@
 #ifndef ARROW_STORAGE_H_
 #define ARROW_STORAGE_H_
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #include <arrow/device.h>
 #include <arrow/gateway.h>
 
-#define FLASH_MAGIC_NUMBER 0xdeadbeaf
+#if !defined(FLASH_MAGIC_NUMBER)
+  #define FLASH_MAGIC_NUMBER 0xdeadbeaf
+#endif
 
 // default structure for the device information
 typedef struct {
@@ -45,5 +51,9 @@ int restore_wifi_setting(char *ssid, char *pass, int *sec);
 
 // save the wifi settings (SSID, password, secure mode)
 void save_wifi_setting(const char *ssid, const char *pass, int sec);
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif
