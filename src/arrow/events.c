@@ -53,8 +53,10 @@ sub_t sub_list[] = {
 #if !defined(NO_SOFTWARE_UPDATE)
   { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate },
 #endif
+#if !defined(NO_RELEASE_UPDATE)
   { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease },
   { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease }
+#endif
 };
 
 // checker

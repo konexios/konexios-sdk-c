@@ -4,6 +4,9 @@
 #include <time/watchdog.h>
 #include <arrow/sys.h>
 
+#if defined(NO_RELEASE_UPDATE)
+typedef void __dummy__;
+#else
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
 static __release_cb  __release = NULL;
@@ -261,3 +264,4 @@ int arrow_software_release_download(const char *token, const char *tr_hid) {
   token_hid_t th = { token, tr_hid };
   STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, NULL, "File download fail");
 }
+#endif
