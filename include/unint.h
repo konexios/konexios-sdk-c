@@ -39,6 +39,10 @@ typedef unsigned int size_t;
 #elif defined(__semiconductor__)
 # include <inttypes.h>
 # include <sys/types.h>
+
+#elif defined(__quadro__)
+# include <inttypes.h>
+# include <sys/types.h>
 #endif
 
 #if defined(__USE_STD__)

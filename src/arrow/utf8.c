@@ -117,7 +117,7 @@ void hex_encode(char *dst, const char *src, int size) {
 }
 
 void hex_decode(char *dst, const char *src, int size) {
-    int i;
+    int i = 0;
     uint8_t data = 0;
     for (i=0; i<size; i++) {
         sscanf(src+i*2, "%02x", (unsigned char*)&data);

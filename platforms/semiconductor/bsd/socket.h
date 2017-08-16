@@ -9,7 +9,6 @@
 #ifndef _NUCLEO_BSD_SOCKET_H_
 #define _NUCLEO_BSD_SOCKET_H_
 
-
 #if defined(__cplusplus)
 #include "W5100_Socket.h"
 extern "C" {
