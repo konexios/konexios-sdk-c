@@ -30,9 +30,9 @@
 #   define XGMTIME localtime
 #endif
 
-// FIXME rm MBED this for the nucleo
-#elif defined(__MBED__) && !defined(__semiconductor__)
+#elif defined(__nucleo__)
 #define MBED
+#define NO_ERROR_STRINGS
 #define WOLFSSL_USER_IO
 #define NO_WRITEV
 #define NO_DEV_RANDOM
@@ -57,18 +57,26 @@
 #define NO_OLD_TLS
 #define NO_PWDBASED
 #define NO_SKID
-#define NO_WOLFSSL_SERVER
-#define NO_SESSION_CACHE // For Small RAM
-//#define IGNORE_KEY_EXTENSIONS
-#define NO_WOLFSSL_DIR
-//    #define DEBUG_WOLFSSL
+//#define NO_CURVE25519
+//#define NO_ED25519
+
 #define WOLFSSL_STATIC_RSA
-#define HAVE_SUPPORTED_CURVES
-#define HAVE_TLS_EXTENSIONS
-#define SIZEOF_LONG_LONG  8
-/* Options for Sample program */
-//#define WOLFSSL_NO_VERIFYSERVER
-//#define NO_FILESYSTEM
+#define NO_WOLFSSL_SERVER
+#define SINGLE_THREADED
+#define NO_STDIO_FILESYSTEM
+#define WOLFSSL_BASE64_ENCODE
+//#define DEBUG_WOLFSSL
+#define NO_SESSION_CACHE // For Small RAM
+#define WOLFSSL_LOW_MEMORY
+//#define WOLFSSL_SMALL_STACK
+#define TFM_TIMING_RESISTANT
+#define RSA_LOW_MEM
+#define NO_WOLFSSL_MEMORY
+//#define STATIC_CHUNKS_ONLY
+//#define LARGE_STATIC_BUFFERS
+#define WOLFSSL_NO_VERIFYSERVER
+#define NO_FILESYSTEM
+#define NO_CERT
 //    #define HAVE_TM_TYPE
 #ifndef WOLFSSL_NO_VERIFYSERVER
 #define TIME_OVERRIDES
