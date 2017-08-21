@@ -115,3 +115,12 @@ void hex_encode(char *dst, const char *src, int size) {
   for (i=0; i<size; i++)
     sprintf(dst+i*2, "%02x", (unsigned char)(src[i]));
 }
+
+void hex_decode(char *dst, const char *src, int size) {
+    int i = 0;
+    uint8_t data = 0;
+    for (i=0; i<size; i++) {
+        sscanf(src+i*2, "%02x", (unsigned int*)&data);
+        dst[i] = data;
+    }
+}

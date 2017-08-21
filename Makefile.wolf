@@ -1,8 +1,5 @@
 WOLFSSL_PATH := $(SDK_PATH)/src/wolfSSL
 
-WOLF_SRC += $(wildcard $(SDK_PATH)/platforms/default/wolf/crypt/*.c)
-# WOLF_SRC += $(wildcard $(WOLFSSL_PATH)/**/*.c)
-WOLF_SRC += $(wildcard $(SDK_PATH)/src/ssl/*.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/ssl/*.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/src/*.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/aes.c)
@@ -31,6 +28,8 @@ WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/wc_encrypt.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/wc_port.c)
 WOLF_SRC += $(wildcard $(SDK_PATH)/src/wolfSSL/wolfcrypt/src/logging.c)
 
+
 WOLF_INCLUDES += \
     -I$(WOLFSSL_PATH) \
     -I$(WOLFSSL_PATH)/wolfssl
+

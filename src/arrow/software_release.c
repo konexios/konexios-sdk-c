@@ -4,6 +4,9 @@
 #include <time/watchdog.h>
 #include <arrow/sys.h>
 
+#if defined(NO_RELEASE_UPDATE)
+typedef void __dummy__;
+#else
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
 static __release_cb  __release = NULL;
@@ -230,7 +233,9 @@ int arrow_software_release_payload_handler(void *r,
                                            int size) {
   http_response_t *res = (http_response_t *)r;
   property_t *response_buffer = &res->payload.buf;
-  return __payload(response_buffer, payload.value, size);
+  if ( __payload )
+    return __payload(response_buffer, payload.value, size);
+  return -1;
 }
 
 static void _software_releases_download_init(http_request_t *request, void *arg) {
@@ -254,10 +259,11 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
   if ( response->m_httpResponseCode != 200 ) return -1;
   DBG("file size : %d", response->payload.size);
   if ( __download ) return __download(&response->payload.buf);
-  return 0;
+  return -1;
 }
 
 int arrow_software_release_download(const char *token, const char *tr_hid) {
   token_hid_t th = { token, tr_hid };
   STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, NULL, "File download fail");
 }
+#endif

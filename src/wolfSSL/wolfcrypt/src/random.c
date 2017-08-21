@@ -1456,13 +1456,14 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return 0;
     }
 
-#elif defined(__stm32l475iot__) || defined(__semiconductor__)
+#elif defined(__stm32l475iot__) || defined(__semiconductor__) || defined(__quadro__)
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz) {
         int i;
         for (i = 0; i < (int)sz; i++ )
             output[i] = rand()%256;
         return 0;
     }
+
 #elif defined(NO_DEV_RANDOM)
 
 #error "you need to write an os specific wc_GenerateSeed() here"

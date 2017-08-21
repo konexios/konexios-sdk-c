@@ -15,7 +15,7 @@
 # include <inttypes.h>
 # include <sys/types.h>
 
-#elif defined(__MBED__)
+#elif defined(__MBED__) && !defined(__semiconductor__)
 # include <inttypes.h>
 # include <sys/types.h>
 
@@ -37,6 +37,10 @@ typedef unsigned int size_t;
 # include <sys/types.h>
 
 #elif defined(__semiconductor__)
+# include <inttypes.h>
+# include <sys/types.h>
+
+#elif defined(__quadro__)
 # include <inttypes.h>
 # include <sys/types.h>
 #endif

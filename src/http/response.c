@@ -39,6 +39,7 @@ int default_add_payload_handler(void *r,
     res->payload.size = size;
     res->payload.buf.value = (char*)malloc(size+1);
     memcpy(res->payload.buf.value, payload.value, size);
+    P_VALUE(res->payload.buf)[res->payload.size] = '\0';
     res->payload.buf.flags = is_dynamic;
     return 0;
   } else {

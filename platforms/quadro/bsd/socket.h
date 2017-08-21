@@ -6,13 +6,16 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_UTF8_H_
-#define ARROW_UTF8_H_
+#ifndef _QUADRO_BSD_SOCKET_H_
+#define _QUADRO_BSD_SOCKET_H_
 
-int utf8check(const char *s);
-void fix_urldecode(char *query);
-void urlencode(char *dst, char *src, int len);
-void hex_encode(char *dst, const char *src, int size);
-void hex_decode(char *dst, const char *src, int size);
+#include <unint.h>
+# include <bsd/inet.h>
+# include <platforms/default/bsd/sockdef.h>
+# include <platforms/default/bsd/sockdecl.h>
+# include <bsd/struct_hostent.h>
+# define htons _htons
+# define htonl _htonl
+# define ntohl _ntohl
 
-#endif
+#endif // _STM32L475IOT_BSD_SOCKET_H_

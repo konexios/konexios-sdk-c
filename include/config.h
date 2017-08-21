@@ -50,7 +50,8 @@
     || defined(__XCC__) \
     || defined(__senseability__) \
     || defined(__stm32l475iot__) \
-    || defined(__semiconductor__)
+    || defined(__semiconductor__) \
+    || defined(__quadro__)
 #else
 # error "platform doesn't support"
 #endif
@@ -208,6 +209,16 @@
 #define DEVICE_NAME         "BB-GEVK"
 #define DEVICE_TYPE         "BB-GEVK-IOT"
 #define DEVICE_UID_SUFFIX   "devkit"
+
+#elif defined(__quadro__)
+    // gateway
+# define GATEWAY_UID_PREFIX          "quadro"
+# define GATEWAY_NAME                "quadro-demo"
+# define GATEWAY_OS                  "ThreadX"
+    // device
+#define DEVICE_NAME         "QuadroBoard"
+#define DEVICE_TYPE         "QuadroBoard-IOT"
+#define DEVICE_UID_SUFFIX   "evk"
 
 #else
 # error "Not supported platform"

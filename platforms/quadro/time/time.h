@@ -6,13 +6,22 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_UTF8_H_
-#define ARROW_UTF8_H_
+#ifndef STM32L475IOT_TIME_TIME_H_
+#define STM32L475IOT_TIME_TIME_H_
 
-int utf8check(const char *s);
-void fix_urldecode(char *query);
-void urlencode(char *dst, char *src, int len);
-void hex_encode(char *dst, const char *src, int size);
-void hex_decode(char *dst, const char *src, int size);
-
+#if defined(__cplusplus)
+extern "C" {
 #endif
+
+#include <config.h>
+#include <time.h>
+#include <sys/time.h>
+#include <platforms/default/time/time.h>
+
+int stime (const time_t *__when);
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif // STM32L475IOT_TIME_TIME_H_

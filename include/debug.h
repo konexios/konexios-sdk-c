@@ -18,7 +18,9 @@ extern "C" {
 //Debug is disabled by default
 #ifdef DEBUG
 
-#define DBG_LINE_SIZE 120
+#if !defined(DBG_LINE_SIZE)
+#define DBG_LINE_SIZE 256
+#endif
 void dbg_line(const char *fmt, ...);
 #define DBG(...) dbg_line(__VA_ARGS__);
 
