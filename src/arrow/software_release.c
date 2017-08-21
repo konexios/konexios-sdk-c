@@ -240,7 +240,6 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   SSP_PARAMETER_NOT_USED(th);
   int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
   uri[n] = 0x0;
-//  strcpy(uri, "http://mirror.tochlab.net:80/pub/gnu/hello/hello-1.3.tar.gz");
   http_request_init(request, GET, uri);
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
@@ -252,6 +251,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
   SSP_PARAMETER_NOT_USED(arg);
   wdt_feed();
 //  if ( IS_EMPTY(response->payload.buf) )  return -1;
+  if ( response->m_httpResponseCode != 200 ) return -1;
   DBG("file size : %d", response->payload.size);
   if ( __download ) return __download(&response->payload.buf);
   return 0;
