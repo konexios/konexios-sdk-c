@@ -456,11 +456,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     } while(1);
 
 last_wait:
-    // flush the socket buffer
-//    while( client_recv(http_buffer, sizeof(http_buffer), cli) == sizeof(http_buffer) )
-//      ;
-    DBG("end -------------------- ");
-
     HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
 }

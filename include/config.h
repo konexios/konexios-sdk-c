@@ -17,7 +17,7 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.3.1
+#define SDK_VERSION 1.3.2
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -224,8 +224,12 @@
 # error "Not supported platform"
 #endif
 #define GATEWAY_TYPE                "Local"
+#if !defined(GATEWAY_SOFTWARE_NAME)
 #define GATEWAY_SOFTWARE_NAME       "eos"
+#endif
+#if !defined(GATEWAY_SOFTWARE_VERSION)
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
+#endif
 
 /* telemetry configuration */
 
