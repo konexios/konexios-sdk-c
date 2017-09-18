@@ -23,11 +23,14 @@
 #include "private.h"
 #endif
 
+// FIXME turn off the keys protect
+#if 0
 #if !defined(DEFAULT_API_KEY)
-#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
+#warning "There is no DEFAULT_API_KEY key into acn-sdk-c/private.h file"
 #endif
 #if !defined(DEFAULT_SECRET_KEY)
-#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#warning "There is no DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#endif
 #endif
 
 #if defined(__IBM__)

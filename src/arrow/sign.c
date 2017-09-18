@@ -46,7 +46,6 @@ static iot_key_t secret = {NULL};
 char *get_api_key(void) {
   if (api.key) return api.key;
   if ( default_api_key ) {
-    DBG("-------------RETURN DEFAULT KEY ---------------");
     return (char*)default_api_key;
   }
   if ( restore_key_setting(api_key, NULL) < 0 ) return NULL;
@@ -75,7 +74,7 @@ void set_secret_key(char *newkey) {
   set_key(&secret, newkey);
 }
 
-static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
+static char canonicalRequest[sizeof(api_key) + 512];
 
 void sign(char *signature,
           const char *timestamp,
