@@ -52,6 +52,9 @@ int restore_wifi_setting(char *ssid, char *pass, int *sec);
 // save the wifi settings (SSID, password, secure mode)
 void save_wifi_setting(const char *ssid, const char *pass, int sec);
 
+void save_key_setting(const char *api_key, const char *sec_key);
+int restore_key_setting(char *api, char *sec);
+
 #if defined (__cplusplus)
 }
 #endif

@@ -17,17 +17,20 @@
 //#define DEV_ENV
 //#define DEBUG
 
-#define SDK_VERSION 1.3.1
+#define SDK_VERSION 1.3.2
 
 #if !defined(_KEYS_)
 #include "private.h"
 #endif
 
+// FIXME turn off the keys protect
+#if 0
 #if !defined(DEFAULT_API_KEY)
-#error "Add the DEFAULT_API_KEY key into acn-sdk-c/private.h file"
+#warning "There is no DEFAULT_API_KEY key into acn-sdk-c/private.h file"
 #endif
 #if !defined(DEFAULT_SECRET_KEY)
-#error "ADD the DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#warning "There is no DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
+#endif
 #endif
 
 #if defined(__IBM__)
@@ -224,8 +227,12 @@
 # error "Not supported platform"
 #endif
 #define GATEWAY_TYPE                "Local"
+#if !defined(GATEWAY_SOFTWARE_NAME)
 #define GATEWAY_SOFTWARE_NAME       "eos"
+#endif
+#if !defined(GATEWAY_SOFTWARE_VERSION)
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
+#endif
 
 /* telemetry configuration */
 

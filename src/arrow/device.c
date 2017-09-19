@@ -51,10 +51,6 @@ void arrow_device_add_property(arrow_device_t *dev, const char *key, const char 
 #include <debug.h>
 char *arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
-  DBG("name:%s", P_VALUE(dev->name));
-  DBG("name:%s", P_VALUE(dev->type));
-  DBG("name:%s", P_VALUE(dev->uid));
-  DBG("name:%s", P_VALUE(dev->gateway_hid));
   json_append_member(_main, "name", json_mkstring(P_VALUE(dev->name)));
   json_append_member(_main, "type", json_mkstring(P_VALUE(dev->type)));
   json_append_member(_main, "uid", json_mkstring(P_VALUE(dev->uid)));

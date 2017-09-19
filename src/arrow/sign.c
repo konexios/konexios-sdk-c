@@ -16,6 +16,7 @@
 #endif
 #include <debug.h>
 #include <ssl/crypt.h>
+#include <arrow/storage.h>
 
 #if defined(SIGN_DEBUG)
 # define DBG_SIGN DBG
@@ -24,11 +25,16 @@
 #endif
 
 // by default keys
+#if defined(DEFAULT_API_KEY) && defined(DEFAULT_SECRET_KEY)
 static const char *default_api_key = DEFAULT_API_KEY;
 static const char *default_secret_key = DEFAULT_SECRET_KEY;
+#else
+static const char *default_api_key = NULL;
+static const char *default_secret_key = NULL;
+#endif
 
-static char api_key[sizeof(DEFAULT_API_KEY) + 20];
-static char secret_key[sizeof(DEFAULT_SECRET_KEY) + 20];
+static char api_key[66];
+static char secret_key[50];
 
 typedef struct {
   char *key;
@@ -39,12 +45,19 @@ static iot_key_t secret = {NULL};
 
 char *get_api_key(void) {
   if (api.key) return api.key;
-  return (char*)default_api_key;
+  if ( default_api_key ) {
+    return (char*)default_api_key;
+  }
+  if ( restore_key_setting(api_key, NULL) < 0 ) return NULL;
+  return api_key;
 }
 
 char *get_secret_key(void) {
   if (secret.key) return secret.key;
-  return (char*)default_secret_key;
+  if ( default_secret_key )
+    return (char*)default_secret_key;
+  if ( restore_key_setting(NULL, secret_key) < 0 ) return NULL;
+  return secret_key;
 }
 
 static void set_key(iot_key_t *iot, char *newkey) {
@@ -61,7 +74,7 @@ void set_secret_key(char *newkey) {
   set_key(&secret, newkey);
 }
 
-static char canonicalRequest[sizeof(DEFAULT_API_KEY) + 512];
+static char canonicalRequest[sizeof(api_key) + 512];
 
 void sign(char *signature,
           const char *timestamp,
