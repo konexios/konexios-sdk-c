@@ -412,8 +412,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 chunk_len = 0;
                 return -1; // fail
             }
-//            HTTP_
-                DBG("detect chunk %d", chunk_len);
+            HTTP_DBG("detect chunk %d", chunk_len);
             shift_payload(buf, &trfLen, crlfPtr - buf + 2);
         } else {
             chunk_len = recvContentLength;// - trfLen;
