@@ -3,6 +3,7 @@
 #include <debug.h>
 #include <time/watchdog.h>
 #include <arrow/sys.h>
+#include <time/time.h>
 
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;
@@ -157,7 +158,8 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   JsonNode *tmp = json_find_member(_parameters, "softwareReleaseTransHid");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
-  arrow_software_releases_trans_received(trans_hid);
+  while( arrow_software_releases_trans_received(trans_hid) < 0)
+    msleep(1000);
   tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_token = tmp->string_;
@@ -181,9 +183,11 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(_from);
 //  int ret = arrow_software_release(_token, _checksum, _from, _to);
   if ( ret < 0 ) {
-    arrow_software_releases_trans_fail(trans_hid, "failed");
+    while( arrow_software_releases_trans_fail(trans_hid, "failed") < 0)
+      msleep(1000);
   } else {
-    arrow_software_releases_trans_success(trans_hid);
+    while(arrow_software_releases_trans_success(trans_hid) < 0)
+      msleep(1000);
     reboot();
   }
   return ret;
