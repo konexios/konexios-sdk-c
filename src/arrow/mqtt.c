@@ -210,7 +210,7 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   rc = NetworkConnect(&mqtt_net, mqtt_addr, MQTT_PORT);
   DBG("Connecting to %s %d", mqtt_addr, MQTT_PORT);
   if ( rc < 0 ) return rc;
-  MQTTClientInit(&mqtt_client, &mqtt_net, 3000, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
+  MQTTClientInit(&mqtt_client, &mqtt_net, DEFAULT_MQTT_TIMEOUT, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
   rc = MQTTConnect(&mqtt_client, &data);
   DBG("Connected %d", rc);
   return rc;

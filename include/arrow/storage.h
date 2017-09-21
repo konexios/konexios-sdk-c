@@ -17,7 +17,11 @@ extern "C" {
 #include <arrow/gateway.h>
 
 #if !defined(FLASH_MAGIC_NUMBER)
-  #define FLASH_MAGIC_NUMBER 0xdeadbeaf
+  #if defined(DEV_ENV)
+    #define FLASH_MAGIC_NUMBER 0xdea1beac
+  #else
+    #define FLASH_MAGIC_NUMBER 0xdeadbeaf
+  #endif
 #endif
 
 // default structure for the device information

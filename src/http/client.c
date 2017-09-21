@@ -89,7 +89,7 @@ void http_client_init(http_client_t *cli) {
 	cli->response_code = 0;
   if ( cli->flags._new ) {
     cli->sock = -1;
-    cli->timeout = 3000;
+    cli->timeout = DEFAULT_API_TIMEOUT;
 		cli->_r_func = simple_read;
 		cli->_w_func = simple_write;
 	}
@@ -97,10 +97,12 @@ void http_client_init(http_client_t *cli) {
 
 void http_client_free(http_client_t *cli) {
   if ( cli->flags._close ) {
+    if ( cli->sock >= 0 ) {
 #if defined(HTTP_CIPHER)
-    ssl_close(cli->sock);
+      ssl_close(cli->sock);
 #endif
-    if ( cli->sock >= 0 ) soc_close(cli->sock);
+      soc_close(cli->sock);
+    }
     cli->flags._new = 1;
   } else {
     cli->flags._new = 0;

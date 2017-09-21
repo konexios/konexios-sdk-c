@@ -33,6 +33,13 @@
 #endif
 #endif
 
+#if !defined(DEFAULT_MQTT_TIMEOUT)
+  #define DEFAULT_MQTT_TIMEOUT 10000
+#endif
+#if !defined(DEFAULT_API_TIMEOUT)
+  #define DEFAULT_API_TIMEOUT 10000
+#endif
+
 #if defined(__IBM__)
 //#define HTTP_CIPHER
 //#define MQTT_CIPHER

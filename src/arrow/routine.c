@@ -92,8 +92,9 @@ int arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-  if ( has_cmd_handler() < 0 ) http_session_close_set(current_client(), true);
-
+#if !defined(HTTP_SOCK_KEEP_OPEN)
+  http_session_close_set(current_client(), true);
+#endif
   return 0;
 }
 
@@ -129,7 +130,9 @@ int arrow_mqtt_connect_routine(void) {
 
   arrow_state_mqtt_run(&_device);
 #if !defined(NO_EVENTS)
-  mqtt_subscribe();
+  while(mqtt_subscribe() < 0 ) {
+    msleep(ARROW_RETRY_DELAY);
+  }
 #endif
   _init_mqtt = 1;
 
@@ -138,6 +141,7 @@ int arrow_mqtt_connect_routine(void) {
 
 void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done || !_init_mqtt ) return;
+  wdt_feed();
   if ( has_cmd_handler() >= 0 ) {
     DBG("MQTT wait commands");
   }

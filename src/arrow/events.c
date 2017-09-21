@@ -120,14 +120,24 @@ static char *form_canonical_prm(JsonNode *param) {
     switch(child->tag) {
       case JSON_STRING: strcpy(can_list[count]+i+1, child->string_); break;
 #if defined(__XCC__)
-      case json_True: strcpy(can_list[count]+i+1, "true"); break;
-      case json_False: strcpy(can_list[count]+i+1, "false"); break;
-      default:
-        snprintf(can_list[count]+i+1, 50, "%d", child->valueint);
+      case json_True: {
+        strcpy(can_list[count]+i+1, "true"); break;
+        *(can_list[count]+i+5) = 0x0;
+      }
+      case json_False: {
+        strcpy(can_list[count]+i+1, "false"); break;
+        *(can_list[count]+i+6) = 0x0;
+      }
+      default: {
+        int r = snprintf(can_list[count]+i+1, 50, "%d", child->valueint);
+        *(can_list[count]+i+1 + r ) = 0x0;
+      }
 #else
-      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true":"false")); break;
-      default:
-        snprintf(can_list[count]+i+1, 50, "%f", child->number_);
+      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true\0":"false\0")); break;
+      default: {
+        int r = snprintf(can_list[count]+i+1, 50, "%f", child->number_);
+        *(can_list[count]+i+1 + r ) = 0x0;
+      }
 #endif
     }
     count++;
@@ -149,6 +159,8 @@ static char *form_canonical_prm(JsonNode *param) {
 
 int process_event(const char *str) {
   DBG("ev: %s", str);
+  DBG("ev: %s", str+100);
+  DBG("ev: %s", str+200);
   mqtt_event_t mqtt_e;
   int ret = -1;
   memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
@@ -187,6 +199,7 @@ int process_event(const char *str) {
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
+    DBG("[%s]", can);
     if ( !check_signature(sign_version->string_, sign->string_, &mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);
