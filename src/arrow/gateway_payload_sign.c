@@ -45,13 +45,16 @@ int gateway_payload_sign(char *signature,
 //  DBG("sec: %s", get_secret_key());
   hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), get_secret_key(), (int)strlen(get_secret_key()));
   hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = 0x0;
 //  DBG("hex1: %s", hex_tmp);
   memset(tmp, 0, 128);
   hmac256(tmp, signatureVersion, (int)strlen(signatureVersion), hex_tmp, (int)strlen(hex_tmp));
   hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = 0x0;
 //  DBG("hex2: [%d]%s", strlen(hex_tmp), hex_tmp);
   hmac256(tmp, hex_tmp, strlen(hex_tmp), stringtoSign, strlen(stringtoSign));
   hex_encode(signature, tmp, 32);
+  signature[64] = 0x0;
 //  DBG("sig: [%d]%s", strlen(signature), signature);
   FREE_CHUNK(canonicalRequest);
   FREE_CHUNK(tmp);
