@@ -69,14 +69,12 @@ struct check_signature_t {
 
 static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
   char signature[65] = {0};
-  SSP_PARAMETER_NOT_USED(ev);
-  SSP_PARAMETER_NOT_USED(can);
-  int err = 0;/*gateway_payload_sign(signature,
+  int err = gateway_payload_sign(signature,
                                  ev->gateway_hid,
                                  ev->name,
                                  ev->encrypted,
                                  can,
-                                 "1");*/
+                                 "1");
   if ( err ) {
     return -1;
   }

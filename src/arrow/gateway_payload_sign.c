@@ -5,6 +5,8 @@
 #include <debug.h>
 #include <arrow/utf8.h>
 
+#define USE_STATIC
+
 int gateway_payload_sign(char *signature,
                          const char *hid,
                          const char *name,
@@ -12,7 +14,7 @@ int gateway_payload_sign(char *signature,
                          const char *canParString,
                          const char *signatureVersion) {
   // step 1
-  CREATE_CHUNK(canonicalRequest, 512);
+  static CREATE_CHUNK(canonicalRequest, 256);
   strcpy(canonicalRequest, hid);
   strcat(canonicalRequest, "\n");
   strcat(canonicalRequest, name);
@@ -21,16 +23,17 @@ int gateway_payload_sign(char *signature,
   else strcat(canonicalRequest, "false\n");
   strcat(canonicalRequest, canParString);
   strcat(canonicalRequest, "\n");
-  char hex_hash_canonical_req[66];
-  char hash_canonical_req[34];
-  sha256(hash_canonical_req, canonicalRequest, (int)strlen(canonicalRequest));
-  hex_encode(hex_hash_canonical_req, hash_canonical_req, 32);
-  hex_hash_canonical_req[64] = '\0';
+  CREATE_CHUNK(hex_tmp, 66);
+  CREATE_CHUNK(tmp, 34);
+
+  sha256(tmp, canonicalRequest, (int)strlen(canonicalRequest));
+  hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = '\0';
 //  DBG("can: %s", hex_hash_canonical_req);
 
   // step 2
   char *stringtoSign = canonicalRequest;
-  strcpy(stringtoSign, hex_hash_canonical_req);
+  strcpy(stringtoSign, hex_tmp);
   strcat(stringtoSign, "\n");
   strcat(stringtoSign, get_api_key());
   strcat(stringtoSign, "\n");
@@ -38,8 +41,6 @@ int gateway_payload_sign(char *signature,
 
 //  DBG("strToSign:\r\n[%s]", stringtoSign);
   // step 3
-  CREATE_CHUNK(tmp, 128);
-  CREATE_CHUNK(hex_tmp, 128);
 
 //  DBG("api: %s", get_api_key());
 //  DBG("sec: %s", get_secret_key());
