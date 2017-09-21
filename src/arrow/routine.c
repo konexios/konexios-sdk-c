@@ -143,7 +143,7 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done || !_init_mqtt ) return;
   wdt_feed();
   if ( has_cmd_handler() >= 0 ) {
-    DBG("MQTT wait commands");
+    DBG("MQTT waits");
   }
   while (1) {
 #if defined(NO_EVENTS)
