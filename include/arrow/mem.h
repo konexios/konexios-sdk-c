@@ -18,7 +18,7 @@
 #if GCC_VERSION <= 50201
 # include <sys/cdefs.h>
 #endif
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ == 17
+#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 17 && __GLIBC_MINOR__ < 23
 # include <features.h>
 #else
 # include <sys/features.h>

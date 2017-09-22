@@ -227,7 +227,7 @@ static int receive_response(http_client_t *cli, http_response_t *res, char *buf,
     }
 
     if ( *len < (uint32_t)crlfPos + 2 ) {
-        DBG("receive_response memmove warning [%08x] %d, %d", (int)buf, crlfPos, *len);
+        DBG("receive_response memmove warning [%p] %d, %d", buf, crlfPos, *len);
     }
     memmove(buf, buf+crlfPos+2, *len - (uint32_t)(crlfPos + 2) + 1 ); //Be sure to move NULL-terminating char as well
     *len -= (uint32_t)(crlfPos + 2);

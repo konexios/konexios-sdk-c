@@ -158,7 +158,6 @@ static char *form_canonical_prm(JsonNode *param) {
 
 
 int process_event(const char *str) {
-  DBG("ev: %s", str);
   mqtt_event_t mqtt_e;
   int ret = -1;
   memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));

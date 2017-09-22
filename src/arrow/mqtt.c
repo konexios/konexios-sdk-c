@@ -28,9 +28,15 @@ static char p_topic[100];
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     DBG("mqtt msg arrived %u", message->payloadlen);
-    DBG("%.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
-    ((char *)message->payload)[message->payloadlen] = '\0';
-    process_event(message->payload);
+    char *nt_str = (char*)malloc(message->payloadlen+1);
+    if ( !nt_str ) {
+        DBG("Can't allocate more memory [%d]", message->payloadlen+1);
+        return;
+    }
+    memcpy(nt_str, message->payload, message->payloadlen);
+    nt_str[message->payloadlen] = 0x0;
+    process_event(nt_str);
+    free(nt_str);
 }
 
 #if defined(__IBM__)
