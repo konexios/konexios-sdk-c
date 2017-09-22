@@ -91,7 +91,7 @@ void property_free(property_t *dst);
 #define P_CLEAR(field) memset(&(field), 0x0, sizeof(property_t))
 
 #if defined(USE_HEAP)
-#define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(strlen(ARROW_API_DEVICE_ENDPOINT) + 50)
+#define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(size)
 #elif defined(USE_STATIC)
 #define CREATE_CHUNK(ptr, size) static char ptr[size]
 #else
