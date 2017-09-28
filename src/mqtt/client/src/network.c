@@ -8,18 +8,6 @@
 #if defined(__USE_STD__)
 # include <errno.h>
 #endif
-#if defined(__XCC__)
-#define WOLFSSL SSL
-#define WOLFSSL_CTX SSL_CTX
-#define IPPROTO_TCP 0
-#define SSL_SUCCESS 0
-#define SSL_INBUF_SIZE               6000
-#define SSL_OTA_INBUF_SIZE           20000
-#define SSL_OUTBUF_SIZE              3500
-# define wolfSSL_write qcom_SSL_write
-# define wolfSSL_read qcom_SSL_read
-#define strerror(...) "xcc error"
-#endif
 
 static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};

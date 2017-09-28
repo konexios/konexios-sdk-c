@@ -38,7 +38,7 @@ bool http_session_close(http_client_t *cli) {
 
 #define CHECK_CONN_ERR(ret) \
     if ( ret < 0 ) { \
-      DBG("Connection error (%d)", ret); \
+      DBG("Connection error [%d] (%d)", __LINE__, ret); \
       return ret; \
     }
 
@@ -323,7 +323,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     ret = receive_response(cli, res, http_buffer, &trfLen);
     if ( ret < 0 ) {
-        DBG("Connection error (%d)", ret);
+        DBG("Receiving error (%d)", ret);
         return -1;
     }
     if ( res->m_httpResponseCode != 200 ) goto last_wait;

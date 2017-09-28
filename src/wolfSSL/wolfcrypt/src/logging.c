@@ -100,6 +100,11 @@ void wolfSSL_Debugging_OFF(void)
     #include <stdio.h>   /* for default printf stuff */
 #endif
 
+#ifdef __xtensa__
+# include <debug.h>
+# define dc_log_printf DBG
+#endif
+
 #ifdef THREADX
 # if defined(_ARIS_)
 #  include "TRACE_USE.h"
@@ -115,7 +120,7 @@ static void wolfssl_log(const int logLevel, const char *const logMessage)
         log_function(logLevel, logMessage);
     else {
         if (loggingEnabled) {
-#ifdef THREADX
+#if defined(THREADX) || defined(__xtensa__)
             dc_log_printf("%s\n", logMessage);
 #elif defined(MICRIUM)
         #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)

@@ -79,8 +79,7 @@ static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
     return -1;
   }
   DBG("cmp { %s, %s }", sign, signature);
-//  return ( strcmp(sign, signature) == 0 ? 1 : 0 );
-  return 1;
+  return ( strcmp(sign, signature) == 0 ? 1 : 0 );
 }
 
 static struct check_signature_t checker_collection[] = {

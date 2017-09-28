@@ -30,7 +30,7 @@
 # include <string.h>
 # include <strings.h>
 #endif
-#if defined(__XCC__)
+#if defined(__xtensa__)
 #include <qcom_common.h>
 #include <malloc_api.h>
 //#include <qcom_mem.h>
@@ -52,7 +52,7 @@ enum prop_flags {
   is_dynamic  = 0x1,
   is_const    = 0x2
 };
-#if defined(__XCC__)
+#if defined(__xtensa__)
 # define __attribute_packed__
 #else
 # define __attribute_packed__ __attribute__((__packed__))

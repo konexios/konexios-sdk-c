@@ -165,9 +165,8 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_token = tmp->string_;
-  DBG("FW TOKEN: %s", tmp->string_);
+  DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
-//  msleep(100000);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_from = tmp->string_;
