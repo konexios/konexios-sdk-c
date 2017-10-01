@@ -81,7 +81,6 @@ static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 //    struct timeval interval = { 5000/1000, (0 % 1000) * 1000 };
 //    setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
     int got = recv(s->socket, buf, (uint32_t)sz, 0);
-//    DBG("recv ssl %d [%d]", got, sz);
     if (got <= 0)  return -2;  // IO_ERR_WANT_READ;
     return (int)got;
 }
@@ -136,7 +135,10 @@ int __attribute__((weak)) ssl_connect(int sock) {
 int __attribute__((weak)) ssl_recv(int sock, char *data, int len) {
 //	DBG("ssl r[%d]", len);
 	socket_ssl_t *s = find_ssl_sock(sock);
-	if ( !s ) return -1;
+	if ( !s ) {
+            DBG("No socket %d", sock);
+            return -1;
+        }
 	return wolfSSL_read(s->ssl, data, (int)len);
 }
 

@@ -10,9 +10,10 @@
 #define ARROW_TIME_TIME_H_
 
 #include <config.h>
+#define _XOPEN_SOURCE
 #include <time.h>
 #include <sys/time.h>
 #include <platforms/default/time/time.h>
-#include <mbed/rtc_time.h>
+#include <mbed/platform/mbed_rtc_time.h>
 
 #endif // ARROW_TIME_TIME_H_
