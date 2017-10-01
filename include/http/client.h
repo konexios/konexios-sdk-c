@@ -10,13 +10,6 @@
 #define HTTPCLIENT_CLIENT_H_
 
 #include "request.h"
-#if !defined(__XCC__)
-#else
-#define SSL_INBUF_SIZE               6000
-#define SSL_OTA_INBUF_SIZE           20000
-#define SSL_OUTBUF_SIZE              3500
-#endif
-
 #if defined(_ARIS_) && defined(ETH_MODE)
 #include "nx_api.h"
 #include "nxd_dns.h"

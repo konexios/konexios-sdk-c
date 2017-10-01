@@ -44,6 +44,10 @@
     #include "port/pic32/pic32mz-crypt.h"
 #endif
 
+#if defined(SHA256_DIGEST_SIZE)
+# undef SHA256_DIGEST_SIZE
+#endif
+
 /* in bytes */
 enum {
     SHA256              =  2,   /* hash type unique */

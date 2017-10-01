@@ -48,7 +48,7 @@ int gateway_payload_sign(char *signature,
   hex_encode(hex_tmp, tmp, 32);
   hex_tmp[64] = 0x0;
 //  DBG("hex1: %s", hex_tmp);
-  memset(tmp, 0, 128);
+  memset(tmp, 0, 34);
   hmac256(tmp, signatureVersion, (int)strlen(signatureVersion), hex_tmp, (int)strlen(hex_tmp));
   hex_encode(hex_tmp, tmp, 32);
   hex_tmp[64] = 0x0;
