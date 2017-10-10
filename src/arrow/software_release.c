@@ -264,7 +264,6 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
   SSP_PARAMETER_NOT_USED(arg);
   wdt_feed();
 //  if ( IS_EMPTY(response->payload.buf) )  return -1;
-  DBG("file size : %d", response->payload.size);
   if ( __download ) return __download(&response->payload.buf);
   return -1;
 }

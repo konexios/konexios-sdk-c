@@ -120,16 +120,18 @@ int __attribute__((weak)) ssl_connect(int sock) {
     wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
     wolfSSL_Debugging_ON();
 #endif
-	int err = wolfSSL_connect(s->ssl);
-	if (err != SSL_SUCCESS) {
-		free(s);
-		DBG("SSL connect fail");
-		return -1;
-	} else {
-		create_ssl_sock(s);
-		DBG("SSL connect done");
-	}
-  return 0;
+    int err = wolfSSL_connect(s->ssl);
+    if (err != SSL_SUCCESS) {
+        wolfSSL_free(s->ssl);
+        wolfSSL_CTX_free(s->ctx);
+        free(s);
+        DBG("SSL connect fail");
+        return -1;
+    } else {
+        create_ssl_sock(s);
+        DBG("SSL connect done");
+    }
+    return 0;
 }
 
 int __attribute__((weak)) ssl_recv(int sock, char *data, int len) {
@@ -150,13 +152,13 @@ int __attribute__((weak)) ssl_send(int sock, char* data, int length) {
 }
 
 int __attribute__((weak)) ssl_close(int sock) {
-	socket_ssl_t *s = find_ssl_sock(sock);
-	DBG("close ssl");
-  if ( s ) {
-    wolfSSL_free(s->ssl);
-    wolfSSL_CTX_free(s->ctx);
-    remove_ssl_sock(sock);
-    if ( !__sock ) wolfSSL_Cleanup();
-  }
-	return 0;
+    socket_ssl_t *s = find_ssl_sock(sock);
+    DBG("close ssl");
+    if ( s ) {
+        wolfSSL_free(s->ssl);
+        wolfSSL_CTX_free(s->ctx);
+        remove_ssl_sock(sock);
+        if ( !__sock ) wolfSSL_Cleanup();
+    }
+    return 0;
 }
