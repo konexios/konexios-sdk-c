@@ -101,6 +101,7 @@ typedef struct {
     http_header_t content_type;
     http_payload_t payload;
     _payload_meth_t _p_meth;
+    int processed_payload_chunk;
 } http_response_t;
 
 void http_request_init(http_request_t *req, int meth, const char *url);

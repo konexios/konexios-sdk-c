@@ -106,9 +106,11 @@ void http_response_set_content_type(http_response_t *res, property_t value) {
 void http_response_set_payload(http_response_t *res, property_t payload, uint32_t size) {
   if ( ! size ) size = P_SIZE(payload);
   res->_p_meth._p_set_handler(res, payload, size);
+  res->processed_payload_chunk = 1;
 }
 
 void http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
   if ( !size ) size = P_SIZE(payload);
   res->_p_meth._p_add_handler(res, payload, size);
+  res->processed_payload_chunk ++ ;
 }

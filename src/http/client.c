@@ -326,7 +326,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         DBG("Receiving error (%d)", ret);
         return -1;
     }
-    if ( res->m_httpResponseCode != 200 ) goto last_wait;
 
     HTTP_DBG("Reading headers %d", trfLen);
     char *crlfPtr;
@@ -335,6 +334,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     memset(&res->content_type, 0x0, sizeof(http_header_t));
     memset(&res->payload, 0x0, sizeof(http_payload_t));
     res->is_chunked = 0;
+    res->processed_payload_chunk = 0;
 
     int recvContentLength = -1;
     //Now get headers
@@ -397,6 +397,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     }
 
     uint32_t chunk_len;
+    uint32_t no_data_error = 0;
     HTTP_DBG("get payload form buf: %d", trfLen);
     HTTP_DBG("get payload form buf: [%s]", buf);
     do {
@@ -428,10 +429,10 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 HTTP_DBG("get chunk add %d", need_to_read-trfLen);
                 ret = client_recv(buf+trfLen, need_to_read-trfLen, cli);
                 if ( ret >= 0 ) newTrfLen = (uint32_t)ret;
-                else { // ret < 0 - error
-                    need_to_read = trfLen;
-                    chunk_len = need_to_read;
+                else {
+                    // ret < 0 - error
                     newTrfLen = 0;
+                    if ( no_data_error ++ > 3) return -1;
                     DBG("No data");
                 }
                 trfLen += newTrfLen;
@@ -456,7 +457,6 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         }
     } while(1);
 
-last_wait:
     HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
     return 0;
 }

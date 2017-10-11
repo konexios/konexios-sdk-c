@@ -5,6 +5,6 @@ int md5sum(char *hash, const char *data, int len);
 
 void md5_chunk_init();
 void md5_chunk(const char *data, int len);
-void md5_chunk_hash(char *hash);
+int md5_chunk_hash(char *hash);
 
 #endif  // ARROW_MD5SUM_H_

@@ -98,7 +98,6 @@ int NetworkConnect(Network* n, char* addr, int port) {
         soc_close(n->my_socket);
         return -2;
     }
-    DBG("cipher socket %d", n->my_socket);
 #if defined(MQTT_CIPHER)
     if ( ssl_connect(n->my_socket) < 0 ) {
     	soc_close(n->my_socket);

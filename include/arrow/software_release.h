@@ -13,8 +13,8 @@ typedef int (*__release_cb)(const char *url,
                            const char *from,
                            const char *to);
 
-typedef int (*__download_payload_cb)(property_t *,const char *,int);
-typedef int (*__download_complete_cb)(property_t *);
+typedef int (*__download_payload_cb)(const char *,int);
+typedef int (*__download_complete_cb)(void);
 
 typedef struct _release_sched_ {
   property_t trans_hid;
@@ -41,7 +41,7 @@ int arrow_software_releases_trans_start(const char *hid);
 // DeviceSoftwareRelease event handler
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters);
 
-int arrow_software_release_download(const char *token, const char *tr_hid);
+int arrow_software_release_download(const char *token, const char *tr_hid, const char *checksum);
 
 // set software release download callback
 // will be executed when download complete
