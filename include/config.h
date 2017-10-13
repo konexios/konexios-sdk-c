@@ -56,7 +56,7 @@
 
 #if defined(__linux__) \
     || defined(_ARIS_) \
-    || defined(__MBED__) \
+    || defined(__nucleo__) \
     || defined(__XCC__) \
     || defined(__senseability__) \
     || defined(__stm32l475iot__) \
@@ -85,7 +85,7 @@
 #if !defined(MAIN_WLAN_SSID)
 # if defined(_ARIS_)
 #  define MAIN_WLAN_SSID      "ARIS_WIFI"
-# elif defined(__MBED__)
+# elif defined(__nucleo__)
 #  define MAIN_WLAN_SSID      "NUCLEO_WIFI"
 # elif defined(__XCC__)
 #  define MAIN_WLAN_SSID      "QCA4010_WIFI"
@@ -155,7 +155,7 @@
 # define DEVICE_NAME         "aris-device-demo"
 # define DEVICE_TYPE         "aris-device"
 # define DEVICE_UID_SUFFIX   "board"
-#elif defined(TARGET_NUCLEO_F401RE)
+#elif defined(__nucleo__)
     // gateway
 # define GATEWAY_UID_PREFIX          "nucleo"
 # define GATEWAY_NAME                "my-test-gateway-123"

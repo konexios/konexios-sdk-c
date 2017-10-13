@@ -241,11 +241,15 @@ int arrow_software_release_payload_handler(void *r,
                                            int size) {
   http_response_t *res = (http_response_t *)r;
 //  property_t *response_buffer = &res->payload.buf;
+  int flag = FW_FIRST;
   if ( __payload ) {
-      if ( ! res->processed_payload_chunk )
+      wdt_feed();
+      if ( ! res->processed_payload_chunk ) {
           md5_chunk_init();
+      } else
+          flag |= FW_NEXT;
       md5_chunk(payload.value, size);
-      return __payload(payload.value, size);
+      return __payload(payload.value, size, flag);
   }
   return -1;
 }
@@ -266,15 +270,18 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
     SSP_PARAMETER_NOT_USED(response);
     char *checksum = (char *)arg;
     wdt_feed();
-    char hash[32];
-    char hash_hex[64];
-    int size = md5_chunk_hash(hash);
-    hex_encode(hash_hex, hash, size);
-    DBG("fw hash cmp {%s, %s}", checksum, hash_hex);
-    if ( strncmp(hash_hex, checksum, 2*size) == 0 ) {
-        if ( __download ) return __download();
-    } else {
-        DBG("fw md5 checksum failed...");
+    if ( __download ) {
+        char hash[34];
+        char hash_hex[64];
+        int size = md5_chunk_hash(hash);
+        hex_encode(hash_hex, hash, size);
+        DBG("fw hash cmp {%s, %s}", checksum, hash_hex);
+        if ( strncmp(hash_hex, checksum, 2*size) == 0 ) {
+            return __download(FW_SUCCESS);
+        } else {
+            DBG("fw md5 checksum failed...");
+            return __download(FW_MD5SUM);
+        }
     }
     return -1;
 }

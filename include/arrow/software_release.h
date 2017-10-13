@@ -8,13 +8,23 @@ extern "C" {
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 
+enum arrow_ota_result {
+    FW_SUCCESS = 0x00,
+    FW_MD5SUM
+};
+
+enum arrow_ota_init {
+    FW_FIRST = 0x00,
+    FW_NEXT
+};
+
 typedef int (*__release_cb)(const char *url,
                            const char *chsum,
                            const char *from,
                            const char *to);
 
-typedef int (*__download_payload_cb)(const char *,int);
-typedef int (*__download_complete_cb)(void);
+typedef int (*__download_payload_cb)(const char *,int,int);
+typedef int (*__download_complete_cb)(int);
 
 typedef struct _release_sched_ {
   property_t trans_hid;
