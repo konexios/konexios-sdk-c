@@ -96,7 +96,7 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 }
 
 int __attribute__((weak)) ssl_connect(int sock) {
-	if ( !__sock ) wolfSSL_Init();
+    if ( !__sock ) wolfSSL_Init();
 	socket_ssl_t *s = (socket_ssl_t *)malloc(sizeof(socket_ssl_t));
 	s->next = NULL;
 	s->socket = sock;
@@ -135,7 +135,7 @@ int __attribute__((weak)) ssl_connect(int sock) {
 }
 
 int __attribute__((weak)) ssl_recv(int sock, char *data, int len) {
-//	DBG("ssl r[%d]", len);
+//    DBG("ssl r[%d]", len);
 	socket_ssl_t *s = find_ssl_sock(sock);
 	if ( !s ) {
             DBG("No socket %d", sock);
@@ -145,7 +145,7 @@ int __attribute__((weak)) ssl_recv(int sock, char *data, int len) {
 }
 
 int __attribute__((weak)) ssl_send(int sock, char* data, int length) {
-//	DBG("ssl w[%d]", length);
+//    DBG("ssl w[%d]", length);
 	socket_ssl_t *s = find_ssl_sock(sock);
 	if ( !s ) return -1;
 	return wolfSSL_write(s->ssl, data, (int)length);
@@ -153,7 +153,7 @@ int __attribute__((weak)) ssl_send(int sock, char* data, int length) {
 
 int __attribute__((weak)) ssl_close(int sock) {
     socket_ssl_t *s = find_ssl_sock(sock);
-    DBG("close ssl");
+    DBG("close ssl %d", sock);
     if ( s ) {
         wolfSSL_free(s->ssl);
         wolfSSL_CTX_free(s->ctx);

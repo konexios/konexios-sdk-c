@@ -112,7 +112,6 @@
 #define NO_SKID
 #define NO_WOLFSSL_SERVER
 //#define NO_SESSION_CACHE // For Small RAM
-#define NO_WOLFSSL_DIR
 //#define DEBUG_WOLFSSL
 #define WOLFSSL_STATIC_RSA
 //#define HAVE_SUPPORTED_CURVES
@@ -203,7 +202,9 @@
 #define NO_RABBIT
 //#define NO_AES
 #define NO_ECC256
-#define NO_ECC_DHE
+//#define HAVE_NRTU
+#define HAVE_ECC
+//#define NO_ECC_DHE
 #define NO_HC128
 #define NO_PSK
 #define NO_MD2
@@ -212,8 +213,6 @@
 #define NO_OLD_TLS
 #define NO_PWDBASED
 #define NO_SKID
-//#define NO_CURVE25519
-//#define NO_ED25519
 #define NO_WOLFSSL_SERVER
 //#define NO_CERTS
 #define SINGLE_THREADED
@@ -221,15 +220,18 @@
 #define WOLFSSL_BASE64_ENCODE
 //#define DEBUG_WOLFSSL
 #define WOLFSSL_STATIC_RSA
-/* Options for Sample program */
 #define NO_SESSION_CACHE // For Small RAM
 #define WOLFSSL_LOW_MEMORY
-#define TFM_TIMING_RESISTANT
+#define USE_FAST_MATH
+#define NEED_AES_TABLES
+//#define TFM_TIMING_RESISTANT
+//#define ECC_TIMING_RESISTANT
+#define ALT_ECC_SIZE
 #define RSA_LOW_MEM
 #define NO_WOLFSSL_MEMORY
 #define WOLFSSL_NO_VERIFYSERVER
 #define NO_FILESYSTEM
-#define NO_CERT
+//#define NO_CERT
 #define HAVE_TM_TYPE
 #ifndef WOLFSSL_NO_VERIFYSERVER
     #define TIME_OVERRIDES

@@ -4,6 +4,7 @@
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
+OPT ?= Os
 $(info DIR:   $(LIBDIR))
 SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
 
@@ -31,7 +32,7 @@ AR_PRM = -rcs
 default: $(SDK_TARGET)
 
 $(SDK_PATH)/src/%.o : $(SDK_PATH)/src/%.c
-	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) -Os -c $< -o $@
+	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
 $(SDK_TARGET): $(OBJ)
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
