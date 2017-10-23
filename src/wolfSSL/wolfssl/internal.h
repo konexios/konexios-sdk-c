@@ -875,7 +875,7 @@ enum Misc {
 #if defined(NO_RELEASE_UPDATE)
     MAX_RECORD_SIZE = 3596,
 #else
-    MAX_RECORD_SIZE = 17000,    /* 2^14, max size by standard */
+    MAX_RECORD_SIZE = 16448,    /* 2^14, max size by standard */
 #endif
     MAX_MSG_EXTRA   = 38 + MAX_DIGEST_SIZE,
                                 /* max added to msg, mac + pad  from */

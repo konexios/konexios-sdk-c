@@ -432,7 +432,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
                 else {
                     // ret < 0 - error
                     newTrfLen = 0;
-                    if ( no_data_error ++ > 3) return -1;
+                    if ( no_data_error ++ > 2) return -1;
                     DBG("No data");
                 }
                 trfLen += newTrfLen;
