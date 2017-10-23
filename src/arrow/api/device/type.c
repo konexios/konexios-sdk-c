@@ -11,13 +11,13 @@ void device_type_init(device_type_t *dev, int enable, const char *name, const ch
   dev->telemetries = NULL;
 }
 
-void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, const char *type, const char *desc) {
+device_type_telemetry_t *device_type_add_telemetry(device_type_t *dev, const char *name, const char *type, const char *desc) {
   device_type_telemetry_t *telemetry;
   telemetry = malloc(sizeof(device_type_telemetry_t));
-  telemetry->controllable = contr;
   telemetry->description = strdup(desc);
   telemetry->name = strdup(name);
   telemetry->type = strdup(type);
+  telemetry->variables = NULL;
   telemetry->next = NULL;
   device_type_telemetry_t *last = dev->telemetries;
   while( last && last->next )
@@ -27,6 +27,7 @@ void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, 
   } else {
     last->next = telemetry;
   }
+  return telemetry;
 }
 
 void device_type_free(device_type_t *dev) {
@@ -37,10 +38,38 @@ void device_type_free(device_type_t *dev) {
     if ( telemetry->description ) free(telemetry->description);
     if ( telemetry->name ) free(telemetry->name);
     if ( telemetry->type ) free(telemetry->type);
+    device_type_telemetry_variables_free(telemetry);
     device_type_telemetry_t *t_free = telemetry;
     telemetry = telemetry->next;
     free(t_free);
   }
+}
+
+int device_type_add_telemetry_variables(device_type_telemetry_t *tel, const char *key, const char *value) {
+    variables_t *var = calloc(1, sizeof(variables_t));
+    property_copy(&var->key, p_stack(key));
+    property_copy(&var->value, p_stack(value));
+    var->next = NULL;
+    if ( !tel->variables ) {
+        tel->variables = var;
+    } else {
+        variables_t *last = tel->variables;
+        while( last && last->next ) last = last->next;
+        last->next = var;
+    }
+    return 0;
+}
+
+int device_type_telemetry_variables_free(device_type_telemetry_t *tel) {
+    variables_t *last = tel->variables;
+    while( last ) {
+        variables_t *var = last;
+        last = last->next;
+        property_free(&var->key);
+        property_free(&var->value);
+        free(var);
+    }
+    return 0;
 }
 
 static void _device_type_list_init(http_request_t *request, void *arg) {
@@ -74,7 +103,16 @@ static char  *device_type_serialize(device_type_t *dev) {
   device_type_telemetry_t *t = dev->telemetries;
   while( t ) {
     JsonNode *tl_element = json_mkobject();
-    json_append_member(tl_element, "controllable", json_mkbool(t->controllable));
+    JsonNode *var_array = json_mkarray();
+    variables_t *var = t->variables;
+    while( var ) {
+        JsonNode *tl_variables = json_mkobject();
+        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->key)));
+        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->value)));
+        json_append_element(var_array, tl_variables);
+        var = var->next;
+    }
+    json_append_member(tl_element, "variables", var_array);
     json_append_member(tl_element, "description", json_mkstring(t->description));
     json_append_member(tl_element, "name", json_mkstring(t->name));
     json_append_member(tl_element, "type", json_mkstring(t->type));

@@ -7,8 +7,14 @@ extern "C" {
 
 #include <arrow/device.h>
 
+typedef struct _vars_ {
+    property_t key;
+    property_t value;
+    struct _vars_ *next;
+} variables_t;
+
 typedef struct _device_type_telemetry {
-  int controllable;
+  variables_t *variables;
   char *description;
   char *name;
   char *type;
@@ -25,9 +31,12 @@ typedef struct _device_type {
 // initialize the type object
 void device_type_init(device_type_t *dev, int enable, const char *name, const char *dec);
 // add a telemetry type
-void device_type_add_telemetry(device_type_t *dev, int contr, const char *name, const char *type, const char *desc);
+device_type_telemetry_t *device_type_add_telemetry(device_type_t *dev, const char *name, const char *type, const char *desc);
 // terminate the type object
 void device_type_free(device_type_t *dev);
+
+int device_type_add_telemetry_variables(device_type_telemetry_t *tel, const char *key, const char *value);
+int device_type_telemetry_variables_free(device_type_telemetry_t *tel);
 
 // list existing device types
 int arrow_device_type_list(void);
