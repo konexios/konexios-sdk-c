@@ -4,7 +4,7 @@
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
-OPT ?= Os
+OPT ?= -Os
 $(info DIR:   $(LIBDIR))
 SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
 

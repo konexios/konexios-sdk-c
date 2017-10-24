@@ -118,7 +118,7 @@ static int send_start(http_client_t *cli, http_request_t *req) {
     if ( req->query ) {
         char queryString[CHUNK_SIZE];
         strcpy(queryString, "?");
-        http_query_t *query = req->query;
+        property_map_t *query = req->query;
         while ( query ) {
           if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)CHUNK_SIZE ) break;
             strcat(queryString, P_VALUE(query->key));
@@ -161,7 +161,7 @@ static int send_header(http_client_t *cli, http_request_t *req) {
         if ( (ret = client_send(buf, ret, cli)) < 0 ) return ret;
     }
 
-    http_header_t *head = req->header;
+    property_map_t *head = req->header;
     while( head ) {
       ret = snprintf(buf, sizeof(http_buffer)-1, "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
     	if ( ret < 0 ) return ret;
@@ -331,7 +331,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     char *crlfPtr;
     int crlfPos;
     res->header = NULL;
-    memset(&res->content_type, 0x0, sizeof(http_header_t));
+    memset(&res->content_type, 0x0, sizeof(property_map_t));
     memset(&res->payload, 0x0, sizeof(http_payload_t));
     res->is_chunked = 0;
     res->processed_payload_chunk = 0;
