@@ -72,30 +72,13 @@ void http_response_init(http_response_t *res, _payload_meth_t *handler) {
 void http_response_free(http_response_t *res) {
     P_FREE(res->payload.buf);
     res->payload.size = 0;
-    http_header_t *head = res->header;
-    http_header_t *head_next = NULL;
-    do {
-        if (head) {
-            head_next = head->next;
-            P_FREE(head->key);
-            P_FREE(head->value);
-            free(head);
-        }
-        head = head_next;
-    } while(head);
+    property_map_clear(res->header);
     P_FREE(res->content_type.value);
     P_FREE(res->content_type.key);
 }
 
 void http_response_add_header(http_response_t *req, property_t key, property_t value) {
-    http_header_t *head = req->header;
-    while( head && head->next ) head = head->next;
-    http_header_t *head_new = (http_header_t *)malloc(sizeof(http_header_t));
-    P_COPY(head_new->key, key);
-    P_COPY(head_new->value, value);
-    head_new->next = NULL;
-    if ( head ) head->next = head_new;
-    else req->header = head_new;
+    property_map_add(&req->header, key, value);
 }
 
 void http_response_set_content_type(http_response_t *res, property_t value) {

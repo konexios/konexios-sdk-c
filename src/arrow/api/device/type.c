@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #include "arrow/api/device/type.h"
 #include <http/routine.h>
 #include <debug.h>
@@ -46,29 +54,11 @@ void device_type_free(device_type_t *dev) {
 }
 
 int device_type_add_telemetry_variables(device_type_telemetry_t *tel, const char *key, const char *value) {
-    variables_t *var = calloc(1, sizeof(variables_t));
-    property_copy(&var->key, p_stack(key));
-    property_copy(&var->value, p_stack(value));
-    var->next = NULL;
-    if ( !tel->variables ) {
-        tel->variables = var;
-    } else {
-        variables_t *last = tel->variables;
-        while( last && last->next ) last = last->next;
-        last->next = var;
-    }
-    return 0;
+    return property_map_add(&tel->variables, p_stack(key), p_stack(value));
 }
 
 int device_type_telemetry_variables_free(device_type_telemetry_t *tel) {
-    variables_t *last = tel->variables;
-    while( last ) {
-        variables_t *var = last;
-        last = last->next;
-        property_free(&var->key);
-        property_free(&var->value);
-        free(var);
-    }
+    property_map_clear(tel->variables);
     return 0;
 }
 
@@ -104,7 +94,7 @@ static char  *device_type_serialize(device_type_t *dev) {
   while( t ) {
     JsonNode *tl_element = json_mkobject();
     JsonNode *var_array = json_mkarray();
-    variables_t *var = t->variables;
+    property_map_t *var = t->variables;
     while( var ) {
         JsonNode *tl_variables = json_mkobject();
         json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->key)));

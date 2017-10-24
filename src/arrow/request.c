@@ -15,7 +15,7 @@
 #include <debug.h>
 
 static void get_canonical_string(char *buffer, http_request_t *req){
-    http_query_t *query = req->query;
+    property_map_t *query = req->query;
     buffer[0] = '\0';
     while (query) {
         strcat(buffer, P_VALUE(query->key));

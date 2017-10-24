@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #if !defined(ARROW_DEVICE_TYPE_H_)
 #define ARROW_DEVICE_TYPE_H_
 
@@ -6,15 +14,10 @@ extern "C" {
 #endif
 
 #include <arrow/device.h>
-
-typedef struct _vars_ {
-    property_t key;
-    property_t value;
-    struct _vars_ *next;
-} variables_t;
+#include <arrow/map.h>
 
 typedef struct _device_type_telemetry {
-  variables_t *variables;
+  property_map_t *variables;
   char *description;
   char *name;
   char *type;
