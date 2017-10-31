@@ -47,3 +47,22 @@ sdk_clean:
 	$(RM) $(call fix_slash,$(OBJ)) $(QUIET)
 	$(RM) $(call fix_slash,$(SDK_TARGET)) $(QUIET)
 	$(RM) $(call fix_slash,$(DEPS)) $(QUIET)
+	
+app_version:
+	$(eval VERSION = $(shell ${GET_VERSION} && ./${GET_VERSION_BIN} && $(RM) ${GET_VERSION_BIN}))
+	
+app_settings:
+	@echo "------------------"
+	@echo "Build firmware for:"
+	$(shell ${GET_SETTINGS})
+	@./${GET_SETTINGS_BIN}
+	@$(RM) ${GET_SETTINGS_BIN}
+	@echo "------------------"
+
+check_settings:
+	@echo "------------------"
+	@echo "Check settings"
+	$(shell ${CHECK_SETTINGS})
+	@./$(CHECK_SETTINGS_BIN)
+	@$(RM) $(CHECK_SETTINGS_BIN)
+	@echo "------------------"

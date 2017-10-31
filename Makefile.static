@@ -73,3 +73,12 @@ ifeq ($(OS),Windows_NT)
 else
   file_exist = $(shell if [ -e $(PRIV_INC) ]; then echo yes; else echo no; fi)
 endif
+
+GET_VERSION_BIN=__get_version
+GET_VERSION=gcc $(SDK_PATH)/helper/__g.c -o $(GET_VERSION_BIN) -I$(SDK_PATH)/include -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__
+
+GET_SETTINGS_BIN=__get_settings
+GET_SETTINGS=gcc $(SDK_PATH)/helper/__dev.c -o $(GET_SETTINGS_BIN) -I$(SDK_PATH)/include -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__
+
+CHECK_SETTINGS_BIN=__check_settings
+CHECK_SETTINGS=gcc $(SDK_PATH)/helper/__set.c -o $(CHECK_SETTINGS_BIN) -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__

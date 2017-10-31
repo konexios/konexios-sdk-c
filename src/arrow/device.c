@@ -85,11 +85,6 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   P_COPY(device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
   P_COPY(device->name, p_const(DEVICE_NAME));
   P_COPY(device->type, p_const(DEVICE_TYPE));
-//    FIXME info property extra param?
-//    arrow_device_add_info(device, "info1", "value1");
-//    arrow_device_add_info(device, "info2", "value2");
-//    arrow_device_add_property(device, "prop1", "value1");
-//    arrow_device_add_property(device, "prop2", "value2");
   if ( IS_EMPTY(gateway->uid) ) return -1;
   char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
   strcpy(uid, P_VALUE(gateway->uid) );
