@@ -6,38 +6,23 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef SDK_C_CONFIG_H_
+#define SDK_C_CONFIG_H_
 
 #define xstr(s) str(s)
 #define str(s) #s
 
-//#define __IBM__
-//#define __AZURE__
-//#define DEV_ENV
-//#define DEBUG
-
-#define SDK_VERSION 1.3.3
+#define SDK_VERSION 1.3.5
 
 #if !defined(_KEYS_)
 #include "private.h"
 #endif
 
-// FIXME turn off the keys protect
-#if 0
-#if !defined(DEFAULT_API_KEY)
-#warning "There is no DEFAULT_API_KEY key into acn-sdk-c/private.h file"
-#endif
-#if !defined(DEFAULT_SECRET_KEY)
-#warning "There is no DEFAULT_SECRET_KEY key into acn-sdk-c/private.h file"
-#endif
-#endif
-
 #if !defined(DEFAULT_MQTT_TIMEOUT)
-  #define DEFAULT_MQTT_TIMEOUT 10000
+# define DEFAULT_MQTT_TIMEOUT 10000
 #endif
 #if !defined(DEFAULT_API_TIMEOUT)
-  #define DEFAULT_API_TIMEOUT 10000
+# define DEFAULT_API_TIMEOUT 10000
 #endif
 
 #if defined(__IBM__)
@@ -54,19 +39,6 @@
 //#  define MQTT_CIPHER
 #endif
 
-#if defined(__linux__) \
-    || defined(_ARIS_) \
-    || defined(__nucleo__) \
-    || defined(__XCC__) \
-    || defined(__senseability__) \
-    || defined(__stm32l475iot__) \
-    || defined(__semiconductor__) \
-    || defined(__quadro__)
-#else
-# error "platform doesn't support"
-#endif
-
-
 #if defined(__XCC__)
 # define __NO_STD__
 #else
@@ -77,23 +49,15 @@
 # define SSP_PARAMETER_NOT_USED(x) (void)((x))
 #endif
 
+/* NTP server settings */
 #define NTP_DEFAULT_SERVER "0.pool.ntp.org"
 #define NTP_DEFAULT_PORT 123
 #define NTP_DEFAULT_TIMEOUT 4000
 
 /* Initialize AP mode parameters structure with SSID, channel and OPEN security type. */
 #if !defined(MAIN_WLAN_SSID)
-# if defined(_ARIS_)
-#  define MAIN_WLAN_SSID      "ARIS_WIFI"
-# elif defined(__nucleo__)
-#  define MAIN_WLAN_SSID      "NUCLEO_WIFI"
-# elif defined(__XCC__)
-#  define MAIN_WLAN_SSID      "QCA4010_WIFI"
-# endif
+#  define MAIN_WLAN_SSID      "ACN_WIFI"
 #endif
-
-#define MAIN_WLAN_CHANNEL   5
-#define MAIN_WLAN_AUTH      1
 
 /* cloud connectivity */
 #if defined(HTTP_CIPHER)
@@ -111,7 +75,7 @@
 
 #if defined(MQTT_CIPHER)
 #  define MQTT_SCH "tls"
-# define MQTT_PORT 8883
+#  define MQTT_PORT 8883
 #else
 # define MQTT_SCH "tcp"
 # define MQTT_PORT 1883
@@ -144,96 +108,21 @@
 #define ARROW_API_SOFTWARE_RELEASE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/transactions"
 #define ARROW_MQTT_URL                      MQTT_SCH "://" MQTT_ADDR ":" xstr(MQTT_PORT)
 
-/* gateway and device configuration */
-
-#if defined(_ARIS_)
-/* gateway configuration */
-# define GATEWAY_UID_PREFIX          "aris"
-# define GATEWAY_NAME                "aris-gateway-demo"
-# define GATEWAY_OS                  "ThreadX"
-/* device configuration */
-# define DEVICE_NAME         "aris-device-demo"
-# define DEVICE_TYPE         "aris-device"
-# define DEVICE_UID_SUFFIX   "board"
-#elif defined(__nucleo__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "nucleo"
-# define GATEWAY_NAME                "my-test-gateway-123"
-# define GATEWAY_OS                  "mbed"
-    // device
-# if defined(SENSOR_TILE)
-#  define DEVICE_UID_SUFFIX   "sensortile"
-#  define DEVICE_NAME         "nucleo-sensortile"
-#  define DEVICE_TYPE         "st-sensortile"
-# else
-#  define DEVICE_UID_SUFFIX   "iks01a1"
-#  define DEVICE_NAME         "nucleo iks01a1"
-#  define DEVICE_TYPE         "x-nucleo-iks01a1"
-# endif    
-#elif defined(__linux__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "probook"
-# define GATEWAY_NAME                "probook-gateway-demo"
-# define GATEWAY_OS                  "linux"
-    // device
-# define DEVICE_NAME         "probook-4540s"
-# define DEVICE_TYPE         "hp-probook-4540s"
-# define DEVICE_UID_SUFFIX   "notebook"
-
-#elif defined(__XCC__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "QCA"
-# define GATEWAY_NAME                "QCA-gateway-demo"
-# define GATEWAY_OS                  "ThreadX"
-    // device
-#define DEVICE_NAME         "ULPGN"
-#define DEVICE_TYPE         "SX_ULPGN"
-#define DEVICE_UID_SUFFIX   "devkit"
-
-#elif defined(__senseability__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "Cypress"
-# define GATEWAY_NAME                "Cypress-gate-demo"
-# define GATEWAY_OS                  "none"
-    // device
-#define DEVICE_NAME         "SenseAbility20"
-#define DEVICE_TYPE         "SenseAbility"
-#define DEVICE_UID_SUFFIX   "devkit"
-
-#elif defined(__stm32l475iot__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "STM32"
-# define GATEWAY_NAME                "STM32-gate-demo"
-# define GATEWAY_OS                  "rtos"
-    // device
-#define DEVICE_NAME         "B-L475E-IOT01"
-#define DEVICE_TYPE         "B-L475E-Type"
-#define DEVICE_UID_SUFFIX   "devkit"
-
-#elif defined(__semiconductor__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "semiconductor"
-# define GATEWAY_NAME                "semiconductor-demo"
-# define GATEWAY_OS                  "mbed"
-    // device
-#define DEVICE_NAME         "BB-GEVK"
-#define DEVICE_TYPE         "BB-GEVK-IOT"
-#define DEVICE_UID_SUFFIX   "devkit"
-
-#elif defined(__quadro__)
-    // gateway
-# define GATEWAY_UID_PREFIX          "quadro"
-# define GATEWAY_NAME                "quadro-demo"
-# define GATEWAY_OS                  "ThreadX"
-    // device
-#define DEVICE_NAME         "QuadroBoard"
-#define DEVICE_TYPE         "QuadroBoard-IOT"
-#define DEVICE_UID_SUFFIX   "evk"
-
-#else
-# error "Not supported platform"
+/* default gateway and device configuration */
+/* default gateway configuration */
+#if !defined(GATEWAY_UID_PREFIX)
+# define GATEWAY_UID_PREFIX          "unknown"
 #endif
+#if !defined(GATEWAY_NAME)
+#  define GATEWAY_NAME                GATEWAY_UID_PREFIX "-gateway"
+#endif
+#if !defined(GATEWAY_OS)
+# define GATEWAY_OS                  "none"
+#endif
+
+#if !defined(GATEWAY_TYPE)
 #define GATEWAY_TYPE                "Local"
+#endif
 #if !defined(GATEWAY_SOFTWARE_NAME)
 #define GATEWAY_SOFTWARE_NAME       "eos"
 #endif
@@ -241,8 +130,21 @@
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
 #endif
 
-/* telemetry configuration */
+/* device configuration */
+#if !defined(DEVICE_NAME)
+#warning "There is no DEVICE_NAME value into acn-sdk-c/private.h file; use \"unknown\" by default"
+#define DEVICE_NAME                 "unknown"
+#endif
+#if !defined(DEVICE_TYPE)
+#warning "There is no DEVICE_TYPE value into acn-sdk-c/private.h file; use \"unknown\" by default"
+#define DEVICE_TYPE                 "unknown"
+#endif
+#if !defined(DEVICE_UID_SUFFIX)
+#warning "There is no DEVICE_UID_SUFFIX value into acn-sdk-c/private.h file; use \"dev\" by default"
+#define DEVICE_UID_SUFFIX           "dev"
+#endif
 
+/* telemetry configuration */
 #define TELEMETRY_DEVICE_HID        "_|deviceHid"
 #define TELEMETRY_TEMPERATURE       "f|temperature"
 #define TELEMETRY_HUMIDITY          "f|humidity"
@@ -264,4 +166,4 @@
 #endif
 #define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
 
-#endif /* CONFIG_H_ */
+#endif /* SDK_C_CONFIG_H_ */
