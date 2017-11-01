@@ -269,7 +269,7 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
         if ( n == 2 ) {
             HTTP_DBG("Read header : %s: %s", key, value);
             if( !strcmp(key, "Content-Length") ) {
-                sscanf(value, "%8d", &res->recvContentLength);
+                sscanf(value, "%8d", (int *)&res->recvContentLength);
             } else if( !strcmp(key, "Transfer-Encoding") ) {
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
@@ -301,7 +301,7 @@ static char *wait_payload(http_client_t *cli, const char *pattern) {
     }
     HTTP_DBG("try to get chunk");
     int ret = client_recv( cli, chunk);
-    HTTP_DBG("ret %d / %d", ret, *trfLen);
+    HTTP_DBG("ret %d", ret);
     if ( ret < 0 ) {
       crlf = NULL;
       break;
@@ -313,6 +313,7 @@ static char *wait_payload(http_client_t *cli, const char *pattern) {
 static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     // find the \r\n in the payload
     // next string shoud start at HEX chunk size
+    SSP_PARAMETER_NOT_USED(res);
     int chunk_len = 0;
     char *crlf = wait_payload(cli, "\r\n");
     if ( !crlf ) return -1; // no \r\n - wrong string
@@ -352,7 +353,11 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
                 }
             }
             HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
-            http_response_add_payload(res, p_stack(queue_rd_addr(cli->queue)), need_to_read);
+            if ( http_response_add_payload(res, p_stack(queue_rd_addr(cli->queue)), need_to_read) < 0 ) {
+                queue_clear(cli->queue);
+                DBG("Payload is failed");
+                return -1;
+            }
             if ( queue_size(cli->queue) == need_to_read ) {
                 queue_clear(cli->queue);
             } else {
@@ -453,7 +458,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         return -1;
     }
 
-    HTTP_DBG("Reading headers %d", trfLen);
+    HTTP_DBG("Reading headers");
     res->header = NULL;
     memset(&res->content_type, 0x0, sizeof(http_header_t));
     memset(&res->payload, 0x0, sizeof(http_payload_t));

@@ -23,6 +23,8 @@
 # include <qcom/basetypes.h>
 # include <qcom/stdint.h>
 typedef A_INT64 int64_t;
+typedef A_INT32 ptrdiff_t;
+typedef A_INT32 intptr_t;
 
 #elif defined(__linux__)
 # include <inttypes.h>

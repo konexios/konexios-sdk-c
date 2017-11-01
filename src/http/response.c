@@ -109,8 +109,10 @@ void http_response_set_payload(http_response_t *res, property_t payload, uint32_
   res->processed_payload_chunk = 1;
 }
 
-void http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
+int http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
   if ( !size ) size = P_SIZE(payload);
-  res->_p_meth._p_add_handler(res, payload, size);
+  int ret = 0;
+  ret = res->_p_meth._p_add_handler(res, payload, size);
+  if ( ret < 0 ) return -1;
   res->processed_payload_chunk ++ ;
 }

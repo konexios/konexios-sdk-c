@@ -13,7 +13,7 @@
 #include <arrow/request.h>
 #include <debug.h>
 
-static http_client_t _cli = { -1, -1, 0, {1, 1}, NULL, NULL };
+static http_client_t _cli = { -1, -1, 0, {1, 1}, NULL, NULL, NULL };
 
 http_client_t *current_client(void) {
   return &_cli;
