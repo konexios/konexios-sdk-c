@@ -22,7 +22,6 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-	P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
 	DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
 
 	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
@@ -97,9 +96,7 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   DBG("response gate reg %d", response->m_httpResponseCode);
-  // convert to null-terminate string
   if ( response->m_httpResponseCode == 200 ) {
-      P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
       if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
           DBG("parse error");
           return -1;

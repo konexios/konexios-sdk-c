@@ -10,23 +10,27 @@
 #define HTTPCLIENT_CLIENT_H_
 
 #include "request.h"
+#include <arrow/queue.h>
 #if defined(_ARIS_) && defined(ETH_MODE)
 #include "nx_api.h"
 #include "nxd_dns.h"
 #endif
+
+#define LINE_CHUNK 40
 
 typedef struct __session_flags {
   int _new   : 16;
   int _close : 16;
 } __session_flags_t;
 
-typedef int (*rw_func)(uint8_t *, uint16_t, void *);
+typedef int (*rw_func)(void *, uint8_t *, uint16_t);
 
 typedef struct {
   int sock;
   uint32_t timeout;
   int response_code;
   __session_flags_t flags;
+  queue_buffer_t  *queue;
   rw_func         _r_func;
   rw_func         _w_func;
 } http_client_t;

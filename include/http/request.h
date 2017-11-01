@@ -96,7 +96,8 @@ typedef struct __attribute_packed__ {
 
 typedef struct {
     int m_httpResponseCode;
-    int is_chunked;
+    uint16_t is_chunked;
+    uint16_t recvContentLength;
     http_header_t *header;
     http_header_t content_type;
     http_payload_t payload;
