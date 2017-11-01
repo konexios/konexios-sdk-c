@@ -132,15 +132,12 @@
 
 /* device configuration */
 #if !defined(DEVICE_NAME)
-#warning "There is no DEVICE_NAME value into acn-sdk-c/private.h file; use \"unknown\" by default"
 #define DEVICE_NAME                 "unknown"
 #endif
 #if !defined(DEVICE_TYPE)
-#warning "There is no DEVICE_TYPE value into acn-sdk-c/private.h file; use \"unknown\" by default"
 #define DEVICE_TYPE                 "unknown"
 #endif
 #if !defined(DEVICE_UID_SUFFIX)
-#warning "There is no DEVICE_UID_SUFFIX value into acn-sdk-c/private.h file; use \"dev\" by default"
 #define DEVICE_UID_SUFFIX           "dev"
 #endif
 
