@@ -40,6 +40,7 @@ $(info GCC: $(CC))
 
 get_make_path = $(dir $(call, cross_abspath,$(lastword $(MAKEFILE_LIST))))/
 SDK_PATH ?= $(call get_make_path)
+SDK_IMPL ?= $(SDK_PATH)/platforms/$(PLATFORM)
 
 SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/ntp/*.c)
@@ -58,7 +59,8 @@ SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)
 SDK_INCLUDES += \
     -I$(SDK_PATH) \
     -I$(SDK_PATH)/include \
-    -I$(SDK_PATH)/src
+    -I$(SDK_PATH)/src \
+    -I$(SDK_IMPL)
 
 ifneq ($(PLATFORM),)
 SDK_INCLUDES += -I$(SDK_PATH)/platforms/$(PLATFORM)
