@@ -115,4 +115,5 @@ int http_response_add_payload(http_response_t *res, property_t payload, uint32_t
   ret = res->_p_meth._p_add_handler(res, payload, size);
   if ( ret < 0 ) return -1;
   res->processed_payload_chunk ++ ;
+  return 0;
 }

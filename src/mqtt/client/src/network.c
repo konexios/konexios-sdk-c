@@ -19,8 +19,8 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
 
     int bytes = 0;
-    int rc;
     while (bytes < len) {
+        int rc = 0;
 //    	if (rc) DBG("mqtt recv ---%d", timeout_ms);
 #if defined(MQTT_CIPHER)
     	rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));

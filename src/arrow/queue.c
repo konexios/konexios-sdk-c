@@ -126,8 +126,9 @@ int queue_printf(queue_buffer_t *buf, const char *fmt, ...) {
     int ret = vsnprintf((char*)queue_wr_addr(buf),
                         queue_capacity(buf),
                         fmt, args);
-    if ( ret < 0 ) return ret;
+    if ( ret < 0 ) goto queue_printf_end;
     queue_size_add(buf, ret);
+queue_printf_end:
     va_end(args);
     return ret;
 }

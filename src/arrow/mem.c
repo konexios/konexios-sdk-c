@@ -35,8 +35,10 @@ void property_n_copy(property_t *dst, const char *src, int n) {
 }
 
 void property_free(property_t *dst) {
-  if ( dst && dst->flags == is_dynamic && dst->value)
-		free(dst->value);
-	  dst->value = NULL;
-	  dst->flags = 0x0;
+  if ( dst ) {
+      if (dst->flags == is_dynamic && dst->value)
+          free(dst->value);
+      dst->value = NULL;
+      dst->flags = 0x0;
+  }
 }

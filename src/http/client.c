@@ -279,7 +279,7 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
 #if defined(HTTP_PARSE_HEADER)
                 http_response_add_header(res,
                                          p_stack(key),
-                                         p_stack(value);
+                                         p_stack(value));
 #endif
             }
             queue_shift_immediately(buf, (uint8_t*)crlf + 2);

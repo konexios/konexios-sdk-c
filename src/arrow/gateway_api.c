@@ -29,9 +29,9 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		DBG("Parse error");
 		return -1;
 	}
-	JsonNode *tmp;
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
+        JsonNode *tmp;
 		tmp = json_find_member(_main_key, "apiKey");
 		if (tmp) {
 			DBG("(%d) api key: %s", strlen(tmp->string_), tmp->string_);

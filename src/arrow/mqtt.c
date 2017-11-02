@@ -111,6 +111,7 @@ static int sas_token_gen(char *sas, char *devname, char *key, char *time_exp) {
 
   decoded_key_len = 100;
   ret = Base64_Encode((byte*)hmacdig, SHA256_DIGEST_SIZE, (byte*)decoded_key, (word32*)&decoded_key_len);
+  if ( ret ) return -1;
   decoded_key[decoded_key_len] = 0x0;
 
   urlencode(sas, decoded_key, decoded_key_len-1);
