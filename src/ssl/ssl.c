@@ -155,6 +155,7 @@ int __attribute__((weak)) ssl_close(int sock) {
     socket_ssl_t *s = find_ssl_sock(sock);
     DBG("close ssl %d", sock);
     if ( s ) {
+        wolfSSL_shutdown(s->ssl);
         wolfSSL_free(s->ssl);
         wolfSSL_CTX_free(s->ctx);
         remove_ssl_sock(sock);

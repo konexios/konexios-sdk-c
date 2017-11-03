@@ -116,8 +116,13 @@ void http_client_init(http_client_t *cli) {
     if ( cli->flags._new ) {
         cli->sock = -1;
         cli->timeout = DEFAULT_API_TIMEOUT;
+#if defined(HTTP_CIPHER)
         cli->_r_func = simple_read;
         cli->_w_func = simple_write;
+#else
+        cli->_r_func = simple_read;
+        cli->_w_func = simple_write;
+#endif
     }
 }
 
@@ -139,6 +144,7 @@ void http_client_free(http_client_t *cli) {
 static int send_start(http_client_t *cli, http_request_t *req, queue_buffer_t *buf) {
     queue_clear(buf);
     int ret = queue_printf(buf, "%s %s", P_VALUE(req->meth), P_VALUE(req->uri));
+    if ( ret < 0 ) return ret;
     if ( req->query ) {
         char queryString[CHUNK_SIZE];
         strcpy(queryString, "?");
@@ -154,11 +160,13 @@ static int send_start(http_client_t *cli, http_request_t *req, queue_buffer_t *b
             query = query->next;
         }
     }
-    queue_strcat(buf, HTTP_VERS);
+    ret = queue_strcat(buf, HTTP_VERS);
+    if ( ret < 0 ) return ret;
     if ( (ret = client_send(cli)) < 0 ) {
         return ret;
     }
     ret = queue_printf(buf, "Host: %s:%d\r\n", P_VALUE(req->host), req->port);
+    if ( ret < 0 ) return ret;
     if ( (ret = client_send(cli)) < 0 ) {
         return ret;
     }
@@ -237,8 +245,11 @@ static uint8_t *wait_line(http_client_t *cli) {
 static int receive_response(http_client_t *cli, http_response_t *res) {
     queue_clear(cli->queue);
     uint8_t *crlf = wait_line(cli);
-    if ( !crlf ) return -1;
-    if ( queue_null_terminate(cli->queue, crlf) < 0 ) return -1;
+    if ( !crlf ) { DBG("couldn't wait end of a line"); return -1; }
+    if ( queue_null_terminate(cli->queue, crlf) < 0 ) {
+        DBG("Null terminated fail");
+        return -1;
+    }
     DBG("resp: {%s}", queue_rd_addr(cli->queue));
     if( sscanf((char*)queue_rd_addr(cli->queue), "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
         DBG("Not a correct HTTP answer : %s", queue_rd_addr(cli->queue));
@@ -254,7 +265,7 @@ static int receive_response(http_client_t *cli, http_response_t *res) {
 static int receive_headers(http_client_t *cli, http_response_t *res) {
     char *crlf = NULL;
     queue_buffer_t *buf = (queue_buffer_t *)cli->queue;
-    queue_shift_clear(&http_queue);
+    queue_shift_clear(cli->queue);
     while( ( crlf = (char*)wait_line(cli) ) ) {
         if ( QUEUE_POS(crlf) == 0 ) {
             HTTP_DBG("Headers read done");
@@ -387,10 +398,12 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         DBG("new TCP connection");
     	ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     	if ( ret < 0 ) return ret;
+        queue_clear(cli->queue);
     	cli->sock = ret;
+        // resolve the host
     	struct sockaddr_in serv;
     	struct hostent *serv_resolve;
-      serv_resolve = gethostbyname(P_VALUE(req->host));
+        serv_resolve = gethostbyname(P_VALUE(req->host));
     	if (serv_resolve == NULL) {
     		DBG("ERROR, no such host");
     		return -1;
@@ -402,6 +415,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 				(uint32_t)serv_resolve->h_length);
     	serv.sin_port = htons(req->port);
 
+        // set timeout
     	struct timeval tv;
     	tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
     	tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);

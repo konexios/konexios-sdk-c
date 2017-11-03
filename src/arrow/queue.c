@@ -16,6 +16,13 @@ inline uint16_t queue_capacity(queue_buffer_t *buf) {
     return (uint16_t) ( sizeof(buf->buffer) - buf->size );
 }
 
+static int check_and_clean(queue_buffer_t *buf, int len) {
+    if ( queue_capacity(buf) >= len ) return 0;
+    queue_shift_clear(buf);
+    if ( queue_capacity(buf) < len ) return -1;
+    return 0;
+}
+
 inline uint16_t queue_size(queue_buffer_t *buf) {
     return buf->size;
 }
@@ -29,6 +36,7 @@ uint8_t *queue_rd_addr(queue_buffer_t *buf) {
 }
 
 int queue_size_add(queue_buffer_t *buf, uint16_t sz) {
+    check_and_clean(buf, sz + 1);
     buf->size += sz;
     if ( buf->shift + buf->size >= sizeof ( buf->buffer ) ) {
         return -1;
@@ -57,8 +65,10 @@ static int queue_strcpy(queue_buffer_t *buf, const char *str) {
 
 int queue_strcat(queue_buffer_t *buf, const char *str) {
     int len = strlen((char*)str);
+    if ( check_and_clean(buf, len + 1) < 0 ) return -1;
     memcpy(buf->buffer + buf->shift + buf->size, str, len);
     buf->size += len;
+    buf->buffer[buf->shift + buf->size] = 0x0;
     return 0;
 }
 
