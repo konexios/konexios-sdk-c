@@ -186,12 +186,12 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( ret < 0 ) {
     wdt_feed();
     while( arrow_software_releases_trans_fail(trans_hid, "failed") < 0)
-      msleep(1000);
+      msleep(ARROW_RETRY_DELAY);
     wdt_feed();
   } else {
     wdt_feed();
     while(arrow_software_releases_trans_success(trans_hid) < 0)
-      msleep(1000);
+      msleep(ARROW_RETRY_DELAY);
     reboot();
   }
   return ret;
@@ -240,7 +240,6 @@ int arrow_software_release_payload_handler(void *r,
                                            property_t payload,
                                            int size) {
   http_response_t *res = (http_response_t *)r;
-//  property_t *response_buffer = &res->payload.buf;
   int flag = FW_FIRST;
   if ( __payload ) {
       wdt_feed();

@@ -1,7 +1,3 @@
-#if !defined(ARROW_ERROR_DELAY)
-#define ARROW_RETRY_DELAY 3000
-#endif
-
 #include "arrow/routine.h"
 #include <config.h>
 #include <debug.h>

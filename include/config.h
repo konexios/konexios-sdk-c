@@ -163,4 +163,9 @@
 #endif
 #define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
 
+#if !defined(ARROW_ERROR_DELAY)
+#define ARROW_RETRY_DELAY 3000
+#endif
+
+
 #endif /* SDK_C_CONFIG_H_ */
