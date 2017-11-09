@@ -270,11 +270,11 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
     char *checksum = (char *)arg;
     wdt_feed();
     if ( __download ) {
-        char hash[34];
-        char hash_hex[66];
+        char hash[18];
+        char hash_hex[34];
         int size = md5_chunk_hash(hash);
         hex_encode(hash_hex, hash, size);
-        hash_hex[64] = 0x0;
+        hash_hex[2*size] = 0x0;
         DBG("fw hash cmp {%s, %s}", checksum, hash_hex);
         if ( strncmp(hash_hex, checksum, 2*size) == 0 ) {
             return __download(FW_SUCCESS);
