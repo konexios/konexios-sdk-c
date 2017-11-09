@@ -27,17 +27,10 @@ typedef struct _queue_buffer_ {
 
 uint16_t queue_capacity(queue_buffer_t *buf);
 uint16_t queue_size(queue_buffer_t *buf);
-uint8_t *queue_wr_addr(queue_buffer_t *buf);
-uint8_t *queue_rd_addr(queue_buffer_t *buf);
-int queue_size_add(queue_buffer_t *buf, uint16_t sz);
-int queue_null_terminate(queue_buffer_t *buf, uint8_t *end);
 int queue_strcat(queue_buffer_t *buf, const char *str);
 int queue_clear( queue_buffer_t *buf );
-int queue_shift_clear( queue_buffer_t *buf );
-int queue_shift(queue_buffer_t *buf, uint16_t sz);
-int queue_shift_immediately(queue_buffer_t *buf, uint8_t *pos);
-int queue_shift_immediately_by_ind(queue_buffer_t *buf, uint16_t pos);
-int queue_printf(queue_buffer_t *buf, const char *fmt, ...);
+int queue_push(queue_buffer_t *buf, uint8_t *s, int len);
+int queue_pop(queue_buffer_t *buf, uint8_t *s, int len);
 
 
 #if defined(__cplusplus)

@@ -13,73 +13,17 @@
 #include <string.h>
 
 inline uint16_t queue_capacity(queue_buffer_t *buf) {
-    return (uint16_t) ( sizeof(buf->buffer) - buf->size );
-}
-
-static int check_and_clean(queue_buffer_t *buf, int len) {
-    if ( queue_capacity(buf) >= len ) return 0;
-    queue_shift_clear(buf);
-    if ( queue_capacity(buf) < len ) return -1;
-    return 0;
+    return (uint16_t) ( sizeof(buf->buffer) - 1 - buf->size );
 }
 
 inline uint16_t queue_size(queue_buffer_t *buf) {
     return buf->size;
 }
 
-uint8_t *queue_wr_addr(queue_buffer_t *buf) {
-    return (buf->buffer + buf->shift + buf->size);
-}
-
-uint8_t *queue_rd_addr(queue_buffer_t *buf) {
-    return (buf->buffer + buf->shift);
-}
-
-int queue_size_add(queue_buffer_t *buf, uint16_t sz) {
-    check_and_clean(buf, sz + 1);
-    buf->size += sz;
-    if ( buf->shift + buf->size >= sizeof ( buf->buffer ) ) {
-        return -1;
-    }
-    buf->buffer[buf->shift + buf->size] = 0x0;
-    return 0;
-}
-
-int queue_null_terminate(queue_buffer_t *buf, uint8_t *end) {
-    if ( (intptr_t)end >= (intptr_t)buf->buffer &&
-         (intptr_t)end < (intptr_t)buf->buffer + (intptr_t)sizeof(buf->buffer) ) {
-        *end = 0x0;
-        return *end;
-    }
-    return -1;
-}
-
-#if 0
-static int queue_strcpy(queue_buffer_t *buf, const char *str) {
-    int len = strlen(str);
-    strcpy((char *)buf->http_buffer, str);
-    buf->last = len;
-    return 0;
-}
-#endif
-
 int queue_strcat(queue_buffer_t *buf, const char *str) {
-    int len = strlen((char*)str);
-    if ( check_and_clean(buf, len + 1) < 0 ) return -1;
-    memcpy(buf->buffer + buf->shift + buf->size, str, len);
-    buf->size += len;
-    buf->buffer[buf->shift + buf->size] = 0x0;
-    return 0;
+    int len = strlen(str);
+    return queue_push(buf, (uint8_t*)str, len);
 }
-
-#if 0
-static uint8_t *queue_index(queue_buffer_t *buf, uint16_t index) {
-    if ( buf->shift + index < sizeof(buf->http_buffer) ) {
-        return buf->http_buffer + buf->shift + index;
-    }
-    return NULL;
-}
-#endif
 
 int queue_clear( queue_buffer_t *buf ) {
     buf->buffer[0] = 0x0;
@@ -88,57 +32,31 @@ int queue_clear( queue_buffer_t *buf ) {
     return 0;
 }
 
-int queue_shift_clear( queue_buffer_t *buf ) {
-    if ( buf->shift ) {
-        memmove(buf->buffer,
-                buf->buffer + buf->shift,
-                buf->size);
-        buf->shift = 0;
-        buf->buffer[buf->size] = 0x0;
-        return buf->shift;
-    }
-    return -1;
+int queue_push(queue_buffer_t *buf, uint8_t *s, int len) {
+    if ( !len ) len = strlen((char*)s);
+  if ( queue_capacity(buf) < len ) return -1;
+  int wr = ( buf->shift + buf->size ) % sizeof(buf->buffer);
+  int till_border = sizeof(buf->buffer) - wr;
+  if ( till_border < len ) {
+      memcpy(buf->buffer + wr, s, till_border);
+      memcpy(buf->buffer, s + till_border, len - till_border);
+  } else {
+      memcpy(buf->buffer + wr, s, len);
+  }
+  buf->size += len;
+  return 0;
 }
 
-int queue_shift_immediately( queue_buffer_t *buf, uint8_t *pos ) {
-    if ( (intptr_t)pos >= (intptr_t)buf->buffer &&
-         (intptr_t)pos < (intptr_t)buf->buffer + (intptr_t)sizeof(buf->buffer) ) {
-        uint16_t sz = (uint16_t)(pos - buf->buffer);
-        buf->shift += sz;
-        buf->size -= sz;
-        return queue_shift_clear(buf);
+int queue_pop(queue_buffer_t *buf, uint8_t *s, int len) {
+    if ( queue_size(buf) < len ) return -1;
+    int till_border = sizeof(buf->buffer) - buf->shift;
+    if ( till_border < len ) {
+        memcpy(s, buf->buffer + buf->shift, till_border);
+        memcpy(s + till_border, buf->buffer, len - till_border);
+    } else {
+        memcpy(s, buf->buffer + buf->shift, len);
     }
-    return -1;
-}
-
-int queue_shift_immediately_by_ind( queue_buffer_t *buf, uint16_t pos ) {
-    if ( buf->shift + buf->size + pos < (uint16_t)sizeof(buf->buffer) ) {
-        buf->shift += pos;
-        buf->size -= pos;
-        return queue_shift_clear(buf);
-    }
-    return -1;
-}
-
-int queue_shift(queue_buffer_t *buf, uint16_t sz) {
-    buf->shift += sz;
-    buf->size -= sz;
-    if ( buf->shift > ( sizeof(buf->buffer) >> 2 ) ) {
-        DBG(" === forced shift :queue:");
-        queue_shift_clear(buf);
-    }
+    buf->shift = ( buf->shift + len ) % sizeof(buf->buffer);
+    buf->size -= len;
     return 0;
-}
-
-int queue_printf(queue_buffer_t *buf, const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    int ret = vsnprintf((char*)queue_wr_addr(buf),
-                        queue_capacity(buf),
-                        fmt, args);
-    if ( ret < 0 ) goto queue_printf_end;
-    queue_size_add(buf, ret);
-queue_printf_end:
-    va_end(args);
-    return ret;
 }

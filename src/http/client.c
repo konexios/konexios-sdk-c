@@ -22,6 +22,9 @@
 
 #include <ssl/ssl.h>
 
+uint8_t tmpbuffer[QUEUE_SIZE];
+#define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)
+
 void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
@@ -56,57 +59,60 @@ bool http_session_close(http_client_t *cli) {
 
 static queue_buffer_t http_queue = { { 0 }, 0, 0 };
 
-#define QUEUE_POS(x) (ptrdiff_t)( (intptr_t)(x) - http_queue.shift - (intptr_t)http_queue.buffer )
-
 static int simple_read(void *c, uint8_t *buf, uint16_t len) {
+    SSP_PARAMETER_NOT_USED(buf);
     http_client_t *cli = (http_client_t *)c;
-    if ( ! buf ) buf = queue_wr_addr(cli->queue);
-    int ret = recv(cli->sock, buf, (int)len, 0);
-    queue_size_add(cli->queue, ret);
-    HTTP_DBG("%d|%s|", ret, queue_rd_addr(cli->queue));
-    return ret;
-}
-
-static char *__prep_write_function(http_client_t *cli, uint8_t *buf, uint16_t *len, int *direct) {
-    char *start = NULL;
-    if ( !buf ) {
-        if ( direct ) *direct = 0;
-        start = (char*)queue_rd_addr(cli->queue);
-        if ( len ) *len = queue_size(cli->queue);
-    } else {
-        if ( direct ) *direct = 1;
-        start = (char*)buf;
-        if ( len && !( *len ) ) *len = strlen((char*)buf);
+    if ( len > queue_capacity(cli->queue) ) len = queue_capacity(cli->queue);
+    int ret = recv(cli->sock, tmpbuffer, len, 0);
+    if ( ret > 0 ) {
+        if ( queue_push(cli->queue, tmpbuffer, ret) < 0 ) {
+            return -1;
+        }
     }
-    return start;
+    HTTP_DBG("%d|%s|", ret, tmpbuffer);
+    return ret;
 }
 
 static int simple_write(void *c, uint8_t *buf, uint16_t len) {
     http_client_t *cli = (http_client_t *)c;
-    int direct;
-    char *start = __prep_write_function(cli, buf, &len, &direct);
-    HTTP_DBG("%d|%s|", len, start);
-    int ret = send(cli->sock, start, len, 0);
-    if ( !direct ) queue_shift(cli->queue, len);
+    if ( !buf ) {
+        if ( !len ) len = queue_size(cli->queue);
+        queue_pop(cli->queue, tmpbuffer, len);
+        buf = tmpbuffer;
+    } else {
+        if ( !len ) len = strlen((char*)buf);
+    }
+    HTTP_DBG("%d|%s|", buf, len);
+    int ret = send(cli->sock, buf, len, 0);
     return ret;
 }
 
 static int ssl_read(void *c, uint8_t *buf, uint16_t len) {
+    SSP_PARAMETER_NOT_USED(buf);
     http_client_t *cli = (http_client_t *)c;
-    if ( !buf ) buf = queue_wr_addr(cli->queue);
-    int ret = ssl_recv(cli->sock, (char*)buf, len);
-    if ( ret > 0 ) queue_size_add(cli->queue, ret);
-    HTTP_DBG("[%d]{%s}", ret, queue_rd_addr(cli->queue));
+    if ( len > queue_capacity(cli->queue) ) len = queue_capacity(cli->queue);
+
+    int ret = ssl_recv(cli->sock, (char*)tmpbuffer, (int)len);
+    if ( ret > 0 ) {
+        if ( queue_push(cli->queue, tmpbuffer, ret) < 0 ) {
+            return -1;
+        }
+    }
+    HTTP_DBG("[%d]{%s}", ret, tmpbuffer);
     return ret;
 }
 
 static int ssl_write(void *c, uint8_t *buf, uint16_t len) {
     http_client_t *cli = (http_client_t *)c;
-    int direct;
-    char *start = __prep_write_function(cli, buf, &len, &direct);
-    HTTP_DBG("[%d]|%s|", len, start);
-    int ret = ssl_send(cli->sock, start, len);
-    if ( !direct ) queue_shift(cli->queue, len);
+    if ( !buf ) {
+        if ( !len ) len = queue_size(cli->queue);
+        queue_pop(cli->queue, tmpbuffer, len);
+        buf = tmpbuffer;
+    } else {
+        if ( !len ) len = strlen((char*)buf);
+    }
+    HTTP_DBG("[%d]|%s|", len, buf);
+    int ret = ssl_send(cli->sock, (char*)buf, (int)len);
     return ret;
 }
 
@@ -138,35 +144,40 @@ void http_client_free(http_client_t *cli) {
   } else {
     cli->flags._new = 0;
   }
+  queue_clear(cli->queue);
 }
 
 #define HTTP_VERS " HTTP/1.1\r\n"
 static int send_start(http_client_t *cli, http_request_t *req, queue_buffer_t *buf) {
     queue_clear(buf);
-    int ret = queue_printf(buf, "%s %s", P_VALUE(req->meth), P_VALUE(req->uri));
+    int ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE,
+                       "%s %s",
+                       P_VALUE(req->meth), P_VALUE(req->uri));
     if ( ret < 0 ) return ret;
+    queue_push(cli->queue, tmpbuffer, ret);
     if ( req->query ) {
-        char queryString[CHUNK_SIZE];
+        char *queryString = (char*)tmpbuffer;
         strcpy(queryString, "?");
         http_query_t *query = req->query;
         while ( query ) {
-          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)CHUNK_SIZE ) break;
+          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)queue_capacity(cli->queue) ) break;
             strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
             strcat(queryString, P_VALUE(query->value));
             if ( queue_capacity(buf) - sizeof(HTTP_VERS)-1 < strlen(queryString) ) break;
-            queue_strcat(buf, queryString);
+            queue_push(buf, (uint8_t*)queryString, 0);
             strcpy(queryString, "&");
             query = query->next;
         }
     }
-    ret = queue_strcat(buf, HTTP_VERS);
+    ret = queue_push(buf, (uint8_t*)HTTP_VERS, 0);
     if ( ret < 0 ) return ret;
     if ( (ret = client_send(cli)) < 0 ) {
         return ret;
     }
-    ret = queue_printf(buf, "Host: %s:%d\r\n", P_VALUE(req->host), req->port);
+    ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE, "Host: %s:%d\r\n", P_VALUE(req->host), req->port);
     if ( ret < 0 ) return ret;
+    queue_push(cli->queue, tmpbuffer, ret);
     if ( (ret = client_send(cli)) < 0 ) {
         return ret;
     }
@@ -180,21 +191,30 @@ static int send_header(http_client_t *cli, http_request_t *req, queue_buffer_t *
         if ( req->is_chunked ) {
             ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
         } else {
-            ret = queue_printf(buf, "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
+            ret = snprintf((char*)tmpbuffer,
+                           queue_capacity(cli->queue),
+                           "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
             if ( ret < 0 ) return ret;
+            queue_push(cli->queue, tmpbuffer, ret);
             ret = client_send(cli);
         }
         queue_clear(buf);
         if ( ret < 0 ) return ret;
-        ret = queue_printf(buf, "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
+        ret = snprintf((char*)tmpbuffer,
+                       queue_capacity(cli->queue),
+                       "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
+        queue_push(cli->queue, tmpbuffer, ret);
         if ( ret < 0 ) return ret;
         if ( (ret = client_send(cli)) < 0 ) return ret;
     }
     http_header_t *head = req->header;
     while ( head ) {
         queue_clear(buf);
-        ret = queue_printf(buf, "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
+        ret = snprintf((char*)tmpbuffer,
+                           queue_capacity(cli->queue),
+                           "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
     	if ( ret < 0 ) return ret;
+        queue_push(cli->queue, tmpbuffer, ret);
         if ( (ret = client_send(cli)) < 0 ) return ret;
         head = head->next;
     }
@@ -227,56 +247,62 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
     return -1;
 }
 
-static uint8_t *wait_line(http_client_t *cli) {
-  queue_buffer_t *buf = cli->queue;
-  uint8_t *crlf = NULL;
-  while ( ! (crlf = (uint8_t*)strstr((char*)queue_rd_addr(buf), "\r\n") ) ) {
-      if( queue_capacity(buf) > 0 ) {
-          int ret = client_recv( cli, LINE_CHUNK );
-          if ( ret < 0 ) return NULL;
-          HTTP_DBG("Read %d chars; In buf: [%s]", ret, buf->buffer);
+static uint8_t *wait_line(http_client_t *cli, uint8_t *buf) {
+  int size = 0;
+  while ( size < 2 || strncmp((char*)buf + size - 2, "\r\n", 2) != 0 ) {
+      // pop from buffer by one symbol
+      if ( queue_pop(cli->queue, buf + size, 1) == 0 ) {
+          size ++;
+          buf[size] = 0x0;
       } else {
-          return NULL;
+          // empty buffer
+          if( queue_capacity(cli->queue) > LINE_CHUNK ) {
+              int ret = client_recv( cli, LINE_CHUNK );
+              if ( ret < 0 ) return NULL;
+          } else {
+              return NULL;
+          }
       }
   }
-  return crlf;
+  return buf + size - 2;
 }
 
 static int receive_response(http_client_t *cli, http_response_t *res) {
     queue_clear(cli->queue);
-    uint8_t *crlf = wait_line(cli);
-    if ( !crlf ) { DBG("couldn't wait end of a line"); return -1; }
-    if ( queue_null_terminate(cli->queue, crlf) < 0 ) {
-        DBG("Null terminated fail");
+    CREATE_CHUNK(tmp, QUEUE_SIZE);
+    uint8_t *crlf = wait_line(cli, (uint8_t*)tmp);
+    if ( !crlf ) {
+        DBG("couldn't wait end of a line");
+        FREE_CHUNK(tmp);
         return -1;
     }
-    DBG("resp: {%s}", queue_rd_addr(cli->queue));
-    if( sscanf((char*)queue_rd_addr(cli->queue), "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
-        DBG("Not a correct HTTP answer : %s", queue_rd_addr(cli->queue));
+    *crlf = 0x0;
+    DBG("resp: {%s}", tmp);
+    if( sscanf((char*)tmp, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
+        DBG("Not a correct HTTP answer : %s", tmp);
+        FREE_CHUNK(tmp);
         return -1;
     }
-    queue_shift(cli->queue, QUEUE_POS(crlf) + 2);
 
     DBG("Response code %d", res->m_httpResponseCode);
     cli->response_code = res->m_httpResponseCode;
+    FREE_CHUNK(tmp);
     return 0;
 }
 
 static int receive_headers(http_client_t *cli, http_response_t *res) {
-    char *crlf = NULL;
-    queue_buffer_t *buf = (queue_buffer_t *)cli->queue;
-    queue_shift_clear(cli->queue);
-    while( ( crlf = (char*)wait_line(cli) ) ) {
-        if ( QUEUE_POS(crlf) == 0 ) {
+    uint8_t *crlf = NULL;
+    CREATE_CHUNK(tmp, QUEUE_SIZE);
+    while( ( crlf = wait_line(cli, (uint8_t*)tmp) ) ) {
+        if ( crlf == (uint8_t*)tmp ) {
             HTTP_DBG("Headers read done");
-            queue_shift(buf, 2);
             break;
         }
 
         char key[CHUNK_SIZE>>2];
         char value[CHUNK_SIZE];
 
-        int n = sscanf((char*)queue_rd_addr(buf), "%256[^:]: %256[^\r\n]", key, value);
+        int n = sscanf((char*)tmp, "%256[^:]: %256[^\r\n]", key, value);
         if ( n == 2 ) {
             HTTP_DBG("Read header : %s: %s", key, value);
             if( !strcmp(key, "Content-Length") ) {
@@ -293,50 +319,33 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
                                          p_stack(value));
 #endif
             }
-            queue_shift_immediately(buf, (uint8_t*)crlf + 2);
         } else {
             DBG("Could not parse header");
+            FREE_CHUNK(tmp);
             PRTCL_ERR();
         }
     }
+    FREE_CHUNK(tmp);
     return 0;
-}
-
-static char *wait_payload(http_client_t *cli, const char *pattern) {
-  const uint32_t chunk = 10;
-  char *crlf = NULL;
-  while( (crlf = strstr((char*)queue_rd_addr(cli->queue), pattern)) == NULL ) {
-    // if there is not enough space in a buffer
-    if ( queue_capacity(cli->queue) < chunk ) {
-      queue_shift_immediately_by_ind(cli->queue, chunk);
-    }
-    HTTP_DBG("try to get chunk");
-    int ret = client_recv( cli, chunk);
-    HTTP_DBG("ret %d", ret);
-    if ( ret < 0 ) {
-      crlf = NULL;
-      break;
-    }
-  }
-  return crlf;
 }
 
 static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     // find the \r\n in the payload
     // next string shoud start at HEX chunk size
     SSP_PARAMETER_NOT_USED(res);
+    CREATE_CHUNK(tmp, QUEUE_SIZE);
     int chunk_len = 0;
-    char *crlf = wait_payload(cli, "\r\n");
+    uint8_t *crlf = wait_line(cli, (uint8_t*)tmp);
     if ( !crlf ) return -1; // no \r\n - wrong string
-    int ret = sscanf((char*)queue_rd_addr(cli->queue), "%4x\r\n", (unsigned int*)&chunk_len);
+    int ret = sscanf((char*)tmp, "%4x\r\n", (unsigned int*)&chunk_len);
     if ( ret != 1 ) {
         // couldn't read a chunk size - fail
-        queue_shift_immediately(cli->queue, (uint8_t*)crlf + 2);
         chunk_len = 0;
+        FREE_CHUNK(tmp);
         return -1;
     }
     HTTP_DBG("detect chunk %d", chunk_len);
-    queue_shift(cli->queue, QUEUE_POS(crlf) + 2);
+    FREE_CHUNK(tmp);
     return chunk_len;
 }
 
@@ -350,7 +359,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             chunk_len = res->recvContentLength;
             DBG("Con-Len %d", res->recvContentLength);
         }
-        if ( !chunk_len ) break;
+        if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {
             uint32_t need_to_read = (chunk_len < CHUNK_SIZE-10) ? chunk_len : CHUNK_SIZE-10;
             HTTP_DBG("need to read %d", need_to_read);
@@ -364,25 +373,20 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
                 }
             }
             HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
-            if ( http_response_add_payload(res, p_stack(queue_rd_addr(cli->queue)), need_to_read) < 0 ) {
+            if ( queue_pop(cli->queue, tmpbuffer, need_to_read) < 0 ) return -1;
+            if ( http_response_add_payload(res, p_stack(tmpbuffer), need_to_read) < 0 ) {
                 queue_clear(cli->queue);
                 DBG("Payload is failed");
                 return -1;
-            }
-            if ( queue_size(cli->queue) == need_to_read ) {
-                queue_clear(cli->queue);
-            } else {
-                queue_shift_immediately_by_ind(cli->queue, need_to_read);
             }
             chunk_len -= need_to_read;
             HTTP_DBG("%d %d", chunk_len, need_to_read);
         }
         if ( !res->is_chunked ) { break; }
         else {
-          char *crlf = wait_payload(cli, "\r\n");
-          if ( crlf ) {
-              queue_shift(cli->queue, QUEUE_POS(crlf) + 2);
-              queue_shift_clear(cli->queue);
+          uint8_t *crlf = wait_line(cli, tmpbuffer);
+          if ( !crlf ) {
+              DBG("---- no line ----");
           }
         }
     } while(1);
