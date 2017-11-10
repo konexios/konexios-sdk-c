@@ -15,9 +15,7 @@
 # include <arrow/software_update.h>
 #endif
 
-#if defined(__USE_STD__)
 #include <ctype.h>
-#endif
 #include <debug.h>
 #include <http/client.h>
 #include <arrow/request.h>
@@ -114,30 +112,17 @@ static char *form_canonical_prm(JsonNode *param) {
   json_foreach(child, param) {
     can_list[count] = malloc(MAX_PARAM_LINE_SIZE);
     unsigned int i;
-    for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower(json_key(child)[i]);
+    for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower((int)json_key(child)[i]);
     *(can_list[count]+i) = '=';
     switch(child->tag) {
-      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_); break;
-#if defined(__XCC__)
-      case json_True: {
-        strcpy(can_list[count]+i+1, "true"); break;
-        *(can_list[count]+i+5) = 0x0;
-      }
-      case json_False: {
-        strcpy(can_list[count]+i+1, "false"); break;
-        *(can_list[count]+i+6) = 0x0;
-      }
-      default: {
-        int r = snprintf(can_list[count]+i+1, 50, "%d", child->valueint);
-        *(can_list[count]+i+1 + r ) = 0x0;
-      }
-#else
-      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true\0":"false\0")); break;
+      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_);
+        break;
+      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true\0":"false\0"));
+        break;
       default: {
         int r = snprintf(can_list[count]+i+1, 50, "%f", child->number_);
         *(can_list[count]+i+1 + r ) = 0x0;
       }
-#endif
     }
     count++;
   }
@@ -180,11 +165,7 @@ int process_event(const char *str) {
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
-#if defined(__XCC__)
-  mqtt_e.encrypted = _encrypted->type == json_True? 1 : 0;
-#else
   mqtt_e.encrypted = _encrypted->bool_;
-#endif
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;

@@ -40,11 +40,12 @@ void bcopy(const void *src, void *dest, size_t n);
 char *strcat( char *dest, const char *src);
 char *strncpy(char *dst, const char *src, size_t n);
 char *strncat(char *dest, const char *src, size_t n);
-#if !defined(malloc_module_init)
-# define malloc qcom_mem_alloc
-# define free qcom_mem_free
+double strtod (const char* str, char** endptr);
+# if !defined(malloc_module_init)
+#  define malloc qcom_mem_alloc
+#  define free qcom_mem_free
 void *realloc(void *ptrmem, size_t size);
-#endif
+# endif
 #endif
 
 enum prop_flags {

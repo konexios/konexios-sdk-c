@@ -9,9 +9,6 @@
 #include "arrow/request.h"
 #include <time/time.h>
 #include <arrow/mem.h>
-#if !defined(__XCC__)
-#include <string.h>
-#endif
 #include <debug.h>
 
 static void get_canonical_string(char *buffer, http_request_t *req){

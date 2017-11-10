@@ -29,12 +29,9 @@
 #elif defined(__MBED__)
 # include <inttypes.h>
 # include <stdio.h>
-#elif defined(__linux__)
+#elif defined(__USE_STD__)
 # include <stdint.h>
 # include <string.h>
-#elif defined(__XCC__)
-# include <qcom/base.h>
-# include <qcom_common.h>
 #endif
 
 #define HEAD_FIELD_LEN 100

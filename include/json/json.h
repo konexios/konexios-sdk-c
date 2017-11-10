@@ -24,46 +24,25 @@
 #ifndef CCAN_JSON_H
 #define CCAN_JSON_H
 
-#if defined(__XCC__)
-# include <json.h>
-# define JsonNode struct json_t
-# define json_find_member json_get_object_item
-# define string_ valuestring
-# define json_key(x)  (x)->string
-# define json_number(x) (x)->valueint
-// # define number_ valueint
-# define json_mkobject json_create_object
-# define json_append_member json_add_item_to_object
-# define json_append_member json_add_item_to_object
-# define json_mkstring json_create_string
-# define json_mknumber json_create_number
-# define tag type
-# define JSON_STRING json_String
-# define json_remove_from(obj, x) json_detach_item_from_object(obj, x->string_)
-#define json_foreach(i, object_or_array)            \
-  for ((i) = object_or_array->child;   \
-     (i) != NULL;                               \
-     (i) = (i)->next)
+#include <arrow/mem.h>
 
-# define json_mkbool json_create_bool
-#define json_find_element json_get_array_item
-#define json_mkarray json_create_array
-#define json_append_element json_add_item_toarray
-#else
 # define json_minify(t) (void)(t)
 # define json_key(x)  (x)->key
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
+
+#if defined(__USE_STD__)
 # include <stdbool.h>
 # include <stddef.h>
+#endif
 
 typedef enum {
-	JSON_NULL,
+    JSON_NULL,
 	JSON_BOOL,
 	JSON_STRING,
 	JSON_NUMBER,
 	JSON_ARRAY,
-  JSON_OBJECT
+    JSON_OBJECT
 } JsonTag;
 
 typedef struct JsonNode JsonNode;
@@ -143,5 +122,5 @@ void json_remove_from_parent(JsonNode *node);
  * to errmsg (unless errmsg is NULL).
  */
 bool json_check(const JsonNode *node, char errmsg[256]);
-#endif
+
 #endif
