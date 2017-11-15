@@ -11,5 +11,6 @@ typedef struct _wifi_credentials {
 
 uint32_t credentials_qnt();
 wifi_credentials_t *credentials_get(int index);
+wifi_credentials_t *credentials_next();
 
 #endif  // WIFI_CREDENTIALS_H_

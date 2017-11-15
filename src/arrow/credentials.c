@@ -38,3 +38,14 @@ uint32_t credentials_qnt() {
 wifi_credentials_t *credentials_get(int index) {
     return wifi_crds + index;
 }
+
+wifi_credentials_t *credentials_next() {
+    static int count = 0;
+    uint32_t qnt = credentials_qnt();
+    if ( qnt ) {
+        wifi_credentials_t *p = wifi_crds + count;
+        count = ( count + 1 ) % credentials_qnt();
+        return p;
+    }
+    return NULL;
+}
