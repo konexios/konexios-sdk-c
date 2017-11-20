@@ -117,7 +117,8 @@ static char *sb_finish(SB *sb)
 
 static void sb_free(SB *sb)
 {
-	free(sb->start);
+    if ( sb && sb->start )
+        free(sb->start);
 }
 
 /*
@@ -799,7 +800,7 @@ failure:
 bool parse_string(const char **sp, char **out)
 {
 	const char *s = *sp;
-	SB sb;
+    SB sb = {NULL, NULL, NULL};
 	char throwaway_buffer[4];
 		/* enough space for a UTF-8 character */
 	char *b;
