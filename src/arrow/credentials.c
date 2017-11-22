@@ -7,6 +7,7 @@
  */
 
 #include "arrow/credentials.h"
+#include <arrow/mem.h>
 
 wifi_credentials_t wifi_crds[] = {
 #if defined(DEFAULT_WIFI_SSID) && defined(DEFAULT_WIFI_PASS) && defined(DEFAULT_WIFI_SEC)
@@ -29,10 +30,11 @@ wifi_credentials_t wifi_crds[] = {
        DEFAULT_WIFI_PASS_3,
        DEFAULT_WIFI_SEC_3 },
 #endif
+    {NULL, NULL, 0}
 };
 
 uint32_t credentials_qnt() {
-    return sizeof(wifi_crds) / sizeof(wifi_credentials_t);
+    return sizeof(wifi_crds) / sizeof(wifi_credentials_t) - 1;
 }
 
 wifi_credentials_t *credentials_get(int index) {

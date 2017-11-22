@@ -142,6 +142,10 @@ void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
     DBG("MQTT waits");
   }
   while (1) {
+#if defined(VALGRIND_TEST)
+      static int count = 0;
+      if ( count++ > VALGRIND_TEST ) break;
+#endif
 #if defined(NO_EVENTS)
       msleep(TELEMETRY_DELAY);
 #else

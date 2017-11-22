@@ -43,6 +43,7 @@ SDK_PATH ?= $(call get_make_path)
 SDK_IMPL ?= $(SDK_PATH)/platforms/$(PLATFORM)
 
 SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/data/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/ntp/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/http/*.c)
 ifeq ($(CJSON),yes)
@@ -56,7 +57,9 @@ SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/api/device/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)
 
-SDK_INCLUDES += \
+PREV_SDK_INCLUDES := ${SDK_INCLUDES}
+
+SDK_INCLUDES := \
     -I$(SDK_PATH) \
     -I$(SDK_PATH)/include \
     -I$(SDK_PATH)/src \
@@ -84,3 +87,5 @@ GET_SETTINGS=gcc $(SDK_PATH)/helper/__dev.c -o $(GET_SETTINGS_BIN) -I$(SDK_PATH)
 
 CHECK_SETTINGS_BIN=__check_settings
 CHECK_SETTINGS=gcc $(SDK_PATH)/helper/__set.c -o $(CHECK_SETTINGS_BIN) -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__
+
+SDK_INCLUDES += ${PREV_SDK_INCLUDES}

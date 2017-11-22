@@ -16,7 +16,7 @@ extern "C" {
 #include <unint.h>
 
 #if !defined(QUEUE_SIZE)
-#define QUEUE_SIZE 256
+#define QUEUE_SIZE 512
 #endif
 
 typedef struct _queue_buffer_ {
