@@ -72,7 +72,6 @@ void NetworkDisconnect(Network* n) {
 int NetworkConnect(Network* n, char* addr, int port) {
     struct sockaddr_in serv;
     struct hostent *serv_resolve;
-    DBG("resolve %s", addr);
     serv_resolve = gethostbyname(addr);
     if (serv_resolve == NULL) {
         DBG("MQTT ERROR: no such host %s", addr);

@@ -1456,7 +1456,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return 0;
     }
 
-#elif defined(__stm32l475iot__) || defined(__semiconductor__) || defined(__quadro__) || defined(__xtensa__)
+#elif defined(__stm32l475iot__) || defined(__semiconductor__) || defined(__quadro__) || defined(__silex__)
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz) {
         (void)(os);
         int i;

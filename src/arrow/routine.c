@@ -88,9 +88,7 @@ int arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-#if !defined(HTTP_SOCK_KEEP_OPEN)
   http_session_close_set(current_client(), true);
-#endif
   return 0;
 }
 

@@ -182,10 +182,13 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_checksum = tmp->string_;
   wdt_feed();
-  int ret = arrow_software_release_download(_token, trans_hid, _checksum);
+  int ret = -1;
+  if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
+      DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
+  }
+  ret = arrow_software_release_download(_token, trans_hid, _checksum);
   wdt_feed();
   SSP_PARAMETER_NOT_USED(_to);
-  SSP_PARAMETER_NOT_USED(_from);
   if ( ret < 0 ) {
     wdt_feed();
     while( arrow_software_releases_trans_fail(trans_hid, "failed") < 0)

@@ -8,6 +8,7 @@
 
 #include "ssl/ssl.h"
 #include <wolfssl/ssl.h>
+#include <wolfssl/internal.h>
 #include <arrow/mem.h>
 #include <debug.h>
 #include <unint.h>
@@ -29,7 +30,7 @@ static socket_ssl_t *__sock = NULL;
 #ifdef DEBUG_WOLFSSL
 static void cli_wolfSSL_Logging_cb(const int logLevel,
                                   const char *const logMessage) {
-    DBG("[http]:%d (%s)", logLevel, logMessage);
+    DBG("[SSL]:%d (%s)", logLevel, logMessage);
 }
 #endif
 
@@ -95,13 +96,14 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     return (int)sent;
 }
 
+
 int __attribute__((weak)) ssl_connect(int sock) {
     if ( !__sock ) wolfSSL_Init();
 	socket_ssl_t *s = (socket_ssl_t *)malloc(sizeof(socket_ssl_t));
 	s->next = NULL;
 	s->socket = sock;
 	DBG("init ssl connect %d", sock)
-	s->method = wolfTLSv1_2_client_method();
+    s->method = wolfTLSv1_2_client_method();
 	s->ctx = wolfSSL_CTX_new(s->method);
 	if ( s->ctx == NULL) {
 		DBG("unable to get ctx");
@@ -158,6 +160,8 @@ int __attribute__((weak)) ssl_close(int sock) {
         wolfSSL_shutdown(s->ssl);
         wolfSSL_free(s->ssl);
         wolfSSL_CTX_free(s->ctx);
+        if (s->method)
+            XFREE(s->method, NULL, DYNAMIC_TYPE_TMP_BUFFER);
         remove_ssl_sock(sock);
         if ( !__sock ) wolfSSL_Cleanup();
     }

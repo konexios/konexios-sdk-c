@@ -26,6 +26,9 @@ uint8_t tmpbuffer[QUEUE_SIZE];
 #define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)
 
 void http_session_close_set(http_client_t *cli, bool mode) {
+#if defined(HTTP_SOCK_KEEP_OPEN)
+    mode = false;
+#endif
   cli->flags._close = mode;
 }
 

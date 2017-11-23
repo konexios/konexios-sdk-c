@@ -55,7 +55,7 @@ enum prop_flags {
   is_dynamic  = 0x1,
   is_const    = 0x2
 };
-#if defined(__xtensa__)
+#if defined(__xtensa__) || defined(__XCC__)
 # define __attribute_packed__
 #else
 # define __attribute_packed__ __attribute__((__packed__))
