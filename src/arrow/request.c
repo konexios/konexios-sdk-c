@@ -12,14 +12,13 @@
 #include <debug.h>
 
 static void get_canonical_string(char *buffer, http_request_t *req){
-    http_query_t *query = req->query;
+    http_query_t *query = NULL;
     buffer[0] = '\0';
-    while (query) {
+    for_each_node(query, req->query, http_query_t) {
         strcat(buffer, P_VALUE(query->key));
         strcat(buffer, "=");
         strcat(buffer, P_VALUE(query->value));
         strcat(buffer, "\r\n");
-        query = query->next;
     }
 }
 

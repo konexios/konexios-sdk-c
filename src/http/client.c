@@ -40,7 +40,7 @@ bool http_session_close(http_client_t *cli) {
 #define MAX_BUFFER_SIZE 1024
 #endif
 
-#define CHUNK_SIZE 256
+#define CHUNK_SIZE QUEUE_SIZE
 
 #define CHECK_CONN_ERR(ret) \
     if ( ret < 0 ) { \
@@ -172,8 +172,8 @@ static int send_start(http_client_t *cli, http_request_t *req, queue_buffer_t *b
     if ( req->query ) {
         char *queryString = (char*)tmpbuffer;
         strcpy(queryString, "?");
-        http_query_t *query = req->query;
-        while ( query ) {
+        http_query_t *query = NULL;
+        for_each_node(query, req->query, http_query_t) {
           if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)queue_capacity(cli->queue) ) break;
             strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
@@ -182,7 +182,6 @@ static int send_start(http_client_t *cli, http_request_t *req, queue_buffer_t *b
             if ( queue_push(buf, (uint8_t*)queryString, 0) < 0 )
                 break;
             strcpy(queryString, "&");
-            query = query->next;
         }
     }
     ret = queue_push(buf, (uint8_t*)HTTP_VERS, 0);
@@ -223,8 +222,8 @@ static int send_header(http_client_t *cli, http_request_t *req, queue_buffer_t *
         if ( ret < 0 ) return ret;
         if ( (ret = client_send(cli)) < 0 ) return ret;
     }
-    http_header_t *head = req->header;
-    while ( head ) {
+    http_header_t *head = NULL;
+    for_each_node(head, req->header, http_header_t) {
         queue_clear(buf);
         ret = snprintf((char*)tmpbuffer,
                            queue_capacity(cli->queue),
@@ -232,7 +231,6 @@ static int send_header(http_client_t *cli, http_request_t *req, queue_buffer_t *
     	if ( ret < 0 ) return ret;
         if ( queue_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
         if ( (ret = client_send(cli)) < 0 ) return ret;
-        head = head->next;
     }
     return client_send_direct(cli, "\r\n", 2);
 }

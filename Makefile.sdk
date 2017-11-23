@@ -16,6 +16,9 @@ endif
 OBJ = $(SDK_SRC:.c=.o)
 DEPS = $(SDK_SRC:.c=.d)
 
+OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${OBJ})
+DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${DEPS})
+
 $(info OS:   $(OS))
 $(info TARGET:   $(SDK_TARGET))
 
@@ -29,13 +32,25 @@ endif
 
 AR_PRM = -rcs
 
+ifeq ($(OS),Windows_NT)
+  dir_make = $(shell if exist $(1) (echo yes) else (echo no))
+else
+  dir_make = $(shell if [ ! -e $$(dirname $(1)) ]; then $(MAKEDIR) $$(dirname $(1)); fi)
+endif
+
+
+make_dst_path:
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c) $(QUIET)
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c/src) $(QUIET)
+
 default: $(SDK_TARGET)
 
-$(SDK_PATH)/src/%.o : $(SDK_PATH)/src/%.c
+$(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
+	$(call dir_make,$@) $(QUIET)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
-$(SDK_TARGET): $(OBJ)
-	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
+$(SDK_TARGET): make_dst_path $(OBJ)
 	$(AR) $(AR_PRM) $(SDK_TARGET) $(OBJ)
 	
 depend: dep
