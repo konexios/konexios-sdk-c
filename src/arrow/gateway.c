@@ -46,7 +46,6 @@ char *arrow_gateway_serialize(arrow_gateway_t *gate) {
   if ( !IS_EMPTY(gate->sdkVersion) )
     json_append_member(_main, "sdkVersion", json_mkstring( P_VALUE(gate->sdkVersion) ));
   char *str = json_encode(_main);
-  json_minify(str);
   json_delete(_main);
   return str;
 }

@@ -34,8 +34,7 @@ static void free_mqtt_event(mqtt_event_t *mq) {
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
   JsonNode *tmp = json_find_member(_node, name);
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = malloc(strlen(tmp->string_)+1);
-  strcpy(*str, tmp->string_);
+  *str = strdup(tmp->string_);
   return 0;
 }
 
@@ -99,11 +98,6 @@ static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-#if defined(__XCC__)
-typedef int (*__compar_fn_t) (const void *, const void *);
-extern void qsort(void *__base, size_t __nmemb, size_t __size, __compar_fn_t __compar);
-#endif
-
 static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
@@ -139,7 +133,6 @@ static char *form_canonical_prm(JsonNode *param) {
 
   return canParam;
 }
-
 
 int process_event(const char *str) {
   mqtt_event_t mqtt_e;

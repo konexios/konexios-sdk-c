@@ -58,7 +58,6 @@ char *arrow_device_serialize(arrow_device_t *dev) {
   if ( dev->info ) json_append_member(_main, "info", dev->info);
   if ( dev->prop ) json_append_member(_main, "properties", dev->prop);
   char *dev_str = json_encode(_main);
-  json_minify(dev_str);
   if ( dev->info ) json_remove_from(_main, dev->info);
   if ( dev->prop ) json_remove_from(_main, dev->prop);
   json_delete(_main);

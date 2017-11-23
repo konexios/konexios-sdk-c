@@ -28,7 +28,6 @@ static void _device_action_create_init(http_request_t *request, void *arg) {
 //  json_append_member(_main, "", json_mkstring(dm->model));
   json_append_member(_main, "systemName", json_mkstring(dm->model->systemName));
   char *payload = json_encode(_main);
-  json_minify(payload);
   http_request_set_payload(request, p_heap(payload));
   json_delete(_main);
 }
@@ -134,7 +133,6 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
 //  json_append_member(_main, "", json_mkstring(dm->model));
   json_append_member(_main, "systemName", json_mkstring(dm->model->systemName));
   char *payload = json_encode(_main);
-  json_minify(payload);
   http_request_set_payload(request, p_heap(payload));
   json_delete(_main);
 }

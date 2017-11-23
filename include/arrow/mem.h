@@ -30,15 +30,17 @@
 # include <string.h>
 # include <strings.h>
 #endif
-#if defined(__xtensa__)
+#if defined(__silex__)
 #include <qcom_common.h>
 #include <malloc_api.h>
 //#include <qcom_mem.h>
 #include <qcom_utils.h>
-void bzero(void *s, size_t n);
-void bcopy(const void *src, void *dest, size_t n);
+typedef int (*__compar_fn_t) (const void *, const void *);
+extern void qsort(void *__base, size_t __nmemb, size_t __size, __compar_fn_t __compar);
+#define bzero(s, n) A_MEMSET(s, 0, n)
+#define bcopy(src, dest, n) A_MEMCPY(dest, src, n)
 char *strcat( char *dest, const char *src);
-char *strncpy(char *dst, const char *src, size_t n);
+//char *strncpy(char *dst, const char *src, size_t n);
 char *strncat(char *dest, const char *src, size_t n);
 double strtod (const char* str, char** endptr);
 # if !defined(malloc_module_init)
