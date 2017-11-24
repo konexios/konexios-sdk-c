@@ -133,8 +133,6 @@ int __attribute__((weak)) ssl_close(int sock) {
         wolfSSL_shutdown(s->ssl);
         wolfSSL_free(s->ssl);
         wolfSSL_CTX_free(s->ctx);
-        if (s->method)
-            XFREE(s->method, NULL, DYNAMIC_TYPE_TMP_BUFFER);
         linked_list_del_node(__sock, socket_ssl_t, s);
         free(s);
         if ( !__sock ) wolfSSL_Cleanup();
