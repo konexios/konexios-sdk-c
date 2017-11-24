@@ -5,9 +5,8 @@ typedef struct _linked_list_ {
   struct _linked_list_ *next;
 } linked_list_t;
 
-#if defined(__USE_STD__)
 #include <stddef.h>
-#else
+#if !defined(offsetof)
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 #if defined(_GCC_EXT_)
