@@ -17,6 +17,7 @@
 #include <debug.h>
 #include <ssl/crypt.h>
 #include <arrow/storage.h>
+#include <data/chunk.h>
 
 #if defined(SIGN_DEBUG)
 # define DBG_SIGN DBG

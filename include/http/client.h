@@ -10,7 +10,7 @@
 #define HTTPCLIENT_CLIENT_H_
 
 #include "request.h"
-#include <arrow/queue.h>
+#include <data/ringbuffer.h>
 #if defined(_ARIS_) && defined(ETH_MODE)
 #include "nx_api.h"
 #include "nxd_dns.h"
@@ -30,7 +30,7 @@ typedef struct {
   uint32_t timeout;
   int response_code;
   __session_flags_t flags;
-  queue_buffer_t  *queue;
+  ring_buffer_t  *queue;
   rw_func         _r_func;
   rw_func         _w_func;
 } http_client_t;

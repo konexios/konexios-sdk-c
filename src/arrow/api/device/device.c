@@ -1,6 +1,7 @@
 #include "arrow/api/device/device.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
 

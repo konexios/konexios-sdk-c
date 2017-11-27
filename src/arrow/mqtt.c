@@ -16,6 +16,9 @@
 
 #include <arrow/events.h>
 
+#define USE_STATIC
+#include <data/chunk.h>
+
 #define MQTT_BUF_LEN 600
 
 static Network mqtt_net;
@@ -197,7 +200,7 @@ static int mqtt_connect_azure(arrow_gateway_t *gateway,
 static int mqtt_connect_iot(arrow_gateway_t *gateway) {
 #define USERNAME_LEN (sizeof(VHOST) + 66)
 
-  static CREATE_CHUNK(username, USERNAME_LEN);
+  CREATE_CHUNK(username, USERNAME_LEN);
 
   int ret = snprintf(username, USERNAME_LEN, VHOST "%s", P_VALUE(gateway->hid));
   if ( ret < 0 ) return -1;
@@ -229,6 +232,7 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   MQTTClientInit(&mqtt_client, &mqtt_net, DEFAULT_MQTT_TIMEOUT, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
   ret = MQTTConnect(&mqtt_client, &data);
   DBG("Connected %d", ret);
+  FREE_CHUNK(username);
   return ret;
 }
 #endif

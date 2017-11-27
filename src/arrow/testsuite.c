@@ -1,6 +1,7 @@
 #include "arrow/testsuite.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 70
 

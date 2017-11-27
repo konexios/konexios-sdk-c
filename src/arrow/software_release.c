@@ -6,6 +6,7 @@
 #include <ssl/md5sum.h>
 #include <arrow/utf8.h>
 #include <time/time.h>
+#include <data/chunk.h>
 
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;

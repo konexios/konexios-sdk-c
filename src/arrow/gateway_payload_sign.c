@@ -6,6 +6,7 @@
 #include <arrow/utf8.h>
 
 #define USE_STATIC
+#include <data/chunk.h>
 
 int gateway_payload_sign(char *signature,
                          const char *hid,
@@ -14,7 +15,7 @@ int gateway_payload_sign(char *signature,
                          const char *canParString,
                          const char *signatureVersion) {
   // step 1
-  static CREATE_CHUNK(canonicalRequest, 256);
+  CREATE_CHUNK(canonicalRequest, 256);
   strcpy(canonicalRequest, hid);
   strcat(canonicalRequest, "\n");
   strcat(canonicalRequest, name);

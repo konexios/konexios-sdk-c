@@ -93,18 +93,4 @@ void property_free(property_t *dst);
 #define P_SIZE(field) ( (field).value ? strlen((field).value) : 0 )
 #define P_CLEAR(field) memset(&(field), 0x0, sizeof(property_t))
 
-#if defined(USE_HEAP)
-#define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(size)
-#elif defined(USE_STATIC)
-#define CREATE_CHUNK(ptr, size) static char ptr[size]
-#else
-#define CREATE_CHUNK(ptr, size) char ptr[size]
-#endif
-
-# if defined(USE_HEAP)
-#define FREE_CHUNK(ptr) free(uri)
-#else
-#define FREE_CHUNK(ptr)
-# endif
-
 #endif  // _ARROW_KRONOS_C_SDK_MEM_H_

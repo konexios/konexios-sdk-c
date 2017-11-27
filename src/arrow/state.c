@@ -6,6 +6,7 @@
 #include <http/routine.h>
 #include <arrow/events.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 static JsonNode *state_tree = NULL;
 static char *_device_hid = NULL;
