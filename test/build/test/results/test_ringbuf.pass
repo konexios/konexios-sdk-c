@@ -1,0 +1,31 @@
+---
+:source:
+  :path: test
+  :file: test_ringbuf.c
+:successes:
+- :test: test_create_buffer
+  :line: 15
+  :message: ''
+- :test: test_capacity
+  :line: 26
+  :message: ''
+- :test: test_add_simple
+  :line: 37
+  :message: ''
+- :test: test_add_overflow
+  :line: 54
+  :message: ''
+- :test: test_pop_simple
+  :line: 68
+  :message: ''
+- :test: test_pop_push_complex
+  :line: 86
+  :message: ''
+:failures: []
+:ignores: []
+:counts:
+  :total: 6
+  :passed: 6
+  :failed: 0
+  :ignored: 0
+:stdout: []

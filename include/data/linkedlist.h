@@ -27,7 +27,7 @@ typedef struct _linked_list_ {
     (p) = (root) ; \
     UN(base_p) != NULL ; \
     UN(base_p) = UN(base_p)->next, \
-    (p) = container_of(UN(base_p), type, node) )
+    (p) = UN(base_p)?container_of(UN(base_p), type, node):(p) )
       
 #define for_each_node_hard(p, root, type) \
   linked_list_t *UN(base_p) = NULL; \
