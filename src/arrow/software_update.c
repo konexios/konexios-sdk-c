@@ -18,14 +18,9 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   DBG("update url: %s", tmp->string_);
 
-  if ( arrow_gateway_software_update(tmp->string_) >= 0 ) {
-      DBG("------------------------");
-      while ( arrow_gateway_heartbeat(current_gateway()) < 0)
-          msleep(3000);
-      DBG("++++++++++++++++++++++++");
-  }
+  if ( arrow_gateway_software_update(tmp->string_) < 0 ) return -1;
   DBG("Reboot...");
-  qcom_sys_reset();
+  reboot();
 }
 
 int __attribute__((weak)) arrow_gateway_software_update(const char *url) {

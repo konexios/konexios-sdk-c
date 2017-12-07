@@ -16,7 +16,7 @@ endif
 OBJ = $(SDK_SRC:.c=.o)
 DEPS = $(SDK_SRC:.c=.d)
 
-OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${OBJ})
+OBJ		:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${OBJ})
 DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${DEPS})
 
 $(info OS:   $(OS))
@@ -30,14 +30,14 @@ ifneq ($(call file_exist,$(PRIV_INC)),yes)
  __dummy = $(shell echo "#ifndef ACN_SDK_C_PRIVATE_H_\n#define ACN_SDK_C_PRIVATE_H_\n\n\n#endif\n" >> $(PRIV_INC))
 endif
 
-AR_PRM = -rcs
-
+# Windows argument string issue
 ifeq ($(OS),Windows_NT)
-  dir_make = $(shell if exist $(1) (echo yes) else (echo no))
+FIXED_OBJ := $(patsubst $(PWD)\%,.\\%,$(call fix_slash,$(OBJ)))
 else
-  dir_make = $(shell if [ ! -e $$(dirname $(1)) ]; then $(MAKEDIR) $$(dirname $(1)); fi)
+FIXED_OBJ := $(OBJ)
 endif
 
+AR_PRM = -rcs
 
 make_dst_path:
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
@@ -47,11 +47,11 @@ make_dst_path:
 default: $(SDK_TARGET)
 
 $(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
-	$(call dir_make,$@) $(QUIET)
+	$(MAKEDIR) $(call fix_slash,$(dir $@)) $(QUIET)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
 $(SDK_TARGET): make_dst_path $(OBJ)
-	$(AR) $(AR_PRM) $(SDK_TARGET) $(OBJ)
+	$(AR) $(AR_PRM) $(SDK_TARGET) $(FIXED_OBJ)
 	
 depend: dep
 
