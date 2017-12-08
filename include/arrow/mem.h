@@ -30,7 +30,7 @@
 # include <string.h>
 # include <strings.h>
 #endif
-#if !defined(NO_ARCH_MEM)
+#if defined(ARCH_MEM)
 # include "sys/arch_mem.h"
 #endif
 

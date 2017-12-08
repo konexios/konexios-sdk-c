@@ -12,29 +12,13 @@
 #include <config.h>
 #include <unint.h>
 #include <data/property.h>
+#include <data/linkedlist.h>
 
 #if defined(HTTP_DEBUG)
 #define HTTP_DBG DBG
 #else
 #define HTTP_DBG(...)
 #endif
-
-#if defined(_ARIS_)
-# include "wifi_thread.h"
-# include "driver/include/m2m_wifi.h"
-# include "driver/source/nmasic.h"
-# include "bus_wrapper/include/nm_bus_wrapper.h"
-# include "reloc_macro.h"
-# include "reloc_assert.h"
-#elif defined(__MBED__)
-# include <inttypes.h>
-# include <stdio.h>
-#elif defined(__USE_STD__)
-# include <stdint.h>
-# include <string.h>
-#endif
-
-#include <data/linkedlist.h>
 
 #define HEAD_FIELD_LEN 100
 #define CONTENT_TYPE "Content-Type"
