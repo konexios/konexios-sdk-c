@@ -11,7 +11,7 @@
 
 #include <config.h>
 #include <unint.h>
-#include <arrow/mem.h>
+#include <data/property.h>
 
 #if defined(HTTP_DEBUG)
 #define HTTP_DBG DBG

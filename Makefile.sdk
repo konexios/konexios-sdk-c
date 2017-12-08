@@ -37,6 +37,8 @@ else
 FIXED_OBJ := $(OBJ)
 endif
 
+make_dir_for_file = $(shell $(MAKEDIR) $(call fix_slash,$(dir $(1))))
+
 AR_PRM = -rcs
 
 make_dst_path:

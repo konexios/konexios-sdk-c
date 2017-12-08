@@ -9,7 +9,7 @@
 #ifndef ARROW_GATEWAY_H_
 #define ARROW_GATEWAY_H_
 
-#include <arrow/mem.h>
+#include <data/property.h>
 #include <config.h>
 #include <json/json.h>
 

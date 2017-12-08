@@ -4,6 +4,7 @@
 #include <arrow/routine.h>
 #include <arrow/gateway_api.h>
 #include <time/time.h>
+#include <arrow/sys.h>
 
 #if defined(NO_SOFTWARE_UPDATE)
 typedef void __dummy__;

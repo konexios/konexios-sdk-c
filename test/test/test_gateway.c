@@ -4,6 +4,7 @@
 #include <config.h>
 #include <arrow/gateway.h>
 #include <arrow/mem.h>
+#include <data/property.h>
 #include <json/json.h>
 #include "mock_net.h"
 

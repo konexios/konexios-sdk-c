@@ -4,10 +4,10 @@
   :file: test_gateway.c
 :successes:
 - :test: test_gateway_init
-  :line: 20
+  :line: 21
   :message: ''
 - :test: test_gateway_prepare
-  :line: 25
+  :line: 26
   :message: ''
 :failures: []
 :ignores: []

@@ -126,6 +126,7 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
     JsonNode *_error = json_mkobject();
     json_append_member(_error, "error", json_mkstring(ans->error));
     http_request_set_payload(request, p_heap(json_encode(_error)));
+    json_delete(_error);
   }
 }
 

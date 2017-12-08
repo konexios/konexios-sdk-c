@@ -73,8 +73,8 @@ void resetTest(void)
 int main(void)
 {
   UnityBegin("test_gateway.c");
-  RUN_TEST(test_gateway_init, 20);
-  RUN_TEST(test_gateway_prepare, 25);
+  RUN_TEST(test_gateway_init, 21);
+  RUN_TEST(test_gateway_prepare, 26);
 
   CMock_Guts_MemFreeFinal();
   return (UnityEnd());

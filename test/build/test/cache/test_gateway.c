@@ -1,10 +1,13 @@
 #include "build/temp/_test_gateway.c"
 #include "mock_net.h"
 #include "json/json.h"
+#include "data/property.h"
 #include "arrow/mem.h"
 #include "arrow/gateway.h"
 #include "config.h"
 #include "unity.h"
+
+
 
 
 
@@ -35,7 +38,7 @@ void test_gateway_init(void) {
 
     arrow_gateway_init(&_test_gateway);
 
-    UnityAssertEqualNumber((UNITY_INT)((0)), (UNITY_INT)((( (_test_gateway.hid).value ))), (((void *)0)), (UNITY_UINT)(22), UNITY_DISPLAY_STYLE_INT);
+    UnityAssertEqualNumber((UNITY_INT)((0)), (UNITY_INT)((( (_test_gateway.hid).value ))), (((void *)0)), (UNITY_UINT)(23), UNITY_DISPLAY_STYLE_INT);
 
 }
 
@@ -47,9 +50,9 @@ void test_gateway_prepare( void ) {
 
 
 
-    get_mac_address_CMockExpectAnyArgsAndReturn(28, 0);
+    get_mac_address_CMockExpectAnyArgsAndReturn(29, 0);
 
-    get_mac_address_CMockReturnMemThruPtr_mac(29, mac, (int)(6 * (int)sizeof(*mac)));
+    get_mac_address_CMockReturnMemThruPtr_mac(30, mac, (int)(6 * (int)sizeof(*mac)));
 
     arrow_prepare_gateway(&_test_gateway);
 

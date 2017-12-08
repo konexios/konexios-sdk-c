@@ -11,7 +11,7 @@
 #include <arrow/sign.h>
 #include <mqtt/client/MQTTClient.h>
 #include <json/telemetry.h>
-#include <arrow/mem.h>
+#include <data/property.h>
 #include <debug.h>
 
 #include <arrow/events.h>
