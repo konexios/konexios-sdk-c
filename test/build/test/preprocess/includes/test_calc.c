@@ -1,6 +1,0 @@
----
-- unity.h
-- calc.h
-- mock_rules.h
-- config.h
-- build/temp/_test_calc.c

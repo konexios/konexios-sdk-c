@@ -14,7 +14,7 @@
 #if defined(__linux__) \
     || defined(_ARIS_) \
     || defined(__nucleo__) \
-    || defined(__xtensa__) \
+    || defined(__silex__) \
     || defined(__senseability__) \
     || defined(__stm32l475iot__) \
     || defined(__semiconductor__) \

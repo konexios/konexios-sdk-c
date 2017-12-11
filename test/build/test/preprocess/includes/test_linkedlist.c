@@ -1,5 +1,0 @@
----
-- unity.h
-- config.h
-- data/linkedlist.h
-- build/temp/_test_linkedlist.c

@@ -17,13 +17,6 @@
 #include <bsd/socket.h>
 #include <time/time.h>
 
-
-#if defined(_ARIS_)
-# if defined(ETH_MODE)
-#  include "nx_api.h"
-# endif
-#endif
-
 #include <ssl/ssl.h>
 
 #if !defined(MAX_BUFFER_SIZE)

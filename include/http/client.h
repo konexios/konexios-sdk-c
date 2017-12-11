@@ -6,15 +6,11 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef HTTPCLIENT_CLIENT_H_
-#define HTTPCLIENT_CLIENT_H_
+#ifndef ACN_SDK_C_HTTP_CLIENT_H_
+#define ACN_SDK_C_HTTP_CLIENT_H_
 
 #include "request.h"
 #include <data/ringbuffer.h>
-#if defined(_ARIS_) && defined(ETH_MODE)
-#include "nx_api.h"
-#include "nxd_dns.h"
-#endif
 
 #define LINE_CHUNK 40
 
@@ -43,4 +39,4 @@ void http_client_free(http_client_t *cli);
 
 int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res);
 
-#endif /* HTTPCLIENT_CLIENT_H_ */
+#endif /* ACN_SDK_C_HTTP_CLIENT_H_ */

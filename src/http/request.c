@@ -11,11 +11,6 @@
 #include "http/request.h"
 #include <debug.h>
 #include <config.h>
-#if defined(__USE_STD__)
-# include <string.h>
-# include <stdio.h>
-# include <stdlib.h>
-#endif
 #include <arrow/mem.h>
 #include <arrow/utf8.h>
 #include <arrow/net.h>
