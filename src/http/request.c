@@ -43,11 +43,6 @@ static char * __attribute__((used)) get_##type(int i) { \
 CMP_INIT(METH)
 CMP_INIT(Scheme)
 
-#if defined(_ARIS_)
-int cmp_meth(const char *str) { return cmp_METH(str); }
-char *get_meth(int i) { return get_METH(i); }
-#endif
-
 extern int default_set_payload_handler(void *r,
                                        property_t buf,
                                        int size);
