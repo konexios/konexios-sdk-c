@@ -11,9 +11,6 @@
 #include <time/time.h>
 #include <time/watchdog.h>
 #include <ntp/client.h>
-//#elif defined(__senseability__)
-//#define SLEEP CyDelay
-//#endif
 
 
 int ntp_set_time_cycle(void) {

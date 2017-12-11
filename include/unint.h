@@ -6,46 +6,18 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef KRONOS_C_SDK_UNINT_H_
-#define KRONOS_C_SDK_UNINT_H_
+#ifndef ACN_SDK_C_INT_H_
+#define ACN_SDK_C_INT_H_
 
 #include <config.h>
 
-#if defined(_ARIS_)
-# include <inttypes.h>
-# include <sys/types.h>
-
-#elif defined(__MBED__) && !defined(__semiconductor__)
-# include <inttypes.h>
-# include <sys/types.h>
-
-#elif defined(__XCC__)
-# include <qcom/basetypes.h>
-# include <qcom/stdint.h>
-typedef A_INT64 int64_t;
-typedef A_INT32 ptrdiff_t;
-typedef A_INT32 intptr_t;
-
-#elif defined(__linux__)
-# include <inttypes.h>
-
-#elif defined(__senseability__)
-# include <cytypes.h>
-# include <sys/types.h>
-typedef unsigned int size_t;
-
-#elif defined(__stm32l475iot__)
-# include <stdint.h>
-# include <sys/types.h>
-
-#elif defined(__semiconductor__)
-# include <inttypes.h>
-# include <sys/types.h>
-
-#elif defined(__quadro__)
+#if defined(ARCH_TYPE)
+#include "sys/arch/type.h"
+#else
 # include <inttypes.h>
 # include <sys/types.h>
 #endif
+
 
 #if defined(__USE_STD__)
 #include <stdbool.h>
@@ -55,4 +27,4 @@ typedef int bool;
 #define true 1
 #endif
 
-#endif // KRONOS_C_SDK_UNINT_H_
+#endif // ACN_SDK_C_INT_H_

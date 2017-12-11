@@ -5,8 +5,8 @@
  *      Author: ddemidov
  */
 
-#ifndef MQTTCLIENT_C_SRC_ARIS_MQTTARIS_H_
-#define MQTTCLIENT_C_SRC_ARIS_MQTTARIS_H_
+#ifndef ACN_SDK_C_MQTT_NETWORK_H_
+#define ACN_SDK_C_MQTT_NETWORK_H_
 
 #include <config.h>
 
@@ -29,14 +29,6 @@
 #include <time/time.h>
 #include <bsd/socket.h>
 
-#if defined(_ARIS_)
-# if defined(ETH_MODE)
-#  include <nx_api.h>
-# else
-#  include "socket/include/socket.h"
-# endif
-#endif
-
 typedef struct Network {
     int my_socket;
     int (*mqttread) (struct Network*, unsigned char*, int, int);
@@ -57,4 +49,4 @@ DLLExport void NetworkInit(Network*);
 DLLExport int NetworkConnect(Network*, char*, int);
 DLLExport void NetworkDisconnect(Network*);
 
-#endif /* MQTTCLIENT_C_SRC_ARIS_MQTTARIS_H_ */
+#endif /* ACN_SDK_C_MQTT_NETWORK_H_ */

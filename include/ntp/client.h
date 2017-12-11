@@ -24,15 +24,6 @@ NTP Client header file
 #define NTPCLIENT_H_
 
 #include <arrow/mem.h>
-#if defined(_ARIS_)
-# if defined(ETH_MODE)
-#  include "nx_api.h"
-#  include "nx_udp.h"
-#  include "nxd_dns.h"
-# endif
-# include "hal_data.h"
-#endif
-
 #include <unint.h>
 
 #if defined (__ICCARM__)
