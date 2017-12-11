@@ -89,7 +89,8 @@ void wolfSSL_Debugging_OFF(void)
 
 
 #ifdef DEBUG_WOLFSSL
-
+# include <debug.h>
+# define dc_log_printf DBG
 #if defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
     #if MQX_USE_IO_OLD
         #include <fio.h>
@@ -115,7 +116,7 @@ static void wolfssl_log(const int logLevel, const char *const logMessage)
         log_function(logLevel, logMessage);
     else {
         if (loggingEnabled) {
-#ifdef THREADX
+#if defined(THREADX) || defined(__silex__)
             dc_log_printf("%s\n", logMessage);
 #elif defined(MICRIUM)
         #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)

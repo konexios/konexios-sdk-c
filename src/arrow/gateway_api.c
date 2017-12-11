@@ -2,6 +2,7 @@
 #include <http/routine.h>
 #include <arrow/sign.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
 
@@ -22,7 +23,6 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-	P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
 	DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
 
 	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
@@ -30,9 +30,9 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		DBG("Parse error");
 		return -1;
 	}
-	JsonNode *tmp;
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
+        JsonNode *tmp;
 		tmp = json_find_member(_main_key, "apiKey");
 		if (tmp) {
 			DBG("(%d) api key: %s", strlen(tmp->string_), tmp->string_);
@@ -97,14 +97,14 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   DBG("response gate reg %d", response->m_httpResponseCode);
-  // convert to null-terminate string
-  P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
-  if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
-      DBG("parse error");
-      return -1;
-  } else {
-      DBG("gateway hid: %s", P_VALUE(gateway->hid) );
-  }
+  if ( response->m_httpResponseCode == 200 ) {
+      if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
+          DBG("parse error");
+          return -1;
+      } else {
+          DBG("gateway hid: %s", P_VALUE(gateway->hid) );
+      }
+  } else return -1;
   return 0;
 }
 

@@ -5,6 +5,9 @@
 #include <debug.h>
 #include <arrow/utf8.h>
 
+#define USE_STATIC
+#include <data/chunk.h>
+
 int gateway_payload_sign(char *signature,
                          const char *hid,
                          const char *name,
@@ -12,7 +15,7 @@ int gateway_payload_sign(char *signature,
                          const char *canParString,
                          const char *signatureVersion) {
   // step 1
-  CREATE_CHUNK(canonicalRequest, 512);
+  CREATE_CHUNK(canonicalRequest, 256);
   strcpy(canonicalRequest, hid);
   strcat(canonicalRequest, "\n");
   strcat(canonicalRequest, name);
@@ -21,16 +24,17 @@ int gateway_payload_sign(char *signature,
   else strcat(canonicalRequest, "false\n");
   strcat(canonicalRequest, canParString);
   strcat(canonicalRequest, "\n");
-  char hex_hash_canonical_req[66];
-  char hash_canonical_req[34];
-  sha256(hash_canonical_req, canonicalRequest, (int)strlen(canonicalRequest));
-  hex_encode(hex_hash_canonical_req, hash_canonical_req, 32);
-  hex_hash_canonical_req[64] = '\0';
+  CREATE_CHUNK(hex_tmp, 66);
+  CREATE_CHUNK(tmp, 34);
+
+  sha256(tmp, canonicalRequest, (int)strlen(canonicalRequest));
+  hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = '\0';
 //  DBG("can: %s", hex_hash_canonical_req);
 
   // step 2
   char *stringtoSign = canonicalRequest;
-  strcpy(stringtoSign, hex_hash_canonical_req);
+  strcpy(stringtoSign, hex_tmp);
   strcat(stringtoSign, "\n");
   strcat(stringtoSign, get_api_key());
   strcat(stringtoSign, "\n");
@@ -38,20 +42,21 @@ int gateway_payload_sign(char *signature,
 
 //  DBG("strToSign:\r\n[%s]", stringtoSign);
   // step 3
-  CREATE_CHUNK(tmp, 128);
-  CREATE_CHUNK(hex_tmp, 128);
 
 //  DBG("api: %s", get_api_key());
 //  DBG("sec: %s", get_secret_key());
   hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), get_secret_key(), (int)strlen(get_secret_key()));
   hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = 0x0;
 //  DBG("hex1: %s", hex_tmp);
-  memset(tmp, 0, 128);
+  memset(tmp, 0, 34);
   hmac256(tmp, signatureVersion, (int)strlen(signatureVersion), hex_tmp, (int)strlen(hex_tmp));
   hex_encode(hex_tmp, tmp, 32);
+  hex_tmp[64] = 0x0;
 //  DBG("hex2: [%d]%s", strlen(hex_tmp), hex_tmp);
   hmac256(tmp, hex_tmp, strlen(hex_tmp), stringtoSign, strlen(stringtoSign));
   hex_encode(signature, tmp, 32);
+  signature[64] = 0x0;
 //  DBG("sig: [%d]%s", strlen(signature), signature);
   FREE_CHUNK(canonicalRequest);
   FREE_CHUNK(tmp);

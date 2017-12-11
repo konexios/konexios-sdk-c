@@ -11,10 +11,13 @@
 #include <arrow/sign.h>
 #include <mqtt/client/MQTTClient.h>
 #include <json/telemetry.h>
-#include <arrow/mem.h>
+#include <data/property.h>
 #include <debug.h>
 
 #include <arrow/events.h>
+
+#define USE_STATIC
+#include <data/chunk.h>
 
 #define MQTT_BUF_LEN 600
 
@@ -22,15 +25,28 @@ static Network mqtt_net;
 static MQTTClient mqtt_client;
 static unsigned char buf[MQTT_BUF_LEN];
 static unsigned char readbuf[MQTT_BUF_LEN];
-static char s_topic[100];
-static char p_topic[100];
+
+#define S_TOP_NAME "krs/cmd/stg/"
+#define P_TOP_NAME "krs.tel.gts."
+
+#define S_TOP_LEN sizeof(S_TOP_NAME) + 66
+#define P_TOP_LEN sizeof(P_TOP_NAME) + 66
+
+static char s_topic[S_TOP_LEN];
+static char p_topic[P_TOP_LEN];
 
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     DBG("mqtt msg arrived %u", message->payloadlen);
-    DBG("%.*s\t", md->topicName->lenstring.len, md->topicName->lenstring.data);
-    ((char *)message->payload)[message->payloadlen] = '\0';
-    process_event(message->payload);
+    char *nt_str = (char*)malloc(message->payloadlen+1);
+    if ( !nt_str ) {
+        DBG("Can't allocate more memory [%d]", message->payloadlen+1);
+        return;
+    }
+    memcpy(nt_str, message->payload, message->payloadlen);
+    nt_str[message->payloadlen] = 0x0;
+    process_event(nt_str);
+    free(nt_str);
 }
 
 #if defined(__IBM__)
@@ -105,6 +121,7 @@ static int sas_token_gen(char *sas, char *devname, char *key, char *time_exp) {
 
   decoded_key_len = 100;
   ret = Base64_Encode((byte*)hmacdig, SHA256_DIGEST_SIZE, (byte*)decoded_key, (word32*)&decoded_key_len);
+  if ( ret ) return -1;
   decoded_key[decoded_key_len] = 0x0;
 
   urlencode(sas, decoded_key, decoded_key_len-1);
@@ -181,17 +198,22 @@ static int mqtt_connect_azure(arrow_gateway_t *gateway,
 }
 #else
 static int mqtt_connect_iot(arrow_gateway_t *gateway) {
-  char username[100];
+#define USERNAME_LEN (sizeof(VHOST) + 66)
 
-  strcpy(username, VHOST);
-  strcat(username, P_VALUE(gateway->hid));
+  CREATE_CHUNK(username, USERNAME_LEN);
+
+  int ret = snprintf(username, USERNAME_LEN, VHOST "%s", P_VALUE(gateway->hid));
+  if ( ret < 0 ) return -1;
+  username[ret] = 0x0;
   DBG("qmtt.username %s", username);
 
-  strcpy(s_topic, "krs/cmd/stg/");
-  strcat(s_topic, P_VALUE(gateway->hid));
+  ret = snprintf(s_topic, S_TOP_LEN, S_TOP_NAME "%s", P_VALUE(gateway->hid));
+  if ( ret < 0 ) return -1;
+  s_topic[ret] = 0x0;
 
-  strcpy(p_topic, "krs.tel.gts.");
-  strcat(p_topic, P_VALUE(gateway->hid));
+  ret = snprintf(p_topic, P_TOP_LEN, P_TOP_NAME "%s", P_VALUE(gateway->hid));
+  if ( ret < 0 ) return -1;
+  p_topic[ret] = 0x0;
 
   MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
   data.willFlag = 0;
@@ -202,18 +224,16 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   data.keepAliveInterval = 10;
   data.cleansession = 1;
 
-  int rc;
   NetworkInit(&mqtt_net);
-  char mqtt_addr[100];
-  strcpy(mqtt_addr, MQTT_ADDR);
-  DBG("addr: (%d)%s", strlen(mqtt_addr), mqtt_addr);
-  rc = NetworkConnect(&mqtt_net, mqtt_addr, MQTT_PORT);
-  DBG("Connecting to %s %d", mqtt_addr, MQTT_PORT);
-  if ( rc < 0 ) return rc;
-  MQTTClientInit(&mqtt_client, &mqtt_net, 3000, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
-  rc = MQTTConnect(&mqtt_client, &data);
-  DBG("Connected %d", rc);
-  return rc;
+  DBG("addr: %s", MQTT_ADDR);
+  ret = NetworkConnect(&mqtt_net, MQTT_ADDR, MQTT_PORT);
+  DBG("Connecting to %s %d", MQTT_ADDR, MQTT_PORT);
+  if ( ret < 0 ) return ret;
+  MQTTClientInit(&mqtt_client, &mqtt_net, DEFAULT_MQTT_TIMEOUT, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
+  ret = MQTTConnect(&mqtt_client, &data);
+  DBG("Connected %d", ret);
+  FREE_CHUNK(username);
+  return ret;
 }
 #endif
 

@@ -1,6 +1,10 @@
 #include "arrow/software_update.h"
 #include <debug.h>
 #include <arrow/events.h>
+#include <arrow/routine.h>
+#include <arrow/gateway_api.h>
+#include <time/time.h>
+#include <arrow/sys.h>
 
 #if defined(NO_SOFTWARE_UPDATE)
 typedef void __dummy__;
@@ -15,7 +19,9 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   DBG("update url: %s", tmp->string_);
 
-  return arrow_gateway_software_update(tmp->string_);
+  if ( arrow_gateway_software_update(tmp->string_) < 0 ) return -1;
+  DBG("Reboot...");
+  reboot();
 }
 
 int __attribute__((weak)) arrow_gateway_software_update(const char *url) {

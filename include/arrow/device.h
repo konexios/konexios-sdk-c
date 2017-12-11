@@ -18,13 +18,8 @@ typedef struct __attribute_packed__ {
   property_t type;
   property_t uid;
   property_t gateway_hid;
-#if defined(__XCC__)
-  struct json_t *info;
-  struct json_t *prop;
-#else
-    JsonNode *info;
-    JsonNode *prop;
-#endif
+  JsonNode *info;
+  JsonNode *prop;
     property_t hid;
 #if defined(__IBM__)
     property_t eid;

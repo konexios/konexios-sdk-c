@@ -4,3 +4,4 @@ gcc*
 *private.h
 *.qbs
 *.sh
+test/build

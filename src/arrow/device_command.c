@@ -135,6 +135,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
+  http_session_close_set(current_client(), false);
   arrow_send_event_ans(ev->gateway_hid, received, NULL);
   DBG("start device command processing");
 
@@ -160,6 +161,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   } else {
     arrow_send_event_ans(ev->gateway_hid, succeeded, NULL);
   }
+  http_session_close_set(current_client(), true);
 
   return 0;
 }

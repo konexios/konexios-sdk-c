@@ -1,6 +1,7 @@
 #include "arrow/api/device/device.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
 
@@ -20,8 +21,6 @@ static void _device_register_init(http_request_t *request, void *arg) {
 
 static int _device_register_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  // convert to null-terminate string
-  P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
   if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
       DBG("device parse error");
       return -1;
@@ -106,8 +105,6 @@ static void _device_update_init(http_request_t *request, void *arg) {
 
 static int _device_update_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  // convert to null-terminate string
-  P_VALUE(response->payload.buf)[response->payload.size] = 0x0;
   if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
       DBG("device parse error");
       return -1;

@@ -8,20 +8,22 @@
 
 #include "ssl/ssl.h"
 #include <wolfssl/ssl.h>
+#include <wolfssl/internal.h>
 #include <arrow/mem.h>
 #include <debug.h>
 #include <unint.h>
 #include <bsd/socket.h>
+#include <data/linkedlist.h>
 #ifdef DEBUG_WOLFSSL
 #include <wolfcrypt/logging.h>
 #endif
 
 typedef struct socket_ssl {
-WOLFSSL_METHOD  *method;
-WOLFSSL_CTX     *ctx;
-WOLFSSL         *ssl;
-int socket;
-struct socket_ssl *next;
+  WOLFSSL_METHOD  *method;
+  WOLFSSL_CTX     *ctx;
+  WOLFSSL         *ssl;
+  int socket;
+  linked_list_head_node;
 } socket_ssl_t;
 
 static socket_ssl_t *__sock = NULL;
@@ -29,49 +31,13 @@ static socket_ssl_t *__sock = NULL;
 #ifdef DEBUG_WOLFSSL
 static void cli_wolfSSL_Logging_cb(const int logLevel,
                                   const char *const logMessage) {
-    DBG("[http]:%d (%s)", logLevel, logMessage);
+    DBG("[SSL]:%d (%s)", logLevel, logMessage);
 }
 #endif
 
-int create_ssl_sock(socket_ssl_t *s) {
-	socket_ssl_t *last = __sock;
-	if ( last ) {
-		while(last->next) last = last->next;
-		last->next = s;
-	} else {
-		__sock = s;
-	}
-	return 0;
-}
-
-int remove_ssl_sock(int sock) {
-	socket_ssl_t *last = __sock;
-	socket_ssl_t *old = NULL;
-	while(last) {
-		if ( last->socket == sock ) {
-			if ( old ) {
-				old->next = last->next;
-				free(last);
-				return 0;
-			} else {
-				__sock = last->next;
-				free(last);
-				return 0;
-			}
-		}
-		old = last;
-		last = last->next;
-	}
-	return -1;
-}
-
-socket_ssl_t *find_ssl_sock(int sock) {
-	socket_ssl_t *last = __sock;
-	while(last) {
-		if ( last->socket == sock ) return last;
-		last = last->next;
-	}
-	return NULL;
+static int sockeq(socket_ssl_t *s, int data) {
+    if ( s->socket == data ) return 0;
+    return -1;
 }
 
 static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
@@ -81,7 +47,6 @@ static int recv_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 //    struct timeval interval = { 5000/1000, (0 % 1000) * 1000 };
 //    setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
     int got = recv(s->socket, buf, (uint32_t)sz, 0);
-//    DBG("recv ssl %d [%d]", got, sz);
     if (got <= 0)  return -2;  // IO_ERR_WANT_READ;
     return (int)got;
 }
@@ -96,16 +61,16 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
     return (int)sent;
 }
 
+
 int __attribute__((weak)) ssl_connect(int sock) {
-	if ( !__sock ) wolfSSL_Init();
+    if ( !__sock ) wolfSSL_Init();
 	socket_ssl_t *s = (socket_ssl_t *)malloc(sizeof(socket_ssl_t));
-	s->next = NULL;
 	s->socket = sock;
-	DBG("init ssl connect %d", sock)
-	s->method = wolfTLSv1_2_client_method();
+    s->method = wolfTLSv1_2_client_method();
 	s->ctx = wolfSSL_CTX_new(s->method);
 	if ( s->ctx == NULL) {
 		DBG("unable to get ctx");
+        goto ssl_connect_error_sock;
 	}
 	wolfSSL_CTX_set_verify(s->ctx, SSL_VERIFY_NONE, NULL);
 	wolfSSL_SetIORecv(s->ctx, recv_ssl);
@@ -114,6 +79,7 @@ int __attribute__((weak)) ssl_connect(int sock) {
 	s->ssl = wolfSSL_new(s->ctx);
 	if (s->ssl == NULL) {
 		DBG("oops, bad SSL ptr");
+        goto ssl_connect_error_ctx;
 	}
 	wolfSSL_SetIOReadCtx(s->ssl, (void*)s);
 	wolfSSL_SetIOWriteCtx(s->ssl, (void*)s);
@@ -121,40 +87,55 @@ int __attribute__((weak)) ssl_connect(int sock) {
     wolfSSL_SetLoggingCb(cli_wolfSSL_Logging_cb);
     wolfSSL_Debugging_ON();
 #endif
-	int err = wolfSSL_connect(s->ssl);
-	if (err != SSL_SUCCESS) {
-		free(s);
-		DBG("SSL connect fail");
-		return -1;
-	} else {
-		create_ssl_sock(s);
-		DBG("SSL connect done");
-	}
-  return 0;
+    int err = wolfSSL_connect(s->ssl);
+    if (err != SSL_SUCCESS) {
+        goto ssl_connect_error_ssl;
+    } else {
+        linked_list_add_node_last(__sock, socket_ssl_t, s);
+        DBG("SSL connect done");
+        return 0;
+    }
+ssl_connect_error_ssl:
+    DBG("SSL connect fail");
+    wolfSSL_free(s->ssl);
+ssl_connect_error_ctx:
+    wolfSSL_CTX_free(s->ctx);
+ssl_connect_error_sock:
+    XFREE(s->method, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    free(s);
+    return -1;
 }
 
 int __attribute__((weak)) ssl_recv(int sock, char *data, int len) {
-//	DBG("ssl r[%d]", len);
-	socket_ssl_t *s = find_ssl_sock(sock);
-	if ( !s ) return -1;
+//    DBG("ssl r[%d]", len);
+    socket_ssl_t *s = NULL;
+    linked_list_find_node(s, __sock, socket_ssl_t, sockeq, sock);
+	if ( !s ) {
+            DBG("No socket %d", sock);
+            return -1;
+        }
 	return wolfSSL_read(s->ssl, data, (int)len);
 }
 
 int __attribute__((weak)) ssl_send(int sock, char* data, int length) {
-//	DBG("ssl w[%d]", length);
-	socket_ssl_t *s = find_ssl_sock(sock);
+//    DBG("ssl w[%d]", length);
+    socket_ssl_t *s = NULL;
+    linked_list_find_node(s, __sock, socket_ssl_t, sockeq, sock);
 	if ( !s ) return -1;
 	return wolfSSL_write(s->ssl, data, (int)length);
 }
 
 int __attribute__((weak)) ssl_close(int sock) {
-	socket_ssl_t *s = find_ssl_sock(sock);
-	DBG("close ssl");
-  if ( s ) {
-    wolfSSL_free(s->ssl);
-    wolfSSL_CTX_free(s->ctx);
-    remove_ssl_sock(sock);
-    if ( !__sock ) wolfSSL_Cleanup();
-  }
-	return 0;
+    socket_ssl_t *s = NULL;
+    linked_list_find_node(s, __sock, socket_ssl_t, sockeq, sock);
+    DBG("close ssl %d", sock);
+    if ( s ) {
+        wolfSSL_shutdown(s->ssl);
+        wolfSSL_free(s->ssl);
+        wolfSSL_CTX_free(s->ctx);
+        linked_list_del_node(__sock, socket_ssl_t, s);
+        free(s);
+        if ( !__sock ) wolfSSL_Cleanup();
+    }
+    return 0;
 }

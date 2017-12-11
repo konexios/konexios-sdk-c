@@ -23,16 +23,21 @@
 
 #include "json/json.h"
 
-#include <assert.h>
+#include <arrow/mem.h>
+#if defined(__USE_STD__)
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#else
+#define assert(...)
+#endif
 #include <math.h>
+#include <debug.h>
 
 #define out_of_memory() do {                    \
-		fprintf(stderr, "Out of memory.\n");    \
-		exit(EXIT_FAILURE);                     \
+        DBG("JSON: Out of memory");    \
 	} while (0)
 
 /* Sadly, strdup is not portable. */
@@ -112,7 +117,8 @@ static char *sb_finish(SB *sb)
 
 static void sb_free(SB *sb)
 {
-	free(sb->start);
+    if ( sb && sb->start )
+        free(sb->start);
 }
 
 /*
@@ -794,7 +800,7 @@ failure:
 bool parse_string(const char **sp, char **out)
 {
 	const char *s = *sp;
-	SB sb;
+    SB sb = {NULL, NULL, NULL};
 	char throwaway_buffer[4];
 		/* enough space for a UTF-8 character */
 	char *b;

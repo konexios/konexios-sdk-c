@@ -1446,7 +1446,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             output[i] = (rand() % 256);
         return 0;
     }
-    
+
 #elif defined(__senseability__)
     #warning "write a real random seed!!!!, just for testing now"
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz) {
@@ -1456,8 +1456,9 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return 0;
     }
 
-#elif defined(__stm32l475iot__) || defined(__semiconductor__) || defined(__quadro__)
+#elif defined(__stm32l475iot__) || defined(__semiconductor__) || defined(__quadro__) || defined(__silex__)
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz) {
+        (void)(os);
         int i;
         for (i = 0; i < (int)sz; i++ )
             output[i] = rand()%256;

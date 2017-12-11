@@ -23,7 +23,7 @@ __attribute__((weak)) void dbg_line(const char *fmt, ...) {
 #endif
 
 __attribute__((weak)) void hex_dump(const char *data, int size) {
-  size -= size%8;
+//  size -= size%8;
   int i=0;
   for (i=0; i<size/8; i++) {
     DBG("%02x %02x %02x %02x %02x %02x %02x %02x",
@@ -32,4 +32,12 @@ __attribute__((weak)) void hex_dump(const char *data, int size) {
         data[4+i*8], data[5+i*8],
         data[6+i*8], data[7+i*8]);
   }
+  char str[3*8] = {0};
+  char *s = str;
+  for ( i=size%8; i>0; i-- ) {
+      sprintf(s, "%02x ", data[size-i]);
+      s += 3;
+  }
+  *(s-1) = 0;
+  if ( str[0] ) DBG("%s", str);
 }

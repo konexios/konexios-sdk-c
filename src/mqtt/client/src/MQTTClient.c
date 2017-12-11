@@ -160,7 +160,6 @@ static char isTopicMatched(char* topicFilter, MQTTString* topicName)
     return (curn == curn_end) && (*curf == '\0');
 }
 
-
 static int deliverMessage(MQTTClient* c, MQTTString* topicName, MQTTMessage* message)
 {
     int i;
@@ -221,7 +220,6 @@ exit:
     return rc;
 }
 
-
 static int cycle(MQTTClient* c, TimerInterval* timer)
 {
     // read the socket, see what work is due
@@ -240,6 +238,7 @@ static int cycle(MQTTClient* c, TimerInterval* timer)
         {
             MQTTString topicName;
             MQTTMessage msg;
+            msg.payloadlen = 0;
             int intQoS;
             if (MQTTDeserialize_publish(&msg.dup, &intQoS, &msg.retained, &msg.id, &topicName,
                (unsigned char**)&msg.payload, (int*)&msg.payloadlen, c->readbuf, (int)c->readbuf_size) != 1)

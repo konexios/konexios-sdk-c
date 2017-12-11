@@ -25,8 +25,10 @@ void __attribute__((weak)) md5_chunk_init() {
 
 void __attribute__((weak)) md5_chunk(const char *data, int len) {
   wc_Md5Update(&md5, (const byte*)data, (word32)len);
+
 }
 
-void __attribute__((weak)) md5_chunk_hash(char *hash) {
+int __attribute__((weak)) md5_chunk_hash(char *hash) {
   wc_Md5Final(&md5, (byte*) hash);
+  return MD5_DIGEST_SIZE;
 }

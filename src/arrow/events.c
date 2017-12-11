@@ -15,9 +15,7 @@
 # include <arrow/software_update.h>
 #endif
 
-#if defined(__USE_STD__)
 #include <ctype.h>
-#endif
 #include <debug.h>
 #include <http/client.h>
 #include <arrow/request.h>
@@ -36,8 +34,7 @@ static void free_mqtt_event(mqtt_event_t *mq) {
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
   JsonNode *tmp = json_find_member(_node, name);
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = malloc(strlen(tmp->string_)+1);
-  strcpy(*str, tmp->string_);
+  *str = strdup(tmp->string_);
   return 0;
 }
 
@@ -68,7 +65,7 @@ struct check_signature_t {
 };
 
 static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
-  char signature[65];
+  char signature[65] = {0};
   int err = gateway_payload_sign(signature,
                                  ev->gateway_hid,
                                  ev->name,
@@ -101,34 +98,25 @@ static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-#if defined(__XCC__)
-typedef int (*__compar_fn_t) (const void *, const void *);
-extern void qsort(void *__base, size_t __nmemb, size_t __size, __compar_fn_t __compar);
-#endif
-
 static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
   int count = 0;
   json_foreach(child, param) {
-    DBG("get child {%s}", json_key(child));
     can_list[count] = malloc(MAX_PARAM_LINE_SIZE);
     unsigned int i;
-    for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower(json_key(child)[i]);
+    for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower((int)json_key(child)[i]);
     *(can_list[count]+i) = '=';
     switch(child->tag) {
-      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_); break;
-#if defined(__XCC__)
-      case json_True: strcpy(can_list[count]+i+1, "true"); break;
-      case json_False: strcpy(can_list[count]+i+1, "false"); break;
-      default:
-        snprintf(can_list[count]+i+1, 50, "%d", child->valueint);
-#else
-      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true":"false")); break;
-      default:
-        snprintf(can_list[count]+i+1, 50, "%f", child->number_);
-#endif
+      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_);
+        break;
+      case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true\0":"false\0"));
+        break;
+      default: {
+        int r = snprintf(can_list[count]+i+1, 50, "%f", child->number_);
+        *(can_list[count]+i+1 + r ) = 0x0;
+      }
     }
     count++;
   }
@@ -146,9 +134,7 @@ static char *form_canonical_prm(JsonNode *param) {
   return canParam;
 }
 
-
 int process_event(const char *str) {
-  DBG("ev: %s", str);
   mqtt_event_t mqtt_e;
   int ret = -1;
   memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
@@ -172,11 +158,7 @@ int process_event(const char *str) {
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
-#if defined(__XCC__)
-  mqtt_e.encrypted = _encrypted->type == json_True? 1 : 0;
-#else
   mqtt_e.encrypted = _encrypted->bool_;
-#endif
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
@@ -187,6 +169,7 @@ int process_event(const char *str) {
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
+    DBG("[%s]", can);
     if ( !check_signature(sign_version->string_, sign->string_, &mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);

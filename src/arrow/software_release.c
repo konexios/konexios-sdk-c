@@ -3,6 +3,10 @@
 #include <debug.h>
 #include <time/watchdog.h>
 #include <arrow/sys.h>
+#include <ssl/md5sum.h>
+#include <arrow/utf8.h>
+#include <time/time.h>
+#include <data/chunk.h>
 
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;
@@ -104,15 +108,16 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   switch(ans->state) {
     case received:
-      n = snprintf(uri, URI_LEN, "%s/%s/received", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/received", ans->hid);
     break;
     case success:
-      n = snprintf(uri, URI_LEN, "%s/%s/succeeded", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/succeeded", ans->hid);
     break;
     case fail:
-      n = snprintf(uri, URI_LEN, "%s/%s/failed", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, ans->hid);
+      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/failed", ans->hid);
     break;
   }
+  if ( n < 0 ) return;
   uri[n] = 0x0;
   DBG("uri %s", uri);
   http_request_init(request, PUT, uri);
@@ -121,6 +126,7 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
     JsonNode *_error = json_mkobject();
     json_append_member(_error, "error", json_mkstring(ans->error));
     http_request_set_payload(request, p_heap(json_encode(_error)));
+    json_delete(_error);
   }
 }
 
@@ -143,6 +149,7 @@ static void _software_releases_start_init(http_request_t *request, void *arg) {
   const char *hid = (const char *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  if ( n < 0 ) return;
   uri[n] = 0x0;
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
@@ -157,13 +164,16 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   JsonNode *tmp = json_find_member(_parameters, "softwareReleaseTransHid");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
-  arrow_software_releases_trans_received(trans_hid);
+  wdt_feed();
+  http_session_close_set(current_client(), false);
+  while( arrow_software_releases_trans_received(trans_hid) < 0)
+    msleep(ARROW_RETRY_DELAY);
+  wdt_feed();
   tmp = json_find_member(_parameters, "tempToken");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_token = tmp->string_;
-  DBG("FW TOKEN: %s", tmp->string_);
+  DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
-//  msleep(100000);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_from = tmp->string_;
@@ -174,18 +184,25 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *_checksum = tmp->string_;
   wdt_feed();
-  int ret = arrow_software_release_download(_token, trans_hid);
+  int ret = -1;
+  if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
+      DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
+  }
+  ret = arrow_software_release_download(_token, trans_hid, _checksum);
   wdt_feed();
-  SSP_PARAMETER_NOT_USED(_checksum);
   SSP_PARAMETER_NOT_USED(_to);
-  SSP_PARAMETER_NOT_USED(_from);
-//  int ret = arrow_software_release(_token, _checksum, _from, _to);
   if ( ret < 0 ) {
-    arrow_software_releases_trans_fail(trans_hid, "failed");
+    wdt_feed();
+    while( arrow_software_releases_trans_fail(trans_hid, "failed") < 0)
+      msleep(ARROW_RETRY_DELAY);
+    wdt_feed();
   } else {
-    arrow_software_releases_trans_success(trans_hid);
+    wdt_feed();
+    while(arrow_software_releases_trans_success(trans_hid) < 0)
+      msleep(ARROW_RETRY_DELAY);
     reboot();
   }
+  http_session_close_set(current_client(), true);
   return ret;
 }
 
@@ -232,18 +249,24 @@ int arrow_software_release_payload_handler(void *r,
                                            property_t payload,
                                            int size) {
   http_response_t *res = (http_response_t *)r;
-  property_t *response_buffer = &res->payload.buf;
-  if ( __payload )
-    return __payload(response_buffer, payload.value, size);
+  int flag = FW_FIRST;
+  if ( __payload ) {
+      wdt_feed();
+      if ( ! res->processed_payload_chunk ) {
+          md5_chunk_init();
+      } else
+          flag |= FW_NEXT;
+      md5_chunk(payload.value, size);
+      return __payload(payload.value, size, flag);
+  }
   return -1;
 }
 
 static void _software_releases_download_init(http_request_t *request, void *arg) {
-
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  SSP_PARAMETER_NOT_USED(th);
-  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  int n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/%s/file", th->hid, th->token);
+  if (n < 0) return;
   uri[n] = 0x0;
   http_request_init(request, GET, uri);
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
@@ -252,18 +275,29 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
 }
 
 static int _software_releases_download_proc(http_response_t *response, void *arg) {
-//  release_sched_t *rs = (release_sched_t *)arg;
-  SSP_PARAMETER_NOT_USED(arg);
-  wdt_feed();
-//  if ( IS_EMPTY(response->payload.buf) )  return -1;
-  if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("file size : %d", response->payload.size);
-  if ( __download ) return __download(&response->payload.buf);
-  return -1;
+    SSP_PARAMETER_NOT_USED(response);
+    SSP_PARAMETER_NOT_USED(arg);
+    char *checksum = (char *)arg;
+    wdt_feed();
+    if ( __download ) {
+        char hash[18];
+        char hash_hex[34];
+        int size = md5_chunk_hash(hash);
+        hex_encode(hash_hex, hash, size);
+        hash_hex[2*size] = 0x0;
+        DBG("fw hash cmp {%s, %s}", checksum, hash_hex);
+        if ( strncmp(hash_hex, checksum, 2*size) == 0 ) {
+            return __download(FW_SUCCESS);
+        } else {
+            DBG("fw md5 checksum failed...");
+            return __download(FW_MD5SUM);
+        }
+    }
+    return -1;
 }
 
-int arrow_software_release_download(const char *token, const char *tr_hid) {
+int arrow_software_release_download(const char *token, const char *tr_hid, const char *checksum) {
   token_hid_t th = { token, tr_hid };
-  STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, NULL, "File download fail");
+  STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, (void*)checksum, "File download fail");
 }
 #endif

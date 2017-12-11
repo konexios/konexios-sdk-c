@@ -1,5 +1,39 @@
 # Arrow Connect SDK #
 
+### private data ###
+
+All information concerned platform should be collect into private.h file in the SDK root directory.
+It's strongly recommended define all environment variable to build correct firmware.
+Example:
+
+```c
+#ifndef ACN_SDK_C_PRIVATE_H_
+#define ACN_SDK_C_PRIVATE_H_
+
+#define DEFAULT_API_KEY             "abc"
+#define DEFAULT_SECRET_KEY          "xyz"
+//#define DEV_ENV
+//#define HTTP_DEBUG
+
+#define DEFAULT_WIFI_SSID           "yourSSID"
+#define DEFAULT_WIFI_PASS           "password"
+#define DEFAULT_WIFI_SEC            0x00040003
+
+/* gateway */
+#define GATEWAY_UID_PREFIX          "QCA"
+#define GATEWAY_NAME                "QCA-gateway-demo"
+#define GATEWAY_OS                  "ThreadX"
+
+/* gateway firmware */
+#define GATEWAY_SOFTWARE_NAME       "SX-ULPGN-EVK-TEST-FW"
+#define GATEWAY_SOFTWARE_VERSION    "1.2.4"
+
+/* device */
+#define DEVICE_NAME                 "ULPGN"
+#define DEVICE_TYPE                 "SX_ULPGN"
+#define DEVICE_UID_SUFFIX           "devkit"
+```
+
 ### examples ###
 
 On devices with disabled RTC possible to use NTP time setup:
@@ -41,7 +75,7 @@ arrow_gateway_t gateway;
 while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
 arrow_gateway_free(&gateway);
 ```
-related defins in the config.h file:
+related defins in the private.h file:
 
 ```c
 #define GATEWAY_UID_PREFIX          "aris"

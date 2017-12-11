@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef KRONOS_C_SDK_ARROW_NET_H_
-#define KRONOS_C_SDK_ARROW_NET_H_
+#ifndef ACN_SDK_C_SYS_NET_H_
+#define ACN_SDK_C_SYS_NET_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -15,20 +15,8 @@ extern "C" {
 
 int get_mac_address(char *mac);
 
-#if defined(_ARIS_)
-# include "driver/source/nmasic.h"
-# if defined(ETH_MODE)
-#  include "nxd_bsd.h"
-# endif
-#elif defined(__MBED__)
-//# include "WiFi.h"
-//# include <type>
-#elif defined(__linux__)
-# include <stdlib.h>
-#endif
-
 #if defined(__cplusplus)
 }
 #endif
 
-#endif  // KRONOS_C_SDK_ARROW_NET_H_
+#endif  // ACN_SDK_C_SYS_NET_H_

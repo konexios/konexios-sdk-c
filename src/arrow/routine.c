@@ -1,7 +1,3 @@
-#if !defined(ARROW_ERROR_DELAY)
-#define ARROW_RETRY_DELAY 3000
-#endif
-
 #include "arrow/routine.h"
 #include <config.h>
 #include <debug.h>
@@ -92,8 +88,7 @@ int arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-  if ( has_cmd_handler() < 0 ) http_session_close_set(current_client(), true);
-
+  http_session_close_set(current_client(), true);
   return 0;
 }
 
@@ -129,7 +124,9 @@ int arrow_mqtt_connect_routine(void) {
 
   arrow_state_mqtt_run(&_device);
 #if !defined(NO_EVENTS)
-  mqtt_subscribe();
+  while(mqtt_subscribe() < 0 ) {
+    msleep(ARROW_RETRY_DELAY);
+  }
 #endif
   _init_mqtt = 1;
 
@@ -138,10 +135,15 @@ int arrow_mqtt_connect_routine(void) {
 
 void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done || !_init_mqtt ) return;
+  wdt_feed();
   if ( has_cmd_handler() >= 0 ) {
-    DBG("MQTT wait commands");
+    DBG("MQTT waits");
   }
   while (1) {
+#if defined(VALGRIND_TEST)
+      static int count = 0;
+      if ( count++ > VALGRIND_TEST ) break;
+#endif
 #if defined(NO_EVENTS)
       msleep(TELEMETRY_DELAY);
 #else
