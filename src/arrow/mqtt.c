@@ -275,7 +275,11 @@ int mqtt_yield(int timeout_ms) {
 
 int mqtt_publish(arrow_device_t *device, void *d) {
     MQTTMessage msg;
+#if defined(__nrf52832__)
+    msg.qos = QOS1;
+#else
     msg.qos = QOS0;
+#endif
     msg.retained = 0;
     msg.dup = 0;
     char *payload = telemetry_serialize(device, d);
