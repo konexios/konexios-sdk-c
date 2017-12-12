@@ -9,15 +9,12 @@ $(info DIR:   $(LIBDIR))
 SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
 
 ifeq ($(WOLFSSL),yes)
-SDK_SRC += $(WOLF_SRC)
-SDK_INCLUDES += $(WOLF_INCLUDES)
+SDK_SRC		+= $(WOLF_SRC)
+SDK_INCLUDES	+= $(WOLF_INCLUDES)
 endif
 
-OBJ = $(SDK_SRC:.c=.o)
-DEPS = $(SDK_SRC:.c=.d)
-
-OBJ		:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${OBJ})
-DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,${DEPS})
+OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.o))
+DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.d))
 
 $(info OS:   $(OS))
 $(info TARGET:   $(SDK_TARGET))
@@ -41,18 +38,22 @@ make_dir_for_file = $(shell $(MAKEDIR) $(call fix_slash,$(dir $(1))))
 
 AR_PRM = -rcs
 
+default: $(SDK_TARGET)
+
 make_dst_path:
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c) $(QUIET)
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c/src) $(QUIET)
-
-default: $(SDK_TARGET)
+	@ echo $(LIBDIR)/acn-sdk-c/src/  -- $(SDK_PATH)/src/
+	@ echo $(SDK_TARGET)
 
 $(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
+	@ echo "-- $@"
 	$(MAKEDIR) $(call fix_slash,$(dir $@)) $(QUIET)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
 $(SDK_TARGET): make_dst_path $(OBJ)
+	@ echo "Hello"
 	$(AR) $(AR_PRM) $(SDK_TARGET) $(FIXED_OBJ)
 	
 depend: dep
