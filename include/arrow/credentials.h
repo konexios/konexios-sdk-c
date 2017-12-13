@@ -1,7 +1,7 @@
 #if !defined(WIFI_CREDENTIALS_H_)
 #define WIFI_CREDENTIALS_H_
 
-#include <unint.h>
+#include <sys/type.h>
 
 typedef struct _wifi_credentials {
     char *ssid;

@@ -11,7 +11,6 @@
 #include <wolfssl/internal.h>
 #include <sys/mem.h>
 #include <debug.h>
-#include <unint.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #ifdef DEBUG_WOLFSSL

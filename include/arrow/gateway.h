@@ -10,7 +10,6 @@
 #define ARROW_GATEWAY_H_
 
 #include <data/property.h>
-#include <config.h>
 #include <json/json.h>
 
 typedef struct __attribute_packed__ {

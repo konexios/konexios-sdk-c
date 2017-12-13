@@ -8,7 +8,6 @@
 
 #include "arrow/utf8.h"
 #include <sys/mem.h>
-#include <unint.h>
 
 static int utf8_validate_cz(const char *s) {
   unsigned char c = (unsigned char) *s;

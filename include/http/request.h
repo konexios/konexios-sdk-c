@@ -9,8 +9,6 @@
 #ifndef HTTPCLIENT_REQUEST_H_
 #define HTTPCLIENT_REQUEST_H_
 
-#include <config.h>
-#include <unint.h>
 #include <data/property.h>
 #include <data/linkedlist.h>
 

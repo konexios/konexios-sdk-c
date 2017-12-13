@@ -95,7 +95,7 @@ int ntp_set_time(
   DBG("get time %d", (int)now1);
   DBG("ctime %s", ctime(&now1));
 
-  pkt.txTm_s = _htonl( (uint32_t)NTP_TIMESTAMP_DELTA + (uint32_t)time(NULL) ); //WARN: We are in LE format, network byte order is BE
+  pkt.txTm_s = htonl( (uint32_t)NTP_TIMESTAMP_DELTA + (uint32_t)time(NULL) ); //WARN: We are in LE format, network byte order is BE
   pkt.refTm_f = pkt.origTm_f = pkt.rxTm_f = pkt.txTm_f = 0;
 
   //Set timeout, non-blocking and wait using select
@@ -129,14 +129,14 @@ int ntp_set_time(
   }
 
   //Correct Endianness
-  pkt.refTm_s = _ntohl( pkt.refTm_s );
-  pkt.refTm_f = _ntohl( pkt.refTm_f );
-  pkt.origTm_s = _ntohl( pkt.origTm_s );
-  pkt.origTm_f = _ntohl( pkt.origTm_f );
-  pkt.rxTm_s = _ntohl( pkt.rxTm_s );
-  pkt.rxTm_f = _ntohl( pkt.rxTm_f );
-  pkt.txTm_s = _ntohl( pkt.txTm_s );
-  pkt.txTm_f = _ntohl( pkt.txTm_f );
+  pkt.refTm_s = ntohl( pkt.refTm_s );
+  pkt.refTm_f = ntohl( pkt.refTm_f );
+  pkt.origTm_s = ntohl( pkt.origTm_s );
+  pkt.origTm_f = ntohl( pkt.origTm_f );
+  pkt.rxTm_s = ntohl( pkt.rxTm_s );
+  pkt.rxTm_f = ntohl( pkt.rxTm_f );
+  pkt.txTm_s = ntohl( pkt.txTm_s );
+  pkt.txTm_f = ntohl( pkt.txTm_f );
 
   //Compute offset, see RFC 4330 p.13
   uint32_t destTm_s = (uint32_t)NTP_TIMESTAMP_DELTA + (uint32_t)time(NULL);

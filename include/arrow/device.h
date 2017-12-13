@@ -10,8 +10,8 @@
 #define ARROW_DEVICE_H_
 
 #include "json/json.h"
-#include <arrow/gateway.h>
 #include <sys/mem.h>
+#include <arrow/gateway.h>
 
 typedef struct __attribute_packed__ {
   property_t name;

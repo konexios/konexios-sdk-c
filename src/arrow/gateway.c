@@ -7,7 +7,6 @@
  */
 
 #include "arrow/gateway.h"
-#include <unint.h>
 #include <debug.h>
 #include <sys/mac.h>
 

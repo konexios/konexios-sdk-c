@@ -24,7 +24,6 @@ NTP Client header file
 #define NTPCLIENT_H_
 
 #include <sys/mem.h>
-#include <unint.h>
 
 #if defined (__ICCARM__)
     #pragma pack()

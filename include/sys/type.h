@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ACN_SDK_C_INT_H_
-#define ACN_SDK_C_INT_H_
+#ifndef ACN_SDK_C_SYS_TYPE_H_
+#define ACN_SDK_C_SYS_TYPE_H_
 
 #include <config.h>
 
@@ -27,4 +27,4 @@ typedef int bool;
 #define true 1
 #endif
 
-#endif // ACN_SDK_C_INT_H_
+#endif // ACN_SDK_C_SYS_TYPE_H_

@@ -10,7 +10,7 @@
 #define COMMON_TIME_TIME_H_
 
 #include <config.h>
-#include <unint.h>
+#include <sys/type.h>
 
 #if defined(__cplusplus)
 extern "C" {

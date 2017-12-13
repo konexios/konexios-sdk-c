@@ -6,20 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_NTP_H_
-#define ARROW_NTP_H_
-
-#ifndef NTP_DEFAULT_SERVER
-#define NTP_DEFAULT_SERVER "0.pool.ntp.org"
-#endif
-
-#ifndef NTP_DEFAULT_PORT
-#define NTP_DEFAULT_PORT 123
-#endif
-
-#ifndef NTP_DEFAULT_TIMEOUT
-#define NTP_DEFAULT_TIMEOUT 4000
-#endif
+#ifndef _COMMON_BSD_SOCKET_H_
+#define _COMMON_BSD_SOCKET_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -27,11 +15,21 @@ extern "C" {
 
 #include <sys/type.h>
 
-int ntp_set_time_cycle(void);
-int ntp_set_time_common(const char *server, uint16_t port, int timeout, int try_times);
+#if !defined(USER_BYTE_CONVERTER)
+# include <bsd/inet.h>
+#else
+# include <sys/arch/byteconvert.h>
+#endif
 
+#if defined(ARCH_SOCK)
+# include <sys/arch/socket.h>
+#else
+# include <bsd/struct_hostent.h>
+# include <bsd/sockdef.h>
+# include <bsd/sockdecl.h>
+#endif
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* ARROW_NTP_H_ */
+#endif // _COMMON_BSD_SOCKET_H_

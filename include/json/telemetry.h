@@ -14,7 +14,6 @@ extern "C" {
 #endif
 
 #include <arrow/device.h>
-#include <unint.h>
     
 char *telemetry_serialize(arrow_device_t *device, void *data);
 

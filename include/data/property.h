@@ -9,8 +9,6 @@
 #ifndef _ACN_SDK_C_PROPERTY_H_
 #define _ACN_SDK_C_PROPERTY_H_
 
-#include <config.h>
-#include <unint.h>
 #include <sys/mem.h>
 
 enum prop_flags {

@@ -9,7 +9,7 @@
 #ifndef _COMMON_BSD_SOCKDEF_H_
 #define _COMMON_BSD_SOCKDEF_H_
  
-#include <unint.h>
+#include <sys/type.h>
     
 #define  SOL_SOCKET  0xfff    /* options for socket level */
 

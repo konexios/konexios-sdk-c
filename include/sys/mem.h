@@ -10,7 +10,7 @@
 #define ACN_SDK_C_MEM_H_
 
 #include <config.h>
-#include <unint.h>
+#include <sys/type.h>
 #if defined(__USE_STD__)
 #if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE

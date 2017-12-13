@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include <unint.h>
+#include <sys/type.h>
 
 #if !defined(RINGBUFFER_SIZE)
 #define RINGBUFFER_SIZE 512
