@@ -9,7 +9,7 @@
 #include "time/time.h"
 
 time_t build_time(void) {
-  static const char *built = __DATE__" "__TIME__;
+  static const char *built = __DATE__ " " __TIME__;
   struct tm t;
   const char *ret = (const char *)strptime(built, "%b %d %Y %H:%M:%S", &t);
   if ( ret ) {
@@ -21,10 +21,3 @@ time_t build_time(void) {
 
   return 0;
 }
-
-#if !defined(TARGET_NUCLEO_F401RE)
-void set_time(time_t t) {
-    stime(&t);
-}
-#endif
-

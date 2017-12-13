@@ -30,11 +30,6 @@
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
 
-#if defined(__USE_STD__)
-# include <stdbool.h>
-# include <stddef.h>
-#endif
-
 typedef enum {
     JSON_NULL,
 	JSON_BOOL,

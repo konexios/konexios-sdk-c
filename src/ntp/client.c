@@ -20,9 +20,9 @@
 #include "ntp/client.h"
 #include <debug.h>
 #include <bsd/socket.h>
-#include <time/time.h>
 #include <bsd/inet.h>
 #include <arrow/mem.h>
+#include <time/time.h>
 
 #define NTP_TIMESTAMP_DELTA 2208988800ull //Diff btw a UNIX timestamp (Starting Jan, 1st 1970) and a NTP timestamp (Starting Jan, 1st 1900)
 
@@ -141,7 +141,7 @@ int ntp_set_time(
   //Compute offset, see RFC 4330 p.13
   uint32_t destTm_s = (uint32_t)NTP_TIMESTAMP_DELTA + (uint32_t)time(NULL);
   int64_t offset = ( (int64_t)( pkt.rxTm_s - pkt.origTm_s ) + (int64_t) ( pkt.txTm_s - destTm_s ) ) >> 1; //Avoid overflow
-  set_time((time_t)offset + time(NULL));
-
+  time_t stime_value = (time_t)offset + time(NULL);
+  if ( stime(&stime_value) < 0 ) return NTP_PRTCL;
   return NTP_OK;
 }

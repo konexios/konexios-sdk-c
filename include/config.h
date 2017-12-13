@@ -12,7 +12,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SDK_VERSION 1.3.5
+#define SDK_VERSION 1.3.6
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -39,10 +39,14 @@
 //#  define MQTT_CIPHER
 #endif
 
-#if defined(__XCC__)
-# define __NO_STD__
-#else
-# define __USE_STD__
+#if !defined(__NO_STD__)
+# if !defined(__XCC__)
+#  define __USE_STD__
+// for the std lib headers
+#  if !defined(_GNU_SOURCE)
+#   define _GNU_SOURCE
+#  endif
+# endif
 #endif
 
 #if !defined(SSP_PARAMETER_NOT_USED)

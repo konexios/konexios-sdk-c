@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-    #ifndef _COMMON_BSD_SOCKDEF_H_
+#ifndef _COMMON_BSD_SOCKDEF_H_
 #define _COMMON_BSD_SOCKDEF_H_
  
 #include <unint.h>

@@ -40,7 +40,7 @@ $(info GCC: $(CC))
 
 get_make_path = $(dir $(call, cross_abspath,$(lastword $(MAKEFILE_LIST))))/
 SDK_PATH ?= $(call get_make_path)
-SDK_IMPL ?= $(SDK_PATH)/platforms/$(PLATFORM)
+SDK_IMPL ?= $(abspath $(SDK_PATH)/../$(PLATFORM)/acnsdkc/)
 
 SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/data/*.c)
@@ -66,10 +66,8 @@ SDK_INCLUDES := \
     -I$(SDK_IMPL)
 
 ifneq ($(PLATFORM),)
-SDK_INCLUDES += -I$(SDK_PATH)/platforms/$(PLATFORM)
 CC_SYMBOLS += -D__$(PLATFORM)__
 endif
-SDK_INCLUDES += -I$(SDK_PATH)/platforms/default
 
 PRIV_INC = $(SDK_PATH)/private.h
 

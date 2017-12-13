@@ -10,12 +10,29 @@
 #define COMMON_TIME_TIME_H_
 
 #include <config.h>
+#include <unint.h>
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#if defined(ARCH_TIME)
+# include <sys/arch/time.h>
+#else
+# include <sys/time.h>
+# include <time.h>
+# if !defined(timerclear)
+#  include <time/timer_functions.h>
+# endif
+#endif
 
 int msleep(int m_sec);
-void get_time(char *ts);
 time_t build_time(void);
-#if !defined(TARGET_NUCLEO_F401RE)
-void set_time(time_t t);
+void get_time(char *ts);
+int stime(const time_t *t);
+
+#if defined(__cplusplus)
+}
 #endif
 
 # endif // COMMON_TIME_TIME_H_
