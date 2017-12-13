@@ -31,7 +31,7 @@
 # include <strings.h>
 #endif
 #if defined(ARCH_MEM)
-# include "sys/arch_mem.h"
+# include "sys/arch/mem.h"
 #endif
 
 #if defined(__xtensa__) || defined(__XCC__)
