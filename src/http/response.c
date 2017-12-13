@@ -9,14 +9,8 @@
 #include "http/request.h"
 #include <debug.h>
 #include <config.h>
-#if defined(__USE_STD__)
-# include <string.h>
-# include <stdio.h>
-# include <stdlib.h>
-#endif
 #include <sys/mem.h>
 #include <arrow/utf8.h>
-#include <arrow/net.h>
 
 // default functions to process payload for the http response
 int default_set_payload_handler(void *r,

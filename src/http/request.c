@@ -13,7 +13,6 @@
 #include <config.h>
 #include <sys/mem.h>
 #include <arrow/utf8.h>
-#include <arrow/net.h>
 
 static const char *METH_str[] = { "GET", "POST", "PUT", "DELETE", "HEAD"};
 static const char *Scheme_str[] = { "http", "https" };

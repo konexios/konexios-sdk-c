@@ -8,11 +8,8 @@
 
 #include "arrow/gateway.h"
 #include <unint.h>
-#include <arrow/net.h>
-#if defined(__USE_STD__)
-#include <stdlib.h>
-#endif
 #include <debug.h>
+#include <sys/mac.h>
 
 #if defined(__IBM__)
 P_ADD(arrow_gateway_config, organizationId);
