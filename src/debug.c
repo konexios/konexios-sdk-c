@@ -1,6 +1,6 @@
 #include "debug.h"
 
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 char dbg_buffer[DBG_LINE_SIZE] __attribute__((weak));
 

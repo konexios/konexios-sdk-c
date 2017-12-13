@@ -20,7 +20,7 @@
 #include <http/client.h>
 #include <arrow/request.h>
 #include <json/json.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
 
 static void free_mqtt_event(mqtt_event_t *mq) {

@@ -11,7 +11,7 @@
 #include "http/request.h"
 #include <debug.h>
 #include <config.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <arrow/utf8.h>
 #include <arrow/net.h>
 

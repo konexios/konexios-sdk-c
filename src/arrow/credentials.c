@@ -7,7 +7,7 @@
  */
 
 #include "arrow/credentials.h"
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 wifi_credentials_t wifi_crds[] = {
 #if defined(DEFAULT_WIFI_SSID) && defined(DEFAULT_WIFI_PASS) && defined(DEFAULT_WIFI_SEC)

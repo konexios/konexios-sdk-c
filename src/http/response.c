@@ -14,7 +14,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 #endif
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <arrow/utf8.h>
 #include <arrow/net.h>
 

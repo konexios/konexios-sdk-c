@@ -2,7 +2,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <stdarg.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 void device_type_init(device_type_t *dev, int enable, const char *name, const char *dec) {
   dev->enabled = enable;

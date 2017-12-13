@@ -25,7 +25,7 @@
   #define DLLExport
 #endif
 
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <time/time.h>
 #include <bsd/socket.h>
 

@@ -9,7 +9,7 @@
 #include "ssl/ssl.h"
 #include <wolfssl/ssl.h>
 #include <wolfssl/internal.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <debug.h>
 #include <unint.h>
 #include <bsd/socket.h>

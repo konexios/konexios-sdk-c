@@ -8,7 +8,7 @@
 
 #include "arrow/request.h"
 #include <time/time.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <debug.h>
 
 static void get_canonical_string(char *buffer, http_request_t *req){

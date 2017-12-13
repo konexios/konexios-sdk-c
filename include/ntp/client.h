@@ -23,7 +23,7 @@ NTP Client header file
 #ifndef NTPCLIENT_H_
 #define NTPCLIENT_H_
 
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <unint.h>
 
 #if defined (__ICCARM__)

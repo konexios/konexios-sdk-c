@@ -2,7 +2,7 @@
 #include <time/time.h>
 #include <http/client.h>
 #include <json/json.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <http/routine.h>
 #include <arrow/events.h>
 #include <debug.h>

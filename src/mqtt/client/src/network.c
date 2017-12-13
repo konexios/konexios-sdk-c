@@ -3,7 +3,7 @@
 #include <bsd/socket.h>
 #include <debug.h>
 #include <bsd/inet.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <ssl/ssl.h>
 #if defined(__USE_STD__)
 # include <errno.h>

@@ -1,7 +1,7 @@
 #include "arrow/gateway_payload_sign.h"
 #include <arrow/sign.h>
 #include <ssl/crypt.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <debug.h>
 #include <arrow/utf8.h>
 

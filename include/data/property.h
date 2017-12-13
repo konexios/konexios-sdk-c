@@ -11,7 +11,7 @@
 
 #include <config.h>
 #include <unint.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 enum prop_flags {
   is_stack    = 0x0,

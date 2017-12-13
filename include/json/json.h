@@ -24,7 +24,7 @@
 #ifndef CCAN_JSON_H
 #define CCAN_JSON_H
 
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 # define json_key(x)  (x)->key
 # define json_number(x) (x)->number_

@@ -7,7 +7,7 @@
  */
 
 #include "arrow/utf8.h"
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <unint.h>
 
 static int utf8_validate_cz(const char *s) {

@@ -1,6 +1,6 @@
 #include "arrow/api/device/action.h"
 #include <http/routine.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <debug.h>
 #include <data/chunk.h>
 

@@ -23,12 +23,8 @@
 
 #include "json/json.h"
 
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #if defined(__USE_STD__)
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 #else
 #define assert(...)

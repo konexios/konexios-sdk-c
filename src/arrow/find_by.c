@@ -1,5 +1,5 @@
 #include "arrow/find_by.h"
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 static const char *find_by_name[] = {
   "userHid",

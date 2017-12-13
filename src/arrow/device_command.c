@@ -9,7 +9,7 @@
 #include "arrow/device_command.h"
 #include <http/routine.h>
 #include <json/json.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <arrow/events.h>
 #include <debug.h>
 

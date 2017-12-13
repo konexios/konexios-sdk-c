@@ -8,7 +8,7 @@
 
 #include "data/ringbuffer.h"
 #include <debug.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 
 int ringbuf_init(ring_buffer_t *buf, int32_t size) {
     buf->buffer = (uint8_t *)malloc(size);

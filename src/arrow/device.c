@@ -7,7 +7,7 @@
  */
 
 #include "arrow/device.h"
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <config.h>
 #if defined(__USE_STD__)
 # include <stdlib.h>

@@ -8,7 +8,7 @@
 
 #include <config.h>
 #include <arrow/sign.h>
-#include <arrow/mem.h>
+#include <sys/mem.h>
 #include <arrow/utf8.h>
 #if defined(__USE_STD__)
 # include <inttypes.h>
