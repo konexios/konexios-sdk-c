@@ -14,22 +14,7 @@
 # include <sys/arch/ssl.h>
 #else
 
-#if defined(_ARIS_)
-#define NO_WOLFSSL_MEMORY
-#define WOLFSSL_MALLOC_CHECK
-#define NO_WOLFSSL_DIR
-//#define DEBUG_WOLFSSL
-#define WOLFSSL_STATIC_RSA
-#define HAVE_TLS_EXTENSIONS
-/* Options for Sample program */
-//#define WOLFSSL_NO_VERIFYSERVER
-#ifndef WOLFSSL_NO_VERIFYSERVER
-#   define TIME_OVERRIDES
-#   define XTIME time
-#   define XGMTIME localtime
-#endif
-
-#elif defined(__senseability__)
+#if defined(__senseability__)
 #define WOLFSSL_USER_IO
 #define NO_WRITEV
 #define NO_DEV_RANDOM
