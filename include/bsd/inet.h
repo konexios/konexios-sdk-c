@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef KRONOS_C_SDK_BSD_INET_H_
+#if !defined(KRONOS_C_SDK_BSD_INET_H_) && !defined(USER_BYTE_CONVERTER)
 #define KRONOS_C_SDK_BSD_INET_H_
 
 #include <sys/type.h>
