@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <json/json.h>
+#include <data/linkedlist.h>
 
 typedef enum {
     failed,
