@@ -166,19 +166,17 @@ void http_client_free(http_client_t *cli) {
 }
 
 #define HTTP_VERS " HTTP/1.1\r\n"
-static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *buf) {
-    ringbuf_clear(buf);
-    int ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE,
-                       "%s %s",
-                       P_VALUE(req->meth), P_VALUE(req->uri));
-    if ( ret < 0 ) return ret;
-    if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
+static int send_start(http_client_t *cli, http_request_t *req) {
+    char *buf = http_buffer;
+    int ret;
+    ret = snprintf(buf, CHUNK_SIZE-1, "%s %s", P_VALUE(req->meth), P_VALUE(req->uri));
+    buf[ret] = '\0';
     if ( req->query ) {
-        char *queryString = (char*)tmpbuffer;
+        char queryString[CHUNK_SIZE];
         strcpy(queryString, "?");
-        http_query_t *query = NULL;
-        for_each_node(query, req->query, http_query_t) {
-          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)ringbuf_capacity(cli->queue) ) break;
+        property_map_t *query = req->query;
+        while ( query ) {
+          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)CHUNK_SIZE ) break;
             strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
             strcat(queryString, P_VALUE(query->value));
@@ -207,36 +205,29 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
     ringbuf_clear(buf);
     if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
         if ( req->is_chunked ) {
-            ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
+            ret = client_send("Transfer-Encoding: chunked\r\n", 0, cli);
         } else {
-            ret = snprintf((char*)tmpbuffer,
-                           ringbuf_capacity(cli->queue),
-                           "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
+            ret = snprintf(buf, sizeof(http_buffer)-1, "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
             if ( ret < 0 ) return ret;
-            if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 )
-                return -1;
-            ret = client_send(cli);
+            buf[ret] = '\0';
+            ret = client_send(buf, ret, cli);
         }
-        ringbuf_clear(buf);
         if ( ret < 0 ) return ret;
-        ret = snprintf((char*)tmpbuffer,
-                       ringbuf_capacity(cli->queue),
-                       "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
-        if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
+        ret = snprintf(buf, sizeof(http_buffer)-1, "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
         if ( ret < 0 ) return ret;
-        if ( (ret = client_send(cli)) < 0 ) return ret;
+        buf[ret] = '\0';
+        if ( (ret = client_send(buf, ret, cli)) < 0 ) return ret;
     }
-    http_header_t *head = NULL;
-    for_each_node(head, req->header, http_header_t) {
-        ringbuf_clear(buf);
-        ret = snprintf((char*)tmpbuffer,
-                           ringbuf_capacity(cli->queue),
-                           "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
+
+    property_map_t *head = req->header;
+    while( head ) {
+      ret = snprintf(buf, sizeof(http_buffer)-1, "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
     	if ( ret < 0 ) return ret;
-        if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
-        if ( (ret = client_send(cli)) < 0 ) return ret;
+    	buf[ret] = '\0';
+        if ( (ret = client_send(buf, ret, cli)) < 0 ) return ret;
+        head = head->next;
     }
-    return client_send_direct(cli, "\r\n", 2);
+    return client_send((uint8_t*)"\r\n", 2, cli);
 }
 
 static int send_payload(http_client_t *cli, http_request_t *req) {
@@ -498,9 +489,11 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
         return -1;
     }
 
-    HTTP_DBG("Reading headers");
+    HTTP_DBG("Reading headers %d", trfLen);
+    char *crlfPtr;
+    int crlfPos;
     res->header = NULL;
-    memset(&res->content_type, 0x0, sizeof(http_header_t));
+    memset(&res->content_type, 0x0, sizeof(property_map_t));
     memset(&res->payload, 0x0, sizeof(http_payload_t));
     res->is_chunked = 0;
     res->processed_payload_chunk = 0;

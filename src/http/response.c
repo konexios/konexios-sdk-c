@@ -66,24 +66,13 @@ void http_response_init(http_response_t *res, _payload_meth_t *handler) {
 void http_response_free(http_response_t *res) {
     P_FREE(res->payload.buf);
     res->payload.size = 0;
-    http_header_t *head = NULL;
-    for_each_node_hard(head, res->header, http_header_t) {
-        if (head) {
-          P_FREE(head->key);
-          P_FREE(head->value);
-          free(head);
-        }
-    }
+    property_map_clear(res->header);
     P_FREE(res->content_type.value);
     P_FREE(res->content_type.key);
 }
 
 void http_response_add_header(http_response_t *req, property_t key, property_t value) {
-    http_header_t *head = req->header;
-    http_header_t *head_new = (http_header_t *)malloc(sizeof(http_header_t));
-    P_COPY(head_new->key, key);
-    P_COPY(head_new->value, value);
-    linked_list_add_node_last(head, http_header_t, head_new);
+    property_map_add(&req->header, key, value);
 }
 
 void http_response_set_content_type(http_response_t *res, property_t value) {

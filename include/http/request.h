@@ -18,6 +18,25 @@
 #define HTTP_DBG(...)
 #endif
 
+#if defined(_ARIS_)
+# include "wifi_thread.h"
+# include "driver/include/m2m_wifi.h"
+# include "driver/source/nmasic.h"
+# include "bus_wrapper/include/nm_bus_wrapper.h"
+# include "reloc_macro.h"
+# include "reloc_assert.h"
+#elif defined(__MBED__)
+# include <inttypes.h>
+# include <stdio.h>
+#elif defined(__linux__)
+# include <stdint.h>
+# include <string.h>
+#elif defined(__XCC__)
+# include <qcom/base.h>
+# include <qcom_common.h>
+#endif
+#include <arrow/map.h>
+
 #define HEAD_FIELD_LEN 100
 #define CONTENT_TYPE "Content-Type"
 
@@ -35,15 +54,6 @@ enum Scheme {
   https,
   Scheme_count
 };
-
-
-typedef struct __attribute_packed__ http_header_ {
-    property_t key;
-    property_t value;
-    linked_list_head_node;
-} http_header_t;
-
-typedef struct http_header_ http_query_t;
 
 typedef struct __attribute_packed__ {
     uint32_t size;
@@ -68,9 +78,9 @@ typedef struct __attribute_packed__ {
     int8_t is_corrupt;
     int8_t is_cipher;
     int8_t is_chunked;
-    http_header_t *header;
-    http_header_t content_type;
-    http_query_t *query;
+    property_map_t *header;
+    property_map_t content_type;
+    property_map_t *query;
     http_payload_t payload;
     _payload_meth_t _response_payload_meth;
 } http_request_t;
@@ -79,8 +89,8 @@ typedef struct {
     int m_httpResponseCode;
     uint16_t is_chunked;
     uint16_t recvContentLength;
-    http_header_t *header;
-    http_header_t content_type;
+    property_map_t *header;
+    property_map_t content_type;
     http_payload_t payload;
     _payload_meth_t _p_meth;
     int processed_payload_chunk;
@@ -91,7 +101,8 @@ void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, property_t key, property_t value);
 void http_request_add_query(http_request_t *req, property_t key, property_t value);
 void http_request_set_content_type(http_request_t *req, property_t value);
-http_header_t *http_request_first_header(http_request_t *req);
+property_map_t *http_request_first_header(http_request_t *req);
+property_map_t *http_request_next_header(http_request_t *req, property_map_t *head);
 void http_request_set_payload(http_request_t *req, property_t payload);
 
 void http_response_init(http_response_t *req, _payload_meth_t *handler);
