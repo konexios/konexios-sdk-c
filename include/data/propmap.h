@@ -19,6 +19,7 @@ typedef struct __attribute_packed__ _property_map_list {
   linked_list_head_node;
 } property_map_t;
 
+int property_map_init(property_map_t *root);
 int property_map_add(property_map_t **root, property_t key, property_t value);
 int property_map_delete(property_map_t **root, property_t key);
 property_map_t *property_map_find(property_map_t *root, property_t key);

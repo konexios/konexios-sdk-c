@@ -36,6 +36,7 @@ typedef struct __attribute_packed__ _property {
 #define p_heap(x)   property(x, is_dynamic)
 #define p_null()    property(NULL, 0)
 
+void property_init(property_t *dst);
 void property_copy(property_t *dst, const property_t src);
 void property_n_copy(property_t *dst, const char *src, int n);
 void property_free(property_t *dst);

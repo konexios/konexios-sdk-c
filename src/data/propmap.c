@@ -13,8 +13,16 @@ static int propkeyeq( property_map_t *s, property_t key ) {
     return -1;
 }
 
+int property_map_init(property_map_t *root) {
+    property_init(&root->key);
+    property_init(&root->value);
+    return 0;
+}
+
 int property_map_add(property_map_t **root, property_t key, property_t value) {
-    property_map_t *el = (property_map_t *)malloc(sizeof(property_map_t));
+    property_map_t *el = (property_map_t *) calloc(1, sizeof(property_map_t));
+    property_init(&el->key);
+    property_init(&el->value);
     property_copy(&el->key, key);
     property_copy(&el->value, value);
     linked_list_add_node_last(*root, property_map_t, el);

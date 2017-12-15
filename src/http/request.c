@@ -51,16 +51,16 @@ extern int default_add_payload_handler(void *r,
 
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
-  P_CLEAR(req->meth);
-  P_CLEAR(req->scheme);
-  P_CLEAR(req->host);
-  P_CLEAR(req->uri);
-  P_CLEAR(req->payload.buf);
+  property_init(&req->meth);
+  property_init(&req->scheme);
+  property_init(&req->host);
+  property_init(&req->uri);
+  property_init(&req->payload.buf);
   property_copy(&req->meth, p_const(get_METH(meth)));
   char *sch_end = strstr((char*)url, "://");
   if ( !sch_end ) { req->is_corrupt = 1; return; }
   int sch = cmp_n_Scheme(url, (int)(sch_end - url));
-  P_COPY(req->scheme, p_const(get_Scheme(sch)));
+  property_copy(&req->scheme, p_const(get_Scheme(sch)));
   req->is_cipher = sch;
   char *host_start = sch_end + 3; //sch_end + strlen("://");
   char *host_end = strstr(host_start, ":");
@@ -73,7 +73,7 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   req->port = port;
 
   char *uri_start = strstr(host_end+1, "/");
-  P_COPY(req->uri, p_stack(uri_start));
+  property_copy(&req->uri, p_stack(uri_start));
 
   DBG("meth: %s", P_VALUE(req->meth) );
   DBG("scheme: %s", P_VALUE(req->scheme));
@@ -86,7 +86,7 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   req->query = NULL;
   req->is_chunked = 0;
   memset(&req->payload, 0x0, sizeof(http_payload_t));
-  memset(&req->content_type, 0x0, sizeof(property_map_t));
+  property_map_init(&req->content_type);
   req->_response_payload_meth._p_set_handler = default_set_payload_handler;
   req->_response_payload_meth._p_add_handler = default_add_payload_handler;
 }

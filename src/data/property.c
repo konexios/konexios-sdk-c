@@ -9,6 +9,11 @@
 #include "data/property.h"
 #include <debug.h>
 
+void property_init(property_t *dst) {
+    dst->flags = 0x00;
+    dst->value = NULL;
+}
+
 void property_copy(property_t *dst, const property_t src) {
 	if ( !dst ) return;
   property_free(dst);
