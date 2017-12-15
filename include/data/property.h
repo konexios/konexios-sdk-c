@@ -39,6 +39,7 @@ typedef struct __attribute_packed__ _property {
 void property_copy(property_t *dst, const property_t src);
 void property_n_copy(property_t *dst, const char *src, int n);
 void property_free(property_t *dst);
+int property_cmp(property_t *src, property_t *dst);
 
 #define P_COPY(dst, src) property_copy(&dst, src)
 #define P_NCOPY(dst, str, n)  property_n_copy(&dst, str, n)

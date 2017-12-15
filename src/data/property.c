@@ -42,3 +42,8 @@ void property_free(property_t *dst) {
       dst->flags = 0x0;
   }
 }
+
+int property_cmp(property_t *src, property_t *dst) {
+    if ( strcmp(src->value, dst->value) == 0 ) return 0;
+    return -1;
+}

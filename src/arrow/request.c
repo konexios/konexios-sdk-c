@@ -12,9 +12,9 @@
 #include <debug.h>
 
 static void get_canonical_string(char *buffer, http_request_t *req){
-    http_query_t *query = NULL;
+    property_map_t *query = req->query;
     buffer[0] = '\0';
-    for_each_node(query, req->query, http_query_t) {
+    for_each_node(query, req->query, property_map_t) {
         strcat(buffer, P_VALUE(query->key));
         strcat(buffer, "=");
         strcat(buffer, P_VALUE(query->value));

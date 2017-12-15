@@ -176,8 +176,8 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
     if ( req->query ) {
         char *queryString = (char*)tmpbuffer;
         strcpy(queryString, "?");
-        http_query_t *query = NULL;
-        for_each_node(query, req->query, http_query_t) {
+        property_map_t *query = NULL;
+        for_each_node(query, req->query, property_map_t) {
           if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)ringbuf_capacity(cli->queue) ) break;
             strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
@@ -226,8 +226,8 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( ret < 0 ) return ret;
         if ( (ret = client_send(cli)) < 0 ) return ret;
     }
-    http_header_t *head = NULL;
-    for_each_node(head, req->header, http_header_t) {
+    property_map_t *head = NULL;
+    for_each_node(head, req->header, property_map_t) {
         ringbuf_clear(buf);
         ret = snprintf((char*)tmpbuffer,
                            ringbuf_capacity(cli->queue),
@@ -500,7 +500,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
 
     HTTP_DBG("Reading headers");
     res->header = NULL;
-    memset(&res->content_type, 0x0, sizeof(http_header_t));
+    memset(&res->content_type, 0x0, sizeof(property_map_t));
     memset(&res->payload, 0x0, sizeof(http_payload_t));
     res->is_chunked = 0;
     res->processed_payload_chunk = 0;

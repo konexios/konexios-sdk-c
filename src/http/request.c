@@ -86,51 +86,30 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   req->query = NULL;
   req->is_chunked = 0;
   memset(&req->payload, 0x0, sizeof(http_payload_t));
-  memset(&req->content_type, 0x0, sizeof(http_header_t));
+  memset(&req->content_type, 0x0, sizeof(property_map_t));
   req->_response_payload_meth._p_set_handler = default_set_payload_handler;
   req->_response_payload_meth._p_add_handler = default_add_payload_handler;
 }
 
 void http_request_close(http_request_t *req) {
-  P_FREE(req->meth);
-  P_FREE(req->scheme);
-  P_FREE(req->host);
-  P_FREE(req->uri);
-  P_FREE(req->payload.buf);
+  property_free(&req->meth);
+  property_free(&req->scheme);
+  property_free(&req->host);
+  property_free(&req->uri);
+  property_free(&req->payload.buf);
   req->payload.size = 0;
-  http_header_t *head = NULL;
-  for_each_node_hard(head, req->header, http_header_t) {
-      if (head) {
-        P_FREE(head->key);
-        P_FREE(head->value);
-        free(head);
-      }
-  }
-  http_query_t *query = NULL;
-  for_each_node_hard(query, req->query, http_header_t) {
-      if ( query ) {
-          P_FREE(query->key);
-          P_FREE(query->value);
-          free(query);
-      }
-  }
-  P_FREE(req->content_type.value);
-  P_FREE(req->content_type.key);
+  property_map_clear(&req->header);
+  property_map_clear(&req->query);
+  property_free(&req->content_type.value);
+  property_free(&req->content_type.key);
 }
 
 void http_request_add_header(http_request_t *req, property_t key, property_t value) {
-    http_header_t *head_new = (http_header_t *)malloc(sizeof(http_header_t));
-    head_new->key = key;
-    head_new->value = value;
-    linked_list_add_node_last(req->header, http_header_t, head_new);
+    property_map_add(&req->header, key, value);
 }
 
 void http_request_add_query(http_request_t *req, property_t key, property_t value) {
-  http_query_t *head = req->query;
-  http_query_t *query_new = (http_query_t *)malloc(sizeof(http_query_t));
-  query_new->key = key;
-  query_new->value = value;
-  linked_list_add_node_last(head, http_query_t, query_new);
+  property_map_add(&req->query, key, value);
 }
 
 void http_request_set_content_type(http_request_t *req, property_t value) {
@@ -138,13 +117,13 @@ void http_request_set_content_type(http_request_t *req, property_t value) {
   req->content_type.value = value;
 }
 
-http_header_t *http_request_first_header(http_request_t *req) {
+property_map_t *http_request_first_header(http_request_t *req) {
     return req->header;
 }
 
 void http_request_set_payload(http_request_t *req, property_t payload) {
   req->payload.size = P_SIZE(payload);
-  P_COPY(req->payload.buf, payload);
+  property_copy(&req->payload.buf, payload);
   if ( IS_EMPTY(req->payload.buf) ) {
     DBG("[http] set_payload: fail");
   }
