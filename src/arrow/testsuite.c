@@ -243,8 +243,8 @@ int arrow_test_step_success(property_t *res_hid, int number) {
 typedef struct _test_step_fail_end_ {
   property_t *res_hid;
   int number;
-  char *code;
-  char *error;
+  const char *code;
+  const char *error;
 } test_step_fail_end_t;
 
 static void _test_step_fail_end_init(http_request_t *request, void *arg) {
@@ -258,14 +258,16 @@ static void _test_step_fail_end_init(http_request_t *request, void *arg) {
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "code", json_mkstring(st->code));
-  json_append_member(_main, "error", json_mkstring(st->error));
+  if ( st->code )
+      json_append_member(_main, "code", json_mkstring(st->code));
+  if ( st->error )
+      json_append_member(_main, "error", json_mkstring(st->error));
   http_request_set_payload(request, p_heap(json_encode(_main)));
   json_delete(_main);
 }
 
 int arrow_test_step_fail(property_t *res_hid, int number, const char *error) {
-    test_step_success_end_t st = { res_hid, number };
+    test_step_fail_end_t st = { res_hid, number, NULL, error };
     STD_ROUTINE(_test_step_fail_end_init, &st,
                 NULL, NULL,
                 "Arrow TEST end step failed...");
