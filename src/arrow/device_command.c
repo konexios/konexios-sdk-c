@@ -15,13 +15,6 @@
 
 static cmd_handler *__handlers = NULL;
 
-static void __create_cmd_handler(cmd_handler *hd, const char *name, fp callback) {
-  hd->name = malloc(strlen(name)+1);
-  strcpy(hd->name, name);
-  hd->callback = callback;
-  hd->next = NULL;
-}
-
 // handlers
 int has_cmd_handler(void) {
 	if ( __handlers ) return 0;
@@ -30,24 +23,17 @@ int has_cmd_handler(void) {
 
 int add_cmd_handler(const char *name, fp callback) {
   cmd_handler *h = malloc(sizeof(cmd_handler));
-  __create_cmd_handler(h, name, callback);
-  if ( !__handlers ) {
-    __handlers = h;
-  } else {
-    cmd_handler *last = __handlers;
-    while( last->next ) last = last->next;
-    last->next = h;
-  }
+  h->name = strdup(name);
+  h->callback = callback;
+  linked_list_add_node_last(__handlers, cmd_handler, h);
   return 0;
 }
 
 void free_cmd_handler(void) {
-  cmd_handler *curr = __handlers;
-  while( curr ) {
-    cmd_handler *rm = curr;
-    curr = curr->next;
-    free(rm->name);
-    free(rm);
+  cmd_handler *curr = NULL;
+  for_each_node_hard ( curr, __handlers , cmd_handler ) {
+      free(curr->name);
+      free(curr);
   }
 }
 
@@ -75,10 +61,10 @@ typedef struct _event_data {
 static void _event_ans_init(http_request_t *request, void *arg) {
     event_data_t *data = (event_data_t *)arg;
 	char *uri = form_evetns_url(data->hid, data->ev);
-  http_request_init(request, PUT, uri);
+    http_request_init(request, PUT, uri);
 	free(uri);
 	if ( data->payload ) {
-    http_request_set_payload(request, p_stack(data->payload));
+        http_request_set_payload(request, p_stack(data->payload));
 	}
 }
 
@@ -95,18 +81,20 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
   JsonNode *tmp = json_find_member(_node, name);
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = malloc(strlen(tmp->string_)+1);
-  strcpy(*str, tmp->string_);
+  *str = strdup(tmp->string_);
   return 0;
+}
+
+static int cmdeq( cmd_handler *s, const char *name ) {
+    if ( strcmp(s->name, name) == 0 ) return 0;
+    return -1;
 }
 
 static fp find_cmd_handler(const char *cmd) {
   if ( __handlers ) {
-    cmd_handler *h = __handlers;
-    while(h) {
-      if ( strcmp(h->name, cmd) == 0 ) return h->callback;
-      h = h->next;
-    }
+    cmd_handler *h = NULL;
+    linked_list_find_node ( h, __handlers, cmd_handler, cmdeq, cmd );
+    if ( h ) return h->callback;
   } else {
     DBG("No cmd handlers");
   }

@@ -26,7 +26,7 @@ typedef int (*fp)(const char *);
 typedef struct __cmd_handler {
   char *name;
   fp callback;
-  struct __cmd_handler *next;
+  linked_list_head_node;
 } cmd_handler;
 
 // Find and execute 'name' command handler for this 'payload'
