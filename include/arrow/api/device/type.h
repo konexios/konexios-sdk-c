@@ -21,7 +21,7 @@ typedef struct _device_type_telemetry {
   char *description;
   char *name;
   char *type;
-  struct _device_type_telemetry *next;
+  linked_list_head_node;
 } device_type_telemetry_t;
 
 typedef struct _device_type {
@@ -39,7 +39,6 @@ device_type_telemetry_t *device_type_add_telemetry(device_type_t *dev, const cha
 void device_type_free(device_type_t *dev);
 
 int device_type_add_telemetry_variables(device_type_telemetry_t *tel, const char *key, const char *value);
-int device_type_telemetry_variables_free(device_type_telemetry_t *tel);
 
 // list existing device types
 int arrow_device_type_list(void);
