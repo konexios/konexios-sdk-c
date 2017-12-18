@@ -38,6 +38,7 @@
     - acn-sdk-c/include
     - +:acn-sdk-c
     - +:acn-sdk-c/include/arrow
+    - +:acn-sdk-c/include/sys
 
 :defines:
   # in order to add common defines:

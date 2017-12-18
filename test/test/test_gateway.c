@@ -6,7 +6,7 @@
 #include <sys/mem.h>
 #include <data/property.h>
 #include <json/json.h>
-#include "mock_net.h"
+#include "mock_mac.h"
 
 void setUp(void)
 {
