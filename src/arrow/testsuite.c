@@ -250,7 +250,7 @@ typedef struct _test_step_fail_end_ {
 static void _test_step_fail_end_init(http_request_t *request, void *arg) {
   test_step_fail_end_t *st = (test_step_fail_end_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int ret = snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/succeeded",
+  int ret = snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/failed",
            ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
