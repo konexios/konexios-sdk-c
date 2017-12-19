@@ -34,13 +34,10 @@ static void _device_action_create_init(http_request_t *request, void *arg) {
 }
 
 int arrow_create_device_action(arrow_device_t *dev, dev_action_model_t *model) {
-  int ret = 0;
   struct _dev_model dm = {dev, model};
-  ret = __http_routine(_device_action_create_init, &dm, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Action create failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_action_create_init, &dm,
+              NULL, NULL,
+              "Arrow Device Action create failed...");
 }
 
 static void _device_action_delete_init(http_request_t *request, void *arg) {
@@ -54,13 +51,10 @@ static void _device_action_delete_init(http_request_t *request, void *arg) {
 }
 
 int arrow_delete_device_action(arrow_device_t *dev, dev_action_model_t *model) {
-  int ret = 0;
   struct _dev_model dm = {dev, model};
-  ret = __http_routine(_device_action_delete_init, &dm, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Action delete failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_action_delete_init, &dm,
+              NULL, NULL,
+              "Arrow Device Action delete failed...");
 }
 
 static void _device_action_list_init(http_request_t *request, void *arg) {
@@ -83,11 +77,9 @@ static int _device_action_list_process(http_response_t *response, void *arg) {
 }
 
 int arrow_list_device_action(arrow_device_t *dev) {
-  int ret = __http_routine(_device_action_list_init, dev, _device_action_list_process, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Action list failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_action_list_init, dev,
+              _device_action_list_process, NULL,
+              "Arrow Device Action list failed...");
 }
 
 static void _action_type_list_init(http_request_t *request, void *arg) {
@@ -110,11 +102,9 @@ static int _action_type_list_process(http_response_t *response, void *arg) {
 
 
 int arrow_list_action_type(void) {
-  int ret = __http_routine(_action_type_list_init, NULL, _action_type_list_process, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Action types list failed...");
-  }
-  return ret;
+  STD_ROUTINE(_action_type_list_init, NULL,
+              _action_type_list_process, NULL,
+              "Arrow Action types list failed...");
 }
 
 static void _device_action_update_init(http_request_t *request, void *arg) {
@@ -141,9 +131,7 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
 
 int arrow_update_device_action(arrow_device_t *dev, dev_action_model_t *model) {
   struct _dev_model dm = {dev, model};
-  int ret = __http_routine(_device_action_update_init, &dm, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Device Action update failed...");
-  }
-  return ret;
+  STD_ROUTINE(_device_action_update_init, &dm,
+              NULL, NULL,
+              "Arrow Device Action update failed...");
 }

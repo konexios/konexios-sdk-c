@@ -9,6 +9,10 @@
 #ifndef _ACN_SDK_C_PROPERTY_H_
 #define _ACN_SDK_C_PROPERTY_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <sys/mem.h>
 
 enum prop_flags {
@@ -50,5 +54,9 @@ int property_cmp(property_t *src, property_t *dst);
 #define P_VALUE(field) ( (field).value )
 #define P_SIZE(field) ( (field).value ? strlen((field).value) : 0 )
 #define P_CLEAR(field) memset(&(field), 0x0, sizeof(property_t))
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  // _ACN_SDK_C_PROPERTY_H_

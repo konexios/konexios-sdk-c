@@ -1,6 +1,10 @@
 #if !defined(ARROW_LINKED_LIST_H_)
 #define ARROW_LINKED_LIST_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 typedef struct _linked_list_ {
   struct _linked_list_ *next;
 } linked_list_t;
@@ -77,6 +81,10 @@ linked_list_t *linked_list_del_last(linked_list_t *root);
   linked_list_t *base_p = linked_list_del_last(&(root)->node); \
   root = container_of(base_p, type, node); \
 }
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  // ARROW_LINKED_LIST_H_
 

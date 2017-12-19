@@ -9,16 +9,14 @@
 #ifndef HTTPCLIENT_REQUEST_H_
 #define HTTPCLIENT_REQUEST_H_
 
-#include <data/property.h>
-#include <data/linkedlist.h>
+#include <data/propmap.h>
+#include <data/find_by.h>
 
 #if defined(HTTP_DEBUG)
 #define HTTP_DBG DBG
 #else
 #define HTTP_DBG(...)
 #endif
-
-#include <data/propmap.h>
 
 #define HEAD_FIELD_LEN 100
 #define CONTENT_TYPE "Content-Type"
@@ -86,6 +84,7 @@ void http_request_add_query(http_request_t *req, property_t key, property_t valu
 void http_request_set_content_type(http_request_t *req, property_t value);
 property_map_t *http_request_first_header(http_request_t *req);
 void http_request_set_payload(http_request_t *req, property_t payload);
+int http_request_set_findby(http_request_t *req, find_by_t *fb);
 
 void http_response_init(http_response_t *req, _payload_meth_t *handler);
 void http_response_free(http_response_t *res);

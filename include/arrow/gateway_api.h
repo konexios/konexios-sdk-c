@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <arrow/find_by.h>
+#include <data/find_by.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 

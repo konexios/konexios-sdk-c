@@ -128,11 +128,9 @@ static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
 }
 
 int arrow_gateway_heartbeat(arrow_gateway_t *gateway) {
-  int ret = __http_routine(_gateway_heartbeat_init, gateway, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Gateway heartbeat failed...");
-  }
-  return ret;
+  STD_ROUTINE(_gateway_heartbeat_init, gateway,
+              NULL, NULL,
+              "Gateway heartbeat failed...");
 }
 
 static void _gateway_checkin_init(http_request_t *request, void *arg) {
@@ -171,17 +169,15 @@ static int _gateway_find_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_gateway_find(const char *hid) {
-  int ret = __http_routine(_gateway_find_init, (void*)hid, _gateway_find_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Gateway register failed...");
-  }
-  return ret;
+  STD_ROUTINE(_gateway_find_init, (void*)hid,
+              _gateway_find_proc, NULL,
+              "Gateway register failed...");
 }
 
 static void _gateway_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
   http_request_init(request, GET, ARROW_API_GATEWAY_ENDPOINT);
-  ADD_FIND_BY_TO_REQ(params, request);
+  http_request_set_findby(request, params);
 }
 
 static int _gateway_find_by_proc(http_response_t *response, void *arg) {
@@ -195,12 +191,10 @@ static int _gateway_find_by_proc(http_response_t *response, void *arg) {
 
 int arrow_gateway_find_by(int n, ...) {
   find_by_t *params = NULL;
-  COLLECT_FIND_BY(params, n);
-  int ret = __http_routine(_gateway_find_by_init, params, _gateway_find_by_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Gateway find by failed...");
-  }
-  return ret;
+  find_by_collect(params, n);
+  STD_ROUTINE(_gateway_find_by_init, params,
+              _gateway_find_by_proc, NULL,
+              "Gateway find by failed...");
 }
 
 typedef struct _gate_param_ {
@@ -214,8 +208,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN,"%s/%s/logs", ARROW_API_GATEWAY_ENDPOINT, P_VALUE(dp->gate->hid) );
   http_request_init(request, GET, uri);
   FREE_CHUNK(uri);
-  find_by_t *params = dp->params;
-  ADD_FIND_BY_TO_REQ(params, request);
+  http_request_set_findby(request, dp->params);
 }
 
 static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
@@ -226,13 +219,11 @@ static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
 
 int arrow_gateway_logs_list(arrow_gateway_t *gateway, int n, ...) {
   find_by_t *params = NULL;
-  COLLECT_FIND_BY(params, n);
+  find_by_collect(params, n);
   gate_param_t dp = { gateway, params };
-  int ret = __http_routine(_gateway_list_logs_init, &dp, _gateway_list_logs_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Gateway logs failed...");
-  }
-  return ret;
+  STD_ROUTINE(_gateway_list_logs_init, &dp,
+              _gateway_list_logs_proc, NULL,
+              "Gateway logs failed...");
 }
 
 static void _gateway_devices_list_init(http_request_t *request, void *arg) {

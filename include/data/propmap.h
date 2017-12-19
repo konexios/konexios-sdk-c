@@ -9,6 +9,10 @@
 #if !defined(ACN_SDK_C_PROPERTY_MAP_H_)
 #define ACN_SDK_C_PROPERTY_MAP_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <sys/mem.h>
 #include <data/property.h>
 #include <data/linkedlist.h>
@@ -25,5 +29,9 @@ int property_map_delete(property_map_t **root, property_t key);
 property_map_t *property_map_find(property_map_t *root, property_t key);
 int property_map_assign(property_map_t *root, property_t key, property_t value);
 int property_map_clear(property_map_t **root);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  // ACN_SDK_C_PROPERTY_MAP_H_

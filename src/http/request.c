@@ -128,3 +128,13 @@ void http_request_set_payload(http_request_t *req, property_t payload) {
     DBG("[http] set_payload: fail");
   }
 }
+
+int http_request_set_findby(http_request_t *req, find_by_t *fb) {
+    find_by_t *tmp = NULL;
+    find_by_for_each(tmp, fb) {
+        http_request_add_query(req,
+                find_by_to_property(tmp),
+                tmp->value);
+    }
+    return 0;
+}

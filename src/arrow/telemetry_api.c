@@ -1,8 +1,9 @@
 #include "arrow/telemetry_api.h"
-#include <arrow/find_by.h>
+#include <data/find_by.h>
 #include <json/telemetry.h>
 #include <http/routine.h>
 #include <debug.h>
+#include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_TELEMETRY_ENDPOINT) + 50
 
@@ -68,10 +69,10 @@ int arrow_send_telemetry(arrow_device_t *device, void *d) {
 
 static void _telemetry_batch_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
-  char *uri = (char*)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/batch", ARROW_API_TELEMETRY_ENDPOINT);
   http_request_init(request, POST, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   request->is_chunked = 1;
   int i = 0;
   char *_main = NULL;
@@ -106,12 +107,11 @@ typedef struct _telemetry_hid_ {
 
 static void _telemetry_find_by_application_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/applications/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, uri);
-  free(uri);
-  find_by_t *params = appl->params;
-  ADD_FIND_BY_TO_REQ(params, request);
+  FREE_CHUNK(uri);
+  http_request_set_findby(request, appl->params);
 }
 
 static int _telemetry_find_by_application_hid_proc(http_response_t *response, void *arg) {
@@ -122,23 +122,20 @@ static int _telemetry_find_by_application_hid_proc(http_response_t *response, vo
 
 int arrow_telemetry_find_by_application_hid(const char *hid, int n, ...) {
   find_by_t *params = NULL;
-  COLLECT_FIND_BY(params, n);
+  find_by_collect(params, n);
   telemetry_hid_t app = {params, hid};
-  int ret = __http_routine(_telemetry_find_by_application_hid_init, &app, _telemetry_find_by_application_hid_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry find by failed...");
-  }
-  return ret;
+  STD_ROUTINE(_telemetry_find_by_application_hid_init, &app,
+              _telemetry_find_by_application_hid_proc, NULL,
+              "Arrow Telemetry find by failed...");
 }
 
 static void _telemetry_find_by_device_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, uri);
-  free(uri);
-  find_by_t *params = appl->params;
-  ADD_FIND_BY_TO_REQ(params, request);
+  FREE_CHUNK(uri);
+  http_request_set_findby(request, appl->params);
 }
 
 static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *arg) {
@@ -197,23 +194,20 @@ int arrow_telemetry_find_by_device_hid(const char *hid,
                                        telemetry_response_data_list_t *data,
                                        int n, ...) {
   find_by_t *params = NULL;
-  COLLECT_FIND_BY(params, n);
+  find_by_collect(params, n);
   telemetry_hid_t app = {params, hid};
-  int ret = __http_routine(_telemetry_find_by_device_hid_init, &app, _telemetry_find_by_device_hid_proc, data);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry find by failed...");
-  }
-  return ret;
+  STD_ROUTINE(_telemetry_find_by_device_hid_init, &app,
+              _telemetry_find_by_device_hid_proc, data,
+              "Arrow Telemetry find by failed...");
 }
 
 static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/nodes/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, uri);
-  free(uri);
-  find_by_t *params = appl->params;
-  ADD_FIND_BY_TO_REQ(params, request);
+  FREE_CHUNK(uri);
+  http_request_set_findby(request, appl->params);
 }
 
 static int _telemetry_find_by_node_hid_proc(http_response_t *response, void *arg) {
@@ -224,11 +218,9 @@ static int _telemetry_find_by_node_hid_proc(http_response_t *response, void *arg
 
 int arrow_telemetry_find_by_node_hid(const char *hid, int n, ...) {
   find_by_t *params = NULL;
-  COLLECT_FIND_BY(params, n);
+  find_by_collect(params, n);
   telemetry_hid_t app = {params, hid};
-  int ret = __http_routine(_telemetry_find_by_node_hid_init, &app, _telemetry_find_by_node_hid_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry find by failed...");
-  }
-  return ret;
+  STD_ROUTINE(_telemetry_find_by_node_hid_init, &app,
+              _telemetry_find_by_node_hid_proc, NULL,
+              "Arrow Telemetry find by failed...");
 }

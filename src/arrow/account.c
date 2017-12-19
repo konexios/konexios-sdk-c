@@ -38,11 +38,8 @@ static int _account_process(http_response_t *response, void *arg) {
 }
 
 int arrow_create_account(const char *name, const char *email, const char *pass) {
-  int ret = 0;
   account_t acc = {name, email, pass};
-  ret = __http_routine(_account_request, &acc, _account_process, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Account create failed...");
-  }
-  return ret;
+  STD_ROUTINE(_account_request, &acc,
+              _account_process, NULL,
+              "Arrow Account create failed...");
 }
