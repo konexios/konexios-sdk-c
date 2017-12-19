@@ -19,12 +19,10 @@
 #endif
 
 #if !defined(__NO_STD__)
-# if !defined(__XCC__)
-#  define __USE_STD__
+# define __USE_STD__
 // for the std lib headers
-#  if !defined(_GNU_SOURCE)
-#   define _GNU_SOURCE
-#  endif
+# if !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
 # endif
 #endif
 

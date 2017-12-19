@@ -15,37 +15,15 @@ int telemetry_response_data_list_init(telemetry_response_data_list_t *data, int 
   return 0;
 }
 
-static void add_to_tail(telemetry_data_info_t **info,
-                        const char *deviceHid,
-                        const char *name,
-                        const char *type,
-                        time_t timestamp,
-                        int flval) {
-  if (! *info ) {
-    *info = malloc(sizeof(telemetry_data_info_t));
-    (*info)->deviceHid = strdup(deviceHid);
-    (*info)->name = strdup(name);
-    (*info)->type = strdup(type);
-    (*info)->timestamp = timestamp;
-    (*info)->floatValue = flval;
-    (*info)->next = NULL;
-  } else {
-    add_to_tail(&((*info)->next), deviceHid, name, type, timestamp, flval);
-  }
-}
-
-static void free_at_last(telemetry_data_info_t *info) {
-  if ( info->next ) free_at_last(info->next);
-  if ( info->deviceHid ) free(info->deviceHid);
-  if ( info->name ) free(info->name);
-  if ( info->type ) free(info->type);
-  free(info);
-}
-
-
 int telemetry_response_data_list_free(telemetry_response_data_list_t *data) {
-  free_at_last(data->data);
-  return 0;
+    telemetry_data_info_t *tmp = NULL;
+    for_each_node_hard(tmp, data->data, telemetry_data_info_t) {
+        if ( tmp->deviceHid ) free(tmp->deviceHid);
+        if ( tmp->name ) free(tmp->name);
+        if ( tmp->type ) free(tmp->type);
+        free(tmp);
+    }
+    return 0;
 }
 
 int add_telemetry_data_info(telemetry_response_data_list_t *data,
@@ -54,8 +32,14 @@ int add_telemetry_data_info(telemetry_response_data_list_t *data,
                             const char *type,
                             time_t timestamp,
                             int flval) {
-  add_to_tail(&data->data, deviceHid, name, type, timestamp, flval);
-  return 0;
+    telemetry_data_info_t *info = (telemetry_data_info_t *) malloc(sizeof(telemetry_data_info_t));
+    info->deviceHid = strdup(deviceHid);
+    info->name = strdup(name);
+    info->type = strdup(type);
+    info->timestamp = timestamp;
+    info->floatValue = flval;
+    linked_list_add_node_last(data->data, telemetry_data_info_t, info);
+    return 0;
 }
 
 
