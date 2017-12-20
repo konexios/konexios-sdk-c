@@ -98,7 +98,9 @@ static void _state_post_init(http_request_t *request, void *arg) {
 
 static int _arrow_post_state(arrow_device_t *device, _st_post_api post_type) {
   post_dev_t pd = {device, post_type};
-  STD_ROUTINE(_state_post_init, &pd, NULL, NULL, "State post failed...");
+  STD_ROUTINE(_state_post_init, &pd,
+              NULL, NULL,
+              "State post failed...");
 }
 
 int arrow_post_state_request(arrow_device_t *device) {

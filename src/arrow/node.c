@@ -18,11 +18,9 @@ static int _node_list_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_node_list(void) {
-  int ret = __http_routine(_node_list_init, NULL, _node_list_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node list failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_list_init, NULL,
+              _node_list_proc, NULL,
+              "Arrow Node list failed...");
 }
 
 static char *arrow_node_serialize(arrow_node_t *node) {
@@ -51,11 +49,9 @@ static int _node_create_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_node_create(arrow_node_t *node) {
-  int ret = __http_routine(_node_create_init, node, _node_create_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node create failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_create_init, node,
+              _node_create_proc, NULL,
+              "Arrow Node create failed...");
 }
 
 static void _node_update_init(http_request_t *request, void *arg) {
@@ -76,9 +72,7 @@ static int _node_update_proc(http_response_t *response, void *arg) {
 
 
 int arrow_node_update(arrow_node_t *node) {
-  int ret = __http_routine(_node_update_init, node, _node_update_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node updaet failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_update_init, node,
+              _node_update_proc, NULL,
+              "Arrow Node updaet failed...");
 }

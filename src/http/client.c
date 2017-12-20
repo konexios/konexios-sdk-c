@@ -178,7 +178,9 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
         strcpy(queryString, "?");
         property_map_t *query = NULL;
         for_each_node(query, req->query, property_map_t) {
-          if ( (int)strlen(P_VALUE(query->key)) + (int)strlen(P_VALUE(query->value)) + 3 < (int)ringbuf_capacity(cli->queue) ) break;
+          if ( (int)strlen(P_VALUE(query->key)) +
+               (int)strlen(P_VALUE(query->value)) + 3 >
+               (int)ringbuf_capacity(cli->queue) ) break;
             strcat(queryString, P_VALUE(query->key));
             strcat(queryString, "=");
             strcat(queryString, P_VALUE(query->value));

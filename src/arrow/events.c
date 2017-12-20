@@ -8,8 +8,11 @@
 
 #include "arrow/events.h"
 #include <arrow/device_command.h>
-#include <arrow/software_release.h>
 #include <arrow/state.h>
+
+#if !defined(NO_RELEASE_UPDATE)
+#include <arrow/software_release.h>
+#endif
 
 #if !defined(NO_SOFTWARE_UPDATE)
 # include <arrow/software_update.h>

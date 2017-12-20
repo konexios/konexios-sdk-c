@@ -21,7 +21,8 @@ static const char *find_by_name[] = {
   "systemNames",
   "fromTimestamp",
   "toTimestamp",
-  "telemetryNames"
+  "telemetryNames",
+  "osNames"
 };
 
 const char *get_find_by_name(int num) {

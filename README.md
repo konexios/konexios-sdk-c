@@ -34,13 +34,26 @@ Example:
 #define DEVICE_UID_SUFFIX           "devkit"
 ```
 
+### Defines ###
+You can define this options in the private.h file or use "-Dxxx" compiler flag
+
+define NO_EVENTS            to switch off the event handlers for a mqtt connection
+define NO_RELEASE_UPDATE    turn off the firmware update capability (based on a arrow_software_release_dowload_set_cb functions)
+define NO_SOFTWARE_UPDATE   turn off the software update capability (based on a arrow_gateway_software_update_set_cb function)
+
+define ARCH_MEM             use the platform specific header with memory functions (bzero, bcopy, strcpy, strncpy etc) in a ${SDK_IMPL}/sys/arch/mem.h (if your platform need the implementation this one)
+define ARCH_TYPE            use the platform specific header with common types (uint8_t, uint16_t etc) in a ${SDK_IMPL}/sys/arch/type.h
+define ARCH_SOCK            use the platform specific header with socket layer additional headers and definitions (if needed) in a ${SDK_IMPL}/sys/arch/socket.h
+define ARCH_SSL             use the wolfSSL settings file ${SDK_IMPL}/sys/arch/ssl.h (if you don't reimplement ssl functions and use default ssl_connect, ssl_recv etc)
+define ARCH_TIME            use the platform specific headers or define needed types for common time functions (struct tm etc)
+
 ### examples ###
 
 On devices with disabled RTC possible to use NTP time setup:
 ```c
 ntp_set_time_cycle();
 ```
-related defins in the config.h file:
+related defins in the config/ntp.h file:
 
 ```c
 #define NTP_DEFAULT_SERVER "0.pool.ntp.org"
@@ -60,6 +73,29 @@ server - ntp server
 port - ntp port
 timeout - timeout for time setting
 try - attempt to get time setting
+
+### Find Gateway ###
+```c
+gateway_info_t *list = NULL;
+int r = arrow_gateway_find_by(&list, 2, find_by(osNames, "mbed"), find_by(f_size, "100"));
+if ( r == 0 ) {
+  gateway_info_t *tmp;
+  for_each_node_hard(tmp, list, gateway_info_t) {
+  std::cout<<"hid:\t\t"<<P_VALUE(tmp->hid)<<std::endl
+           <<"createdBy:\t"<<P_VALUE(tmp->createdBy)<<std::endl
+           <<"lastModifiedBy:\t"<<P_VALUE(tmp->lastModifiedBy)<<std::endl
+           <<"uid:\t\t"<<P_VALUE(tmp->uid)<<std::endl
+           <<"name:\t\t"<<P_VALUE(tmp->name)<<std::endl
+           <<"type:\t\t"<<P_VALUE(tmp->type)<<std::endl
+           <<"deviceType:\t"<<P_VALUE(tmp->deviceType)<<std::endl
+           <<"osName:\t\t"<<P_VALUE(tmp->osName)<<std::endl
+           <<"softwareName:\t"<<P_VALUE(tmp->softwareName)<<std::endl
+           <<"softwareVersion:\t"<<P_VALUE(tmp->softwareVersion)<<std::endl;
+  gateway_info_free(tmp);
+  free(tmp);
+  }
+}
+```
 
 ### Register Gateway ###
 
@@ -386,6 +422,4 @@ or
   "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
 }
 
-### Defines ###
-define NO_EVENTS to switch off the event handlers for a mqtt connection
 

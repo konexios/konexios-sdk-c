@@ -22,10 +22,10 @@ typedef int (*response_proc_f)(http_response_t *response, void *arg);
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc);
 
-#define STD_ROUTINE(init, i_arg, proc, p_arg, fail_msg) { \
+#define STD_ROUTINE(init, i_arg, proc, p_arg, ...) { \
   int ret = __http_routine(init, i_arg, proc, p_arg); \
   if ( ret < 0 ) { \
-    if (fail_msg) DBG("Error:" fail_msg); \
+      DBG("Error:" __VA_ARGS__); \
   } \
   return ret; \
 }

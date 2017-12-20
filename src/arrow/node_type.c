@@ -18,11 +18,9 @@ static int _node_type_list_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_node_type_list(void) {
-  int ret = __http_routine(_node_type_list_init, NULL, _node_type_list_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node Type list failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_type_list_init, NULL,
+              _node_type_list_proc, NULL,
+              "Arrow Node Type list failed...");
 }
 
 static char *arrow_node_type_serialize(arrow_node_type_t *node) {
@@ -49,11 +47,9 @@ static int _node_type_create_proc(http_response_t *response, void *arg) {
 }
 
 int arrow_node_type_create(arrow_node_type_t *node) {
-  int ret = __http_routine(_node_type_create_init, node, _node_type_create_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node create failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_type_create_init, node,
+              _node_type_create_proc, NULL,
+              "Arrow Node create failed...");
 }
 
 static void _node_type_update_init(http_request_t *request, void *arg) {
@@ -74,9 +70,7 @@ static int _node_type_update_proc(http_response_t *response, void *arg) {
 
 
 int arrow_node_type_update(arrow_node_type_t *node) {
-  int ret = __http_routine(_node_type_update_init, node, _node_type_update_proc, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Node updaet failed...");
-  }
-  return ret;
+  STD_ROUTINE(_node_type_update_init, node,
+              _node_type_update_proc, NULL,
+              "Arrow Node updaet failed...");
 }

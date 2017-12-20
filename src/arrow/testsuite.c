@@ -166,11 +166,9 @@ static void _test_begin_init(http_request_t *request, void *arg) {
 }
 
 int arrow_test_begin(property_t *res_hid) {
-  int ret = __http_routine(_test_begin_init, res_hid, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow TEST begin failed...");
-  }
-  return ret;
+  STD_ROUTINE(_test_begin_init, res_hid,
+              NULL, NULL,
+              "Arrow TEST begin failed...");
 }
 
 static void _test_end_init(http_request_t *request, void *arg) {
@@ -184,11 +182,9 @@ static void _test_end_init(http_request_t *request, void *arg) {
 }
 
 int arrow_test_end(property_t *res_hid) {
-  int ret = __http_routine(_test_end_init, res_hid, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow TEST end failed...");
-  }
-  return ret;
+  STD_ROUTINE(_test_end_init, res_hid,
+              NULL, NULL,
+              "Arrow TEST end failed...");
 }
 
 typedef struct _test_step_ {
@@ -209,11 +205,9 @@ static void _test_step_begin_init(http_request_t *request, void *arg) {
 
 int arrow_test_step_begin(property_t *res_hid, int number) {
   test_step_t st = { res_hid, number };
-  int ret = __http_routine(_test_step_begin_init, &st, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow TEST begin step failed...");
-  }
-  return ret;
+  STD_ROUTINE(_test_step_begin_init, &st,
+              NULL, NULL,
+              "Arrow TEST begin step failed...");
 }
 
 typedef struct _test_step_success_end_ {

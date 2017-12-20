@@ -70,11 +70,9 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 
 int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
   event_data_t edata = {(char*)hid, ev, (char *)payload};
-	int ret = __http_routine(_event_ans_init, &edata, NULL, NULL);
-	if ( ret < 0 ) {
-		DBG("Arrow Event answer failed...");
-	}
-	return ret;
+    STD_ROUTINE(_event_ans_init, &edata,
+                NULL, NULL,
+                "Arrow Event answer failed...");
 }
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) __attribute__((used));

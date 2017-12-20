@@ -9,6 +9,10 @@
 #ifndef ACN_SDK_C_MEM_H_
 #define ACN_SDK_C_MEM_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <config.h>
 #include <sys/type.h>
 #if defined(__USE_STD__)
@@ -38,6 +42,10 @@
 # define __attribute_packed__
 #else
 # define __attribute_packed__ __attribute__((__packed__))
+#endif
+
+#if defined(__cplusplus)
+}
 #endif
 
 #endif  // ACN_SDK_C_MEM_H_

@@ -1,6 +1,10 @@
 #if !defined(ACN_SDK_C_DOUBLY_LINKED_LIST_H_)
 #define ACN_SDK_C_DOUBLY_LINKED_LIST_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <data/linkedlist.h>
 
 typedef struct _doubly_linked_list_ {
@@ -86,6 +90,9 @@ doubly_linked_list_t *doubly_linked_list_del(
   } \
 }
 
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  // ACN_SDK_C_DOUBLY_LINKED_LIST_H_
 

@@ -58,13 +58,10 @@ static void _telemetry_init(http_request_t *request, void *arg) {
 }
 
 int arrow_send_telemetry(arrow_device_t *device, void *d) {
-  int ret = 0;
   device_telemetry_t dt = {device, d, 1};
-  ret = __http_routine(_telemetry_init, &dt, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry send failed...");
-  }
-  return ret;
+  STD_ROUTINE(_telemetry_init, &dt,
+              NULL, NULL,
+              "Arrow Telemetry send failed...");
 }
 
 static void _telemetry_batch_init(http_request_t *request, void *arg) {
@@ -93,11 +90,9 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
 
 int arrow_telemetry_batch_create(arrow_device_t *device, void *data, int size) {
   device_telemetry_t dt = {device, data, size};
-  int ret = __http_routine(_telemetry_batch_init, &dt, NULL, NULL);
-  if ( ret < 0 ) {
-    DBG("Arrow Telemetry send failed...");
-  }
-  return ret;
+  STD_ROUTINE(_telemetry_batch_init, &dt,
+              NULL, NULL,
+              "Arrow Telemetry send failed...");
 }
 
 typedef struct _telemetry_hid_ {

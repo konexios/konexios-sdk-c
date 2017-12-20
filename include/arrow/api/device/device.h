@@ -9,6 +9,15 @@ extern "C" {
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 
+enum {
+    DEVICE_ERROR            = -200,
+    DEVICE_REGISTER_ERROR   = -201,
+    DEVICE_FINDBY_ERROR     = -206,
+    DEVICE_LOGS_ERROR       = -207,
+    DEVICE_EVLIST_ERROR     = -208,
+    DEVICE_UPDATE_ERROR     = -210
+};
+
 // create or update this device
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 // find device information by some parameters, 'n' is the number of the find arguments
