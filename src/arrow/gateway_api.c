@@ -223,9 +223,16 @@ static int _gateway_find_by_proc(http_response_t *response, void *arg) {
           JsonNode *t = json_find_member(tmp, "hid");
           if ( t && t->tag == JSON_STRING )
               property_copy( &gi->hid, p_stack(t->string_));
+          // FIXME parse timestamp
+          t = json_find_member(tmp, "createdDate");
+          if ( t && t->tag == JSON_STRING )
+              strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &gi->createdDate);
           t = json_find_member(tmp, "createdBy");
           if ( t && t->tag == JSON_STRING )
               property_copy( &gi->createdBy, p_stack(t->string_));
+          t = json_find_member(tmp, "lastModifiedDate");
+          if ( t && t->tag == JSON_STRING )
+              strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &gi->lastModifiedDate);
           t = json_find_member(tmp, "lastModifiedBy");
           if ( t && t->tag == JSON_STRING )
               property_copy( &gi->lastModifiedBy, p_stack(t->string_));

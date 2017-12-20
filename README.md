@@ -38,13 +38,19 @@ Example:
 You can define this options in the private.h file or use "-Dxxx" compiler flag
 
 define NO_EVENTS            to switch off the event handlers for a mqtt connection
+
 define NO_RELEASE_UPDATE    turn off the firmware update capability (based on a arrow_software_release_dowload_set_cb functions)
+
 define NO_SOFTWARE_UPDATE   turn off the software update capability (based on a arrow_gateway_software_update_set_cb function)
 
 define ARCH_MEM             use the platform specific header with memory functions (bzero, bcopy, strcpy, strncpy etc) in a ${SDK_IMPL}/sys/arch/mem.h (if your platform need the implementation this one)
+
 define ARCH_TYPE            use the platform specific header with common types (uint8_t, uint16_t etc) in a ${SDK_IMPL}/sys/arch/type.h
+
 define ARCH_SOCK            use the platform specific header with socket layer additional headers and definitions (if needed) in a ${SDK_IMPL}/sys/arch/socket.h
+
 define ARCH_SSL             use the wolfSSL settings file ${SDK_IMPL}/sys/arch/ssl.h (if you don't reimplement ssl functions and use default ssl_connect, ssl_recv etc)
+
 define ARCH_TIME            use the platform specific headers or define needed types for common time functions (struct tm etc)
 
 ### examples ###
