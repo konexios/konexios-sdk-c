@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #if !defined(ARROW_GATEWAY_API_H_)
 #define ARROW_GATEWAY_API_H_
 
@@ -5,6 +13,7 @@
 extern "C" {
 #endif
 
+#include <arrow/api/device/info.h>
 #include <data/find_by.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>
@@ -26,10 +35,8 @@ enum {
 
 typedef struct _gateway_info_ {
     property_t hid;
-    struct tm createdDate;
-    property_t createdBy;
-    struct tm lastModifiedDate;
-    property_t lastModifiedBy;
+    who_when_t created;
+    who_when_t lastModified;
     property_t uid;
     property_t name;
     property_t type;
@@ -42,6 +49,17 @@ typedef struct _gateway_info_ {
 
 void gateway_info_init(gateway_info_t *gi);
 void gateway_info_free(gateway_info_t *gi);
+
+typedef struct _gateway_log_ {
+    property_t productName;
+    property_t type;
+    property_t objectHid;
+    who_when_t created;
+    JsonNode *parameters;
+    linked_list_head_node;
+} gateway_log_t;
+void gateway_log_init(gateway_log_t *gi);
+void gateway_log_free(gateway_log_t *gi);
 
 // register new gateway
 int arrow_register_gateway(arrow_gateway_t *gateway);
@@ -56,9 +74,9 @@ int arrow_gateway_find(const char *hid);
 // find gateway by other any parameters
 int arrow_gateway_find_by(gateway_info_t **info, int n, ...);
 // list gateway audit logs
-int arrow_gateway_logs_list(arrow_gateway_t *gateway, int n, ...);
+int arrow_gateway_logs_list(gateway_log_t **logs, arrow_gateway_t *gateway, int n, ...);
 // list gateway devices
-int arrow_gateway_devices_list(const char *hid);
+int arrow_gateway_devices_list(device_info_t **list, const char *hid);
 // send command and payload to gateway and device
 int arrow_gateway_device_send_command(const char *gHid, const char *dHid, const char *cmd, const char *payload);
 // update existing gateway

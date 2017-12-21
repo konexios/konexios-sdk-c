@@ -44,18 +44,16 @@ static void _device_find_by_init(http_request_t *request, void *arg) {
 }
 
 static int _device_find_by_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  if ( response->m_httpResponseCode == 200 ) {
-    DBG("find[%s]", P_VALUE(response->payload.buf));
-  } else return -1;
-  return 0;
+    device_info_t **devs = (device_info_t **)arg;
+    *devs = NULL;
+    return device_info_parse(devs, P_VALUE(response->payload.buf));
 }
 
-int arrow_device_find_by(int n, ...) {
+int arrow_device_find_by(device_info_t **list, int n, ...) {
   find_by_t *params = NULL;
   find_by_collect(params, n);
   STD_ROUTINE(_device_find_by_init, (void*)params,
-              _device_find_by_proc, NULL,
+              _device_find_by_proc, (void*)list,
               DEVICE_MSG, DEVICE_FINDBY_ERROR);
 }
 

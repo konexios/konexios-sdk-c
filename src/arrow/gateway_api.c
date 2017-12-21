@@ -4,13 +4,20 @@
 #include <debug.h>
 #include <data/chunk.h>
 
+void who_when_init(who_when_t *ww) {
+    memset(&ww->date, 0x0, sizeof(struct tm));
+    property_init(&ww->by);
+}
+
+void who_when_free(who_when_t *ww) {
+    property_free(&ww->by);
+}
+
 void gateway_info_init(gateway_info_t *gi) {
-    memset(&gi->createdDate, 0x0, sizeof(struct tm));
-    memset(&gi->lastModifiedDate, 0x0, sizeof(struct tm));
-    property_init(&gi->createdBy);
+    who_when_init(&gi->created);
+    who_when_init(&gi->lastModified);
     property_init(&gi->deviceType);
     property_init(&gi->hid);
-    property_init(&gi->lastModifiedBy);
     property_init(&gi->name);
     property_init(&gi->osName);
     property_init(&gi->softwareName);
@@ -20,16 +27,32 @@ void gateway_info_init(gateway_info_t *gi) {
 }
 
 void gateway_info_free(gateway_info_t *gi) {
-    property_free(&gi->createdBy);
+    who_when_free(&gi->created);
+    who_when_free(&gi->lastModified);
     property_free(&gi->deviceType);
     property_free(&gi->hid);
-    property_free(&gi->lastModifiedBy);
     property_free(&gi->name);
     property_free(&gi->osName);
     property_free(&gi->softwareName);
     property_free(&gi->softwareVersion);
     property_free(&gi->type);
     property_free(&gi->uid);
+}
+
+void gateway_log_init(gateway_log_t *gi) {
+    who_when_init(&gi->created);
+    property_init(&gi->objectHid);
+    property_init(&gi->productName);
+    property_init(&gi->type);
+    gi->parameters = NULL;
+}
+
+void gateway_log_free(gateway_log_t *gi) {
+    who_when_free(&gi->created);
+    property_free(&gi->objectHid);
+    property_free(&gi->productName);
+    property_free(&gi->type);
+    if (gi->parameters) json_delete(gi->parameters);
 }
 
 #define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
@@ -210,12 +233,8 @@ static int _gateway_find_by_proc(http_response_t *response, void *arg) {
   *info = NULL;
   JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
   if ( !_main ) return -1;
-  JsonNode *_size = json_find_member(_main, "size");
-  if ( !_size && _size->tag != JSON_NUMBER ) return -2;
-  int size = (int)_size->number_;
-  if ( size ) {
-      JsonNode *_data = json_find_member(_main, "data");
-      if ( !_data ) return -3;
+  JsonNode *_data = parse_size_data(_main, NULL);
+  if ( _data ) {
       JsonNode *tmp = NULL;
       json_foreach(tmp, _data) {
           gateway_info_t *gi = (gateway_info_t *)malloc(sizeof(gateway_info_t));
@@ -223,40 +242,15 @@ static int _gateway_find_by_proc(http_response_t *response, void *arg) {
           JsonNode *t = json_find_member(tmp, "hid");
           if ( t && t->tag == JSON_STRING )
               property_copy( &gi->hid, p_stack(t->string_));
-          // FIXME parse timestamp
-          t = json_find_member(tmp, "createdDate");
-          if ( t && t->tag == JSON_STRING )
-              strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &gi->createdDate);
-          t = json_find_member(tmp, "createdBy");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->createdBy, p_stack(t->string_));
-          t = json_find_member(tmp, "lastModifiedDate");
-          if ( t && t->tag == JSON_STRING )
-              strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &gi->lastModifiedDate);
-          t = json_find_member(tmp, "lastModifiedBy");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->lastModifiedBy, p_stack(t->string_));
-          t = json_find_member(tmp, "uid");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->uid, p_stack(t->string_));
-          t = json_find_member(tmp, "name");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->name, p_stack(t->string_));
-          t = json_find_member(tmp, "type");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->type, p_stack(t->string_));
-          t = json_find_member(tmp, "deviceType");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->deviceType, p_stack(t->string_));
-          t = json_find_member(tmp, "osName");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->osName, p_stack(t->string_));
-          t = json_find_member(tmp, "softwareName");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->softwareName, p_stack(t->string_));
-          t = json_find_member(tmp, "softwareVersion");
-          if ( t && t->tag == JSON_STRING )
-              property_copy( &gi->softwareVersion, p_stack(t->string_));
+          parse_who_when(tmp, &gi->created, "createdDate", "createdBy");
+          parse_who_when(tmp, &gi->lastModified, "lastModifiedDate", "lastModifiedBy");
+          json_fill_property(tmp, gi, uid);
+          json_fill_property(tmp, gi, name);
+          json_fill_property(tmp, gi, type);
+          json_fill_property(tmp, gi, deviceType);
+          json_fill_property(tmp, gi, osName);
+          json_fill_property(tmp, gi, softwareName);
+          json_fill_property(tmp, gi, softwareVersion);
           linked_list_add_node_last(*info, gateway_info_t, gi);
       }
   }
@@ -292,17 +286,36 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
 }
 
 static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  DBG("gateway list logs: %s", P_VALUE(response->payload.buf));
-  return 0;
+    gateway_log_t **logs = (gateway_log_t **)arg;
+    *logs = NULL;
+    JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
+    if ( !_main ) return -1;
+    JsonNode *_data = parse_size_data(_main, NULL);
+    if ( _data ) {
+        JsonNode *tmp = NULL;
+        json_foreach(tmp, _data) {
+            gateway_log_t *gl = (gateway_log_t *)malloc(sizeof(gateway_log_t));
+            gateway_log_init(gl);
+            parse_who_when(tmp, &gl->created, "createdDate", "createdBy");
+            json_fill_property(tmp, gl, productName);
+            json_fill_property(tmp, gl, type);
+            json_fill_property(tmp, gl, objectHid);
+            JsonNode *t = json_find_member(tmp, "parameters");
+            json_remove_from_parent(t);
+            gl->parameters = t;
+            linked_list_add_node_last(*logs, gateway_log_t, gl);
+        }
+    }
+    json_delete(_main);
+    return 0;
 }
 
-int arrow_gateway_logs_list(arrow_gateway_t *gateway, int n, ...) {
+int arrow_gateway_logs_list(gateway_log_t **logs, arrow_gateway_t *gateway, int n, ...) {
   find_by_t *params = NULL;
   find_by_collect(params, n);
   gate_param_t dp = { gateway, params };
   STD_ROUTINE(_gateway_list_logs_init, &dp,
-              _gateway_list_logs_proc, NULL,
+              _gateway_list_logs_proc, (void*)logs,
               GATEWAY_MSG, GATEWAY_LOGS_ERROR);
 }
 
@@ -316,16 +329,14 @@ static void _gateway_devices_list_init(http_request_t *request, void *arg) {
 }
 
 static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  if ( response->m_httpResponseCode == 200 ) {
-    DBG("devices [%s]", P_VALUE(response->payload.buf));
-  } else return -1;
-  return 0;
+    device_info_t **devs = (device_info_t **)arg;
+    *devs = NULL;
+    return device_info_parse(devs, P_VALUE(response->payload.buf));
 }
 
-int arrow_gateway_devices_list(const char *hid) {
+int arrow_gateway_devices_list(device_info_t **list, const char *hid) {
   STD_ROUTINE(_gateway_devices_list_init, (void*)hid,
-              _gateway_devices_list_proc, NULL,
+              _gateway_devices_list_proc, list,
               GATEWAY_MSG, GATEWAY_DEVLIST_ERROR);
 }
 
@@ -355,18 +366,10 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   json_delete(_main);
 }
 
-static int _gateway_device_cmd_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  if ( response->m_httpResponseCode == 200 ) {
-    DBG("devices [%s]", P_VALUE(response->payload.buf));
-  } else return -1;
-  return 0;
-}
-
 int arrow_gateway_device_send_command(const char *gHid, const char *dHid, const char *cmd, const char *payload) {
   gate_dev_cmd_t gdc = {gHid, dHid, cmd, payload};
   STD_ROUTINE(_gateway_device_cmd_init, &gdc,
-              _gateway_device_cmd_proc, NULL,
+              NULL, NULL,
               GATEWAY_MSG, GATEWAY_DEVCOMS_ERROR);
 }
 

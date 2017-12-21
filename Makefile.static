@@ -55,6 +55,7 @@ SDK_SRC += $(wildcard $(SDK_PATH)/src/time/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/**/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/api/device/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/api/json/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)
 

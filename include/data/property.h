@@ -25,6 +25,7 @@ typedef struct __attribute_packed__ _property {
   char *value;
   uint8_t flags;
 #if defined(__cplusplus)
+  _property() : value(NULL), flags(0x00) {}
   _property(const char *val, uint8_t f) : value(const_cast<char*>(val)), flags(f) {}
 #endif
 } property_t;

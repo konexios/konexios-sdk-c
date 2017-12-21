@@ -1,3 +1,11 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #if !defined(ARROW_DEVICE_API_H_)
 #define ARROW_DEVICE_API_H_
 
@@ -8,6 +16,7 @@ extern "C" {
 #include <data/find_by.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>
+#include <arrow/api/device/info.h>
 
 enum {
     DEVICE_ERROR            = -200,
@@ -21,7 +30,7 @@ enum {
 // create or update this device
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 // find device information by some parameters, 'n' is the number of the find arguments
-int arrow_device_find_by(int n, ...);
+int arrow_device_find_by(device_info_t **list, int n, ...);
 // find device information by HID
 int arrow_device_find_by_hid(const char *hid);
 // update existing device

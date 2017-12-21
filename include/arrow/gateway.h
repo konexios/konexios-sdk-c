@@ -9,10 +9,14 @@
 #ifndef ARROW_GATEWAY_H_
 #define ARROW_GATEWAY_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <data/property.h>
 #include <json/json.h>
 
-typedef struct __attribute_packed__ {
+typedef struct __attribute_packed__ _arrow_gateway_ {
   property_t name;
   property_t uid;
   property_t os;
@@ -21,6 +25,9 @@ typedef struct __attribute_packed__ {
   property_t software_name;
   property_t software_version;
   property_t sdkVersion;
+#if defined(__cplusplus)
+  _arrow_gateway_() {}
+#endif
 } arrow_gateway_t;
 
 enum account_type {
@@ -65,4 +72,9 @@ void arrow_gateway_config_add_accessKey(arrow_gateway_config_t *conf, const char
 #endif
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway);
+
+#if defined(__cplusplus)
+}
+#endif
+
 #endif /* ARROW_GATEWAY_H_ */
