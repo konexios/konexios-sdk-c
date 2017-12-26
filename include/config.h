@@ -18,6 +18,26 @@
 #include "private.h"
 #endif
 
+#if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) || \
+    defined(__LITTLE_ENDIAN__) || \
+    defined(__ARMEL__) || \
+    defined(__THUMBEL__) || \
+    defined(__AARCH64EL__) || \
+    defined(__MIPSEL__) || \
+    defined(__XTENSA_EL__)
+#define __LE_MODE__ 1
+#elif (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || \
+    defined(__BIG_ENDIAN__) || \
+    defined(__ARMEB__) || \
+    defined(__THUMBEB__) || \
+    defined(__AARCH64EB__) || \
+    defined(__MIPSEB__) || \
+    defined(__XTENSA_EB__)
+#define __BE_MODE__ 1
+#else
+#warning "Undefined endian mode __LE_MODE__/__BE_MODE__ [little by default]"
+#endif
+
 #if !defined(__NO_STD__)
 # define __USE_STD__
 // for the std lib headers

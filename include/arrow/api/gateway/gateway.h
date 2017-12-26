@@ -13,7 +13,9 @@
 extern "C" {
 #endif
 
+#include <arrow/api/gateway/info.h>
 #include <arrow/api/device/info.h>
+#include <arrow/api/log.h>
 #include <data/find_by.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>
@@ -33,34 +35,6 @@ enum {
     GATEWAY_UPDATE_ERROR    = -110
 };
 
-typedef struct _gateway_info_ {
-    property_t hid;
-    who_when_t created;
-    who_when_t lastModified;
-    property_t uid;
-    property_t name;
-    property_t type;
-    property_t deviceType;
-    property_t osName;
-    property_t softwareName;
-    property_t softwareVersion;
-    linked_list_head_node;
-} gateway_info_t;
-
-void gateway_info_init(gateway_info_t *gi);
-void gateway_info_free(gateway_info_t *gi);
-
-typedef struct _gateway_log_ {
-    property_t productName;
-    property_t type;
-    property_t objectHid;
-    who_when_t created;
-    JsonNode *parameters;
-    linked_list_head_node;
-} gateway_log_t;
-void gateway_log_init(gateway_log_t *gi);
-void gateway_log_free(gateway_log_t *gi);
-
 // register new gateway
 int arrow_register_gateway(arrow_gateway_t *gateway);
 // download gateway configuration
@@ -70,11 +44,11 @@ int arrow_gateway_heartbeat(arrow_gateway_t *gateway);
 // send the checkin request
 int arrow_gateway_checkin(arrow_gateway_t *gateway);
 // find gateway by hid
-int arrow_gateway_find(const char *hid);
+int arrow_gateway_find(gateway_info_t *info, const char *hid);
 // find gateway by other any parameters
 int arrow_gateway_find_by(gateway_info_t **info, int n, ...);
 // list gateway audit logs
-int arrow_gateway_logs_list(gateway_log_t **logs, arrow_gateway_t *gateway, int n, ...);
+int arrow_gateway_logs_list(log_t **logs, arrow_gateway_t *gateway, int n, ...);
 // list gateway devices
 int arrow_gateway_devices_list(device_info_t **list, const char *hid);
 // send command and payload to gateway and device

@@ -43,6 +43,7 @@ typedef struct __attribute_packed__ _property {
 
 void property_init(property_t *dst);
 void property_copy(property_t *dst, const property_t src);
+void property_move(property_t *dst, property_t *src);
 void property_n_copy(property_t *dst, const char *src, int n);
 void property_free(property_t *dst);
 int property_cmp(property_t *src, property_t *dst);

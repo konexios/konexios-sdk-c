@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "http/request.h"
+#include "http/response.h"
 #include <debug.h>
 #include <config.h>
 #include <sys/mem.h>

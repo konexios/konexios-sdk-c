@@ -32,7 +32,8 @@ typedef struct _who_when_ {
 } who_when_t;
 void who_when_init(who_when_t *ww);
 void who_when_free(who_when_t *ww);
-int parse_who_when(JsonNode *tmp, who_when_t *ww, const char *date, const char *person);
+void who_when_move(who_when_t *dst, who_when_t *src);
+int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person);
 
 #define json_fill_property(tmp, gx, x) do { \
     JsonNode *t = json_find_member(tmp, xstr(x)); \

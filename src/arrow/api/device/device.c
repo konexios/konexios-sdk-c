@@ -69,17 +69,25 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
 }
 
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  if ( response->m_httpResponseCode == 200 ) {
-    DBG("find[%s]", P_VALUE(response->payload.buf));
-  } else return -1;
-  return 0;
+    device_info_t *info = (device_info_t *)arg;
+    device_info_t *list;
+    int ret = device_info_parse(&list, P_VALUE(response->payload.buf));
+    if ( ret < 0 ) return -1;
+    if ( list ) {
+        device_info_move(info, list);
+        device_info_t *tmp = NULL;
+        for_each_node_hard(tmp, list, device_info_t) {
+            device_info_free(tmp);
+            free(tmp);
+        }
+    }
+    return 0;
 }
 
 
-int arrow_device_find_by_hid(const char *hid) {
+int arrow_device_find_by_hid(device_info_t *list, const char *hid) {
   STD_ROUTINE(_device_find_by_hid_init, (void *)hid,
-              _device_find_by_hid_proc, NULL,
+              _device_find_by_hid_proc, list,
               DEVICE_MSG, DEVICE_FINDBY_ERROR);
 }
 
@@ -133,17 +141,17 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
 }
 
 static int _device_list_events_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  DBG("dev list events: %s", P_VALUE(response->payload.buf));
-  return 0;
+    device_event_t **evns = (device_event_t **)arg;
+    *evns = NULL;
+    return device_event_parse(evns, P_VALUE(response->payload.buf));
 }
 
-int arrow_list_device_events(arrow_device_t *device, int n, ...) {
+int arrow_list_device_events(device_event_t **list, arrow_device_t *device, int n, ...) {
   find_by_t *params = NULL;
   find_by_collect(params, n);
   dev_param_t dp = { device, params };
   STD_ROUTINE(_device_list_events_init, &dp,
-              _device_list_events_proc, NULL,
+              _device_list_events_proc, list,
               DEVICE_MSG, DEVICE_EVLIST_ERROR);
 }
 
@@ -160,17 +168,17 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
 }
 
 static int _device_list_logs_proc(http_response_t *response, void *arg) {
-  SSP_PARAMETER_NOT_USED(arg);
-  DBG("dev list events: %s", P_VALUE(response->payload.buf));
-  return 0;
+  log_t **logs = (log_t **)arg;
+  *logs = NULL;
+  return log_parse(logs, P_VALUE(response->payload.buf));
 }
 
-int arrow_list_device_logs(arrow_device_t *device, int n, ...) {
+int arrow_list_device_logs(log_t **list, arrow_device_t *device, int n, ...) {
   find_by_t *params = NULL;
   find_by_collect(params, n);
   dev_param_t dp = { device, params };
   STD_ROUTINE(_device_list_logs_init, &dp,
-              _device_list_logs_proc, NULL,
+              _device_list_logs_proc, list,
               DEVICE_MSG, DEVICE_LOGS_ERROR);
 }
 

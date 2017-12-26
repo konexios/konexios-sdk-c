@@ -21,7 +21,6 @@
 #include <ctype.h>
 #include <debug.h>
 #include <http/client.h>
-#include <arrow/request.h>
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>

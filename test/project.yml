@@ -31,7 +31,12 @@
     - -:test/support
   :source:
     - src/**
-    - +:acn-sdk-c/src/**
+    - +:acn-sdk-c/src/arrow/**
+    - +:acn-sdk-c/src/bsd/**
+    - +:acn-sdk-c/src/data/**
+    - +:acn-sdk-c/src/http/**
+    - +:acn-sdk-c/src/json/**
+    - +:acn-sdk-c/src/sys/**
   :support:
     - test/support
   :include:
@@ -39,6 +44,8 @@
     - +:acn-sdk-c
     - +:acn-sdk-c/include/arrow
     - +:acn-sdk-c/include/sys
+    - +:acn-sdk-c/include/bsd
+    - +:acn-sdk-c/include/ssl
 
 :defines:
   # in order to add common defines:
@@ -56,7 +63,9 @@
   :mock_prefix: mock_
   :when_no_prototypes: :warn
   :enforce_strict_ordering: TRUE
+  :when_ptr: :smart
   :plugins:
+    - :array
     - :expect_any_args
     - :ignore
     - :callback
@@ -67,6 +76,8 @@
     uint32:   UINT32
     int8:     INT8
     bool:     UINT8
+#  :includes:
+#    - <wolfssl/ssl.h>
 
 :gcov:
     :html_report_type: basic

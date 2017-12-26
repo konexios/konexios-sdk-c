@@ -66,17 +66,6 @@ typedef struct __attribute_packed__ {
     _payload_meth_t _response_payload_meth;
 } http_request_t;
 
-typedef struct {
-    int m_httpResponseCode;
-    uint16_t is_chunked;
-    uint16_t recvContentLength;
-    property_map_t *header;
-    property_map_t content_type;
-    http_payload_t payload;
-    _payload_meth_t _p_meth;
-    int processed_payload_chunk;
-} http_response_t;
-
 void http_request_init(http_request_t *req, int meth, const char *url);
 void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, property_t key, property_t value);
@@ -85,12 +74,5 @@ void http_request_set_content_type(http_request_t *req, property_t value);
 property_map_t *http_request_first_header(http_request_t *req);
 void http_request_set_payload(http_request_t *req, property_t payload);
 int http_request_set_findby(http_request_t *req, find_by_t *fb);
-
-void http_response_init(http_response_t *req, _payload_meth_t *handler);
-void http_response_free(http_response_t *res);
-void http_response_add_header(http_response_t *req, property_t key, property_t value);
-void http_response_set_content_type(http_response_t *req, property_t value);
-void http_response_set_payload(http_response_t *req, property_t payload, uint32_t size);
-int http_response_add_payload(http_response_t *req, property_t payload, uint32_t size);
 
 #endif /* HTTPCLIENT_REQUEST_H_ */

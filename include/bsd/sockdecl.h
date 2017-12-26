@@ -1,7 +1,18 @@
+/* Copyright (c) 2017 Arrow Electronics, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Apache License 2.0
+ * which accompanies this distribution, and is available at
+ * http://apache.org/licenses/LICENSE-2.0
+ * Contributors: Arrow Electronics, Inc.
+ */
+
 #if !defined(_DEFAULT_SOCK_DECL_H_)
 #define _DEFAULT_SOCK_DECL_H_
 
 #include <bsd/struct_hostent.h>
+#if !defined(ARCH_SOCK)
+#include <bsd/socktype.h>
+#endif
 
 struct hostent *gethostbyname(const char *host);
 int socket(int protocol_family, int socket_type, int protocol);

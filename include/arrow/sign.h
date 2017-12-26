@@ -9,6 +9,12 @@
 #ifndef ARROW_SIGN_H_
 #define ARROW_SIGN_H_
 
+#include <http/request.h>
+
+#if !defined(CANONICAL_QUERY_LEN)
+#define CANONICAL_QUERY_LEN 256
+#endif
+
 // API key
 char *get_api_key(void);
 
@@ -29,5 +35,8 @@ void sign(char *signature,
           const char *canQueryString,
           const char *payload,
           const char *apiVersion);
+
+// Add needed headers for the Arrow cloud
+void sign_request(http_request_t *req);
 
 #endif /* ARROW_SIGN_H_ */

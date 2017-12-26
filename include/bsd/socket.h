@@ -25,9 +25,12 @@ extern "C" {
 # include <sys/arch/socket.h>
 #else
 # include <bsd/struct_hostent.h>
-# include <bsd/sockdef.h>
+# include <bsd/socktype.h>
 # include <bsd/sockdecl.h>
 #endif
+
+#include <bsd/sockdef.h>
+
 #if defined(__cplusplus)
 }
 #endif

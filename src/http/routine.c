@@ -10,7 +10,7 @@
 
 #include "http/routine.h"
 #include <http/client.h>
-#include <arrow/request.h>
+#include <arrow/sign.h>
 #include <debug.h>
 
 static http_client_t _cli = { -1, -1, 0, {1, 1}, NULL, NULL, NULL };

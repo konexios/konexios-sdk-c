@@ -34,6 +34,21 @@ void device_info_free(device_info_t *gd) {
     json_delete(gd->properties);
 }
 
+void device_info_move(device_info_t *dst, device_info_t *src) {
+    who_when_move(&dst->created, &src->created);
+    who_when_move(&dst->lastModified, &src->lastModified);
+    property_move(&dst->hid, &src->hid);
+    property_move(&dst->uid, &src->uid);
+    property_move(&dst->name, &src->name);
+    property_move(&dst->type, &src->type);
+    property_move(&dst->gatewayHid, &src->gatewayHid);
+    dst->enabled = src->enabled;
+    dst->info = src->info;
+    src->info = NULL;
+    dst->properties = src->properties;
+    src->properties = NULL;
+}
+
 int device_info_parse(device_info_t **list, const char *s) {
     JsonNode *_main = json_decode(s);
     if ( !_main ) return -1;
@@ -43,8 +58,8 @@ int device_info_parse(device_info_t **list, const char *s) {
         json_foreach(tmp, _data) {
             device_info_t *gd = (device_info_t *)malloc(sizeof(device_info_t));
             device_info_init(gd);
-            parse_who_when(tmp, &gd->created, "createdDate", "createdBy");
-            parse_who_when(tmp, &gd->lastModified, "lastModifiedDate", "lastModifiedBy");
+            who_when_parse(tmp, &gd->created, "createdDate", "createdBy");
+            who_when_parse(tmp, &gd->lastModified, "lastModifiedDate", "lastModifiedBy");
             json_fill_property(tmp, gd, hid);
             json_fill_property(tmp, gd, uid);
             json_fill_property(tmp, gd, name);

@@ -31,6 +31,7 @@ typedef struct _device_info_ {
 } device_info_t;
 void device_info_init(device_info_t *gd);
 void device_info_free(device_info_t *gd);
+void device_info_move(device_info_t *dst, device_info_t *src);
 int device_info_parse(device_info_t **list, const char *s);
 
 #if defined(__cplusplus)

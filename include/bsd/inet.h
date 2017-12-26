@@ -11,8 +11,6 @@
 
 #include <sys/type.h>
 
-uint16_t ntohs(uint16_t n) __attribute__((unused));
-
 /**
  * Convert an u16_t from host- to network byte order.
  *

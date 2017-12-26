@@ -17,6 +17,8 @@ extern "C" {
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 #include <arrow/api/device/info.h>
+#include <arrow/api/device/event.h>
+#include <arrow/api/log.h>
 
 enum {
     DEVICE_ERROR            = -200,
@@ -32,13 +34,13 @@ int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
 // find device information by some parameters, 'n' is the number of the find arguments
 int arrow_device_find_by(device_info_t **list, int n, ...);
 // find device information by HID
-int arrow_device_find_by_hid(const char *hid);
+int arrow_device_find_by_hid(device_info_t *list, const char *hid);
 // update existing device
 int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device);
 // list historical device events
-int arrow_list_device_events(arrow_device_t *device, int n, ...);
+int arrow_list_device_events(device_event_t **list, arrow_device_t *device, int n, ...);
 // list device audit logs
-int arrow_list_device_logs(arrow_device_t *device, int n, ...);
+int arrow_list_device_logs(log_t **list, arrow_device_t *device, int n, ...);
 // error request
 int arrow_error_device(arrow_device_t *device, const char *error);
 

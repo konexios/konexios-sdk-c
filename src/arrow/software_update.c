@@ -2,7 +2,7 @@
 #include <debug.h>
 #include <arrow/events.h>
 #include <arrow/routine.h>
-#include <arrow/gateway_api.h>
+#include <arrow/api/gateway/gateway.h>
 #include <time/time.h>
 #include <sys/reboot.h>
 

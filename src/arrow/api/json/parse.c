@@ -8,6 +8,20 @@
 
 #include <arrow/api/json/parse.h>
 
+void who_when_init(who_when_t *ww) {
+    memset(&ww->date, 0x0, sizeof(struct tm));
+    property_init(&ww->by);
+}
+
+void who_when_free(who_when_t *ww) {
+    property_free(&ww->by);
+}
+
+void who_when_move(who_when_t *dst, who_when_t *src) {
+    property_move(&dst->by, &src->by);
+    memcpy(&dst->date, &src->date, sizeof(struct tm));
+}
+
 JsonNode *parse_size_data(JsonNode *_main, page_size_t *ps) {
     if ( ps ) memset(ps, 0x0, sizeof(page_size_t));
     JsonNode *_size = json_find_member(_main, "size");
@@ -34,7 +48,7 @@ JsonNode *parse_size_data(JsonNode *_main, page_size_t *ps) {
 }
 
 
-int parse_who_when(JsonNode *tmp, who_when_t *ww, const char *date, const char *person) {
+int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person) {
     // FIXME parse timestamp
     JsonNode *t = json_find_member(tmp, date);
     if ( t && t->tag == JSON_STRING )

@@ -16,7 +16,7 @@ void property_init(property_t *dst) {
 
 void property_copy(property_t *dst, const property_t src) {
 	if ( !dst ) return;
-  property_free(dst);
+    property_free(dst);
 	switch(src.flags) {
   case is_stack:
 		dst->value = strdup(src.value);
@@ -31,6 +31,11 @@ void property_copy(property_t *dst, const property_t src) {
 		dst->flags = is_dynamic;
     break;
   }
+}
+
+void property_move(property_t *dst, property_t *src) {
+    property_copy(dst, *src);
+    property_init(src);
 }
 
 void property_n_copy(property_t *dst, const char *src, int n) {
