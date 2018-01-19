@@ -16,6 +16,7 @@
 #include "mock_mac.h"
 #include "mock_sockdecl.h"
 #include "mock_ssl.h"
+#include "http_cb.h"
 
 void setUp(void)
 {
@@ -35,10 +36,16 @@ void test_client_init(void) {
     TEST_ASSERT_EQUAL_INT(DEFAULT_API_TIMEOUT, _test_cli.timeout);
 }
 
-void test_client_do( void ) {
-    http_request_t request;
-    http_response_t response;
+char http_resp_text[] =
+        "HTTP/1.1 200 OK\r\n"
+        "Date: Mon, 27 Jul 2018 12:28:53 GMT\r\n"
+        "\r\n";
 
+static http_request_t request;
+static http_response_t response;
+
+void test_http_client_do( void ) {
+    set_http_cb(http_resp_text, sizeof(http_resp_text));
     static struct hostent s_hostent;
     static char *s_aliases;
     static unsigned long s_hostent_addr;
@@ -54,15 +61,41 @@ void test_client_do( void ) {
     s_hostent.h_addr_list = (char**) &s_phostent_addr;
     s_hostent.h_addr = s_hostent.h_addr_list[0];
 
+    // test address
+    http_request_init(&request, GET, "http://api.arrowconnect.io:80/api/v1/kronos/gateways");
+    TEST_ASSERT( !request.query );
+
 //    char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
 //    get_mac_address_ExpectAndReturn(mac, 0);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(0, &s_hostent);
-//    gethostbyname_IgnoreAndReturn(&s_hostent);
-//    get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
+    gethostbyname_ExpectAndReturn(P_VALUE(request.host), &s_hostent);
+    struct sockaddr_in serv;
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = PF_INET;
+    bcopy((char *)s_hostent.h_addr,
+            (char *)&serv.sin_addr.s_addr,
+            (uint32_t)s_hostent.h_length);
+    serv.sin_port = htons(request.port);
+
+    setsockopt_IgnoreAndReturn(0);
+    connect_ExpectAndReturn(0, (struct sockaddr*)&serv, sizeof(struct sockaddr_in), 0);
+
+    send_StubWithCallback(send_cb);
+    recv_StubWithCallback(recv_cb);
+
     int ret = http_client_do(&_test_cli, &request, &response);
     TEST_ASSERT_EQUAL_INT(0, ret);
+    TEST_ASSERT_EQUAL_INT(200, response.m_httpResponseCode);
 }
+
+void test_http_client_free( void ) {
+    // FIXME ssl close
+    ssl_close_IgnoreAndReturn(0);
+    soc_close_Expect(0);
+    http_client_free(&_test_cli);
+    TEST_ASSERT(!_test_cli.queue);
+}
+
 /*
 void test_gateway_serialize( void ) {
     char *t = arrow_gateway_serialize(&_test_gateway);

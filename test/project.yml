@@ -46,6 +46,7 @@
     - +:acn-sdk-c/include/sys
     - +:acn-sdk-c/include/bsd
     - +:acn-sdk-c/include/ssl
+    - +:src
 
 :defines:
   # in order to add common defines:
