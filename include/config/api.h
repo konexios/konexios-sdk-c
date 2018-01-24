@@ -64,6 +64,14 @@
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
 #endif
 
+#if !defined(DEVICE_SOFTWARE_NAME)
+#define DEVICE_SOFTWARE_NAME GATEWAY_SOFTWARE_NAME
+#endif
+#if !defined(DEVICE_SOFTWARE_VERSION)
+#define DEVICE_SOFTWARE_VERSION GATEWAY_SOFTWARE_VERSION
+#endif
+
+
 /* device configuration */
 #if !defined(DEVICE_NAME)
 #define DEVICE_NAME                 "unknown"
