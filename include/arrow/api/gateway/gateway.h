@@ -21,7 +21,8 @@ extern "C" {
 #include <arrow/device.h>
 #include <time/time.h>
 
-enum {
+typedef enum {
+    GATEWAY_SUCCESS         = 0,
     GATEWAY_ERROR           = -100,
     GATEWAY_REGISTER_ERROR  = -101,
     GATEWAY_HEARTBEAT_ERROR = -102,
@@ -33,7 +34,7 @@ enum {
     GATEWAY_DEVLIST_ERROR   = -108,
     GATEWAY_DEVCOMS_ERROR   = -109,
     GATEWAY_UPDATE_ERROR    = -110
-};
+} arrow_gateway_error_t;
 
 // register new gateway
 int arrow_register_gateway(arrow_gateway_t *gateway);

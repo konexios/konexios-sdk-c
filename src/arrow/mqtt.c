@@ -289,3 +289,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     free(payload);
     return ret;
 }
+
+int mqtt_is_connect() {
+    return mqtt_client.isconnected;
+}

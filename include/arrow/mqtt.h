@@ -23,6 +23,8 @@ int mqtt_connect(arrow_gateway_t *gateway,
                  arrow_device_t *device,
                  arrow_gateway_config_t *config);
 
+int mqtt_is_connect(void);
+
 // Terminate MQTT connection
 void mqtt_disconnect(void);
 

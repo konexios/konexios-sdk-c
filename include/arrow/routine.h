@@ -15,6 +15,16 @@ extern "C" {
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 
+typedef enum {
+    ROUTINE_SUCCESS               = 0,
+    ROUTINE_ERROR                 = -300,
+    ROUTINE_NOT_INITIALIZE        = -301,
+    ROUTINE_GET_TELEMETRY_FAILED  = -302,
+    ROUTINE_MQTT_PUBLISH_FAILED   = -303,
+    ROUTINE_MQTT_CONNECT_FAILED   = -304,
+    ROUTINE_MQTT_SUBSCRIBE_FAILED = -305,
+} arrow_routine_error_t;
+
 typedef int (*get_data_cb)(void *);
 
 // There is only one gateway and device for this space
@@ -25,7 +35,7 @@ arrow_gateway_t *current_gateway(void);
 // Initialize the gateway object and device object as well
 // This function implemented the algorithm to get complete information about a gateway and device.
 // The WDT function is used.
-int arrow_initialize_routine(void);
+arrow_routine_error_t arrow_initialize_routine(void);
 
 // Routine function for terminating current connections with the cloud
 // and terminate all gateway/device information.
@@ -42,18 +52,19 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device);
 
 // Routine function for telemetry sending to the cloud
 // there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
-int arrow_send_telemetry_routine(void *data);
+arrow_routine_error_t arrow_send_telemetry_routine(void *data);
 
 // Funtion set the new state for this device
-int arrow_update_state(const char *name, const char *value);
+arrow_routine_error_t arrow_update_state(const char *name, const char *value);
 
 // Routine for MQTT connection establishing
 // Automatically prepare needed information and send it to the cloud MQTT
-int arrow_mqtt_connect_routine(void);
+arrow_routine_error_t arrow_mqtt_connect_routine(void);
+arrow_routine_error_t arrow_mqtt_disconnect_routine(void);
 
 // This routine send the telemetry data every TELEMETRY_DELAY msec
 // using the data_cb function for forming current telemetry values
-void arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
+arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
 
 #if defined(__cplusplus)
 }
