@@ -100,7 +100,7 @@ ssl_connect_error_ssl:
 ssl_connect_error_ctx:
     wolfSSL_CTX_free(s->ctx);
 ssl_connect_error_sock:
-    XFREE(s->method, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+//    XFREE(s->method, NULL, DYNAMIC_TYPE_TMP_BUFFER);
     free(s);
     return -1;
 }

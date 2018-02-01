@@ -12,7 +12,7 @@
 #include <debug.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 50
+#define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 100
 #define GATEWAY_MSG "Gateway %d"
 
 static void _gateway_config_init(http_request_t *request, void *arg) {
