@@ -9,9 +9,6 @@
 #include "arrow/device.h"
 #include <sys/mem.h>
 #include <config.h>
-#if defined(__USE_STD__)
-# include <stdlib.h>
-#endif
 
 void arrow_device_init(arrow_device_t *dev) {
     dev->info = NULL;
@@ -21,6 +18,8 @@ void arrow_device_init(arrow_device_t *dev) {
     P_CLEAR(dev->uid);
     P_CLEAR(dev->gateway_hid);
     P_CLEAR(dev->hid);
+    property_init(&dev->softwareName);
+    property_init(&dev->softwareVersion);
 #if defined(__IBM__)
     P_CLEAR(dev->eid);
 #endif
@@ -32,6 +31,8 @@ void arrow_device_free(arrow_device_t *dev) {
   P_FREE(dev->uid);
   P_FREE(dev->gateway_hid);
   P_FREE(dev->hid);
+  property_free(&dev->softwareName);
+  property_free(&dev->softwareVersion);
   if ( dev->info ) json_delete(dev->info);
   if ( dev->prop ) json_delete(dev->prop);
 #if defined(__IBM__)
@@ -48,13 +49,15 @@ void arrow_device_add_property(arrow_device_t *dev, const char *key, const char 
   if ( !dev->prop ) dev->prop = json_mkobject();
   json_append_member(dev->prop, key, json_mkstring(value));
 }
-#include <debug.h>
+
 char *arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
   json_append_member(_main, "name", json_mkstring(P_VALUE(dev->name)));
   json_append_member(_main, "type", json_mkstring(P_VALUE(dev->type)));
   json_append_member(_main, "uid", json_mkstring(P_VALUE(dev->uid)));
   json_append_member(_main, "gatewayHid", json_mkstring(P_VALUE(dev->gateway_hid)));
+  json_append_member(_main, "softwareName", json_mkstring(P_VALUE(dev->softwareName)));
+  json_append_member(_main, "softwareName", json_mkstring(P_VALUE(dev->softwareVersion)));
   if ( dev->info ) json_append_member(_main, "info", dev->info);
   if ( dev->prop ) json_append_member(_main, "properties", dev->prop);
   char *dev_str = json_encode(_main);
@@ -84,6 +87,8 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   P_COPY(device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
   P_COPY(device->name, p_const(DEVICE_NAME));
   P_COPY(device->type, p_const(DEVICE_TYPE));
+  property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
+  property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
   char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
   strcpy(uid, P_VALUE(gateway->uid) );

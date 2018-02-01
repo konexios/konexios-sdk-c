@@ -18,6 +18,8 @@ typedef struct __attribute_packed__ {
   property_t type;
   property_t uid;
   property_t gateway_hid;
+  property_t softwareName;
+  property_t softwareVersion;
   JsonNode *info;
   JsonNode *prop;
     property_t hid;
