@@ -77,17 +77,20 @@ linked_list_t *linked_list_del_last(linked_list_t *root);
 
 #define linked_list_del_node(root, type, el) { \
   linked_list_t *base_p = linked_list_del(&(root)->node, &(el)->node); \
-  root = container_of(base_p, type, node); \
+  if ( base_p ) root = container_of(base_p, type, node); \
+  else root = NULL; \
 }
 
 #define linked_list_del_node_first(root, type) { \
   linked_list_t *base_p = linked_list_del(&(root)->node, &(root)->node); \
-  root = container_of(base_p, type, node); \
+  if ( base_p ) root = container_of(base_p, type, node); \
+  else root = NULL; \
 }
 
 #define linked_list_del_node_last(root, type) { \
   linked_list_t *base_p = linked_list_del_last(&(root)->node); \
-  root = container_of(base_p, type, node); \
+  if ( base_p ) root = container_of(base_p, type, node); \
+  else root = NULL; \
 }
 
 #if defined(__cplusplus)

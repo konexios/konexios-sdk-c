@@ -21,6 +21,7 @@
 
 #if defined(__USE_STD__)
 #include <stdbool.h>
+#include <unistd.h>
 #else
 typedef int bool;
 #define false 0
