@@ -19,8 +19,6 @@
 #define USE_STATIC
 #include <data/chunk.h>
 
-#define MQTT_BUF_LEN 600
-
 static Network mqtt_net;
 static MQTTClient mqtt_client;
 static unsigned char buf[MQTT_BUF_LEN];

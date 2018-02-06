@@ -22,7 +22,7 @@ typedef enum {
     ROUTINE_GET_TELEMETRY_FAILED  = -302,
     ROUTINE_MQTT_PUBLISH_FAILED   = -303,
     ROUTINE_MQTT_CONNECT_FAILED   = -304,
-    ROUTINE_MQTT_SUBSCRIBE_FAILED = -305,
+    ROUTINE_MQTT_SUBSCRIBE_FAILED = -305
 } arrow_routine_error_t;
 
 typedef int (*get_data_cb)(void *);

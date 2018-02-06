@@ -13,6 +13,5 @@ typedef struct {
 int process_event(const char *str);
 
 #define MAX_PARAM_LINE 20
-#define MAX_PARAM_LINE_SIZE 256
 
 #endif // ARROW_EVENTS_H_

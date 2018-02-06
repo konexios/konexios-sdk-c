@@ -18,6 +18,10 @@
 # define MQTT_CIPHER
 #endif
 
+#if !defined(MQTT_BUF_LEN)
+#define MQTT_BUF_LEN 600
+#endif
+
 #if defined(MQTT_CIPHER)
 #  define MQTT_SCH "tls"
 #  define MQTT_PORT 8883

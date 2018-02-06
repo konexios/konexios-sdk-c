@@ -104,9 +104,14 @@ static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
+  int total_len = 0;
   int count = 0;
   json_foreach(child, param) {
-    can_list[count] = malloc(MAX_PARAM_LINE_SIZE);
+    int alloc_len = child->tag==JSON_STRING?strlen(child->string_):50;
+    alloc_len += strlen(json_key(child));
+    alloc_len += 10;
+    can_list[count] = malloc( alloc_len );
+    total_len += alloc_len;
     unsigned int i;
     for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower((int)json_key(child)[i]);
     *(can_list[count]+i) = '=';
@@ -122,8 +127,7 @@ static char *form_canonical_prm(JsonNode *param) {
     }
     count++;
   }
-
-  canParam = malloc(count * MAX_PARAM_LINE_SIZE);
+  canParam = malloc(total_len);
   *canParam = 0;
   qsort(can_list, count, sizeof(char *), cmpstringp);
   int i = 0;
@@ -132,7 +136,6 @@ static char *form_canonical_prm(JsonNode *param) {
     if ( i < count-1 ) strcat(canParam, "\n");
     free(can_list[i]);
   }
-
   return canParam;
 }
 
@@ -164,7 +167,6 @@ int process_event(const char *str) {
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
-
   JsonNode *sign_version = json_find_member(_main, "signatureVersion");
   if ( sign_version ) {
     DBG("signature vertsion: %s", sign_version->string_);
