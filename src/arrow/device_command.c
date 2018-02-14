@@ -11,6 +11,7 @@
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/events.h>
+#include <time/time.h>
 #include <debug.h>
 
 static cmd_handler *__handlers = NULL;
