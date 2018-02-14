@@ -5,7 +5,7 @@
 #include <debug.h>
 #include <arrow/utf8.h>
 
-#define USE_STATIC
+#define USE_HEAP
 #include <data/chunk.h>
 
 int gateway_payload_sign(char *signature,
@@ -15,7 +15,12 @@ int gateway_payload_sign(char *signature,
                          const char *canParString,
                          const char *signatureVersion) {
   // step 1
-  CREATE_CHUNK(canonicalRequest, 256);
+  int total_size = strlen(hid);
+  total_size += strlen(name);
+  total_size += strlen(canParString);
+  total_size += strlen(signatureVersion);
+  total_size += 50;
+  CREATE_CHUNK(canonicalRequest, total_size);
   strcpy(canonicalRequest, hid);
   strcat(canonicalRequest, "\n");
   strcat(canonicalRequest, name);

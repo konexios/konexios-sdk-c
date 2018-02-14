@@ -200,17 +200,17 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
 
   CREATE_CHUNK(username, USERNAME_LEN);
 
-  int ret = snprintf(username, USERNAME_LEN, VHOST "%s", P_VALUE(gateway->hid));
-  if ( ret < 0 ) return -1;
+  int ret = snprintf(username, USERNAME_LEN, "%s%s", VHOST, P_VALUE(gateway->hid));
+  if ( ret < 0 ) goto mqtt_connect_done;
   username[ret] = 0x0;
   DBG("qmtt.username %s", username);
 
-  ret = snprintf(s_topic, S_TOP_LEN, S_TOP_NAME "%s", P_VALUE(gateway->hid));
-  if ( ret < 0 ) return -1;
+  ret = snprintf(s_topic, S_TOP_LEN, "%s%s", S_TOP_NAME, P_VALUE(gateway->hid));
+  if ( ret < 0 ) goto mqtt_connect_done;
   s_topic[ret] = 0x0;
 
-  ret = snprintf(p_topic, P_TOP_LEN, P_TOP_NAME "%s", P_VALUE(gateway->hid));
-  if ( ret < 0 ) return -1;
+  ret = snprintf(p_topic, P_TOP_LEN, "%s%s", P_TOP_NAME, P_VALUE(gateway->hid));
+  if ( ret < 0 ) goto mqtt_connect_done;
   p_topic[ret] = 0x0;
 
   MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
@@ -220,16 +220,24 @@ static int mqtt_connect_iot(arrow_gateway_t *gateway) {
   data.username.cstring = username;
   data.password.cstring = (char*)get_api_key();
   data.keepAliveInterval = 10;
+#if defined(NO_EVENTS)
   data.cleansession = 1;
+#else
+  data.cleansession = 0;
+#endif
 
   NetworkInit(&mqtt_net);
-  DBG("addr: %s", MQTT_ADDR);
   ret = NetworkConnect(&mqtt_net, MQTT_ADDR, MQTT_PORT);
+  if ( ret < 0 ) {
+      DBG("MQTT Network connect failed: %s", MQTT_ADDR);
+      goto mqtt_network_connect_done;
+  }
   DBG("Connecting to %s %d", MQTT_ADDR, MQTT_PORT);
-  if ( ret < 0 ) return ret;
   MQTTClientInit(&mqtt_client, &mqtt_net, DEFAULT_MQTT_TIMEOUT, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
   ret = MQTTConnect(&mqtt_client, &data);
-  DBG("Connected %d", ret);
+mqtt_network_connect_done:
+  if ( ret < 0 ) NetworkDisconnect(&mqtt_net);
+mqtt_connect_done:
   FREE_CHUNK(username);
   return ret;
 }
@@ -263,7 +271,9 @@ void mqtt_disconnect(void) {
 int mqtt_subscribe(void) {
     DBG("Subscribing to %s", s_topic);
     int rc = MQTTSubscribe(&mqtt_client, s_topic, QOS2, messageArrived);
-    DBG("Subscribed %d\n", rc);
+    if ( rc < 0 ) {
+        DBG("Subscribe failed %d\n", rc);
+    }
     return rc;
 }
 

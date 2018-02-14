@@ -121,8 +121,12 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
+  int retry = 0;
   http_session_close_set(current_client(), false);
-  arrow_send_event_ans(ev->gateway_hid, received, NULL);
+  while( arrow_send_event_ans(ev->gateway_hid, received, NULL) < 0 ) {
+      RETRY_UP(retry, {return -2;});
+      msleep(ARROW_RETRY_DELAY);
+  }
   DBG("start device command processing");
 
   JsonNode *tmp = json_find_member(_parameters, "deviceHid");
@@ -140,14 +144,21 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   if ( ret < 0 ) {
       DBG("command_handler fail %d", ret);
   }
+  // close session after next request
+  http_session_close_set(current_client(), true);
 
   if ( _error ) {
-    arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error));
+    while ( arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error)) < 0 ) {
+        RETRY_UP(retry, {return -2;});
+        msleep(ARROW_RETRY_DELAY);
+    }
     json_delete(_error);
   } else {
-    arrow_send_event_ans(ev->gateway_hid, succeeded, NULL);
+    while ( arrow_send_event_ans(ev->gateway_hid, succeeded, NULL) < 0 ) {
+        RETRY_UP(retry, {return -2;});
+        msleep(ARROW_RETRY_DELAY);
+    }
   }
-  http_session_close_set(current_client(), true);
 
   return 0;
 }

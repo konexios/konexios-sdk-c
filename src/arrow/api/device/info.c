@@ -49,6 +49,27 @@ void device_info_move(device_info_t *dst, device_info_t *src) {
     src->properties = NULL;
 }
 
+int _device_info_parse(device_info_t *gd, JsonNode *tmp) {
+    device_info_init(gd);
+    who_when_parse(tmp, &gd->created, "createdDate", "createdBy");
+    who_when_parse(tmp, &gd->lastModified, "lastModifiedDate", "lastModifiedBy");
+    json_fill_property(tmp, gd, hid);
+    json_fill_property(tmp, gd, uid);
+    json_fill_property(tmp, gd, name);
+    json_fill_property(tmp, gd, type);
+    json_fill_property(tmp, gd, gatewayHid);
+    JsonNode *t = json_find_member(tmp, "enabled");
+    if ( t && t->tag == JSON_BOOL )
+        gd->enabled = t->bool_;
+    t = json_find_member(tmp, "info");
+    json_remove_from_parent(t);
+    gd->info = t;
+    t = json_find_member(tmp, "properties");
+    json_remove_from_parent(t);
+    gd->properties = t;
+    return 0;
+}
+
 int device_info_parse(device_info_t **list, const char *s) {
     JsonNode *_main = json_decode(s);
     if ( !_main ) return -1;
@@ -57,23 +78,7 @@ int device_info_parse(device_info_t **list, const char *s) {
         JsonNode *tmp = NULL;
         json_foreach(tmp, _data) {
             device_info_t *gd = (device_info_t *)malloc(sizeof(device_info_t));
-            device_info_init(gd);
-            who_when_parse(tmp, &gd->created, "createdDate", "createdBy");
-            who_when_parse(tmp, &gd->lastModified, "lastModifiedDate", "lastModifiedBy");
-            json_fill_property(tmp, gd, hid);
-            json_fill_property(tmp, gd, uid);
-            json_fill_property(tmp, gd, name);
-            json_fill_property(tmp, gd, type);
-            json_fill_property(tmp, gd, gatewayHid);
-            JsonNode *t = json_find_member(tmp, "enabled");
-            if ( t && t->tag == JSON_BOOL )
-                gd->enabled = t->bool_;
-            t = json_find_member(tmp, "info");
-            json_remove_from_parent(t);
-            gd->info = t;
-            t = json_find_member(tmp, "properties");
-            json_remove_from_parent(t);
-            gd->properties = t;
+            _device_info_parse(gd, tmp);
             linked_list_add_node_last(*list, device_info_t, gd);
         }
     }

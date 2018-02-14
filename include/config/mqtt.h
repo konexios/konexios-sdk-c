@@ -19,7 +19,7 @@
 #endif
 
 #if !defined(MQTT_BUF_LEN)
-#define MQTT_BUF_LEN 600
+#define MQTT_BUF_LEN 1200
 #endif
 
 #if defined(MQTT_CIPHER)

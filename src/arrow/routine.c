@@ -57,6 +57,15 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   if ( restore_device_info(device) < 0 ) {
     if ( arrow_register_device(gateway, device) < 0 ) return -1;
     save_device_info(device);
+  } else {
+      device_info_t list;
+      if ( arrow_device_find_by_hid(&list, P_VALUE(device->hid)) < 0 ) {
+          return -1;
+      } else {
+          if ( list.enabled ) {
+              DBG("device: %s", P_VALUE(list.name));
+          }
+      }
   }
   return 0;
 }
@@ -86,6 +95,8 @@ arrow_routine_error_t arrow_initialize_routine(void) {
   wdt_feed();
   RETRY_CR(retry);
   DBG("register device via API");
+  // close session after next request
+  http_session_close_set(current_client(), true);
   while ( arrow_connect_device(&_gateway, &_device) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
     DBG(DEVICE_CONNECT, "fail");
@@ -93,7 +104,6 @@ arrow_routine_error_t arrow_initialize_routine(void) {
   }
   DBG(DEVICE_CONNECT, "ok");
   _init_done = 1;
-  http_session_close_set(current_client(), true);
   return ROUTINE_SUCCESS;
 }
 

@@ -18,7 +18,7 @@
 #endif
 
 # if defined(USE_HEAP)
-#define FREE_CHUNK(ptr) free(uri)
+#define FREE_CHUNK(ptr) free(ptr)
 #else
 #define FREE_CHUNK(ptr)
 # endif

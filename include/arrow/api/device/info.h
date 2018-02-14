@@ -29,6 +29,7 @@ typedef struct _device_info_ {
     JsonNode *properties;
     linked_list_head_node;
 } device_info_t;
+int _device_info_parse(device_info_t *gd, JsonNode *tmp);
 void device_info_init(device_info_t *gd);
 void device_info_free(device_info_t *gd);
 void device_info_move(device_info_t *dst, device_info_t *src);

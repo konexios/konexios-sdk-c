@@ -22,6 +22,7 @@ typedef void __dummy__;
 #define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
 static __release_cb  __release = NULL;
+static __download_init_cb __download_init = NULL;
 static __download_payload_cb  __payload = NULL;
 static __download_complete_cb __download = NULL;
 
@@ -169,48 +170,63 @@ int arrow_software_releases_trans_start(const char *hid) {
 
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(_ev);
+  int ret = -1;
   JsonNode *tmp = json_find_member(_parameters, "softwareReleaseTransHid");
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
   wdt_feed();
   http_session_close_set(current_client(), false);
-  while( arrow_software_releases_trans_received(trans_hid) < 0)
+  int retry = 0;
+  while( arrow_software_releases_trans_received(trans_hid) < 0) {
+    RETRY_UP(retry, {return -2;});
     msleep(ARROW_RETRY_DELAY);
+  }
   wdt_feed();
   tmp = json_find_member(_parameters, "tempToken");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_token = tmp->string_;
   DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
   tmp = json_find_member(_parameters, "fromSoftwareVersion");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_from = tmp->string_;
   tmp = json_find_member(_parameters, "toSoftwareVersion");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_to = tmp->string_;
   tmp = json_find_member(_parameters, "md5checksum");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_checksum = tmp->string_;
   wdt_feed();
-  int ret = -1;
   if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
+  }
+  if ( __download_init ) {
+      ret = __download_init();
+      if ( ret < 0 ) goto software_release_done;
   }
   ret = arrow_software_release_download(_token, trans_hid, _checksum);
   wdt_feed();
   SSP_PARAMETER_NOT_USED(_to);
-  if ( ret < 0 ) {
-    wdt_feed();
-    while( arrow_software_releases_trans_fail(trans_hid, "failed") < 0)
-      msleep(ARROW_RETRY_DELAY);
-    wdt_feed();
-  } else {
-    wdt_feed();
-    while(arrow_software_releases_trans_success(trans_hid) < 0)
-      msleep(ARROW_RETRY_DELAY);
-    reboot();
-  }
+software_release_done:
+  // close session after next request
   http_session_close_set(current_client(), true);
+  if ( ret < 0 ) {
+      int retry = 0;
+      wdt_feed();
+      while ( arrow_software_releases_trans_fail(trans_hid, "failed") < 0 ) {
+          RETRY_UP(retry, {return -2;});
+          msleep(ARROW_RETRY_DELAY);
+      }
+      wdt_feed();
+  } else {
+      int retry = 0;
+      wdt_feed();
+      while ( arrow_software_releases_trans_success(trans_hid) < 0 ) {
+          RETRY_UP(retry, {return -2;});
+          msleep(ARROW_RETRY_DELAY);
+      }
+      reboot();
+  }
   return ret;
 }
 
