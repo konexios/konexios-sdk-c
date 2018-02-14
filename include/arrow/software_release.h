@@ -23,6 +23,7 @@ typedef int (*__release_cb)(const char *url,
                            const char *from,
                            const char *to);
 
+typedef int (*__download_init_cb)(void);
 typedef int (*__download_payload_cb)(const char *,int,int);
 typedef int (*__download_complete_cb)(int);
 
@@ -55,6 +56,7 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
 
 // set software release download callback
 // will be executed when download complete
+int arrow_software_release_init_set_cb( __download_init_cb icb );
 int arrow_software_release_dowload_set_cb(__download_payload_cb pcb, __download_complete_cb ccb);
 
 int arrow_software_release(const char *token,
