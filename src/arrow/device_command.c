@@ -147,7 +147,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   }
   // close session after next request
   http_session_close_set(current_client(), true);
-
+  RETRY_CR(retry);
   if ( _error ) {
     while ( arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error)) < 0 ) {
         RETRY_UP(retry, {return -2;});
