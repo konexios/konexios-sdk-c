@@ -41,7 +41,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	}
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
-        JsonNode *tmp;
+        JsonNode *tmp = NULL;
 		tmp = json_find_member(_main_key, "apiKey");
 		if (tmp) {
 			set_api_key(tmp->string_);
@@ -59,16 +59,17 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	JsonNode *_main_ibm = json_find_member(_main, "ibm");
 	if ( _main_ibm ) {
 		config->type = 1;
+        JsonNode *tmp = NULL;
 		tmp = json_find_member(_main_ibm, "organizationId");
-		if ( tmp ) arrow_gateway_config_add_organizationId(config, tmp->string_);
+        if ( tmp ) property_copy(&config->organizationId, p_stack(tmp->string_));
 		tmp = json_find_member(_main_ibm, "gatewayType");
-		if ( tmp ) arrow_gateway_config_add_gatewayType(config, tmp->string_);
+        if ( tmp ) property_copy(&config->gatewayType, p_stack(tmp->string_));
 		tmp = json_find_member(_main_ibm, "gatewayId");
-		if ( tmp ) arrow_gateway_config_add_gatewayId(config, tmp->string_);
+        if ( tmp ) property_copy(&config->gatewayId, p_stack(tmp->string_));
 		tmp = json_find_member(_main_ibm, "authToken");
-		if ( tmp ) arrow_gateway_config_add_authToken(config, tmp->string_);
+        if ( tmp ) property_copy(&config->authToken, p_stack(tmp->string_));
 		tmp = json_find_member(_main_ibm, "authMethod");
-		if ( tmp ) arrow_gateway_config_add_authMethod(config, tmp->string_);
+        if ( tmp ) property_copy(&config->authMethod, p_stack(tmp->string_));
 	}
 #elif defined(__AZURE__)
 	JsonNode *_main_azure = json_find_member(_main, "azure");

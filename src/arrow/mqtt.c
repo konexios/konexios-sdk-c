@@ -19,6 +19,12 @@
 #define USE_STATIC
 #include <data/chunk.h>
 
+#if defined(NO_EVENTS)
+  #define MQTT_CLEAN_SESSION 1
+#else
+  #define MQTT_CLEAN_SESSION 0
+#endif
+
 static Network mqtt_net;
 static MQTTClient mqtt_client;
 static unsigned char buf[MQTT_BUF_LEN];
@@ -54,12 +60,12 @@ static void messageArrived(MessageData* md) {
 int mqtt_connect_ibm(arrow_device_t *device,
                      arrow_gateway_config_t *config) {
   char username[100];
-  char *organizationId = config->organizationId;
-  char *gatewayType = config->gatewayType;
-  char *gatewayId = config->gatewayId;
-  char *authToken = config->authToken;
-  char *deviceType = arrow_device_get_type(device);
-  char *externalId = device->eid;
+  char *organizationId = P_VALUE(config->organizationId);
+  char *gatewayType = P_VALUE(config->gatewayType);
+  char *gatewayId = P_VALUE(config->gatewayId);
+  char *authToken = P_VALUE(config->authToken);
+  char *deviceType = P_VALUE(device->type);
+  char *externalId = P_VALUE(device->eid);
 
   int ret = snprintf(username, sizeof(username), "g:%s:%s:%s",
                      organizationId, gatewayType, gatewayId);
@@ -76,11 +82,15 @@ int mqtt_connect_ibm(arrow_device_t *device,
   data.username.cstring = "use-token-auth";
   data.password.cstring = authToken;
   data.keepAliveInterval = 10;
-  data.cleansession = 1;
+  data.cleansession = MQTT_CLEAN_SESSION;
 
   int rc;
   NetworkInit(&mqtt_net);
   char mqtt_addr[100];
+  if ( !organizationId || !strlen(organizationId) ) {
+      DBG("There is no organizationId");
+      return -1;
+  }
   strcpy(mqtt_addr, organizationId);
   strcat(mqtt_addr, MQTT_ADDR);
   DBG("addr: (%d)%s", strlen(mqtt_addr), mqtt_addr);

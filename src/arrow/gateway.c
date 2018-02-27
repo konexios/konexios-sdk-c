@@ -11,11 +11,6 @@
 #include <sys/mac.h>
 
 #if defined(__IBM__)
-P_ADD(arrow_gateway_config, organizationId);
-P_ADD(arrow_gateway_config, authMethod);
-P_ADD(arrow_gateway_config, authToken);
-P_ADD(arrow_gateway_config, gatewayId);
-P_ADD(arrow_gateway_config, gatewayType);
 #elif defined(__AZURE__)
 P_ADD(arrow_gateway_config, host);
 P_ADD(arrow_gateway_config, accessKey);
