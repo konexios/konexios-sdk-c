@@ -290,12 +290,20 @@ static uint8_t *wait_line(http_client_t *cli, uint8_t *buf) {
 static int receive_response(http_client_t *cli, http_response_t *res) {
     ringbuf_clear(cli->queue);
     CREATE_CHUNK(tmp, RINGBUFFER_SIZE);
-    uint8_t *crlf = wait_line(cli, (uint8_t*)tmp);
-    if ( !crlf ) {
-        DBG("couldn't wait end of a line");
-        FREE_CHUNK(tmp);
-        return -1;
-    }
+    uint8_t *crlf = NULL;
+    do {
+        crlf = wait_line(cli, (uint8_t*)tmp);
+        if ( !crlf ) {
+            DBG("couldn't wait end of a line");
+            FREE_CHUNK(tmp);
+            return -1;
+        }
+        if( (crlf - (uint8_t *)tmp) < 10 ) {
+            // too short line: sizeof(HTTP/1.1)
+            *crlf = 0x0;
+            crlf = NULL;
+        }
+    } while ( !crlf );
     *crlf = 0x0;
     DBG("resp: {%s}", tmp);
     if( sscanf((char*)tmp, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
@@ -424,10 +432,10 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     http_response_init(res, &req->_response_payload_meth);
     if ( cli->sock < 0 ) {
         DBG("new TCP connection");
-    	ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    	if ( ret < 0 ) return ret;
+        ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if ( ret < 0 ) return ret;
         ringbuf_clear(cli->queue);
-    	cli->sock = ret;
+        cli->sock = ret;
         // resolve the host
     	struct sockaddr_in serv;
     	struct hostent *serv_resolve;

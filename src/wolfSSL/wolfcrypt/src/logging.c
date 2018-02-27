@@ -98,7 +98,7 @@ void wolfSSL_Debugging_OFF(void)
         #include <nio.h>
     #endif
 #else
-    #include <stdio.h>   /* for default printf stuff */
+//    #include <stdio.h>   /* for default printf stuff */
 #endif
 
 #ifdef THREADX
@@ -147,6 +147,7 @@ void WOLFSSL_BUFFER(byte* buffer, word32 length)
 {
     #define LINE_LEN 16
 
+    int ret = 0;
     if (loggingEnabled) {
         word32 i;
         char line[80];
@@ -157,21 +158,29 @@ void WOLFSSL_BUFFER(byte* buffer, word32 length)
             return;
         }
 
-        sprintf(line, "\t");
+        ret = snprintf(line, sizeof(line), "\t");
+        line[ret] = 0;
 
         for (i = 0; i < LINE_LEN; i++) {
-            if (i < length)
-                sprintf(line + 1 + i * 3,"%02x ", buffer[i]);
-            else
-                sprintf(line + 1 + i * 3, "   ");
+            if (i < length) {
+                ret = snprintf(line + 1 + i * 3, sizeof(line) - 1 - i*3, "%02x ", buffer[i]);
+
+            }
+            else {
+                ret = snprintf(line + 1 + i * 3, sizeof(line) - 1 - i*3, "   ");
+            }
         }
 
-        sprintf(line + 1 + LINE_LEN * 3, "| ");
+        ret = snprintf(line + 1 + LINE_LEN * 3, sizeof(line)-1-LINE_LEN*3, "| ");
+        line[1+LINE_LEN*3+ret] = 0;
 
         for (i = 0; i < LINE_LEN; i++)
-            if (i < length)
-                sprintf(line + 3 + LINE_LEN * 3 + i,
+            if (i < length) {
+                ret = snprintf(line + 3 + LINE_LEN * 3 + i,
+                               sizeof(line) - 3 - LINE_LEN * 3 - i,
                      "%c", 31 < buffer[i] && buffer[i] < 127 ? buffer[i] : '.');
+                line[3 + LINE_LEN * 3 + i + ret] = 0;
+            }
 
         wolfssl_log(INFO_LOG, line);
 
@@ -185,7 +194,8 @@ void WOLFSSL_ENTER(const char* msg)
 {
     if (loggingEnabled) {
         char buffer[80];
-        sprintf(buffer, "wolfSSL Entering %s", msg);
+        int ret = snprintf(buffer, sizeof(buffer), "wolfSSL Entering %s", msg);
+        buffer[ret] = 0;
         wolfssl_log(ENTER_LOG , buffer);
     }
 }
@@ -195,17 +205,18 @@ void WOLFSSL_LEAVE(const char* msg, int ret)
 {
     if (loggingEnabled) {
         char buffer[80];
-        sprintf(buffer, "wolfSSL Leaving %s, return %d", msg, ret);
+        int rt = snprintf(buffer, sizeof(buffer), "wolfSSL Leaving %s, return %d", msg, ret);
+        buffer[rt] = 0;
         wolfssl_log(LEAVE_LOG , buffer);
     }
 }
-
 
 void WOLFSSL_ERROR(int error)
 {
     if (loggingEnabled) {
         char buffer[80];
-        sprintf(buffer, "wolfSSL error occurred, error = %d", error);
+        int ret = snprintf(buffer, sizeof(buffer), "wolfSSL error occurred, error = %d", error);
+        buffer[ret] = 0;
         wolfssl_log(ERROR_LOG , buffer);
     }
 }

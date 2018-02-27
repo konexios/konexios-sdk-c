@@ -193,15 +193,25 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
       DBG("cannot find payload");
       return -1;
   }
+  int retry = 0;
 
-  _arrow_put_state(_device_hid, st_received, trans_hid->string_);
+  while ( _arrow_put_state(_device_hid, st_received, trans_hid->string_) < 0 ) {
+      RETRY_UP(retry, {return -2;});
+      msleep(ARROW_RETRY_DELAY);
+  }
 
-  int ret = state_handler(json_encode(payload));
+  int ret = state_handler(payload->string_);
 
   if ( ret < 0 ) {
-    _arrow_put_state(_device_hid, st_error, trans_hid->string_);
+    while ( _arrow_put_state(_device_hid, st_error, trans_hid->string_) < 0 ) {
+        RETRY_UP(retry, {return -2;});
+        msleep(ARROW_RETRY_DELAY);
+    }
   } else {
-    _arrow_put_state(_device_hid, st_complete, trans_hid->string_);
+    while ( _arrow_put_state(_device_hid, st_complete, trans_hid->string_) < 0 ) {
+        RETRY_UP(retry, {return -2;});
+        msleep(ARROW_RETRY_DELAY);
+    }
   }
   return 0;
 }

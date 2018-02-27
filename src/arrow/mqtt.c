@@ -43,6 +43,9 @@ static void messageArrived(MessageData* md) {
     }
     memcpy(nt_str, message->payload, message->payloadlen);
     nt_str[message->payloadlen] = 0x0;
+#if defined(SINGLE_SOCKET)
+    mqtt_disconnect();
+#endif
     process_event(nt_str);
     free(nt_str);
 }
