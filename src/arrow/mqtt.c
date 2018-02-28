@@ -71,9 +71,15 @@ int mqtt_connect_ibm(arrow_device_t *device,
                      organizationId, gatewayType, gatewayId);
   username[ret] = '\0';
 
-  ret = snprintf(p_topic, sizeof(p_topic), "iot-2/type/%s/id/%s/evt/telemetry/fmt/json",
+  ret = snprintf(p_topic, sizeof(p_topic),
+                 "iot-2/type/%s/id/%s/evt/telemetry/fmt/json",
                  deviceType, externalId);
   p_topic[ret] = '\0';
+
+  ret = snprintf(s_topic, sizeof(s_topic),
+                 "iot-2/type/%s/id/%s/cmd/operation/fmt/json",
+                 deviceType, externalId);
+  s_topic[ret] = '\0';
 
   MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
   data.willFlag = 0;
