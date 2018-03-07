@@ -9,12 +9,10 @@
 #include "arrow/mqtt.h"
 #include <config.h>
 #include <arrow/sign.h>
-#include <mqtt/client/MQTTClient.h>
 #include <json/telemetry.h>
 #include <data/property.h>
-#include <debug.h>
-
 #include <arrow/events.h>
+#include <debug.h>
 
 #define USE_STATIC
 #include <data/chunk.h>
@@ -25,20 +23,71 @@
   #define MQTT_CLEAN_SESSION 0
 #endif
 
-static Network mqtt_net;
-static MQTTClient mqtt_client;
-static unsigned char buf[MQTT_BUF_LEN];
-static unsigned char readbuf[MQTT_BUF_LEN];
+static mqtt_env_t __mqtt_telemetry;
+#if !defined(NO_EVENTS)
+static mqtt_env_t *__mqtt_commands;
+#endif
 
-#define S_TOP_NAME "krs/cmd/stg/"
-#define P_TOP_NAME "krs.tel.gts."
+static int _mqtt_init_common(mqtt_env_t *env) {
+    env->buf.size = MQTT_BUF_LEN;
+    env->buf.buf = (unsigned char*)malloc(__mqtt_telemetry.buf.size);
+    env->readbuf.size = MQTT_BUF_LEN;
+    env->readbuf.buf = (unsigned char*)malloc(__mqtt_telemetry.readbuf.size);
+    env->timeout = 3000;
+    env->port = MQTT_PORT;
+    return 0;
+}
 
-#define S_TOP_LEN sizeof(S_TOP_NAME) + 66
-#define P_TOP_LEN sizeof(P_TOP_NAME) + 66
+static int _mqtt_deinit_common(mqtt_env_t *env) {
+    property_free(&env->p_topic);
+    property_free(&env->s_topic);
+    property_free(&env->username);
+    property_free(&env->addr);
+    free(env->buf.buf);
+    free(env->readbuf.buf);
+    env->buf.size = 0;
+    env->readbuf.size = 0;
+    return 0;
+}
 
-static char s_topic[S_TOP_LEN];
-static char p_topic[P_TOP_LEN];
+static int _mqtt_env_connect(mqtt_env_t *env, MQTTPacket_connectData *data) {
+    int ret = -1;
+    NetworkInit(&env->net);
+    ret = NetworkConnect(&env->net,
+                         P_VALUE(env->addr),
+                         env->port);
+    DBG("MQTT Connecting %s %d", P_VALUE(env->addr), env->port);
+    if ( ret < 0 ) {
+        DBG("MQTT Connecting fail %s %d [%d]",
+            P_VALUE(env->addr),
+            env->port,
+            ret);
+        return -1;
+    }
+    MQTTClientInit(&env->client,
+                   &env->net,
+                   env->timeout,
+                   env->buf.buf, env->buf.size,
+                   env->readbuf.buf, env->readbuf.size);
+    ret = MQTTConnect(&env->client, data);
+    if ( ret != MQTT_SUCCESS ) {
+        DBG("MQTT Connect fail %d", ret);
+        NetworkDisconnect(&env->net);
+        return -1;
+    }
+    env->init = 1;
+    return 0;
+}
 
+static int _mqtt_env_disconnect(mqtt_env_t *env) {
+    MQTTDisconnect(&env->client);
+    NetworkDisconnect(&env->net);
+    _mqtt_deinit_common(env);
+    env->init = 0;
+    return 0;
+}
+
+#if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     DBG("mqtt msg arrived %u", message->payloadlen);
@@ -55,59 +104,100 @@ static void messageArrived(MessageData* md) {
     process_event(nt_str);
     free(nt_str);
 }
+#endif
+
+typedef struct _mqtt_driver {
+    int (*telemetry_init)(mqtt_env_t *env, i_args *arg);
+    int (*commands_init)(mqtt_env_t *env, i_args *arg);
+    int (*common_init)(mqtt_env_t *env, i_args *arg);
+} mqtt_driver_t;
 
 #if defined(__IBM__)
-int mqtt_connect_ibm(arrow_device_t *device,
-                     arrow_gateway_config_t *config) {
-  char username[100];
-  char *organizationId = P_VALUE(config->organizationId);
-  char *gatewayType = P_VALUE(config->gatewayType);
-  char *gatewayId = P_VALUE(config->gatewayId);
-  char *authToken = P_VALUE(config->authToken);
-  char *deviceType = P_VALUE(device->type);
-  char *externalId = P_VALUE(device->eid);
 
-  int ret = snprintf(username, sizeof(username), "g:%s:%s:%s",
-                     organizationId, gatewayType, gatewayId);
-  username[ret] = '\0';
+typedef struct _ibm_args {
+    arrow_device_t *device;
+    arrow_gateway_config_t *config;
+} ibm_args;
 
-  ret = snprintf(p_topic, sizeof(p_topic),
-                 "iot-2/type/%s/id/%s/evt/telemetry/fmt/json",
-                 deviceType, externalId);
-  p_topic[ret] = '\0';
+int mqtt_common_init_ibm(mqtt_env_t *env, i_args *args) {
+    ibm_args *ibm = (ibm_args *)args->args;
+    char username[256];
+    char addr[100];
 
-  ret = snprintf(s_topic, sizeof(s_topic),
-                 "iot-2/type/%s/id/%s/cmd/operation/fmt/json",
-                 deviceType, externalId);
-  s_topic[ret] = '\0';
+    char *organizationId = P_VALUE(ibm->config->organizationId);
+    char *gatewayType = P_VALUE(ibm->config->gatewayType);
+    char *gatewayId = P_VALUE(ibm->config->gatewayId);
+    char *authToken = P_VALUE(ibm->config->authToken);
+    char *deviceType = P_VALUE(ibm->device->type);
+    char *externalId = P_VALUE(ibm->device->eid);
+    if ( !organizationId || !strlen(organizationId) ) {
+        DBG("There is no organizationId");
+        return -1;
+    }
 
-  MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-  data.willFlag = 0;
-  data.MQTTVersion = 3;
-  data.clientID.cstring = username;
-  data.username.cstring = "use-token-auth";
-  data.password.cstring = authToken;
-  data.keepAliveInterval = 10;
-  data.cleansession = MQTT_CLEAN_SESSION;
+#if 1
+    // init gateway
+    SSP_PARAMETER_NOT_USED(deviceType);
+    SSP_PARAMETER_NOT_USED(externalId);
+    int ret = snprintf(username, sizeof(username),
+                       "g:%s:%s:%s",
+                       organizationId, gatewayType, gatewayId);
+#else
+    // init device
+    SSP_PARAMETER_NOT_USED(gatewayType);
+    SSP_PARAMETER_NOT_USED(gatewayId);
+    int ret = snprintf(username, sizeof(username),
+                       "d:%s:%s:%s",
+                       organizationId, deviceType, externalId);
+#endif
+    username[ret] = '\0';
+    property_copy(&env->username, p_stack(username));
+    DBG("username: %s", username);
 
-  int rc;
-  NetworkInit(&mqtt_net);
-  char mqtt_addr[100];
-  if ( !organizationId || !strlen(organizationId) ) {
-      DBG("There is no organizationId");
-      return -1;
-  }
-  strcpy(mqtt_addr, organizationId);
-  strcat(mqtt_addr, MQTT_ADDR);
-  DBG("addr: (%d)%s", strlen(mqtt_addr), mqtt_addr);
-  rc = NetworkConnect(&mqtt_net, mqtt_addr, MQTT_PORT);
-  DBG("Connecting to %s %d", mqtt_addr, MQTT_PORT);
-  if ( rc < 0 ) return rc;
-  MQTTClientInit(&mqtt_client, &mqtt_net, 3000, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
-  rc = MQTTConnect(&mqtt_client, &data);
-  DBG("Connected %d", rc);
-  return rc;
+    args->data->clientID.cstring = P_VALUE(env->username);
+    args->data->username.cstring = "use-token-auth";
+    args->data->password.cstring = authToken;
+
+    ret = snprintf(addr, sizeof(addr),
+                   "%s%s",
+                   organizationId, MQTT_ADDR);
+    addr[ret] = '\0';
+    property_copy(&env->addr, p_stack(addr));
+    return 0;
 }
+
+int mqtt_telemetry_init_ibm(mqtt_env_t *env, i_args *args) {
+    SSP_PARAMETER_NOT_USED(args);
+    // should be "iot-2/type/%s/id/%s/evt/telemetry/fmt/json"
+    //                 deviceType, externalId
+#if 1
+    // init gateway
+    ibm_args *ibm = (ibm_args *)args->args;
+    char *gatewayType = P_VALUE(ibm->config->gatewayType);
+    char *gatewayId = P_VALUE(ibm->config->gatewayId);
+    char p_topic[256];
+    snprintf(p_topic, sizeof(p_topic),
+             "iot-2/type/%s/id/%s/evt/telemetry/fmt/json",
+             gatewayType, gatewayId);
+    property_copy(&env->p_topic, p_stack(p_topic));
+#else
+    property_copy(&env->p_topic, p_const("iot-2/evt/telemetry/fmt/json"));
+#endif
+    return 0;
+}
+
+int mqtt_subscribe_init_ibm(mqtt_env_t *env, i_args *args) {
+    SSP_PARAMETER_NOT_USED(args);
+    property_copy(&env->s_topic, p_const("iot-2/cmd/test/fmt/json"));
+    return 0;
+}
+
+static mqtt_driver_t ibm_driver = {
+    mqtt_telemetry_init_ibm,
+    mqtt_subscribe_init_ibm,
+    mqtt_common_init_ibm
+};
+
 #elif defined(__AZURE__)
 #include <time/time.h>
 #include <arrow/utf8.h>
@@ -213,83 +303,166 @@ static int mqtt_connect_azure(arrow_gateway_t *gateway,
   if ( rc != MQTT_SUCCESS ) return FAILURE;
   return rc;
 }
-#else
-static int mqtt_connect_iot(arrow_gateway_t *gateway) {
-#define USERNAME_LEN (sizeof(VHOST) + 66)
+#endif
 
-  CREATE_CHUNK(username, USERNAME_LEN);
+#define USERNAME_LEN 80
+#define S_TOP_NAME "krs/cmd/stg/"
+#define P_TOP_NAME "krs.tel.gts."
+#define S_TOP_LEN sizeof(S_TOP_NAME) + 66
+#define P_TOP_LEN sizeof(P_TOP_NAME) + 66
 
-  int ret = snprintf(username, USERNAME_LEN, "%s%s", VHOST, P_VALUE(gateway->hid));
-  if ( ret < 0 ) goto mqtt_connect_done;
-  username[ret] = 0x0;
-  DBG("qmtt.username %s", username);
+typedef struct _iot_args {
+    arrow_gateway_t *gateway;
+} iot_args;
 
-  ret = snprintf(s_topic, S_TOP_LEN, "%s%s", S_TOP_NAME, P_VALUE(gateway->hid));
-  if ( ret < 0 ) goto mqtt_connect_done;
-  s_topic[ret] = 0x0;
+static int mqtt_common_init_iot(
+        mqtt_env_t *env,
+        i_args *args) {
+    iot_args *iot = (iot_args *)args->args;
+    CREATE_CHUNK(username, USERNAME_LEN);
 
-  ret = snprintf(p_topic, P_TOP_LEN, "%s%s", P_TOP_NAME, P_VALUE(gateway->hid));
-  if ( ret < 0 ) goto mqtt_connect_done;
+    int ret = snprintf(username,
+                       USERNAME_LEN,
+                       "/pegasus:%s",
+                       P_VALUE(iot->gateway->hid));
+    if ( ret < 0 ) return -1;
+    username[ret] = 0x0;
+    property_copy(&env->username, p_stack(username));
+    DBG("qmtt.username %s", username);
+
+    args->data->clientID.cstring = P_VALUE(iot->gateway->hid);
+    args->data->username.cstring = username;
+    args->data->password.cstring = (char*)get_api_key();
+    property_copy(&env->addr, p_const("mqtt-a01.arrowconnect.io"));
+
+    FREE_CHUNK(username);
+
+    return 0;
+}
+
+static int mqtt_telemetry_init_iot(
+        mqtt_env_t *env,
+        i_args *args) {
+  iot_args *iot = (iot_args *)args->args;
+  CREATE_CHUNK(p_topic, P_TOP_LEN);
+
+  int ret = snprintf(p_topic,
+                     P_TOP_LEN,
+                     "%s%s",
+                     P_TOP_NAME,
+                     P_VALUE(iot->gateway->hid));
+  if ( ret < 0 ) return -1;
   p_topic[ret] = 0x0;
+  property_copy(&env->p_topic, p_stack(p_topic));
 
-  MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-  data.willFlag = 0;
-  data.MQTTVersion = 3;
-  data.clientID.cstring = P_VALUE(gateway->hid);
-  data.username.cstring = username;
-  data.password.cstring = (char*)get_api_key();
-  data.keepAliveInterval = 10;
-#if defined(NO_EVENTS)
-  data.cleansession = 1;
-#else
-  data.cleansession = 0;
-#endif
-
-  NetworkInit(&mqtt_net);
-  ret = NetworkConnect(&mqtt_net, MQTT_ADDR, MQTT_PORT);
-  if ( ret < 0 ) {
-      DBG("MQTT Network connect failed: %s", MQTT_ADDR);
-      goto mqtt_network_connect_done;
-  }
-  DBG("Connecting to %s %d", MQTT_ADDR, MQTT_PORT);
-  MQTTClientInit(&mqtt_client, &mqtt_net, DEFAULT_MQTT_TIMEOUT, buf, MQTT_BUF_LEN, readbuf, MQTT_BUF_LEN);
-  ret = MQTTConnect(&mqtt_client, &data);
-mqtt_network_connect_done:
-  if ( ret < 0 ) NetworkDisconnect(&mqtt_net);
-mqtt_connect_done:
-  FREE_CHUNK(username);
-  return ret;
+  FREE_CHUNK(p_topic);
+  return 0;
 }
-#endif
 
+static int mqtt_subscribe_init_iot(
+        mqtt_env_t *env,
+        i_args *args) {
+    iot_args *iot = (iot_args *)args->args;
+    CREATE_CHUNK(s_topic, S_TOP_LEN);
+    int ret = snprintf(s_topic,
+                       S_TOP_LEN,
+                       "%s%s",
+                       S_TOP_NAME,
+                       P_VALUE(iot->gateway->hid));
+    if ( ret < 0 ) return -1;
+    s_topic[ret] = 0x0;
+    property_copy(&env->s_topic, p_stack(s_topic));
+    DBG("sub %s",  s_topic);
+    FREE_CHUNK(s_topic);
+    return 0;
+}
 
-int mqtt_connect(arrow_gateway_t *gateway,
-                 arrow_device_t *device,
-                 arrow_gateway_config_t *config) {
+static __attribute_used__ mqtt_driver_t iot_driver = {
+    mqtt_telemetry_init_iot,
+    mqtt_subscribe_init_iot,
+    mqtt_common_init_iot
+};
+
+static int mqtt_connect(mqtt_driver_t *driver,
+                        int ps,
+                        mqtt_env_t *env,
+                        i_args *args ) {
+    if ( env->init && publish == ps ) return 0;
+    else _mqtt_init_common(env);
+    int rc = -1;
+    driver->common_init(env, args);
+    if ( ps == publish )
+        rc = driver->telemetry_init(env, args);
+    else
+        rc = driver->commands_init(env, args);
+    if ( rc < 0 ) {
+        DBG("IBM telemetry setting fail");
+        return rc;
+    }
+    return _mqtt_env_connect(env, args->data);
+}
+
+int mqtt_telemetry_connect(arrow_gateway_t *gateway,
+                           arrow_device_t *device,
+                           arrow_gateway_config_t *config) {
+    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+    data.willFlag = 0;
+    data.MQTTVersion = 3;
+    data.keepAliveInterval = 10;
+    data.cleansession = MQTT_CLEAN_SESSION;
+    mqtt_driver_t *drv = NULL;
 #if defined(__IBM__)
-  SSP_PARAMETER_NOT_USED(gateway);
-  return mqtt_connect_ibm(device, config);
-#elif defined(__AZURE__)
-  SSP_PARAMETER_NOT_USED(gateway);
-  SSP_PARAMETER_NOT_USED(device);
-  SSP_PARAMETER_NOT_USED(config);
-  return mqtt_connect_azure(gateway, device, config);
+    drv = &ibm_driver;
+    ibm_args ibmargs = { device, config };
+    i_args args = { &data, &ibmargs };
 #else
-  SSP_PARAMETER_NOT_USED(device);
-  SSP_PARAMETER_NOT_USED(config);
-  return mqtt_connect_iot(gateway);
+    drv = &iot_driver;
+    iot_args iotargs = { gateway };
+    i_args args = { &data, &iotargs };
 #endif
-
+    return mqtt_connect(drv, publish, &__mqtt_telemetry, &args);
 }
+
+#if !defined(NO_EVENTS)
+int mqtt_subscribe_connect(arrow_gateway_t *gateway,
+                           arrow_device_t *device,
+                           arrow_gateway_config_t *config) {
+    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+    data.willFlag = 0;
+    data.MQTTVersion = 3;
+    data.keepAliveInterval = 10;
+    data.cleansession = MQTT_CLEAN_SESSION;
+
+    if ( !__mqtt_commands ) {
+#if !defined(__IBM__) && !defined(__AZURE__)
+        DBG("---------------comd-----------");
+        __mqtt_commands = &__mqtt_telemetry;
+#else
+        __mqtt_commands = (mqtt_env_t*)malloc(sizeof(mqtt_env_t));
+        memset(__mqtt_commands, 0x0, sizeof(mqtt_env_t));
+#endif
+    }
+    iot_args iotargs = { gateway };
+    i_args args = { &data, &iotargs };
+
+    return mqtt_connect(&iot_driver,
+                        subscribe,
+                        __mqtt_commands,
+                        &args);
+}
+#endif
 
 void mqtt_disconnect(void) {
-    MQTTDisconnect(&mqtt_client);
-    NetworkDisconnect(&mqtt_net);
+    _mqtt_env_disconnect(&__mqtt_telemetry);
 }
 
+#if !defined(NO_EVENTS)
 int mqtt_subscribe(void) {
-    DBG("Subscribing to %s", s_topic);
-    int rc = MQTTSubscribe(&mqtt_client, s_topic, QOS2, messageArrived);
+    DBG("Subscribing to %s", P_VALUE(__mqtt_commands->s_topic));
+    int rc = MQTTSubscribe(&__mqtt_commands->client,
+                           P_VALUE(__mqtt_commands->s_topic),
+                           QOS2,
+                           messageArrived);
     if ( rc < 0 ) {
         DBG("Subscribe failed %d\n", rc);
     }
@@ -297,8 +470,9 @@ int mqtt_subscribe(void) {
 }
 
 int mqtt_yield(int timeout_ms) {
-  return MQTTYield(&mqtt_client, timeout_ms);
+  return MQTTYield(&__mqtt_commands->client, timeout_ms);
 }
+#endif
 
 int mqtt_publish(arrow_device_t *device, void *d) {
     MQTTMessage msg = {
@@ -312,11 +486,14 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     char *payload = telemetry_serialize(device, d);
     msg.payload = payload;
     msg.payloadlen = strlen(payload);
-    int ret = MQTTPublish(&mqtt_client, p_topic, &msg);
+
+    int ret = MQTTPublish(&__mqtt_telemetry.client,
+                          P_VALUE(__mqtt_telemetry.p_topic),
+                          &msg);
     free(payload);
     return ret;
 }
 
 int mqtt_is_connect() {
-    return mqtt_client.isconnected;
+    return __mqtt_telemetry.client.isconnected;
 }

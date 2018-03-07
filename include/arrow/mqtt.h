@@ -15,13 +15,46 @@ extern "C" {
 
 #include "gateway.h"
 #include "device.h"
+#include <mqtt/client/MQTTClient.h>
+
+enum _mqtt_act_ {
+    publish,
+    subscribe
+};
+
+typedef struct _pstring {
+    unsigned char *buf;
+    size_t size;
+} pstring;
+
+typedef struct _mqtt_env_ {
+    Network net;
+    MQTTClient client;
+    pstring buf;
+    pstring readbuf;
+    property_t username;
+    property_t s_topic;
+    property_t p_topic;
+    property_t addr;
+    short port;
+    int timeout;
+    int init;
+} mqtt_env_t;
+
+typedef struct _i_args {
+    MQTTPacket_connectData *data;
+    void *args;
+} i_args;
 
 // Establishing MQTT connection depends used define:
 // __IBM__ or __AZURE__ in private.h file
 // if there is no define IoT connection will be used as default.
-int mqtt_connect(arrow_gateway_t *gateway,
-                 arrow_device_t *device,
-                 arrow_gateway_config_t *config);
+int mqtt_telemetry_connect(arrow_gateway_t *gateway,
+                           arrow_device_t *device,
+                           arrow_gateway_config_t *config);
+int mqtt_subscribe_connect(arrow_gateway_t *gateway,
+                           arrow_device_t *device,
+                           arrow_gateway_config_t *config);
 
 int mqtt_is_connect(void);
 

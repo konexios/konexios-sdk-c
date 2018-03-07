@@ -65,6 +65,7 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
           if ( list.enabled ) {
               DBG("device: %s", P_VALUE(list.name));
           }
+          device_info_free(&list);
       }
   }
   return 0;
@@ -134,7 +135,7 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
   // init MQTT
   DBG("mqtt connect...");
   int retry = 0;
-  while ( mqtt_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
+  while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
       RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
       DBG(DEVICE_MQTT_CONNECT, "fail");
       msleep(ARROW_RETRY_DELAY);
@@ -144,7 +145,13 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
   arrow_state_mqtt_run(&_device);
   RETRY_CR(retry);
 #if !defined(NO_EVENTS)
-  while(mqtt_subscribe() < 0 ) {
+  while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
+      RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
+      DBG(DEVICE_MQTT_CONNECT, "fail");
+      msleep(ARROW_RETRY_DELAY);
+  }
+  RETRY_CR(retry);
+  while( mqtt_subscribe() < 0 ) {
       RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
       DBG(DEVICE_MQTT_CONNECT, "fail");
       msleep(ARROW_RETRY_DELAY);
@@ -207,6 +214,7 @@ void arrow_close(void) {
   if ( _init_done ) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
+    arrow_gateway_config_free(&_gateway_config);
     _init_done = 0;
   }
 }

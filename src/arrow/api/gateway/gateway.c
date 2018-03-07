@@ -32,7 +32,8 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-	DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
+    DBG("pay: {%s}", P_VALUE(response->payload.buf));
+    printf("pay: {%s}\r\n", P_VALUE(response->payload.buf));
 
 	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
 	if ( !_main ) {

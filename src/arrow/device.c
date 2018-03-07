@@ -69,6 +69,7 @@ char *arrow_device_serialize(arrow_device_t *dev) {
 
 int arrow_device_parse(arrow_device_t *dev, const char *str) {
     JsonNode *_main = json_decode(str);
+    printf("pay {%s}\r\n", str);
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, "hid");
     if ( !hid || hid->tag != JSON_STRING ) return -1;

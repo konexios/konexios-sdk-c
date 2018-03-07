@@ -13,7 +13,7 @@
 # define DEFAULT_MQTT_TIMEOUT 10000
 #endif
 
-#if !defined(__IBM__) && \
+#if defined(__IBM__) || \
   ( defined(__AZURE__) || !defined(DEV_ENV) )
 # define MQTT_CIPHER
 #endif
