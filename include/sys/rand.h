@@ -9,6 +9,8 @@
 #if !defined(ACN_SDK_C_SYS_RAND_H_)
 #define ACN_SDK_C_SYS_RAND_H_
 
+#include <sys/mem.h>
+
 int rand(void);
 
 #endif  // ACN_SDK_C_SYS_RAND_H_

@@ -9,7 +9,10 @@
 #include "sys/rand.h"
 #include <time/time.h>
 
+#if !defined(RAND_MAX)
+// mean there is no some rand function implemented
 int __attribute__((weak)) rand(void) {
   int t = (int) time(NULL);
   return t % 0xffff;
 }
+#endif
