@@ -15,11 +15,21 @@ extern "C" {
 
 #include "gateway.h"
 #include "device.h"
+#include <data/linkedlist.h>
 #include <mqtt/client/MQTTClient.h>
 
-enum _mqtt_act_ {
-    publish,
-    subscribe
+enum _mqtt_mask_ {
+    ACN_num = 1<<0,
+    IBM_num = 1<<8,
+    Azure_num = 1<<16
+};
+
+enum _mqtt_init {
+    MQTT_COMMON_INIT = 1,
+    MQTT_TELEMETRY_INIT = 1<<1,
+    MQTT_SUBSCRIBE_INIT = 1<<2,
+    MQTT_CLIENT_INIT    = 1<<3,
+    MQTT_COMMANDS_INIT  = 1<<5
 };
 
 typedef struct _pstring {
@@ -37,14 +47,24 @@ typedef struct _mqtt_env_ {
     property_t p_topic;
     property_t addr;
     short port;
+    short init;
     int timeout;
-    int init;
+    uint32_t mask;
+    linked_list_head_node;
 } mqtt_env_t;
 
 typedef struct _i_args {
     MQTTPacket_connectData *data;
-    void *args;
+    arrow_device_t *device;
+    arrow_gateway_t *gateway;
+    arrow_gateway_config_t *config;
 } i_args;
+
+typedef struct _mqtt_driver {
+    int (*telemetry_init)(mqtt_env_t *env, i_args *arg);
+    int (*commands_init)(mqtt_env_t *env, i_args *arg);
+    int (*common_init)(mqtt_env_t *env, i_args *arg);
+} mqtt_driver_t;
 
 // Establishing MQTT connection depends used define:
 // __IBM__ or __AZURE__ in private.h file
@@ -59,7 +79,9 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
 int mqtt_is_connect(void);
 
 // Terminate MQTT connection
-void mqtt_disconnect(void);
+int mqtt_telemetry_disconnect(void);
+int mqtt_subscribe_disconnect(void);
+void mqtt_close();
 
 // Subscribe on MQTT events
 // In this context this means that device can be controlled by

@@ -163,8 +163,7 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
 
 arrow_routine_error_t arrow_mqtt_disconnect_routine() {
     if ( _init_mqtt ) {
-        if ( mqtt_is_connect() )
-            mqtt_disconnect();
+        mqtt_close();
         _init_mqtt = 0;
         return ROUTINE_SUCCESS;
     }
