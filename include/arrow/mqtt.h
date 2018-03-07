@@ -72,29 +72,38 @@ typedef struct _mqtt_driver {
 int mqtt_telemetry_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config);
+
+int mqtt_is_telemetry_connect(void);
+
+// Terminate MQTT connection
+int mqtt_telemetry_disconnect(void);
+// Terminate all connections
+void mqtt_close();
+
+// Send the telemetry data to the cloud
+// there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
+int mqtt_publish(arrow_device_t *device, void *data);
+
+
+#if !defined(NO_EVENTS)
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config);
 
-int mqtt_is_connect(void);
-
-// Terminate MQTT connection
-int mqtt_telemetry_disconnect(void);
+int mqtt_is_subscribe_connect(void);
 int mqtt_subscribe_disconnect(void);
-void mqtt_close();
 
 // Subscribe on MQTT events
 // In this context this means that device can be controlled by
 // command received from the cloud
 int mqtt_subscribe(void);
 
+#endif
+
+
 // Wait some event from the cloud
 // The user's command or software update command
 int mqtt_yield(int timeout_ms);
-
-// Send the telemetry data to the cloud
-// there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
-int mqtt_publish(arrow_device_t *device, void *data);
 
 #if defined(__cplusplus)
 }

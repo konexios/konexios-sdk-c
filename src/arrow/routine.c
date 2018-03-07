@@ -177,11 +177,7 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
   }
   wdt_feed();
   while (1) {
-#if defined(NO_EVENTS)
-      msleep(TELEMETRY_DELAY);
-#else
       mqtt_yield(TELEMETRY_DELAY);
-#endif
       int get_data_result = data_cb(data);
       if ( get_data_result < 0 ) {
           DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
