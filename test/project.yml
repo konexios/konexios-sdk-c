@@ -36,16 +36,23 @@
     - +:acn-sdk-c/src/data/**
     - +:acn-sdk-c/src/http/**
     - +:acn-sdk-c/src/json/**
+    - +:acn-sdk-c/src/ssl/**
     - +:acn-sdk-c/src/sys/**
+    - +:acn-sdk-c/src/mqtt/**
+    - +:acn-sdk-c/src/mqtt/client/**
+    - +:acn-sdk-c/src/mqtt/packet/**
+    - +:acn-sdk-c/src/wolfSSL/**
   :support:
     - test/support
   :include:
     - acn-sdk-c/include
     - +:acn-sdk-c
     - +:acn-sdk-c/include/arrow
+    - +:acn-sdk-c/include/json
     - +:acn-sdk-c/include/sys
     - +:acn-sdk-c/include/bsd
     - +:acn-sdk-c/include/ssl
+    - +:acn-sdk-c/src/wolfSSL
     - +:src
 
 :defines:

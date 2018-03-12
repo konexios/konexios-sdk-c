@@ -1,4 +1,4 @@
-#include "time/watchdog.h"
+#include "sys/watchdog.h"
 
 int __attribute__((weak)) wdt_start(void)  {
   return 0; // nothing to do

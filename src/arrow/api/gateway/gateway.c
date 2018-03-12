@@ -29,16 +29,25 @@ static void _gateway_config_init(http_request_t *request, void *arg) {
 
 static int _gateway_config_proc(http_response_t *response, void *arg) {
 	arrow_gateway_config_t *config = (arrow_gateway_config_t *)arg;
+    arrow_gateway_config_init(config);
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-	DBG("pay: {%s}\r\n", P_VALUE(response->payload.buf));
+    DBG("pay: {%s}", P_VALUE(response->payload.buf));
 
 	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
 	if ( !_main ) {
 		DBG("Parse error");
 		return -1;
 	}
+    JsonNode *_cloud = json_find_member(_main, "cloudPlatform");
+    if ( !_cloud && _cloud->tag != JSON_STRING ) {
+        DBG("no Cloud Platform");
+        return -1;
+    }
+    if ( strcmp(_cloud->string_, "IotConnect") == 0 ) {
+        config->type = IoT;
+    } // FIXME iot connect ibm, azure
 	JsonNode *_main_key = json_find_member(_main, "key");
 	if ( _main_key ) {
         JsonNode *tmp = NULL;
@@ -54,11 +63,9 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		DBG("There is no keys!");
 		return -1;
 	}
-	arrow_gateway_config_init(config);
 #if defined(__IBM__)
 	JsonNode *_main_ibm = json_find_member(_main, "ibm");
 	if ( _main_ibm ) {
-		config->type = 1;
         JsonNode *tmp = NULL;
 		tmp = json_find_member(_main_ibm, "organizationId");
         if ( tmp ) property_copy(&config->organizationId, p_stack(tmp->string_));
@@ -74,7 +81,6 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 #elif defined(__AZURE__)
 	JsonNode *_main_azure = json_find_member(_main, "azure");
 	if ( _main_azure ) {
-		config->type = 3;
 		tmp = json_find_member(_main_azure, "host");
 		if ( tmp ) arrow_gateway_config_add_host(config, tmp->string_);
 		tmp = json_find_member(_main_azure, "accessKey");

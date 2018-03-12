@@ -1,0 +1,1 @@
+../acn-sdk-c/include/arrow/api/gateway/info.h
