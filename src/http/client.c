@@ -84,7 +84,7 @@ static int simple_write(void *c, uint8_t *buf, uint16_t len) {
     } else {
         if ( !len ) len = strlen((char*)buf);
     }
-    HTTP_DBG("%d|%s|", buf, len);
+    HTTP_DBG("%d|%s|", len, buf);
     int ret = send(cli->sock, buf, len, 0);
     FREE_CHUNK(tmp);
     return ret;

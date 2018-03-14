@@ -14,9 +14,9 @@
 #include <http/request.h>
 
 typedef struct {
-    int m_httpResponseCode;
+    uint16_t m_httpResponseCode;
     uint16_t is_chunked;
-    uint16_t recvContentLength;
+    uint32_t recvContentLength;
     property_map_t *header;
     property_map_t content_type;
     http_payload_t payload;
