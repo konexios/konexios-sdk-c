@@ -31,6 +31,7 @@ typedef int (*get_data_cb)(void *);
 // to get these static objects use the functions:
 arrow_device_t *current_device(void);
 arrow_gateway_t *current_gateway(void);
+arrow_gateway_config_t *current_gateway_config(void);
 
 // Initialize the gateway object and device object as well
 // This function implemented the algorithm to get complete information about a gateway and device.

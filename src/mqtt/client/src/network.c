@@ -43,9 +43,20 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 
 static int _write(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     struct timeval tv = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
+#if 0
+    int error = 0;
+    socklen_t errlen = sizeof (error);
+    if ( getsockopt (n->my_socket, SOL_SOCKET, SO_ERROR, &error, &errlen) !=0 ) return -1;
+    if ( error ) {
+        soc_close(n->my_socket);
+        n->my_socket = -1;
+        return -1;
+    }
+#endif
 
     setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-    int rc = 0;
+
+    int rc = -1;
 #if defined(MQTT_CIPHER)
 //    DBG("mqtt send %d", len);
      rc = ssl_send(n->my_socket, (char*)buffer, len);

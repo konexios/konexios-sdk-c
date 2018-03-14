@@ -35,6 +35,10 @@ arrow_gateway_t *current_gateway(void) {
   return &_gateway;
 }
 
+arrow_gateway_config_t *current_gateway_config(void) {
+    return &_gateway_config;
+}
+
 int arrow_connect_gateway(arrow_gateway_t *gateway){
   arrow_prepare_gateway(gateway);
   int ret = restore_gateway_info(gateway);

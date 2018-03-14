@@ -109,6 +109,8 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 #if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
+    mqtt_telemetry_disconnect();
+    mqtt_subscribe_disconnect();
     DBG("mqtt msg arrived %u", message->payloadlen);
     char *nt_str = (char*)malloc(message->payloadlen+1);
     if ( !nt_str ) {
@@ -123,6 +125,16 @@ static void messageArrived(MessageData* md) {
 #endif
     process_event(nt_str);
     free(nt_str);
+    extern arrow_device_t *current_device(void);
+    extern arrow_gateway_t *current_gateway(void);
+    extern arrow_gateway_config_t *current_gateway_config(void);
+    mqtt_telemetry_connect(current_gateway(),
+                           current_device(),
+                           current_gateway_config());
+    mqtt_subscribe_connect(current_gateway(),
+                           current_device(),
+                           current_gateway_config());
+    mqtt_subscribe();
 }
 #endif
 
@@ -211,6 +223,8 @@ int mqtt_telemetry_disconnect(void) {
                           mqttmask );
     if ( !tmp ) return -1;
     _mqtt_env_close(tmp);
+    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    free(tmp);
     return 0;
 }
 
@@ -306,6 +320,8 @@ int mqtt_subscribe_disconnect(void) {
                           ACN_num );
     if ( !tmp ) return -1;
     _mqtt_env_close(tmp);
+    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    free(tmp);
     return 0;
 }
 

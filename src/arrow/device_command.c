@@ -22,10 +22,21 @@ int has_cmd_handler(void) {
 	return -1;
 }
 
+int arrow_command_handler_add(const char *name, fp callback) {
+    cmd_handler *h = malloc(sizeof(cmd_handler));
+    if ( !h ) return -1;
+    h->level = 1;
+    h->name = strdup(name);
+    h->callback = callback;
+    linked_list_add_node_last(__handlers, cmd_handler, h);
+    return 0;
+}
+
 int add_cmd_handler(const char *name, fp callback) {
   cmd_handler *h = malloc(sizeof(cmd_handler));
   h->name = strdup(name);
   h->callback = callback;
+  h->level = 0;
   linked_list_add_node_last(__handlers, cmd_handler, h);
   return 0;
 }
@@ -89,35 +100,6 @@ static int cmdeq( cmd_handler *s, const char *name ) {
     return -1;
 }
 
-static fp find_cmd_handler(const char *cmd) {
-  if ( __handlers ) {
-    cmd_handler *h = NULL;
-    linked_list_find_node ( h, __handlers, cmd_handler, cmdeq, cmd );
-    if ( h ) return h->callback;
-  } else {
-    DBG("No cmd handlers");
-  }
-  return NULL;
-}
-
-int __attribute__((weak)) command_handler(const char *name,
-                    JsonNode *payload,
-                    JsonNode **error) {
-  int ret = -1;
-  fp callback = find_cmd_handler(name);
-  if ( callback ) {
-    ret = callback(payload->string_);
-    if ( ret < 0 ) {
-      *error = json_mkobject();
-      json_append_member(*error, "error", json_mkstring("Something went wrong"));
-    }
-  } else {
-    *error = json_mkobject();
-    json_append_member(*error, "error", json_mkstring("there is no a command handler"));
-  }
-  return ret;
-}
-
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
@@ -141,9 +123,20 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   if ( !pay || pay->tag != JSON_STRING ) return -1;
   DBG("ev msg: %s", pay->string_);
 
-  ret = command_handler(cmd->string_, pay, &_error);
-  if ( ret < 0 ) {
-      DBG("command_handler fail %d", ret);
+  cmd_handler *cmd_h = NULL;
+  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
+  if ( cmd_h ) {
+    ret = cmd_h->callback(pay->string_);
+    if ( ret < 0 ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("Something went wrong"));
+    }
+  } else {
+    DBG("There is no handler");
+    _error = json_mkobject();
+    json_append_member(_error, "error",
+                       json_mkstring("There is no a command handler"));
   }
   // close session after next request
   http_session_close_set(current_client(), true);
@@ -160,6 +153,5 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
         msleep(ARROW_RETRY_DELAY);
     }
   }
-
   return 0;
 }
