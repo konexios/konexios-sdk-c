@@ -9,8 +9,10 @@
 #ifndef ACN_SDK_C_SYS_MUTEX_H_
 #define ACN_SDK_C_SYS_MUTEX_H_
 
-int MutexInit(void *mutex);
-int MutexLock(void *mutex);
-int MutexUnlock(void *mutex);
+typedef void arrow_mutex;
+
+int arrow_mutex_init(arrow_mutex *mutex);
+int arrow_mutex_lock(arrow_mutex *mutex);
+int arrow_mutex_unlock(arrow_mutex *mutex);
 
 #endif

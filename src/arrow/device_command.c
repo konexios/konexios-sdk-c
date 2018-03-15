@@ -17,6 +17,10 @@
 static cmd_handler *__handlers = NULL;
 
 // handlers
+void arrow_command_init(void) {
+    __handlers = NULL;
+}
+
 int has_cmd_handler(void) {
 	if ( __handlers ) return 0;
 	return -1;
@@ -25,20 +29,10 @@ int has_cmd_handler(void) {
 int arrow_command_handler_add(const char *name, fp callback) {
     cmd_handler *h = malloc(sizeof(cmd_handler));
     if ( !h ) return -1;
-    h->level = 1;
     h->name = strdup(name);
     h->callback = callback;
     linked_list_add_node_last(__handlers, cmd_handler, h);
     return 0;
-}
-
-int add_cmd_handler(const char *name, fp callback) {
-  cmd_handler *h = malloc(sizeof(cmd_handler));
-  h->name = strdup(name);
-  h->callback = callback;
-  h->level = 0;
-  linked_list_add_node_last(__handlers, cmd_handler, h);
-  return 0;
 }
 
 void free_cmd_handler(void) {
@@ -48,7 +42,6 @@ void free_cmd_handler(void) {
       free(curr);
   }
 }
-
 
 // events
 static char *form_evetns_url(const char *hid, cmd_type ev) {

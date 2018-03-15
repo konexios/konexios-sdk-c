@@ -24,7 +24,7 @@
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
-#if 0
+#if 1
 #include <sys/mutex.h>
 #endif
 
@@ -77,9 +77,7 @@ static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
                                  ev->encrypted,
                                  can,
                                  "1");
-  if ( err ) {
-    return -1;
-  }
+  if ( err ) return -1;
   DBG("cmp { %s, %s }", sign, signature);
   return ( strcmp(sign, signature) == 0 ? 1 : 0 );
 }
@@ -143,19 +141,38 @@ static char *form_canonical_prm(JsonNode *param) {
 }
 
 static mqtt_event_t *__event_queue = NULL;
+#if defined(THREAD) || 1
+static arrow_mutex *_event_mutex = NULL;
+#endif
+
+void arrow_mqtt_events_init(void) {
+#if defined(THREAD) || 1
+    arrow_mutex_init(_event_mutex);
+#endif
+}
 
 int arrow_mqtt_has_events(void) {
     int ret = -1;
-//    MutexLock(event_mutex);
+#if defined(THREAD) || 1
+    arrow_mutex_lock(_event_mutex);
+#endif
     ret = __event_queue?1:0;
-//    MutexUnlock(event_mutex);
+#if defined(THREAD) || 1
+    arrow_mutex_unlock(_event_mutex);
+#endif
     return ret;
 }
 
 int arrow_mqtt_event_proc(void) {
-    mqtt_event_t *tmp = __event_queue;
-    if ( !tmp ) return -1;
+    mqtt_event_t *tmp = NULL;
+    arrow_mutex_lock(_event_mutex);
+    tmp = __event_queue;
+    if ( !tmp ) {
+        arrow_mutex_unlock(_event_mutex);
+        return -1;
+    }
     linked_list_del_node_first(__event_queue, mqtt_event_t);
+    arrow_mutex_unlock(_event_mutex);
 
     submodule current_processor = NULL;
     int i = 0;
@@ -169,11 +186,12 @@ int arrow_mqtt_event_proc(void) {
       ret = current_processor(tmp, tmp->parameters);
     } else {
       DBG("No event processor for %s", tmp->name);
-      return -1;
+      goto mqtt_event_proc_error;
     }
+    if ( __event_queue ) ret = 1;
+mqtt_event_proc_error:
     free_mqtt_event(tmp);
     free(tmp);
-    if ( __event_queue ) return 1;
     return ret;
 }
 
