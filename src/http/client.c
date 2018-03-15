@@ -370,7 +370,7 @@ static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     int chunk_len = 0;
     uint8_t *crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE);
     if ( !crlf ) return -1; // no \r\n - wrong string
-    int ret = sscanf((char*)tmp, "%4x\r\n", (unsigned int*)&chunk_len);
+    int ret = sscanf((char*)tmp, "%8x\r\n", (unsigned int*)&chunk_len);
     if ( ret != 1 ) {
         // couldn't read a chunk size - fail
         chunk_len = 0;
