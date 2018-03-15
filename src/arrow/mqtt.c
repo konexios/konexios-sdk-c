@@ -109,8 +109,6 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 #if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
-    mqtt_telemetry_disconnect();
-    mqtt_subscribe_disconnect();
     DBG("mqtt msg arrived %u", message->payloadlen);
     char *nt_str = (char*)malloc(message->payloadlen+1);
     if ( !nt_str ) {
@@ -119,22 +117,8 @@ static void messageArrived(MessageData* md) {
     }
     memcpy(nt_str, message->payload, message->payloadlen);
     nt_str[message->payloadlen] = 0x0;
-#if defined(SINGLE_SOCKET)
-    mqtt_subscribe_disconnect();
-    mqtt_telemetry_disconnect();
-#endif
     process_event(nt_str);
     free(nt_str);
-    extern arrow_device_t *current_device(void);
-    extern arrow_gateway_t *current_gateway(void);
-    extern arrow_gateway_config_t *current_gateway_config(void);
-    mqtt_telemetry_connect(current_gateway(),
-                           current_device(),
-                           current_gateway_config());
-    mqtt_subscribe_connect(current_gateway(),
-                           current_device(),
-                           current_gateway_config());
-    mqtt_subscribe();
 }
 #endif
 
@@ -191,6 +175,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
                           mqttmask );
     if ( !tmp ) {
         tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
+        memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
         _mqtt_init_common(tmp);
         tmp->mask = mqttmask;
         linked_list_add_node_last(__mqtt_channels,
@@ -271,6 +256,7 @@ void mqtt_close(void) {
             _mqtt_env_free(curr);
         free(curr);
     }
+    __mqtt_channels = NULL;
 }
 
 #if !defined(NO_EVENTS)
@@ -289,6 +275,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                           ACN_num );
     if ( !tmp ) {
         tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
+        memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
         _mqtt_init_common(tmp);
         tmp->mask = ACN_num;
         linked_list_add_node_last(__mqtt_channels,
@@ -318,10 +305,12 @@ int mqtt_subscribe_disconnect(void) {
                           mqtt_env_t,
                           mqttchannelseq,
                           ACN_num );
-    if ( !tmp ) return -1;
+    if ( !tmp ) {
+        DBG("There is no sub channel");
+        return -1;
+    }
     _mqtt_env_close(tmp);
-    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
-    free(tmp);
+    // we don't delete
     return 0;
 }
 
@@ -362,15 +351,24 @@ int mqtt_is_subscribe_connect(void) {
 #endif
 
 int mqtt_yield(int timeout_ms) {
+//    TimerInterval timer;
+//    TimerInit(&timer);
+//    TimerCountdownMS(&timer, (unsigned int)timeout_ms);
 #if !defined(NO_EVENTS)
+    int ret = -1;
     mqtt_env_t *tmp = NULL;
     linked_list_find_node(tmp,
                           __mqtt_channels,
                           mqtt_env_t,
                           mqttchannelseq,
                           ACN_num );
-    if ( tmp && tmp->init & MQTT_SUBSCRIBE_INIT ) {
-            return MQTTYield(&tmp->client, timeout_ms);
+    if ( tmp &&
+         tmp->init & MQTT_SUBSCRIBE_INIT &&
+         tmp->init & MQTT_CLIENT_INIT ) {
+//        do {
+            ret = MQTTYield(&tmp->client, timeout_ms);
+//        } while (!TimerIsExpired(&timer));
+        return ret;
     }
     return -1;
 #else

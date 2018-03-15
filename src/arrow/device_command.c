@@ -142,10 +142,12 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   http_session_close_set(current_client(), true);
   RETRY_CR(retry);
   if ( _error ) {
-    while ( arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error)) < 0 ) {
+    char *_error_str = json_encode(_error);
+    while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_str) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
+    free(_error_str);
     json_delete(_error);
   } else {
     while ( arrow_send_event_ans(ev->gateway_hid, succeeded, NULL) < 0 ) {

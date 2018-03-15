@@ -25,6 +25,11 @@ static arrow_gateway_t _gateway;
 static arrow_gateway_config_t _gateway_config;
 static arrow_device_t _device;
 static int _init_done = 0;
+
+enum MQTT_INIT_FLAGS {
+    MQTT_INIT_TELEMETRY_ROUTINE = 0x01,
+    MQTT_INIT_COMMAND_ROUTINE   = 0x02
+};
 static int _init_mqtt = 0;
 
 arrow_device_t *current_device(void) {
@@ -134,34 +139,51 @@ arrow_routine_error_t arrow_send_telemetry_routine(void *data) {
     return ROUTINE_SUCCESS;
 }
 
+// MQTT
+
+arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void) {
+    if ( _init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE ) return ROUTINE_ERROR;
+    int retry = 0;
+    while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
+        DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
+    }
+    _init_mqtt |= MQTT_INIT_TELEMETRY_ROUTINE;
+    DBG(DEVICE_MQTT_CONNECT, "ok");
+    return ROUTINE_SUCCESS;
+}
+
+#if !defined(NO_EVENTS)
+arrow_routine_error_t arrow_mqtt_connect_event_routine(void) {
+    if ( _init_mqtt & MQTT_INIT_COMMAND_ROUTINE ) return ROUTINE_ERROR;
+    int retry = 0;
+    while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
+        DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
+    }
+    RETRY_CR(retry);
+    while( mqtt_subscribe() < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
+        DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
+    }
+    _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
+    return ROUTINE_SUCCESS;
+}
+#endif
+
 arrow_routine_error_t arrow_mqtt_connect_routine(void) {
   if ( !_init_done ) return ROUTINE_NOT_INITIALIZE;
   // init MQTT
   DBG("mqtt connect...");
-  int retry = 0;
-  while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-      RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
-      DBG(DEVICE_MQTT_CONNECT, "fail");
-      msleep(ARROW_RETRY_DELAY);
-  }
-  DBG(DEVICE_MQTT_CONNECT, "ok");
-
+  arrow_routine_error_t ret = ROUTINE_ERROR;
+  ret = arrow_mqtt_connect_telemetry_routine();
+  if ( ret != ROUTINE_SUCCESS ) return ret;
   arrow_state_mqtt_run(&_device);
-  RETRY_CR(retry);
-#if !defined(NO_EVENTS)
-  while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-      RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-      DBG(DEVICE_MQTT_CONNECT, "fail");
-      msleep(ARROW_RETRY_DELAY);
-  }
-  RETRY_CR(retry);
-  while( mqtt_subscribe() < 0 ) {
-      RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-      DBG(DEVICE_MQTT_CONNECT, "fail");
-      msleep(ARROW_RETRY_DELAY);
-  }
-#endif
-  _init_mqtt = 1;
+  ret = arrow_mqtt_connect_event_routine();
+  if ( ret != ROUTINE_SUCCESS ) return ret;
   return ROUTINE_SUCCESS;
 }
 
@@ -175,13 +197,19 @@ arrow_routine_error_t arrow_mqtt_disconnect_routine() {
 }
 
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done || !_init_mqtt ) {
+  if ( !_init_done ||
+       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ||
+       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
       DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
       return ROUTINE_NOT_INITIALIZE;
   }
   wdt_feed();
   while (1) {
       mqtt_yield(TELEMETRY_DELAY);
+      if ( arrow_mqtt_has_events() ) {
+          DBG("There is an event");
+          return ROUTINE_RECEIVE_EVENT;
+      }
       int get_data_result = data_cb(data);
       if ( get_data_result < 0 ) {
           DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
@@ -197,13 +225,11 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
       }
 #if defined(VALGRIND_TEST)
       static int count = 0;
-      if ( count++ > VALGRIND_TEST ) break;
+      if ( count++ > VALGRIND_TEST )
+          return ROUTINE_TEST_DONE;
+      DBG("test count [%d]", count);
 #endif
-#if defined(DEBUG)
-    else {
       DBG(DEVICE_MQTT_TELEMETRY, "ok");
-    }
-#endif
   }
   return ROUTINE_SUCCESS;
 }
@@ -218,3 +244,43 @@ void arrow_close(void) {
   }
 }
 
+arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data) {
+    if ( !_init_done ||
+         !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ) {
+        DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        return ROUTINE_NOT_INITIALIZE;
+    }
+    wdt_feed();
+    while (1) {
+        msleep(TELEMETRY_DELAY);
+        int get_data_result = data_cb(data);
+        if ( get_data_result < 0 ) {
+            DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+            return ROUTINE_GET_TELEMETRY_FAILED;
+        } else if (get_data_result > 0 ) {
+            // skip this
+            continue;
+        }
+        wdt_feed();
+        if ( mqtt_publish(&_device, data) < 0 ) {
+            DBG(DEVICE_MQTT_TELEMETRY, "fail");
+            return ROUTINE_MQTT_PUBLISH_FAILED;
+        }
+        DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    }
+    return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_mqtt_event_receive_routine() {
+    if ( !_init_done ||
+         !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
+        DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        return ROUTINE_NOT_INITIALIZE;
+    }
+    wdt_feed();
+    while (1) {
+        mqtt_yield(TELEMETRY_DELAY);
+        wdt_feed();
+    }
+    return ROUTINE_SUCCESS;
+}

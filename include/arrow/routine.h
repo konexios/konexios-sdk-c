@@ -16,7 +16,11 @@ extern "C" {
 #include <arrow/device.h>
 
 typedef enum {
+#if defined(VALGRIND_TEST)
+    ROUTINE_TEST_DONE   = -1000,
+#endif
     ROUTINE_SUCCESS               = 0,
+    ROUTINE_RECEIVE_EVENT         = 1,
     ROUTINE_ERROR                 = -300,
     ROUTINE_NOT_INITIALIZE        = -301,
     ROUTINE_GET_TELEMETRY_FAILED  = -302,
@@ -63,9 +67,20 @@ arrow_routine_error_t arrow_update_state(const char *name, const char *value);
 arrow_routine_error_t arrow_mqtt_connect_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_routine(void);
 
+// telemetry specific
+arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void);
+arrow_routine_error_t arrow_mqtt_disconnect_telemetry_routine(void);
+
+// command specific
+arrow_routine_error_t arrow_mqtt_connect_event_routine(void);
+arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void);
+
 // This routine send the telemetry data every TELEMETRY_DELAY msec
 // using the data_cb function for forming current telemetry values
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
+
+arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data);
+arrow_routine_error_t arrow_mqtt_event_receive_routine();
 
 #if defined(__cplusplus)
 }

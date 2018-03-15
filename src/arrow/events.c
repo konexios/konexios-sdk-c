@@ -24,13 +24,16 @@
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
+#if 0
+#include <sys/mutex.h>
+#endif
 
 static void free_mqtt_event(mqtt_event_t *mq) {
   if ( mq->gateway_hid ) free(mq->gateway_hid);
   if ( mq->device_hid ) free(mq->device_hid);
   if ( mq->cmd ) free(mq->cmd);
-  if ( mq->payload ) free(mq->payload);
   if ( mq->name ) free(mq->name);
+  if ( mq->parameters ) json_delete(mq->parameters);
 }
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
@@ -139,31 +142,65 @@ static char *form_canonical_prm(JsonNode *param) {
   return canParam;
 }
 
+static mqtt_event_t *__event_queue = NULL;
+
+int arrow_mqtt_has_events(void) {
+    int ret = -1;
+//    MutexLock(event_mutex);
+    ret = __event_queue?1:0;
+//    MutexUnlock(event_mutex);
+    return ret;
+}
+
+int arrow_mqtt_event_proc(void) {
+    mqtt_event_t *tmp = __event_queue;
+    if ( !tmp ) return -1;
+    linked_list_del_node_first(__event_queue, mqtt_event_t);
+
+    submodule current_processor = NULL;
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( strcmp(sub_list[i].name, tmp->name) == 0 ) {
+        current_processor = sub_list[i].proc;
+      }
+    }
+    int ret = -1;
+    if ( current_processor ) {
+      ret = current_processor(tmp, tmp->parameters);
+    } else {
+      DBG("No event processor for %s", tmp->name);
+      return -1;
+    }
+    free_mqtt_event(tmp);
+    free(tmp);
+    if ( __event_queue ) return 1;
+    return ret;
+}
+
 int process_event(const char *str) {
-  mqtt_event_t mqtt_e;
+  mqtt_event_t *mqtt_e = (mqtt_event_t *)calloc(1, sizeof(mqtt_event_t));
   int ret = -1;
-  memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
       DBG("event payload decode failed %d", strlen(str));
       return -1;
   }
 
-  if ( fill_string_from_json(_main, "hid", &mqtt_e.gateway_hid) < 0 ) {
+  if ( fill_string_from_json(_main, "hid", &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
     goto error;
   }
-  DBG("ev ghid: %s", mqtt_e.gateway_hid);
+  DBG("ev ghid: %s", mqtt_e->gateway_hid);
 
-  if ( fill_string_from_json(_main, "name", &mqtt_e.name) < 0 ) {
+  if ( fill_string_from_json(_main, "name", &mqtt_e->name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
-  DBG("ev name: %s", mqtt_e.name);
+  DBG("ev name: %s", mqtt_e->name);
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
-  mqtt_e.encrypted = _encrypted->bool_;
+  mqtt_e->encrypted = _encrypted->bool_;
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
@@ -174,31 +211,18 @@ int process_event(const char *str) {
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
     DBG("[%s]", can);
-    if ( !check_signature(sign_version->string_, sign->string_, &mqtt_e, can) ) {
+    if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);
       goto error;
     }
     free(can);
   }
-
-  submodule current_processor = NULL;
-  int i = 0;
-  for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-    if ( strcmp(sub_list[i].name, mqtt_e.name) == 0 ) {
-      current_processor = sub_list[i].proc;
-    }
-  }
-
-  if ( current_processor ) {
-    ret = current_processor(&mqtt_e, _parameters);
-  } else {
-    DBG("No event processor for %s", mqtt_e.name);
-    goto error;
-  }
+  json_remove_from_parent(_parameters);
+  mqtt_e->parameters = _parameters;
+  linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
 
 error:
-  free_mqtt_event(&mqtt_e);
   if ( _main ) json_delete(_main);
   return ret;
 }
