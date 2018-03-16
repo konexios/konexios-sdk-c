@@ -266,6 +266,12 @@ arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *da
             DBG(DEVICE_MQTT_TELEMETRY, "fail");
             return ROUTINE_MQTT_PUBLISH_FAILED;
         }
+#if defined(VALGRIND_TEST)
+      static int count = 0;
+      if ( count++ > VALGRIND_TEST )
+          return ROUTINE_TEST_DONE;
+      DBG("test count [%d]", count);
+#endif
         DBG(DEVICE_MQTT_TELEMETRY, "ok");
     }
     return ROUTINE_SUCCESS;
@@ -277,10 +283,7 @@ arrow_routine_error_t arrow_mqtt_event_receive_routine() {
         DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
         return ROUTINE_NOT_INITIALIZE;
     }
+    mqtt_yield(TELEMETRY_DELAY);
     wdt_feed();
-    while (1) {
-        mqtt_yield(TELEMETRY_DELAY);
-        wdt_feed();
-    }
     return ROUTINE_SUCCESS;
 }

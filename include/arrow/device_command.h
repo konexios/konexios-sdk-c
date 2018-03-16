@@ -36,7 +36,7 @@ int has_cmd_handler(void);
 int arrow_command_handler_add(const char *name, fp callback);
 
 // erase all command handlers
-void free_cmd_handler(void);
+void arrow_command_handler_free(void);
 
 // DeviceCommand event handler
 int ev_DeviceCommand(void *ev, JsonNode *node);

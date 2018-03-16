@@ -15,6 +15,7 @@ typedef struct {
 } mqtt_event_t;
 
 void arrow_mqtt_events_init(void);
+void arrow_mqtt_events_done(void);
 int process_event(const char *str);
 int arrow_mqtt_has_events(void);
 int arrow_mqtt_event_proc(void);

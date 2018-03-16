@@ -24,8 +24,13 @@
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
-#if 1
+#if defined(ARROW_THREAD)
 #include <sys/mutex.h>
+#define MQTT_EVENTS_QUEUE_LOCK      arrow_mutex_lock(_event_mutex)
+#define MQTT_EVENTS_QUEUE_UNLOCK    arrow_mutex_unlock(_event_mutex)
+#else
+#define MQTT_EVENTS_QUEUE_LOCK
+#define MQTT_EVENTS_QUEUE_UNLOCK
 #endif
 
 static void free_mqtt_event(mqtt_event_t *mq) {
@@ -44,20 +49,24 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
 }
 
 typedef int (*submodule)(void *, JsonNode *);
+typedef void (*module_init)();
+typedef void (*module_deinit)();
 typedef struct {
   char *name;
   submodule proc;
+  module_init init;
+  module_deinit deinit;
 } sub_t;
 
 sub_t sub_list[] = {
-  { "ServerToGateway_DeviceCommand", ev_DeviceCommand },
-  { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest },
+  { "ServerToGateway_DeviceCommand", ev_DeviceCommand, NULL, arrow_command_handler_free },
+  { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest, NULL, NULL },
 #if !defined(NO_SOFTWARE_UPDATE)
-  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate },
+  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate, NULL, NULL },
 #endif
 #if !defined(NO_RELEASE_UPDATE)
-  { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease },
-  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease }
+  { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL },
+  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL }
 #endif
 };
 
@@ -141,38 +150,38 @@ static char *form_canonical_prm(JsonNode *param) {
 }
 
 static mqtt_event_t *__event_queue = NULL;
-#if defined(THREAD) || 1
+#if defined(ARROW_THREAD)
 static arrow_mutex *_event_mutex = NULL;
 #endif
 
 void arrow_mqtt_events_init(void) {
-#if defined(THREAD) || 1
-    arrow_mutex_init(_event_mutex);
+#if defined(ARROW_THREAD)
+    arrow_mutex_init(&_event_mutex);
 #endif
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( sub_list[i].init ) sub_list[i].init();
+    }
 }
 
 int arrow_mqtt_has_events(void) {
     int ret = -1;
-#if defined(THREAD) || 1
-    arrow_mutex_lock(_event_mutex);
-#endif
+    MQTT_EVENTS_QUEUE_LOCK;
     ret = __event_queue?1:0;
-#if defined(THREAD) || 1
-    arrow_mutex_unlock(_event_mutex);
-#endif
+    MQTT_EVENTS_QUEUE_UNLOCK;
     return ret;
 }
 
 int arrow_mqtt_event_proc(void) {
     mqtt_event_t *tmp = NULL;
-    arrow_mutex_lock(_event_mutex);
+    MQTT_EVENTS_QUEUE_LOCK;
     tmp = __event_queue;
     if ( !tmp ) {
-        arrow_mutex_unlock(_event_mutex);
+        MQTT_EVENTS_QUEUE_UNLOCK;
         return -1;
     }
     linked_list_del_node_first(__event_queue, mqtt_event_t);
-    arrow_mutex_unlock(_event_mutex);
+    MQTT_EVENTS_QUEUE_UNLOCK;
 
     submodule current_processor = NULL;
     int i = 0;
@@ -243,4 +252,14 @@ int process_event(const char *str) {
 error:
   if ( _main ) json_delete(_main);
   return ret;
+}
+
+void arrow_mqtt_events_done() {
+#if defined(ARROW_THREAD)
+    arrow_mutex_deinit(_event_mutex);
+#endif
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( sub_list[i].deinit ) sub_list[i].deinit();
+    }
 }

@@ -35,7 +35,7 @@ int arrow_command_handler_add(const char *name, fp callback) {
     return 0;
 }
 
-void free_cmd_handler(void) {
+void arrow_command_handler_free(void) {
   cmd_handler *curr = NULL;
   for_each_node_hard ( curr, __handlers , cmd_handler ) {
       free(curr->name);
