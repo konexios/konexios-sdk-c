@@ -9,11 +9,15 @@
 #ifndef ACN_SDK_C_SYS_MUTEX_H_
 #define ACN_SDK_C_SYS_MUTEX_H_
 
+#include <config.h>
+
+#if defined(ARROW_THREAD)
 typedef void arrow_mutex;
 
 int arrow_mutex_init(arrow_mutex **mutex);
 int arrow_mutex_deinit(arrow_mutex *mutex);
 int arrow_mutex_lock(arrow_mutex *mutex);
 int arrow_mutex_unlock(arrow_mutex *mutex);
+#endif
 
 #endif
