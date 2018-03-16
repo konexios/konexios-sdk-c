@@ -77,13 +77,11 @@ int mqtt_is_telemetry_connect(void);
 
 // Terminate MQTT connection
 int mqtt_telemetry_disconnect(void);
-// Terminate all connections
-void mqtt_close();
+int mqtt_telemetry_terminate(void);
 
 // Send the telemetry data to the cloud
 // there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
 int mqtt_publish(arrow_device_t *device, void *data);
-
 
 #if !defined(NO_EVENTS)
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,
@@ -92,18 +90,20 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
 
 int mqtt_is_subscribe_connect(void);
 int mqtt_subscribe_disconnect(void);
+int mqtt_subscribe_terminate(void);
 
 // Subscribe on MQTT events
 // In this context this means that device can be controlled by
 // command received from the cloud
 int mqtt_subscribe(void);
-
 #endif
-
 
 // Wait some event from the cloud
 // The user's command or software update command
 int mqtt_yield(int timeout_ms);
+// Terminate all connections
+void mqtt_disconnect(void);
+void mqtt_terminate(void);
 
 #if defined(__cplusplus)
 }

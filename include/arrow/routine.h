@@ -66,14 +66,17 @@ arrow_routine_error_t arrow_update_state(const char *name, const char *value);
 // Automatically prepare needed information and send it to the cloud MQTT
 arrow_routine_error_t arrow_mqtt_connect_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_routine(void);
 
 // telemetry specific
 arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_telemetry_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_telemetry_routine(void);
 
 // command specific
 arrow_routine_error_t arrow_mqtt_connect_event_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_event_routine(void);
 
 // This routine send the telemetry data every TELEMETRY_DELAY msec
 // using the data_cb function for forming current telemetry values

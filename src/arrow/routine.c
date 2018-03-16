@@ -154,6 +154,18 @@ arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void) {
     return ROUTINE_SUCCESS;
 }
 
+arrow_routine_error_t arrow_mqtt_disconnect_telemetry_routine(void) {
+    if ( ! ( _init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE ) ) return ROUTINE_ERROR;
+    if ( mqtt_telemetry_terminate() < 0 ) return ROUTINE_ERROR;
+    return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_mqtt_terminate_telemetry_routine(void) {
+    if ( mqtt_telemetry_terminate() < 0 ) return ROUTINE_ERROR;
+    return ROUTINE_SUCCESS;
+}
+
+
 #if !defined(NO_EVENTS)
 arrow_routine_error_t arrow_mqtt_connect_event_routine(void) {
     if ( _init_mqtt & MQTT_INIT_COMMAND_ROUTINE ) return ROUTINE_ERROR;
@@ -172,6 +184,18 @@ arrow_routine_error_t arrow_mqtt_connect_event_routine(void) {
     _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
     return ROUTINE_SUCCESS;
 }
+
+arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void) {
+    if ( ! ( _init_mqtt & MQTT_INIT_COMMAND_ROUTINE ) ) return ROUTINE_ERROR;
+    if ( mqtt_subscribe_disconnect() < 0 ) return ROUTINE_ERROR;
+    return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_mqtt_terminate_event_routine(void) {
+    if ( mqtt_subscribe_terminate() < 0 ) return ROUTINE_ERROR;
+    return ROUTINE_SUCCESS;
+}
+
 #endif
 
 arrow_routine_error_t arrow_mqtt_connect_routine(void) {
@@ -189,11 +213,16 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
 
 arrow_routine_error_t arrow_mqtt_disconnect_routine() {
     if ( _init_mqtt ) {
-        mqtt_close();
+        mqtt_disconnect();
         _init_mqtt = 0;
         return ROUTINE_SUCCESS;
     }
     return ROUTINE_ERROR;
+}
+
+arrow_routine_error_t arrow_mqtt_terminate_routine() {
+    mqtt_terminate();
+    return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {

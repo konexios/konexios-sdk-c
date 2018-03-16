@@ -198,7 +198,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
     return _mqtt_env_connect(tmp, &data);
 }
 
-int mqtt_telemetry_disconnect(void) {
+static mqtt_env_t *get_telemetry_env() {
     int mqttmask = get_telemetry_mask();
     mqtt_env_t *tmp = NULL;
     linked_list_find_node(tmp,
@@ -206,9 +206,21 @@ int mqtt_telemetry_disconnect(void) {
                           mqtt_env_t,
                           mqttchannelseq,
                           mqttmask );
+    return tmp;
+}
+
+int mqtt_telemetry_disconnect(void) {
+    mqtt_env_t *tmp = get_telemetry_env();
     if ( !tmp ) return -1;
     _mqtt_env_close(tmp);
+    return 0;
+}
+
+int mqtt_telemetry_terminate(void) {
+    mqtt_env_t *tmp = get_telemetry_env();
+    if ( !tmp ) return -1;
     linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    _mqtt_env_free(tmp);
     free(tmp);
     return 0;
 }
@@ -249,7 +261,14 @@ int mqtt_is_telemetry_connect(void) {
     return 0;
 }
 
-void mqtt_close(void) {
+void mqtt_disconnect(void) {
+    mqtt_env_t *curr = NULL;
+    for_each_node ( curr, __mqtt_channels, mqtt_env_t ) {
+        if ( curr->init & MQTT_CLIENT_INIT ) _mqtt_env_close(curr);
+    }
+}
+
+void mqtt_terminate(void) {
     mqtt_env_t *curr = NULL;
     for_each_node_hard ( curr, __mqtt_channels, mqtt_env_t ) {
         if ( curr->init & MQTT_CLIENT_INIT )
@@ -260,6 +279,16 @@ void mqtt_close(void) {
 }
 
 #if !defined(NO_EVENTS)
+static mqtt_env_t *get_event_env() {
+    mqtt_env_t *tmp = NULL;
+    linked_list_find_node(tmp,
+                          __mqtt_channels,
+                          mqtt_env_t,
+                          mqttchannelseq,
+                          ACN_num );
+    return tmp;
+}
+
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config) {
@@ -299,18 +328,20 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
 }
 
 int mqtt_subscribe_disconnect(void) {
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          ACN_num );
+    mqtt_env_t *tmp = get_event_env();
     if ( !tmp ) {
         DBG("There is no sub channel");
         return -1;
     }
-    _mqtt_env_close(tmp);
-    // we don't delete
+    return _mqtt_env_close(tmp);
+}
+
+int mqtt_subscribe_terminate(void) {
+    mqtt_env_t *tmp = get_event_env();
+    if ( !tmp ) return -1;
+    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    _mqtt_env_free(tmp);
+    free(tmp);
     return 0;
 }
 
