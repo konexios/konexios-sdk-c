@@ -174,7 +174,7 @@ static int _gateway_find_proc(http_response_t *response, void *arg) {
     if ( list ) {
         gateway_info_move(info, list);
         gateway_info_t *tmp = NULL;
-        for_each_node_hard(tmp, list, gateway_info_t) {
+        arrow_linked_list_for_each_safe(tmp, list, gateway_info_t) {
             gateway_info_free(tmp);
             free(tmp);
         }

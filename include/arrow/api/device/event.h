@@ -18,7 +18,7 @@ typedef struct _device_event_ {
     property_t criteria;
     property_t deviceActionTypeName;
     property_t status;
-    linked_list_head_node;
+    arrow_linked_list_head_node;
 } device_event_t;
 void device_event_init(device_event_t *de);
 void device_event_free(device_event_t *de);

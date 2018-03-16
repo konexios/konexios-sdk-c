@@ -180,7 +180,7 @@ int arrow_mqtt_event_proc(void) {
         MQTT_EVENTS_QUEUE_UNLOCK;
         return -1;
     }
-    linked_list_del_node_first(__event_queue, mqtt_event_t);
+    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
     MQTT_EVENTS_QUEUE_UNLOCK;
 
     submodule current_processor = NULL;
@@ -247,7 +247,7 @@ int process_event(const char *str) {
   }
   json_remove_from_parent(_parameters);
   mqtt_e->parameters = _parameters;
-  linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
+  arrow_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
 
 error:
   if ( _main ) json_delete(_main);

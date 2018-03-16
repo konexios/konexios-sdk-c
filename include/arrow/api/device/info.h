@@ -27,7 +27,7 @@ typedef struct _device_info_ {
     int enabled;
     JsonNode *info;
     JsonNode *properties;
-    linked_list_head_node;
+    arrow_linked_list_head_node;
 } device_info_t;
 int _device_info_parse(device_info_t *gd, JsonNode *tmp);
 void device_info_init(device_info_t *gd);

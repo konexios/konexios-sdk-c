@@ -177,7 +177,7 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
         char *queryString = (char*)tmpbuffer;
         strcpy(queryString, "?");
         property_map_t *query = NULL;
-        for_each_node(query, req->query, property_map_t) {
+        arrow_linked_list_for_each(query, req->query, property_map_t) {
           if ( (int)strlen(P_VALUE(query->key)) +
                (int)strlen(P_VALUE(query->value)) + 3 >
                (int)ringbuf_capacity(cli->queue) ) break;
@@ -229,7 +229,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( (ret = client_send(cli)) < 0 ) return ret;
     }
     property_map_t *head = NULL;
-    for_each_node(head, req->header, property_map_t) {
+    arrow_linked_list_for_each(head, req->header, property_map_t) {
         ringbuf_clear(buf);
         ret = snprintf((char*)tmpbuffer,
                            ringbuf_capacity(cli->queue),

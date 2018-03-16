@@ -31,13 +31,13 @@ int arrow_command_handler_add(const char *name, fp callback) {
     if ( !h ) return -1;
     h->name = strdup(name);
     h->callback = callback;
-    linked_list_add_node_last(__handlers, cmd_handler, h);
+    arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
     return 0;
 }
 
 void arrow_command_handler_free(void) {
   cmd_handler *curr = NULL;
-  for_each_node_hard ( curr, __handlers , cmd_handler ) {
+  arrow_linked_list_for_each_safe ( curr, __handlers , cmd_handler ) {
       free(curr->name);
       free(curr);
   }

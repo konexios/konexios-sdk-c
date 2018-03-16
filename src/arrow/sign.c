@@ -146,7 +146,7 @@ void sign(char *signature,
 static void get_canonical_string(char *buffer, http_request_t *req){
     property_map_t *query = req->query;
     buffer[0] = '\0';
-    for_each_node(query, req->query, property_map_t) {
+    arrow_linked_list_for_each(query, req->query, property_map_t) {
         strcat(buffer, P_VALUE(query->key));
         strcat(buffer, "=");
         strcat(buffer, P_VALUE(query->value));

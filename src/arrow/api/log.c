@@ -40,7 +40,7 @@ int log_parse(log_t **list, const char *text) {
             JsonNode *t = json_find_member(tmp, "parameters");
             json_remove_from_parent(t);
             gl->parameters = t;
-            linked_list_add_node_last(*list, log_t, gl);
+            arrow_linked_list_add_node_last(*list, log_t, gl);
         }
     }
     json_delete(_main);

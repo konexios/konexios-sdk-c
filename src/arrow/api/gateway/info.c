@@ -82,7 +82,7 @@ int gateway_info_parse(gateway_info_t **list, const char *s) {
             json_fill_property(tmp, gi, sdkVersion);
             json_fill_property(tmp, gi, softwareName);
             json_fill_property(tmp, gi, softwareVersion);
-            linked_list_add_node_last(*list, gateway_info_t, gi);
+            arrow_linked_list_add_node_last(*list, gateway_info_t, gi);
         }
     }
     json_delete(_main);

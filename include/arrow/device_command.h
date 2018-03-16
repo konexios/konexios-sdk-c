@@ -26,7 +26,7 @@ typedef int (*fp)(const char *);
 typedef struct __cmd_handler {
   char *name;
   fp callback;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } cmd_handler;
 
 // Is there any command handler was added

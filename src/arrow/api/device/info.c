@@ -79,7 +79,7 @@ int device_info_parse(device_info_t **list, const char *s) {
         json_foreach(tmp, _data) {
             device_info_t *gd = (device_info_t *)malloc(sizeof(device_info_t));
             _device_info_parse(gd, tmp);
-            linked_list_add_node_last(*list, device_info_t, gd);
+            arrow_linked_list_add_node_last(*list, device_info_t, gd);
         }
     }
     json_delete(_main);

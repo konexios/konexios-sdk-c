@@ -11,7 +11,7 @@ typedef struct {
   int encrypted;
   char *cmd;
   JsonNode *parameters;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } mqtt_event_t;
 
 void arrow_mqtt_events_init(void);

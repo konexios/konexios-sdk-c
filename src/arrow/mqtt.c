@@ -178,7 +178,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
         memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
         _mqtt_init_common(tmp);
         tmp->mask = mqttmask;
-        linked_list_add_node_last(__mqtt_channels,
+        arrow_linked_list_add_node_last(__mqtt_channels,
                                   mqtt_env_t,
                                   tmp);
     }
@@ -219,7 +219,7 @@ int mqtt_telemetry_disconnect(void) {
 int mqtt_telemetry_terminate(void) {
     mqtt_env_t *tmp = get_telemetry_env();
     if ( !tmp ) return -1;
-    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
     _mqtt_env_free(tmp);
     free(tmp);
     return 0;
@@ -263,14 +263,14 @@ int mqtt_is_telemetry_connect(void) {
 
 void mqtt_disconnect(void) {
     mqtt_env_t *curr = NULL;
-    for_each_node ( curr, __mqtt_channels, mqtt_env_t ) {
+    arrow_linked_list_for_each ( curr, __mqtt_channels, mqtt_env_t ) {
         if ( curr->init & MQTT_CLIENT_INIT ) _mqtt_env_close(curr);
     }
 }
 
 void mqtt_terminate(void) {
     mqtt_env_t *curr = NULL;
-    for_each_node_hard ( curr, __mqtt_channels, mqtt_env_t ) {
+    arrow_linked_list_for_each_safe ( curr, __mqtt_channels, mqtt_env_t ) {
         if ( curr->init & MQTT_CLIENT_INIT )
             _mqtt_env_free(curr);
         free(curr);
@@ -307,7 +307,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
         memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
         _mqtt_init_common(tmp);
         tmp->mask = ACN_num;
-        linked_list_add_node_last(__mqtt_channels,
+        arrow_linked_list_add_node_last(__mqtt_channels,
                                   mqtt_env_t,
                                   tmp);
     }
@@ -339,7 +339,7 @@ int mqtt_subscribe_disconnect(void) {
 int mqtt_subscribe_terminate(void) {
     mqtt_env_t *tmp = get_event_env();
     if ( !tmp ) return -1;
-    linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+    arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
     _mqtt_env_free(tmp);
     free(tmp);
     return 0;

@@ -14,7 +14,7 @@ typedef struct _telemetry_data_info {
   char *type;
   time_t timestamp;
   int floatValue;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } telemetry_data_info_t;
 
 typedef struct _telemetry_response_data_list_ {

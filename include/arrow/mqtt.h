@@ -50,7 +50,7 @@ typedef struct _mqtt_env_ {
     short init;
     int timeout;
     uint32_t mask;
-    linked_list_head_node;
+    arrow_linked_list_head_node;
 } mqtt_env_t;
 
 typedef struct _i_args {
