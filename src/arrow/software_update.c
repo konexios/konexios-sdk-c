@@ -22,6 +22,7 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   if ( arrow_gateway_software_update(tmp->string_) < 0 ) return -1;
   DBG("Reboot...");
   reboot();
+  return 0;
 }
 
 int __attribute__((weak)) arrow_gateway_software_update(const char *url) {
