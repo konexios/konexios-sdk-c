@@ -40,6 +40,7 @@ typedef struct _pstring {
 typedef struct _mqtt_env_ {
     Network net;
     MQTTClient client;
+    MQTTPacket_connectData data;
     pstring buf;
     pstring readbuf;
     property_t username;
@@ -54,7 +55,6 @@ typedef struct _mqtt_env_ {
 } mqtt_env_t;
 
 typedef struct _i_args {
-    MQTTPacket_connectData *data;
     arrow_device_t *device;
     arrow_gateway_t *gateway;
     arrow_gateway_config_t *config;

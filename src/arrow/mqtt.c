@@ -32,11 +32,21 @@ extern mqtt_driver_t ibm_driver;
 extern mqtt_driver_t azure_driver;
 #endif
 
+static void data_prep(MQTTPacket_connectData *data) {
+    MQTTPacket_connectData d = MQTTPacket_connectData_initializer;
+    *data = d;
+    data->willFlag = 0;
+    data->MQTTVersion = 3;
+    data->keepAliveInterval = 10;
+    data->cleansession = MQTT_CLEAN_SESSION;
+}
+
 static int _mqtt_init_common(mqtt_env_t *env) {
     property_init(&env->p_topic);
     property_init(&env->s_topic);
     property_init(&env->username);
     property_init(&env->addr);
+    data_prep(&env->data);
     env->buf.size = MQTT_BUF_LEN;
     env->buf.buf = (unsigned char*)malloc(env->buf.size);
     env->readbuf.size = MQTT_BUF_LEN;
@@ -59,7 +69,7 @@ static int _mqtt_deinit_common(mqtt_env_t *env) {
     return 0;
 }
 
-static int _mqtt_env_connect(mqtt_env_t *env, MQTTPacket_connectData *data) {
+static int _mqtt_env_connect(mqtt_env_t *env) {
     int ret = -1;
     if ( env->init & MQTT_CLIENT_INIT ) return 0;
     NetworkInit(&env->net);
@@ -79,7 +89,7 @@ static int _mqtt_env_connect(mqtt_env_t *env, MQTTPacket_connectData *data) {
                    env->timeout,
                    env->buf.buf, env->buf.size,
                    env->readbuf.buf, env->readbuf.size);
-    ret = MQTTConnect(&env->client, data);
+    ret = MQTTConnect(&env->client, &env->data);
     if ( ret != MQTT_SUCCESS ) {
         DBG("MQTT Connect fail %d", ret);
         NetworkDisconnect(&env->net);
@@ -152,21 +162,12 @@ static mqtt_driver_t *get_telemetry_driver(uint32_t mqttmask) {
     return drv;
 }
 
-static void data_prep(MQTTPacket_connectData *data) {
-    data->willFlag = 0;
-    data->MQTTVersion = 3;
-    data->keepAliveInterval = 10;
-    data->cleansession = MQTT_CLEAN_SESSION;
-}
-
 int mqtt_telemetry_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config) {
     int mqttmask = get_telemetry_mask();
     mqtt_driver_t *drv = get_telemetry_driver(mqttmask);
-    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-    data_prep(&data);
-    i_args args = { &data, device, gateway, config };
+    i_args args = { device, gateway, config };
     mqtt_env_t *tmp = NULL;
     linked_list_find_node(tmp,
                           __mqtt_channels,
@@ -195,7 +196,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
         tmp->init |= MQTT_TELEMETRY_INIT;
     }
     if ( tmp->init & MQTT_CLIENT_INIT ) return 0;
-    return _mqtt_env_connect(tmp, &data);
+    return _mqtt_env_connect(tmp);
 }
 
 static mqtt_env_t *get_telemetry_env() {
@@ -271,7 +272,7 @@ void mqtt_disconnect(void) {
 void mqtt_terminate(void) {
     mqtt_env_t *curr = NULL;
     arrow_linked_list_for_each_safe ( curr, __mqtt_channels, mqtt_env_t ) {
-        if ( curr->init & MQTT_CLIENT_INIT )
+        if ( curr->init )
             _mqtt_env_free(curr);
         free(curr);
     }
@@ -293,9 +294,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config) {
     mqtt_driver_t *drv = &iot_driver;
-    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-    data_prep(&data);
-    i_args args = { &data, device, gateway, config };
+    i_args args = { device, gateway, config };
     mqtt_env_t *tmp = NULL;
     linked_list_find_node(tmp,
                           __mqtt_channels,
@@ -324,7 +323,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
         tmp->init |= MQTT_SUBSCRIBE_INIT;
     }
     if ( tmp->init & MQTT_CLIENT_INIT ) return 0;
-    return _mqtt_env_connect(tmp, &data);
+    return _mqtt_env_connect(tmp);
 }
 
 int mqtt_subscribe_disconnect(void) {

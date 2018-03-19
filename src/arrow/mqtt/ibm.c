@@ -45,9 +45,9 @@ int mqtt_common_init_ibm(mqtt_env_t *env, i_args *args) {
     property_copy(&env->username, p_stack(username));
     DBG("username: %s", username);
 
-    args->data->clientID.cstring = P_VALUE(env->username);
-    args->data->username.cstring = "use-token-auth";
-    args->data->password.cstring = authToken;
+    env->data.clientID.cstring = P_VALUE(env->username);
+    env->data.username.cstring = "use-token-auth";
+    env->data.password.cstring = authToken;
 
     ret = snprintf(addr, sizeof(addr),
                    "%s%s",

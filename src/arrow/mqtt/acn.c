@@ -37,9 +37,9 @@ static int mqtt_common_init_iot(
     property_copy(&env->username, p_stack(username));
     DBG("qmtt.username %s", username);
 
-    args->data->clientID.cstring = P_VALUE(args->gateway->hid);
-    args->data->username.cstring = username;
-    args->data->password.cstring = (char*)get_api_key();
+    env->data.clientID.cstring = P_VALUE(args->gateway->hid);
+    env->data.username.cstring = P_VALUE(env->username);
+    env->data.password.cstring = (char*)get_api_key();
     property_copy(&env->addr, p_const("mqtt-a01.arrowconnect.io"));
 
     FREE_CHUNK(username);

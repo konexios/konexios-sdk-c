@@ -264,7 +264,7 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
 }
 
 void arrow_close(void) {
-  arrow_mqtt_disconnect_routine();
+  arrow_mqtt_terminate_routine();
   if ( _init_done ) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
