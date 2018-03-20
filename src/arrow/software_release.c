@@ -260,17 +260,14 @@ typedef struct _token_hid_ {
 
 
 // set the callback for update file processing
-int arrow_software_release_init_set_cb( __download_init_cb icb ) {
-    __download_init = icb;
-    return 0;
-}
-
 int arrow_software_release_dowload_set_cb(
-    __download_payload_cb pcb,
-    __download_complete_cb ccb) {
-  __payload = pcb;
-  __download = ccb;
-  return 0;
+        __download_init_cb icb,
+        __download_payload_cb pcb,
+        __download_complete_cb ccb) {
+    __download_init = icb;
+    __payload = pcb;
+    __download = ccb;
+    return 0;
 }
 
 // this is a special payload handler for the OTA
