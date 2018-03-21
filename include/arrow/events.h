@@ -1,4 +1,4 @@
-#if !defined(ARROW_EVENTS_H_)
+#if !defined(ARROW_EVENTS_H_) && !defined(NO_EVENTS)
 #define ARROW_EVENTS_H_
 
 #include <json/json.h>

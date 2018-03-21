@@ -7,6 +7,9 @@
  */
 
 #include "arrow/events.h"
+
+#if !defined(NO_EVENTS)
+
 #include <arrow/device_command.h>
 #include <arrow/state.h>
 
@@ -60,6 +63,7 @@ typedef struct {
 
 sub_t sub_list[] = {
   { "ServerToGateway_DeviceCommand", ev_DeviceCommand, NULL, arrow_command_handler_free },
+  { "SendCommand", ev_DeviceCommand, NULL, NULL },
   { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest, NULL, NULL },
 #if !defined(NO_SOFTWARE_UPDATE)
   { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate, NULL, NULL },
@@ -263,3 +267,6 @@ void arrow_mqtt_events_done() {
       if ( sub_list[i].deinit ) sub_list[i].deinit();
     }
 }
+#else
+typedef void __dummy;
+#endif
