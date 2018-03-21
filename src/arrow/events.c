@@ -21,12 +21,17 @@
 # include <arrow/software_update.h>
 #endif
 
+#if defined(DEVICE_STARTSTOP)
+#include <arrow/device_startstop.h>
+#endif
+
 #include <ctype.h>
 #include <debug.h>
 #include <http/client.h>
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
+
 #if defined(ARROW_THREAD)
 #include <sys/mutex.h>
 #define MQTT_EVENTS_QUEUE_LOCK      arrow_mutex_lock(_event_mutex)
@@ -70,8 +75,13 @@ sub_t sub_list[] = {
 #endif
 #if !defined(NO_RELEASE_UPDATE)
   { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL },
-  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL }
+  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL },
 #endif
+#if defined(DEVICE_STARTSTOP)
+    { "ServerToGateway_DeviceStart", ev_DeviceSoftwareRelease, NULL, NULL },
+    { "ServerToGateway_DeviceStop", ev_DeviceSoftwareRelease, NULL, NULL },
+#endif
+    { NULL, NULL, NULL, NULL }
 };
 
 // checker
@@ -190,7 +200,7 @@ int arrow_mqtt_event_proc(void) {
     submodule current_processor = NULL;
     int i = 0;
     for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-      if ( strcmp(sub_list[i].name, tmp->name) == 0 ) {
+      if ( sub_list[i].name && strcmp(sub_list[i].name, tmp->name) == 0 ) {
         current_processor = sub_list[i].proc;
       }
     }

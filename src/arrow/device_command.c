@@ -106,14 +106,29 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   DBG("start device command processing");
 
   JsonNode *tmp = json_find_member(_parameters, "deviceHid");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no device HID"));
+      goto device_command_done;
+  }
 
   JsonNode *cmd = json_find_member(_parameters, "command");
-  if ( !cmd || cmd->tag != JSON_STRING ) return -1;
+  if ( !cmd || cmd->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no command"));
+      goto device_command_done;
+  }
   DBG("ev cmd: %s", cmd->string_);
 
   JsonNode *pay = json_find_member(_parameters, "payload");
-  if ( !pay || pay->tag != JSON_STRING ) return -1;
+  if ( !pay || pay->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no payload"));
+      goto device_command_done;
+  }
   DBG("ev msg: %s", pay->string_);
 
   cmd_handler *cmd_h = NULL;
@@ -132,10 +147,12 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                        json_mkstring("There is no a command handler"));
   }
   // close session after next request
+device_command_done:
   http_session_close_set(current_client(), true);
   RETRY_CR(retry);
   if ( _error ) {
     char *_error_str = json_encode(_error);
+    DBG("error string: %s", _error_str);
     while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_str) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
