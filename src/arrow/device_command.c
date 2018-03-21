@@ -113,7 +113,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
       goto device_command_done;
   }
 
+  // FIXME workaround actually
   JsonNode *cmd = json_find_member(_parameters, "command");
+  if ( !cmd ) cmd = json_find_member(_parameters, "Command");
   if ( !cmd || cmd->tag != JSON_STRING ) {
       _error = json_mkobject();
       json_append_member(_error, "error",
@@ -122,7 +124,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   }
   DBG("ev cmd: %s", cmd->string_);
 
+  // FIXME workaround actually
   JsonNode *pay = json_find_member(_parameters, "payload");
+  if ( !pay ) pay = json_find_member(_parameters, "Payload");
   if ( !pay || pay->tag != JSON_STRING ) {
       _error = json_mkobject();
       json_append_member(_error, "error",
