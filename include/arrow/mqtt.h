@@ -16,7 +16,7 @@ extern "C" {
 #include "gateway.h"
 #include "device.h"
 #include <data/linkedlist.h>
-#include <mqtt/client/MQTTClient.h>
+#include <MQTTClient.h>
 
 enum _mqtt_mask_ {
     ACN_num = 1<<0,

@@ -64,7 +64,9 @@ SDK_INCLUDES := \
     -I$(SDK_PATH) \
     -I$(SDK_PATH)/include \
     -I$(SDK_PATH)/src \
-    -I$(SDK_IMPL)
+    -I$(SDK_IMPL) \
+    -I$(SDK_PATH)/src/mqtt/client/src \
+    -I$(SDK_PATH)/src/mqtt/packet/src
 
 ifneq ($(PLATFORM),)
 CC_SYMBOLS += -D__$(PLATFORM)__

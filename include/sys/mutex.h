@@ -18,6 +18,12 @@ int arrow_mutex_init(arrow_mutex **mutex);
 int arrow_mutex_deinit(arrow_mutex *mutex);
 int arrow_mutex_lock(arrow_mutex *mutex);
 int arrow_mutex_unlock(arrow_mutex *mutex);
+
+#define CRITICAL_SECTION_START(mutex)   arrow_mutex_lock(mutex)
+#define CRITICAL_SECTION_STOP(mutex)    arrow_mutex_unlock(mutex)
+#else
+#define CRITICAL_SECTION_START(...)
+#define CRITICAL_SECTION_END(...)
 #endif
 
 #endif

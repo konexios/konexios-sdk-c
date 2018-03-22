@@ -306,6 +306,26 @@ arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *da
     return ROUTINE_SUCCESS;
 }
 
+arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data) {
+    if ( !_init_done ||
+         !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ) {
+        DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        return ROUTINE_NOT_INITIALIZE;
+    }
+    wdt_feed();
+    int get_data_result = data_cb(data);
+    if ( get_data_result != 0 ) {
+        DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+        return ROUTINE_GET_TELEMETRY_FAILED;
+    }
+    if ( mqtt_publish(&_device, data) < 0 ) {
+        DBG(DEVICE_MQTT_TELEMETRY, "fail");
+        return ROUTINE_MQTT_PUBLISH_FAILED;
+    }
+    DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    return ROUTINE_SUCCESS;
+}
+
 arrow_routine_error_t arrow_mqtt_event_receive_routine() {
     if ( !_init_done ||
          !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {

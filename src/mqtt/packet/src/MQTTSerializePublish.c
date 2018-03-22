@@ -15,10 +15,9 @@
  *    Ian Craggs - fix for https://bugs.eclipse.org/bugs/show_bug.cgi?id=453144
  *******************************************************************************/
 
-#include <mqtt/packet/StackTrace.h>
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/MQTTSubscribe.h"
-#include "mqtt/packet/MQTTPublish.h"
+#include "MQTTPacket.h"
+#include "StackTrace.h"
+
 #include <string.h>
 
 
@@ -29,7 +28,7 @@
   * @param payloadlen the length of the payload to be sent
   * @return the length of buffer needed to contain the serialized version of the packet
   */
-static int MQTTSerialize_publishLength(int qos, MQTTString topicName, int payloadlen)
+int MQTTSerialize_publishLength(int qos, MQTTString topicName, int payloadlen)
 {
 	int len = 0;
 

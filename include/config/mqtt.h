@@ -22,6 +22,15 @@
 #define MQTT_BUF_LEN 1200
 #endif
 
+#if defined(ARROW_THREAD) &&  \
+    !defined(__IBM__) && \
+    !defined(__AZURE__)
+# warning "There is only one possible MQTT connection"
+# undef ARROW_THREAD
+#endif
+
+//#define MQTT_TASK
+
 #if defined(MQTT_CIPHER)
 #  define MQTT_SCH "tls"
 #  define MQTT_PORT 8883
@@ -45,15 +54,12 @@
 # endif
 #endif
 
+//#define MQTTCLIENT_PLATFORM_HEADER network.h
+
 #define ARROW_MQTT_URL MQTT_SCH "://" MQTT_ADDR ":" #MQTT_PORT
 
 #if !defined(MQTT_QOS)
-// FIXME delete it for a next version
-#if defined(__nrf52832__)
 #define MQTT_QOS        1
-#else
-#define MQTT_QOS        0
-#endif
 #endif
 #if !defined(MQTT_RETAINED)
 #define MQTT_RETAINED   0

@@ -133,7 +133,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                          json_mkstring("There is no payload"));
       goto device_command_done;
   }
-  DBG("ev msg: %s", pay->string_);
+//  DBG("ev msg: %s", pay->string_);
 
   cmd_handler *cmd_h = NULL;
   linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );

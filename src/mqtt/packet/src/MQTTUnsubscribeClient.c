@@ -14,13 +14,10 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/StackTrace.h"
-#include "mqtt/packet/MQTTUnsubscribe.h"
+#include "MQTTPacket.h"
+#include "StackTrace.h"
 
-#if defined(__USE_STD__)
-# include <string.h>
-#endif
+#include <string.h>
 
 /**
   * Determines the length of the MQTT unsubscribe packet that would be produced using the supplied parameters
@@ -28,7 +25,7 @@
   * @param topicFilters the array of topic filter strings to be used in the publish
   * @return the length of buffer needed to contain the serialized version of the packet
   */
-static int MQTTSerialize_unsubscribeLength(int count, MQTTString topicFilters[])
+int MQTTSerialize_unsubscribeLength(int count, MQTTString topicFilters[])
 {
 	int i;
 	int len = 2; /* packetid */
@@ -69,7 +66,7 @@ int MQTTSerialize_unsubscribe(unsigned char* buf, int buflen, unsigned char dup,
 	header.bits.type = UNSUBSCRIBE;
 	header.bits.dup = dup;
 	header.bits.qos = 1;
-	writeChar(&ptr, (char)header.byte); /* write header */
+	writeChar(&ptr, header.byte); /* write header */
 
 	ptr += MQTTPacket_encode(ptr, rem_len); /* write remaining length */;
 

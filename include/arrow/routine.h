@@ -83,6 +83,7 @@ arrow_routine_error_t arrow_mqtt_terminate_event_routine(void);
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
 
 arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data);
+arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data);
 arrow_routine_error_t arrow_mqtt_event_receive_routine();
 
 #if defined(__cplusplus)

@@ -14,9 +14,8 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include <mqtt/packet/StackTrace.h>
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/MQTTPublish.h"
+#include "StackTrace.h"
+#include "MQTTPacket.h"
 #include <string.h>
 
 #define min(a, b) ((a < b) ? 1 : 0)
@@ -37,7 +36,6 @@
 int MQTTDeserialize_publish(unsigned char* dup, int* qos, unsigned char* retained, unsigned short* packetid, MQTTString* topicName,
 		unsigned char** payload, int* payloadlen, unsigned char* buf, int buflen)
 {
-  SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
@@ -83,7 +81,6 @@ exit:
   */
 int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
 {
-  SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;

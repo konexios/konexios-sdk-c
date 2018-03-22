@@ -14,8 +14,8 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include "mqtt/packet/StackTrace.h"
-#include "mqtt/packet/MQTTConnect.h"
+#include "StackTrace.h"
+#include "MQTTPacket.h"
 #include <string.h>
 
 #define min(a, b) ((a < b) ? a : b)
@@ -27,15 +27,15 @@
   * @param version the MQTT protocol version number, as in the connect packet
   * @return correct MQTT combination?  1 is true, 0 is false
   */
-static int MQTTPacket_checkVersion(MQTTString* protocol, int version)
+int MQTTPacket_checkVersion(MQTTString* protocol, int version)
 {
 	int rc = 0;
 
 	if (version == 3 && memcmp(protocol->lenstring.data, "MQIsdp",
-			(size_t)min(6, protocol->lenstring.len)) == 0)
+			min(6, protocol->lenstring.len)) == 0)
 		rc = 1;
 	else if (version == 4 && memcmp(protocol->lenstring.data, "MQTT",
-			(size_t)min(4, protocol->lenstring.len)) == 0)
+			min(4, protocol->lenstring.len)) == 0)
 		rc = 1;
 	return rc;
 }

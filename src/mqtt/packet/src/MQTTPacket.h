@@ -21,12 +21,6 @@
 #if defined(__cplusplus) /* If this is a C++ compiler, use C linkage */
 extern "C" {
 #endif
-#include <config.h>
-//#include "MQTTConnect.h"
-//#include "MQTTPublish.h"
-//#include "MQTTSubscribe.h"
-//#include "MQTTUnsubscribe.h"
-//#include "MQTTFormat.h"
 
 #if defined(WIN32_DLL) || defined(WIN64_DLL)
   #define DLLImport __declspec(dllimport)
@@ -94,13 +88,19 @@ typedef struct
 
 int MQTTstrlen(MQTTString mqttstring);
 
-int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, unsigned short packetid);
-int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen);
+#include "MQTTConnect.h"
+#include "MQTTPublish.h"
+#include "MQTTSubscribe.h"
+#include "MQTTUnsubscribe.h"
+#include "MQTTFormat.h"
+
+DLLExport int MQTTSerialize_ack(unsigned char* buf, int buflen, unsigned char type, unsigned char dup, unsigned short packetid);
+DLLExport int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen);
 
 int MQTTPacket_len(int rem_len);
-int MQTTPacket_equals(MQTTString* a, char* b);
+DLLExport int MQTTPacket_equals(MQTTString* a, char* b);
 
-int MQTTPacket_encode(unsigned char* buf, int length);
+DLLExport int MQTTPacket_encode(unsigned char* buf, int length);
 int MQTTPacket_decode(int (*getcharfn)(unsigned char*, int), int* value);
 int MQTTPacket_decodeBuf(unsigned char* buf, int* value);
 

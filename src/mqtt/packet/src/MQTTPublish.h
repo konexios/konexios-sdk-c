@@ -25,8 +25,6 @@
   #define DLLExport
 #endif
 
-#include "MQTTPacket.h"
-
 DLLExport int MQTTSerialize_publish(unsigned char* buf, int buflen, unsigned char dup, int qos, unsigned char retained, unsigned short packetid,
 		MQTTString topicName, unsigned char* payload, int payloadlen);
 

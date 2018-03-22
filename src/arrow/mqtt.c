@@ -35,9 +35,6 @@ extern mqtt_driver_t azure_driver;
 static void data_prep(MQTTPacket_connectData *data) {
     MQTTPacket_connectData d = MQTTPacket_connectData_initializer;
     *data = d;
-    data->willFlag = 0;
-    data->MQTTVersion = 3;
-    data->keepAliveInterval = 10;
     data->cleansession = MQTT_CLEAN_SESSION;
 }
 
@@ -58,6 +55,9 @@ static int _mqtt_init_common(mqtt_env_t *env) {
 }
 
 static int _mqtt_deinit_common(mqtt_env_t *env) {
+#if defined(MQTT_TASK)
+    arrow_mutex_deinit(env->client.mutex);
+#endif
     property_free(&env->p_topic);
     property_free(&env->s_topic);
     property_free(&env->username);
@@ -69,9 +69,22 @@ static int _mqtt_deinit_common(mqtt_env_t *env) {
     return 0;
 }
 
+static int _mqtt_env_is_init(mqtt_env_t *env, uint32_t init_mask) {
+    int ret = 0;
+    if ( env->init & init_mask ) ret = 1;
+    return ret;
+}
+
+static void _mqtt_env_set_init(mqtt_env_t *env, uint32_t init_mask) {
+    env->init |= init_mask;
+}
+
+static void _mqtt_env_unset_init(mqtt_env_t *env, uint32_t init_mask) {
+    env->init &= ~init_mask;
+}
+
 static int _mqtt_env_connect(mqtt_env_t *env) {
     int ret = -1;
-    if ( env->init & MQTT_CLIENT_INIT ) return 0;
     NetworkInit(&env->net);
     ret = NetworkConnect(&env->net,
                          P_VALUE(env->addr),
@@ -90,36 +103,34 @@ static int _mqtt_env_connect(mqtt_env_t *env) {
                    env->buf.buf, env->buf.size,
                    env->readbuf.buf, env->readbuf.size);
     ret = MQTTConnect(&env->client, &env->data);
-    if ( ret != MQTT_SUCCESS ) {
+    if ( ret != SUCCESS ) {
         DBG("MQTT Connect fail %d", ret);
         NetworkDisconnect(&env->net);
         return -1;
     }
-    env->init |= MQTT_CLIENT_INIT;
+    _mqtt_env_set_init(env, MQTT_CLIENT_INIT);
     return 0;
 }
 
 static int _mqtt_env_close(mqtt_env_t *env) {
     MQTTDisconnect(&env->client);
     NetworkDisconnect(&env->net);
-    env->init &= ~MQTT_CLIENT_INIT;
-    env->init &= ~MQTT_COMMANDS_INIT;
+    _mqtt_env_unset_init(env, MQTT_CLIENT_INIT);
+    _mqtt_env_unset_init(env, MQTT_COMMANDS_INIT);
     return 0;
 }
 
 static int _mqtt_env_free(mqtt_env_t *env) {
-    if ( env->init & MQTT_CLIENT_INIT ) {
+    if ( _mqtt_env_is_init(env, MQTT_CLIENT_INIT) )
         _mqtt_env_close(env);
-    }
     _mqtt_deinit_common(env);
-    env->init = 0;
+    _mqtt_env_unset_init(env, 0xffffffff);
     return 0;
 }
 
 #if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
-    DBG("mqtt msg arrived %u", message->payloadlen);
     char *nt_str = (char*)malloc(message->payloadlen+1);
     if ( !nt_str ) {
         DBG("Can't allocate more memory [%d]", message->payloadlen+1);
@@ -147,10 +158,22 @@ static uint32_t get_telemetry_mask() {
     return mqttmask;
 }
 
+static mqtt_env_t *get_telemetry_env() {
+    int mqttmask = get_telemetry_mask();
+    mqtt_env_t *tmp = NULL;
+    linked_list_find_node(tmp,
+                          __mqtt_channels,
+                          mqtt_env_t,
+                          mqttchannelseq,
+                          mqttmask );
+    return tmp;
+}
+
 static mqtt_driver_t *get_telemetry_driver(uint32_t mqttmask) {
     mqtt_driver_t *drv = NULL;
     switch(mqttmask) {
-    case ACN_num: drv = &iot_driver; break;
+    case ACN_num:
+        drv = &iot_driver; break;
 #if defined(__IBM__)
     case IBM_num: drv = &ibm_driver; break;
 #endif
@@ -168,12 +191,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
     int mqttmask = get_telemetry_mask();
     mqtt_driver_t *drv = get_telemetry_driver(mqttmask);
     i_args args = { device, gateway, config };
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          mqttmask );
+    mqtt_env_t *tmp = get_telemetry_env();
     if ( !tmp ) {
         tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
         memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
@@ -183,59 +201,55 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
                                   mqtt_env_t,
                                   tmp);
     }
-    if ( ! ( tmp->init & MQTT_COMMON_INIT ) ) {
+    if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
-        tmp->init |= MQTT_COMMON_INIT;
+        _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
     }
-    if ( ! ( tmp->init & MQTT_TELEMETRY_INIT ) ) {
+    if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) ) {
         int ret = drv->telemetry_init(tmp, &args);
         if ( ret < 0 ) {
             DBG("MQTT telemetry setting fail");
             return ret;
         }
-        tmp->init |= MQTT_TELEMETRY_INIT;
+        _mqtt_env_set_init(tmp, MQTT_TELEMETRY_INIT);
     }
-    if ( tmp->init & MQTT_CLIENT_INIT ) return 0;
-    return _mqtt_env_connect(tmp);
-}
-
-static mqtt_env_t *get_telemetry_env() {
-    int mqttmask = get_telemetry_mask();
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          mqttmask );
-    return tmp;
+    if ( !_mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
+        int ret = _mqtt_env_connect(tmp);
+        if ( ret < 0 ) return ret;
+    }
+    return 0;
 }
 
 int mqtt_telemetry_disconnect(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) return -1;
-    _mqtt_env_close(tmp);
+    if ( !tmp ) {
+        return -1;
+    }
+    if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) )
+        _mqtt_env_close(tmp);
+    else
+        _mqtt_env_unset_init(tmp, MQTT_TELEMETRY_INIT);
     return 0;
 }
 
 int mqtt_telemetry_terminate(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) return -1;
-    arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
-    _mqtt_env_free(tmp);
-    free(tmp);
+    if ( !tmp ) {
+        return -1;
+    }
+    if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) ) {
+        arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+        _mqtt_env_free(tmp);
+        free(tmp);
+    } else
+        _mqtt_env_unset_init(tmp, MQTT_TELEMETRY_INIT);
     return 0;
 }
 
 int mqtt_publish(arrow_device_t *device, void *d) {
     MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
-    int mqttmask = get_telemetry_mask();
-    mqtt_env_t *tmp = NULL;
     int ret = -1;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          mqttmask );
+    mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
         char *payload = telemetry_serialize(device, d);
         msg.payload = payload;
@@ -249,15 +263,10 @@ int mqtt_publish(arrow_device_t *device, void *d) {
 }
 
 int mqtt_is_telemetry_connect(void) {
-    int mqttmask = get_telemetry_mask();
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          mqttmask );
+    mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
-        if ( tmp->mask & MQTT_CLIENT_INIT ) return 1;
+        if ( _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT ) )
+            return 1;
     }
     return 0;
 }
@@ -265,7 +274,7 @@ int mqtt_is_telemetry_connect(void) {
 void mqtt_disconnect(void) {
     mqtt_env_t *curr = NULL;
     arrow_linked_list_for_each ( curr, __mqtt_channels, mqtt_env_t ) {
-        if ( curr->init & MQTT_CLIENT_INIT ) _mqtt_env_close(curr);
+        if ( _mqtt_env_is_init(curr, MQTT_CLIENT_INIT) ) _mqtt_env_close(curr);
     }
 }
 
@@ -295,35 +304,39 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                            arrow_gateway_config_t *config) {
     mqtt_driver_t *drv = &iot_driver;
     i_args args = { device, gateway, config };
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          ACN_num );
+    mqtt_env_t *tmp = get_event_env();
     if ( !tmp ) {
-        tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
-        memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
+        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
         _mqtt_init_common(tmp);
         tmp->mask = ACN_num;
         arrow_linked_list_add_node_last(__mqtt_channels,
                                   mqtt_env_t,
                                   tmp);
     }
-    if ( ! ( tmp->init & MQTT_COMMON_INIT ) ) {
+    if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
-        tmp->init |= MQTT_COMMON_INIT;
+        _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
     }
-    if ( ! ( tmp->init & MQTT_SUBSCRIBE_INIT ) ) {
+    if ( ! _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) ) {
         int ret = drv->commands_init(tmp, &args);
         if ( ret < 0 ) {
             DBG("MQTT subscribe setting fail");
             return ret;
         }
-        tmp->init |= MQTT_SUBSCRIBE_INIT;
+        _mqtt_env_set_init(tmp, MQTT_SUBSCRIBE_INIT);
     }
-    if ( tmp->init & MQTT_CLIENT_INIT ) return 0;
-    return _mqtt_env_connect(tmp);
+    if ( MQTTSetMessageHandler(&tmp->client,
+                               P_VALUE(tmp->s_topic),
+                               messageArrived) < 0 ) {
+        DBG("MQTT handler fail");
+    }
+    if ( ! _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
+        int ret = _mqtt_env_connect(tmp);
+        if ( ret < 0 ) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int mqtt_subscribe_disconnect(void) {
@@ -332,26 +345,32 @@ int mqtt_subscribe_disconnect(void) {
         DBG("There is no sub channel");
         return -1;
     }
-    return _mqtt_env_close(tmp);
+    if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) )
+        _mqtt_env_close(tmp);
+    else
+        _mqtt_env_unset_init(tmp, MQTT_SUBSCRIBE_INIT);
+    return 0;
 }
 
 int mqtt_subscribe_terminate(void) {
     mqtt_env_t *tmp = get_event_env();
-    if ( !tmp ) return -1;
-    arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
-    _mqtt_env_free(tmp);
-    free(tmp);
+    if ( !tmp ) {
+        return -1;
+    }
+    if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) ) {
+        arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
+        _mqtt_env_free(tmp);
+        free(tmp);
+    } else
+        _mqtt_env_unset_init(tmp, MQTT_SUBSCRIBE_INIT);
     return 0;
 }
 
 int mqtt_subscribe(void) {
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          ACN_num );
-    if ( tmp && !(tmp->init & MQTT_COMMANDS_INIT) ) {
+    mqtt_env_t *tmp = get_event_env();
+    if ( tmp &&
+         _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) &&
+         !_mqtt_env_is_init(tmp, MQTT_COMMANDS_INIT) ) {
         DBG("Subscribing to %s", P_VALUE(tmp->s_topic));
         int rc = MQTTSubscribe(&tmp->client,
                                P_VALUE(tmp->s_topic),
@@ -361,20 +380,15 @@ int mqtt_subscribe(void) {
             DBG("Subscribe failed %d\n", rc);
             return rc;
         }
-        tmp->init |= MQTT_COMMANDS_INIT;
+        _mqtt_env_set_init(tmp, MQTT_COMMANDS_INIT);
     }
     return 0;
 }
 
 int mqtt_is_subscribe_connect(void) {
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          ACN_num );
+    mqtt_env_t *tmp = get_event_env();
     if ( tmp ) {
-        if ( tmp->mask & MQTT_CLIENT_INIT ) return 1;
+        if ( _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) return 1;
     }
     return 0;
 }
@@ -386,17 +400,12 @@ int mqtt_yield(int timeout_ms) {
 //    TimerCountdownMS(&timer, (unsigned int)timeout_ms);
 #if !defined(NO_EVENTS)
     int ret = -1;
-    mqtt_env_t *tmp = NULL;
-    linked_list_find_node(tmp,
-                          __mqtt_channels,
-                          mqtt_env_t,
-                          mqttchannelseq,
-                          ACN_num );
+    mqtt_env_t *tmp = get_event_env();
     if ( tmp &&
-         tmp->init & MQTT_SUBSCRIBE_INIT &&
-         tmp->init & MQTT_CLIENT_INIT ) {
+         _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) &&
+         _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
 //        do {
-            ret = MQTTYield(&tmp->client, timeout_ms);
+        ret = MQTTYield(&tmp->client, timeout_ms);
 //        } while (!TimerIsExpired(&timer));
         return ret;
     }

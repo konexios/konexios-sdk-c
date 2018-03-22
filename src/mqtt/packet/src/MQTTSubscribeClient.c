@@ -14,9 +14,9 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include <mqtt/packet/StackTrace.h>
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/MQTTSubscribe.h"
+#include "MQTTPacket.h"
+#include "StackTrace.h"
+
 #include <string.h>
 
 /**
@@ -25,7 +25,7 @@
   * @param topicFilters the array of topic filter strings to be used in the publish
   * @return the length of buffer needed to contain the serialized version of the packet
   */
-static int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[])
+int MQTTSerialize_subscribeLength(int count, MQTTString topicFilters[])
 {
 	int i;
 	int len = 2; /* packetid */
@@ -99,7 +99,6 @@ exit:
   */
 int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int buflen)
 {
-  SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;

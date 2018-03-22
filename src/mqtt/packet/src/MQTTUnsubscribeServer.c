@@ -14,8 +14,8 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/StackTrace.h"
+#include "MQTTPacket.h"
+#include "StackTrace.h"
 
 #include <string.h>
 
@@ -31,11 +31,9 @@
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return the length of the serialized data.  <= 0 indicates error
   */
-static int __attribute__((used)) MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
+int MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
 		unsigned char* buf, int len)
 {
-  SSP_PARAMETER_NOT_USED(len);
-  SSP_PARAMETER_NOT_USED(maxcount);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
@@ -75,7 +73,7 @@ exit:
   * @param packetid integer - the MQTT packet identifier
   * @return the length of the serialized data.  <= 0 indicates error
   */
-static int __attribute__((used)) MQTTSerialize_unsuback(unsigned char* buf, int buflen, unsigned short packetid)
+int MQTTSerialize_unsuback(unsigned char* buf, int buflen, unsigned short packetid)
 {
 	MQTTHeader header = {0};
 	int rc = 0;

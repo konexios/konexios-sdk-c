@@ -38,6 +38,19 @@ typedef struct Network {
 typedef struct TimerInterval {
     struct timeval end_time;
 } TimerInterval;
+typedef TimerInterval Timer;
+
+#if defined(MQTT_TASK)
+#include <sys/mutex.h>
+typedef arrow_mutex* Mutex;
+typedef int Thread;
+
+#define MutexInit arrow_mutex_init
+#define MutexLock(x) arrow_mutex_lock(*(x))
+#define MutexUnlock(x) arrow_mutex_unlock(*(x))
+
+#define ThreadStart(...) (-1)
+#endif
 
 void TimerInit(TimerInterval*);
 char TimerIsExpired(TimerInterval*);

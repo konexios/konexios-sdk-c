@@ -1,4 +1,4 @@
-#include "mqtt/client/network.h"
+#include "network.h"
 
 #include <bsd/socket.h>
 #include <debug.h>

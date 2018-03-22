@@ -220,6 +220,7 @@ mqtt_event_proc_error:
 
 int process_event(const char *str) {
   mqtt_event_t *mqtt_e = (mqtt_event_t *)calloc(1, sizeof(mqtt_event_t));
+  if ( !mqtt_e ) return -2;
   int ret = -1;
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
@@ -231,13 +232,13 @@ int process_event(const char *str) {
     DBG("cannot find HID");
     goto error;
   }
-  DBG("ev ghid: %s", mqtt_e->gateway_hid);
+//  DBG("ev ghid: %s", mqtt_e->gateway_hid);
 
   if ( fill_string_from_json(_main, "name", &mqtt_e->name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
-  DBG("ev name: %s", mqtt_e->name);
+//  DBG("ev name: %s", mqtt_e->name);
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
@@ -247,11 +248,11 @@ int process_event(const char *str) {
   if ( !_parameters ) goto error;
   JsonNode *sign_version = json_find_member(_main, "signatureVersion");
   if ( sign_version ) {
-    DBG("signature vertsion: %s", sign_version->string_);
+//    DBG("signature vertsion: %s", sign_version->string_);
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
-    DBG("[%s]", can);
+//    DBG("[%s]", can);
     if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);
