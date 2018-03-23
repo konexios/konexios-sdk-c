@@ -9,7 +9,7 @@
 #include "ntp/ntp.h"
 #include <debug.h>
 #include <time/time.h>
-#include <time/watchdog.h>
+#include <sys/watchdog.h>
 #include <ntp/client.h>
 
 

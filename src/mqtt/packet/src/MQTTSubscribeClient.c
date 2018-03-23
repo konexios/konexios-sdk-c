@@ -16,9 +16,9 @@
 
 #include "MQTTPacket.h"
 #include "StackTrace.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 /**
   * Determines the length of the MQTT subscribe packet that would be produced using the supplied parameters
   * @param count the number of topic filter strings in topicFilters
@@ -99,6 +99,7 @@ exit:
   */
 int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int buflen)
 {
+    SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;

@@ -38,7 +38,6 @@ typedef struct Network {
 typedef struct TimerInterval {
     struct timeval end_time;
 } TimerInterval;
-typedef TimerInterval Timer;
 
 #if defined(MQTT_TASK)
 #include <sys/mutex.h>

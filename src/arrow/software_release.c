@@ -9,7 +9,7 @@
 #include "arrow/software_release.h"
 #include <http/routine.h>
 #include <debug.h>
-#include <time/watchdog.h>
+#include <sys/watchdog.h>
 #include <sys/reboot.h>
 #include <ssl/md5sum.h>
 #include <arrow/utf8.h>

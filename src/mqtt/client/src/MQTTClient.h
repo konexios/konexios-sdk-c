@@ -56,7 +56,7 @@
 enum QoS { QOS0, QOS1, QOS2, SUBFAIL=0x80 };
 
 /* all failure return codes must be negative */
-enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
+enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, MQTT_SUCCESS = 0 };
 
 /* The Platform specific header must define the Network and Timer structures and functions
  * which operate on them.
@@ -69,11 +69,11 @@ typedef struct Network
 
 /* The Timer structure must be defined in the platform specific header,
  * and have the following functions to operate on it.  */
-extern void TimerInit(Timer*);
-extern char TimerIsExpired(Timer*);
-extern void TimerCountdownMS(Timer*, unsigned int);
-extern void TimerCountdown(Timer*, unsigned int);
-extern int TimerLeftMS(Timer*);
+extern void TimerInit(TimerInterval*);
+extern char TimerIsExpired(TimerInterval*);
+extern void TimerCountdownMS(TimerInterval*, unsigned int);
+extern void TimerCountdown(TimerInterval*, unsigned int);
+extern int TimerLeftMS(TimerInterval*);
 
 typedef struct MQTTMessage
 {
@@ -126,7 +126,7 @@ typedef struct MQTTClient
     void (*defaultMessageHandler) (MessageData*);
 
     Network* ipstack;
-    Timer last_sent, last_received;
+    TimerInterval last_sent, last_received;
 #if defined(MQTT_TASK)
     Mutex mutex;
     Thread thread;
@@ -218,11 +218,7 @@ DLLExport int MQTTYield(MQTTClient* client, int time);
  *  @param client - the client object to use
  *  @return truth value indicating whether the client is connected to the server
  */
-inline DLLExport int MQTTIsConnected(MQTTClient* client)
-{
-  return client->isconnected;
-}
-
+DLLExport int MQTTIsConnected(MQTTClient* client);
 #if defined(MQTT_TASK)
 /** MQTT start background thread for a client.  After this, MQTTYield should not be called.
 *  @param client - the client object to use

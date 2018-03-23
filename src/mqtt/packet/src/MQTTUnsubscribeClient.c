@@ -16,9 +16,9 @@
 
 #include "MQTTPacket.h"
 #include "StackTrace.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 /**
   * Determines the length of the MQTT unsubscribe packet that would be produced using the supplied parameters
   * @param count the number of topic filter strings in topicFilters

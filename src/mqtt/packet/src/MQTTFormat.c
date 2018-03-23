@@ -16,9 +16,9 @@
 
 #include "StackTrace.h"
 #include "MQTTPacket.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 
 const char* MQTTPacket_names[] =
 {

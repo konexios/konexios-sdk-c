@@ -20,6 +20,8 @@
 #ifndef MQTTCONNECT_H_
 #define MQTTCONNECT_H_
 
+#include <sys/mem.h>
+
 enum connack_return_codes
 {
     MQTT_CONNECTION_ACCEPTED = 0,

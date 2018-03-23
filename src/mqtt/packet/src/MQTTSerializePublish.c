@@ -17,9 +17,9 @@
 
 #include "MQTTPacket.h"
 #include "StackTrace.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 
 /**
   * Determines the length of the MQTT publish packet that would be produced using the supplied parameters

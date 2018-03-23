@@ -17,8 +17,9 @@
 
 #include "StackTrace.h"
 #include "MQTTPacket.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
+#endif
 
 /**
  * Encodes the message length according to the MQTT algorithm

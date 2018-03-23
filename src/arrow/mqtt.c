@@ -103,7 +103,7 @@ static int _mqtt_env_connect(mqtt_env_t *env) {
                    env->buf.buf, env->buf.size,
                    env->readbuf.buf, env->readbuf.size);
     ret = MQTTConnect(&env->client, &env->data);
-    if ( ret != SUCCESS ) {
+    if ( ret != MQTT_SUCCESS ) {
         DBG("MQTT Connect fail %d", ret);
         NetworkDisconnect(&env->net);
         return -1;

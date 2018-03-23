@@ -16,9 +16,9 @@
 
 #include "MQTTPacket.h"
 #include "StackTrace.h"
-
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 
 /**
   * Deserializes the supplied (wire) buffer into subscribe data
@@ -35,6 +35,8 @@
 int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
 	int requestedQoSs[], unsigned char* buf, int buflen)
 {
+    SSP_PARAMETER_NOT_USED(maxcount);
+    SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;

@@ -17,7 +17,9 @@
 #include "MQTTPacket.h"
 #include "StackTrace.h"
 
+#if defined(__USE_STD__)
 #include <string.h>
+#endif
 
 /**
   * Determines the length of the MQTT connect packet that would be produced using the supplied connect options.
@@ -131,6 +133,7 @@ int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData
   */
 int MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen)
 {
+    SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;

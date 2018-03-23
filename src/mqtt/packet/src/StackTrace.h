@@ -17,8 +17,9 @@
 
 #ifndef STACKTRACE_H_
 #define STACKTRACE_H_
-
+#if defined(__USE_STD__)
 #include <stdio.h>
+#endif
 #define NOSTACKTRACE 1
 
 #if defined(NOSTACKTRACE)
