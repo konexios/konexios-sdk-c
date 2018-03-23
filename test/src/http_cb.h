@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 
 void set_http_cb(char *buf, int size);

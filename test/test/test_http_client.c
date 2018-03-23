@@ -13,10 +13,15 @@
 #include <http/request.h>
 #include <http/response.h>
 #include <data/find_by.h>
+
+#include "acnsdkc_ssl.h"
+
 #include "mock_mac.h"
 #include "mock_sockdecl.h"
-#include "mock_ssl.h"
+
 #include "http_cb.h"
+#include "fakedns.h"
+#include "fakesock.h"
 
 void setUp(void)
 {
@@ -46,39 +51,19 @@ static http_response_t response;
 
 void test_http_client_do( void ) {
     set_http_cb(http_resp_text, sizeof(http_resp_text));
-    static struct hostent s_hostent;
-    static char *s_aliases;
-    static unsigned long s_hostent_addr;
-    static unsigned long *s_phostent_addr[2];
 
-    s_hostent_addr = 0xc0a80001;
-    s_phostent_addr[0] = &s_hostent_addr;
-    s_phostent_addr[1] = NULL;
-    s_hostent.h_name = (char*) ARROW_ADDR;
-    s_hostent.h_aliases = &s_aliases;
-    s_hostent.h_addrtype = AF_INET;
-    s_hostent.h_length = sizeof(unsigned long);
-    s_hostent.h_addr_list = (char**) &s_phostent_addr;
-    s_hostent.h_addr = s_hostent.h_addr_list[0];
+   struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
 
     // test address
     http_request_init(&request, GET, "http://api.arrowconnect.io:80/api/v1/kronos/gateways");
     TEST_ASSERT( !request.query );
 
-//    char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
-//    get_mac_address_ExpectAndReturn(mac, 0);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(P_VALUE(request.host), &s_hostent);
-    struct sockaddr_in serv;
-    memset(&serv, 0, sizeof(serv));
-    serv.sin_family = PF_INET;
-    bcopy((char *)s_hostent.h_addr,
-            (char *)&serv.sin_addr.s_addr,
-            (uint32_t)s_hostent.h_length);
-    serv.sin_port = htons(request.port);
+    gethostbyname_ExpectAndReturn(P_VALUE(request.host), fake_addr);
+    struct sockaddr_in *serv = prepsock(fake_addr, request.port);
 
     setsockopt_IgnoreAndReturn(0);
-    connect_ExpectAndReturn(0, (struct sockaddr*)&serv, sizeof(struct sockaddr_in), 0);
+    connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
 
     send_StubWithCallback(send_cb);
     recv_StubWithCallback(recv_cb);
@@ -89,8 +74,6 @@ void test_http_client_do( void ) {
 }
 
 void test_http_client_free( void ) {
-    // FIXME ssl close
-    ssl_close_IgnoreAndReturn(0);
     soc_close_Expect(0);
     http_client_free(&_test_cli);
     TEST_ASSERT(!_test_cli.queue);

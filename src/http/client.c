@@ -84,7 +84,7 @@ static int simple_write(void *c, uint8_t *buf, uint16_t len) {
     } else {
         if ( !len ) len = strlen((char*)buf);
     }
-    HTTP_DBG("%d|%s|", buf, len);
+    HTTP_DBG("%d|%s|", len, buf);
     int ret = send(cli->sock, buf, len, 0);
     FREE_CHUNK(tmp);
     return ret;
@@ -267,13 +267,14 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
     return -1;
 }
 
-static uint8_t *wait_line(http_client_t *cli, uint8_t *buf) {
+static uint8_t *wait_line(http_client_t *cli, uint8_t *buf, size_t maxsize) {
   int size = 0;
   while ( size < 2 || strncmp((char*)buf + size - 2, "\r\n", 2) != 0 ) {
       // pop from buffer by one symbol
       if ( ringbuf_pop(cli->queue, buf + size, 1) == 0 ) {
           size ++;
           buf[size] = 0x0;
+          if ( (size_t)size == maxsize ) return NULL;
       } else {
           // empty buffer
           if( ringbuf_capacity(cli->queue) > LINE_CHUNK ) {
@@ -292,7 +293,7 @@ static int receive_response(http_client_t *cli, http_response_t *res) {
     CREATE_CHUNK(tmp, RINGBUFFER_SIZE);
     uint8_t *crlf = NULL;
     do {
-        crlf = wait_line(cli, (uint8_t*)tmp);
+        crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE);
         if ( !crlf ) {
             DBG("couldn't wait end of a line");
             FREE_CHUNK(tmp);
@@ -324,7 +325,7 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
     CREATE_CHUNK(key, CHUNK_SIZE>>2);
     CREATE_CHUNK(value, CHUNK_SIZE);
     int ret = 0;
-    while( ( crlf = wait_line(cli, (uint8_t*)tmp) ) ) {
+    while( ( crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE) ) ) {
         if ( crlf == (uint8_t*)tmp ) {
             HTTP_DBG("Headers read done");
             ret = 0;
@@ -367,9 +368,9 @@ static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     SSP_PARAMETER_NOT_USED(res);
     CREATE_CHUNK(tmp, RINGBUFFER_SIZE);
     int chunk_len = 0;
-    uint8_t *crlf = wait_line(cli, (uint8_t*)tmp);
+    uint8_t *crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE);
     if ( !crlf ) return -1; // no \r\n - wrong string
-    int ret = sscanf((char*)tmp, "%4x\r\n", (unsigned int*)&chunk_len);
+    int ret = sscanf((char*)tmp, "%8x\r\n", (unsigned int*)&chunk_len);
     if ( ret != 1 ) {
         // couldn't read a chunk size - fail
         chunk_len = 0;
@@ -416,7 +417,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         }
         if ( !res->is_chunked ) break;
         else {
-          uint8_t *crlf = wait_line(cli, tmpbuffer);
+          uint8_t *crlf = wait_line(cli, tmpbuffer, CHUNK_SIZE);
           if ( !crlf ) {
               DBG("No new line");
           }

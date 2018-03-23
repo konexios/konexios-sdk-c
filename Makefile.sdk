@@ -48,12 +48,10 @@ make_dst_path:
 	@ echo $(SDK_TARGET)
 
 $(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
-	@ echo "-- $@"
 	$(MAKEDIR) $(call fix_slash,$(dir $@)) $(QUIET)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
 $(SDK_TARGET): make_dst_path $(OBJ)
-	@ echo "Hello"
 	$(AR) $(AR_PRM) $(SDK_TARGET) $(FIXED_OBJ)
 	
 depend: dep

@@ -9,6 +9,10 @@
 #ifndef ACN_SDK_C_SYS_TYPE_H_
 #define ACN_SDK_C_SYS_TYPE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <config.h>
 
 #if defined(ARCH_TYPE)
@@ -26,6 +30,10 @@
 typedef int bool;
 #define false 0
 #define true 1
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif // ACN_SDK_C_SYS_TYPE_H_

@@ -16,22 +16,17 @@ extern "C" {
 #include <config.h>
 #include <sys/type.h>
 #if defined(__USE_STD__)
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
 #if !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
+# include <features.h>
 #endif
 #if GCC_VERSION <= 50201
 # include <sys/cdefs.h>
 #endif
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 17 && __GLIBC_MINOR__ < 23
-# include <features.h>
-#else
-# include <sys/features.h>
-#endif
 # include <stddef.h>
-# include <string.h>
-# include <stdlib.h>
-# include <stdio.h>
-# include <string.h>
 # include <strings.h>
 #endif
 #if defined(ARCH_MEM)
