@@ -1,6 +1,8 @@
 -include $(SDK_PATH)/Makefile.static
 -include $(SDK_PATH)/Makefile.wolf
 
+SDK_PATH := $(call cross_abspath,$(SDK_PATH))
+
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
