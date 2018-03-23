@@ -20,14 +20,29 @@ static arrow_gateway_t _test_gateway;
 
 void test_gateway_init(void) {
     arrow_gateway_init(&_test_gateway);
-    TEST_ASSERT_EQUAL_INT(0, P_VALUE(_test_gateway.hid));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.hid));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.name));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.os));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.sdkVersion));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.software_name));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.software_version));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.type));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.uid));
 }
 
+#define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 void test_gateway_prepare( void ) {
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
 //    get_mac_address_ExpectAndReturn(mac, 0);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
     arrow_prepare_gateway(&_test_gateway);
-    printf("_test_gateway %s", P_VALUE(_test_gateway.uid));
+    TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.hid));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_NAME, P_VALUE(_test_gateway.name));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_OS, P_VALUE(_test_gateway.os));
+    TEST_ASSERT_EQUAL_STRING(xstr(SDK_VERSION), P_VALUE(_test_gateway.sdkVersion));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_SOFTWARE_NAME, P_VALUE(_test_gateway.software_name));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_SOFTWARE_VERSION, P_VALUE(_test_gateway.software_version));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_TYPE, P_VALUE(_test_gateway.type));
+    TEST_ASSERT_EQUAL_STRING(GATEWAY_UID, P_VALUE(_test_gateway.uid));
 }

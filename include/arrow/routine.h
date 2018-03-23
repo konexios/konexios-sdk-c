@@ -42,6 +42,8 @@ arrow_gateway_config_t *current_gateway_config(void);
 // The WDT function is used.
 arrow_routine_error_t arrow_initialize_routine(void);
 
+arrow_routine_error_t arrow_gateway_initialize_routine(void);
+
 // Routine function for terminating current connections with the cloud
 // and terminate all gateway/device information.
 void arrow_close(void);

@@ -1,21 +1,53 @@
 #include "http_cb.h"
 #include <string.h>
 
-static char *http_r = NULL;
-static int http_size = 0;
-static int resp_count = 0;
+typedef struct __test_http_resp_t {
+    char *text;
+    int http_size;
+} test_http_resp_t;
+
+static test_http_resp_t http_r[10];
+static int resp_index = 0;
+static int http_resp_cout = 0;
 
 void set_http_cb(char *buf, int size) {
-  http_r = buf;
-  http_size = size;
-  resp_count = 0;
+  http_r[0].text = buf;
+  http_r[0].http_size = size;
+  resp_index = 0;
+  http_resp_cout = 0;
 }
+
+void add_http_cb(char *buf, int size) {
+    int i = 0;
+    for ( i =0; i< 10 ; i++ ) {
+        if ( !http_r[i].text ) {
+            http_r[i].text = buf;
+            http_r[i].http_size = size;
+            break;
+        }
+    }
+}
+
+static char send_buffer[1024] = {0};
+static int send_index = 0;
 
 ssize_t send_cb(int sockfd, const void *buf, size_t len, int flags, int count) {
     (void)(sockfd);
     (void)(buf);
     (void)(flags);
+    if ( len < sizeof(send_buffer) - send_index ) {
+        memcpy(send_buffer + send_index, buf, len);
+    } else {
+        int chunk = sizeof(send_buffer) - send_index;
+        memcpy(send_buffer + send_index, buf, chunk);
+        memcpy(send_buffer, buf + chunk, len - chunk);
+        send_index = len - chunk;
+    }
+
 //    printf("s[%s]\r\n", buf);
+//    if ( strstr(send_buffer, "\r\n\r\n") == 0 ) {
+//        memset(send_buffer, 0x0, sizeof(send_buffer));
+//    }
     return (int)len;
 }
 
@@ -24,16 +56,24 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
     (void)(buf);
     (void)(flags);
 //    int size = sizeof(http_resp_text) - resp_count;
-    int size = http_size - resp_count;
+    if ( http_r[http_resp_cout].http_size <= 0 ) return -1;
+    int size = http_r[http_resp_cout].http_size - resp_index;
     if ( size > len ) {
         size = len;
-        memcpy(buf, http_r + resp_count, size);
-        resp_count += size;
+        memcpy(buf, http_r[http_resp_cout].text + resp_index, size);
+        resp_index += size;
     } else {
         if ( size <= 0 ) return -1;
-        memcpy(buf, http_r + resp_count, size);
+        memcpy(buf, http_r[http_resp_cout].text + resp_index, size);
         // printf("r[%s]\r\n", buf);
-        resp_count += size;
+        resp_index += size;
+        printf("---- last %d %d\r\n", resp_index, http_r[http_resp_cout].http_size);
+        if ( resp_index == http_r[http_resp_cout].http_size &&
+             http_resp_cout < 10 ) {
+            // next expected message
+            http_resp_cout++;
+            resp_index = 0;
+        }
     }
     return size;
 }

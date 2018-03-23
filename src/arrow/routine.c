@@ -80,10 +80,33 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   return 0;
 }
 
+arrow_routine_error_t arrow_gateway_initialize_routine(void) {
+    wdt_feed();
+    http_session_close_set(current_client(), false);
+    int retry = 0;
+    while ( arrow_connect_gateway(&_gateway) < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_ERROR;});
+        DBG(GATEWAY_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
+    }
+    DBG(GATEWAY_CONNECT, "ok");
+    http_session_close_set(current_client(), true);
+    wdt_feed();
+    RETRY_CR(retry);
+    while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
+      RETRY_UP(retry, {return ROUTINE_ERROR;});
+      DBG(GATEWAY_CONFIG, "fail");
+      msleep(ARROW_RETRY_DELAY);
+    }
+    DBG(GATEWAY_CONFIG, "ok");
+    _init_done = 1;
+    return ROUTINE_SUCCESS;
+}
+
 arrow_routine_error_t arrow_initialize_routine(void) {
   wdt_feed();
-  int retry = 0;
   http_session_close_set(current_client(), false);
+  int retry = 0;
   DBG("register gateway via API");
   while ( arrow_connect_gateway(&_gateway) < 0 ) {
       RETRY_UP(retry, {return ROUTINE_ERROR;});
