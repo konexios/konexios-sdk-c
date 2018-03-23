@@ -37,20 +37,23 @@
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
 
-#include <mqtt/client/network.h>
-#include <mqtt/client/MQTTClient.h>
-#include <mqtt/packet/MQTTPacket.h>
-#include <mqtt/packet/MQTTConnect.h>
-#include <mqtt/packet/MQTTPublish.h>
+#include "acnsdkc_time.h"
+#include <network.h>
+
+#include "timer.h"
+#include "acnsdkc_time.h"
+#include "acnsdkc_ssl.h"
+#include <MQTTClient.h>
+#include <MQTTPacket.h>
+#include <MQTTConnect.h>
+#include <MQTTPublish.h>
 
 #include <wolfssl/wolfcrypt/sha.h>
 #include <wolfssl/wolfcrypt/sha256.h>
 #include <wolfssl/wolfcrypt/hmac.h>
 #include <wolfssl/wolfcrypt/md5.h>
 
-#include "acnsdkc_time.h"
-#include "acnsdkc_ssl.h"
-#include "timer.h"
+#include <acn.h>
 #include "MQTTConnectClient.h"
 #include "MQTTDeserializePublish.h"
 #include "MQTTSerializePublish.h"

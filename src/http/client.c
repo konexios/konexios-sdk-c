@@ -307,7 +307,7 @@ static int receive_response(http_client_t *cli, http_response_t *res) {
     } while ( !crlf );
     *crlf = 0x0;
     DBG("resp: {%s}", tmp);
-    if( sscanf((char*)tmp, "HTTP/1.1 %4d", &res->m_httpResponseCode) != 1 ) {
+    if( sscanf((char*)tmp, "HTTP/1.1 %4hu", &res->m_httpResponseCode) != 1 ) {
         DBG("Not a correct HTTP answer : %s", tmp);
         FREE_CHUNK(tmp);
         return -1;
