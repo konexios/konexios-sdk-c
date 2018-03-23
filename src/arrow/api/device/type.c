@@ -29,7 +29,7 @@ device_type_telemetry_t *device_type_add_telemetry(device_type_t *dev, const cha
   telemetry->name = strdup(name);
   telemetry->type = strdup(type);
   telemetry->variables = NULL;
-  linked_list_add_node_last ( dev->telemetries, device_type_telemetry_t, telemetry );
+  arrow_linked_list_add_node_last ( dev->telemetries, device_type_telemetry_t, telemetry );
   return telemetry;
 }
 
@@ -37,7 +37,7 @@ void device_type_free(device_type_t *dev) {
   if (dev->description) free(dev->description);
   if (dev->name) free(dev->name);
   device_type_telemetry_t *telemetry = NULL;
-  for_each_node_hard(telemetry, dev->telemetries, device_type_telemetry_t) {
+  arrow_linked_list_for_each_safe(telemetry, dev->telemetries, device_type_telemetry_t) {
       if ( telemetry->description ) free(telemetry->description);
       if ( telemetry->name ) free(telemetry->name);
       if ( telemetry->type ) free(telemetry->type);
@@ -78,11 +78,11 @@ static char  *device_type_serialize(device_type_t *dev) {
   json_append_member(_main, "name", json_mkstring(dev->name));
   JsonNode *tls = json_mkarray();
   device_type_telemetry_t *t = NULL;
-  for_each_node( t, dev->telemetries, device_type_telemetry_t ) {
+  arrow_linked_list_for_each( t, dev->telemetries, device_type_telemetry_t ) {
     JsonNode *tl_element = json_mkobject();
     JsonNode *var_array = json_mkarray();
     property_map_t *var = NULL;
-    for_each_node ( var, t->variables, property_map_t ) {
+    arrow_linked_list_for_each ( var, t->variables, property_map_t ) {
         JsonNode *tl_variables = json_mkobject();
         json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->key)));
         json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->value)));

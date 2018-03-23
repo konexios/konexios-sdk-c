@@ -49,7 +49,7 @@ void test_http_request_add_header(void) {
     http_response_add_header(&_test_response, p_heap("hello"), p_heap("kokoko"));
     TEST_ASSERT( _test_response.header );
     property_map_t *tmp = NULL;
-    for_each_node(tmp, _test_response.header, property_map_t) {
+    arrow_linked_list_for_each(tmp, _test_request.header, property_map_t) {
         TEST_ASSERT_EQUAL_STRING("hello", P_VALUE(tmp->key));
         TEST_ASSERT_EQUAL_STRING("kokoko", P_VALUE(tmp->value));
     }

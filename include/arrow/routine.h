@@ -16,7 +16,11 @@ extern "C" {
 #include <arrow/device.h>
 
 typedef enum {
+#if defined(VALGRIND_TEST)
+    ROUTINE_TEST_DONE   = -1000,
+#endif
     ROUTINE_SUCCESS               = 0,
+    ROUTINE_RECEIVE_EVENT         = 1,
     ROUTINE_ERROR                 = -300,
     ROUTINE_NOT_INITIALIZE        = -301,
     ROUTINE_GET_TELEMETRY_FAILED  = -302,
@@ -31,6 +35,7 @@ typedef int (*get_data_cb)(void *);
 // to get these static objects use the functions:
 arrow_device_t *current_device(void);
 arrow_gateway_t *current_gateway(void);
+arrow_gateway_config_t *current_gateway_config(void);
 
 // Initialize the gateway object and device object as well
 // This function implemented the algorithm to get complete information about a gateway and device.
@@ -61,10 +66,25 @@ arrow_routine_error_t arrow_update_state(const char *name, const char *value);
 // Automatically prepare needed information and send it to the cloud MQTT
 arrow_routine_error_t arrow_mqtt_connect_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_routine(void);
+
+// telemetry specific
+arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void);
+arrow_routine_error_t arrow_mqtt_disconnect_telemetry_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_telemetry_routine(void);
+
+// command specific
+arrow_routine_error_t arrow_mqtt_connect_event_routine(void);
+arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void);
+arrow_routine_error_t arrow_mqtt_terminate_event_routine(void);
 
 // This routine send the telemetry data every TELEMETRY_DELAY msec
 // using the data_cb function for forming current telemetry values
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data);
+
+arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data);
+arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data);
+arrow_routine_error_t arrow_mqtt_event_receive_routine();
 
 #if defined(__cplusplus)
 }

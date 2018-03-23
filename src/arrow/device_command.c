@@ -17,27 +17,31 @@
 static cmd_handler *__handlers = NULL;
 
 // handlers
+void arrow_command_init(void) {
+    __handlers = NULL;
+}
+
 int has_cmd_handler(void) {
 	if ( __handlers ) return 0;
 	return -1;
 }
 
-int add_cmd_handler(const char *name, fp callback) {
-  cmd_handler *h = malloc(sizeof(cmd_handler));
-  h->name = strdup(name);
-  h->callback = callback;
-  linked_list_add_node_last(__handlers, cmd_handler, h);
-  return 0;
+int arrow_command_handler_add(const char *name, fp callback) {
+    cmd_handler *h = malloc(sizeof(cmd_handler));
+    if ( !h ) return -1;
+    h->name = strdup(name);
+    h->callback = callback;
+    arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
+    return 0;
 }
 
-void free_cmd_handler(void) {
+void arrow_command_handler_free(void) {
   cmd_handler *curr = NULL;
-  for_each_node_hard ( curr, __handlers , cmd_handler ) {
+  arrow_linked_list_for_each_safe ( curr, __handlers , cmd_handler ) {
       free(curr->name);
       free(curr);
   }
 }
-
 
 // events
 static char *form_evetns_url(const char *hid, cmd_type ev) {
@@ -89,35 +93,6 @@ static int cmdeq( cmd_handler *s, const char *name ) {
     return -1;
 }
 
-static fp find_cmd_handler(const char *cmd) {
-  if ( __handlers ) {
-    cmd_handler *h = NULL;
-    linked_list_find_node ( h, __handlers, cmd_handler, cmdeq, cmd );
-    if ( h ) return h->callback;
-  } else {
-    DBG("No cmd handlers");
-  }
-  return NULL;
-}
-
-int __attribute__((weak)) command_handler(const char *name,
-                    JsonNode *payload,
-                    JsonNode **error) {
-  int ret = -1;
-  fp callback = find_cmd_handler(name);
-  if ( callback ) {
-    ret = callback(payload->string_);
-    if ( ret < 0 ) {
-      *error = json_mkobject();
-      json_append_member(*error, "error", json_mkstring("Something went wrong"));
-    }
-  } else {
-    *error = json_mkobject();
-    json_append_member(*error, "error", json_mkstring("there is no a command handler"));
-  }
-  return ret;
-}
-
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
@@ -131,28 +106,62 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   DBG("start device command processing");
 
   JsonNode *tmp = json_find_member(_parameters, "deviceHid");
-  if ( !tmp || tmp->tag != JSON_STRING ) return -1;
+  if ( !tmp || tmp->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no device HID"));
+      goto device_command_done;
+  }
 
+  // FIXME workaround actually
   JsonNode *cmd = json_find_member(_parameters, "command");
-  if ( !cmd || cmd->tag != JSON_STRING ) return -1;
+  if ( !cmd ) cmd = json_find_member(_parameters, "Command");
+  if ( !cmd || cmd->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no command"));
+      goto device_command_done;
+  }
   DBG("ev cmd: %s", cmd->string_);
 
+  // FIXME workaround actually
   JsonNode *pay = json_find_member(_parameters, "payload");
-  if ( !pay || pay->tag != JSON_STRING ) return -1;
-  DBG("ev msg: %s", pay->string_);
+  if ( !pay ) pay = json_find_member(_parameters, "Payload");
+  if ( !pay || pay->tag != JSON_STRING ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("There is no payload"));
+      goto device_command_done;
+  }
+//  DBG("ev msg: %s", pay->string_);
 
-  ret = command_handler(cmd->string_, pay, &_error);
-  if ( ret < 0 ) {
-      DBG("command_handler fail %d", ret);
+  cmd_handler *cmd_h = NULL;
+  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
+  if ( cmd_h ) {
+    ret = cmd_h->callback(pay->string_);
+    if ( ret < 0 ) {
+      _error = json_mkobject();
+      json_append_member(_error, "error",
+                         json_mkstring("Something went wrong"));
+    }
+  } else {
+    DBG("There is no handler");
+    _error = json_mkobject();
+    json_append_member(_error, "error",
+                       json_mkstring("There is no a command handler"));
   }
   // close session after next request
+device_command_done:
   http_session_close_set(current_client(), true);
   RETRY_CR(retry);
   if ( _error ) {
-    while ( arrow_send_event_ans(ev->gateway_hid, failed, json_encode(_error)) < 0 ) {
+    char *_error_str = json_encode(_error);
+    DBG("error string: %s", _error_str);
+    while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_str) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
+    free(_error_str);
     json_delete(_error);
   } else {
     while ( arrow_send_event_ans(ev->gateway_hid, succeeded, NULL) < 0 ) {
@@ -160,6 +169,5 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
         msleep(ARROW_RETRY_DELAY);
     }
   }
-
   return 0;
 }

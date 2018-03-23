@@ -14,13 +14,11 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include "mqtt/packet/MQTTFormat.h"
-#include "mqtt/packet/MQTTPublish.h"
-#include "mqtt/packet/MQTTSubscribe.h"
-#include "mqtt/packet/MQTTUnsubscribe.h"
-
+#include "StackTrace.h"
+#include "MQTTPacket.h"
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 
 const char* MQTTPacket_names[] =
 {
@@ -116,6 +114,7 @@ int MQTTStringFormat_unsubscribe(char* strbuf, int strbuflen, unsigned char dup,
 }
 
 
+#if defined(MQTT_CLIENT)
 char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf, int buflen)
 {
 	int index = 0;
@@ -128,6 +127,7 @@ char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf,
 
 	switch (header.bits.type)
 	{
+
 	case CONNACK:
 	{
 		unsigned char sessionPresent, connack_rc;
@@ -180,11 +180,11 @@ char* MQTTFormat_toClientString(char* strbuf, int strbuflen, unsigned char* buf,
 		strindex = snprintf(strbuf, strbuflen, "%s", MQTTPacket_names[header.bits.type]);
 		break;
 	}
-  (void)(strindex); // INFO useless variable
 	return strbuf;
 }
+#endif
 
-
+#if defined(MQTT_SERVER)
 char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf, int buflen)
 {
 	int index = 0;
@@ -200,7 +200,8 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 	case CONNECT:
 	{
 		MQTTPacket_connectData data;
-        if ((MQTTDeserialize_connect(&data, buf, buflen)) == 1)
+		int rc;
+		if ((rc = MQTTDeserialize_connect(&data, buf, buflen)) == 1)
 			strindex = MQTTStringFormat_connect(strbuf, strbuflen, &data);
 	}
 	break;
@@ -255,7 +256,7 @@ char* MQTTFormat_toServerString(char* strbuf, int strbuflen, unsigned char* buf,
 		strindex = snprintf(strbuf, strbuflen, "%s", MQTTPacket_names[header.bits.type]);
 		break;
 	}
-  (void)(strindex); // INFO strindex and strbuflen? right?
 	strbuf[strbuflen] = '\0';
 	return strbuf;
 }
+#endif

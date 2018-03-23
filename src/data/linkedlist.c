@@ -1,7 +1,7 @@
 #include "data/linkedlist.h"
 
-linked_list_t *linked_list_add(linked_list_t *root, linked_list_t *el) {
-    linked_list_t *last = root;
+arrow_linked_list_t *arrow_linked_list_add(arrow_linked_list_t *root, arrow_linked_list_t *el) {
+    arrow_linked_list_t *last = root;
     el->next = 0;
     while ( last && last->next ) {
         last = last->next;
@@ -11,14 +11,14 @@ linked_list_t *linked_list_add(linked_list_t *root, linked_list_t *el) {
     return root;
 }
 
-linked_list_t *linked_list_add_first(linked_list_t *root, linked_list_t *el) {
+arrow_linked_list_t *arrow_linked_list_add_first(arrow_linked_list_t *root, arrow_linked_list_t *el) {
     el->next = root;
     return el;
 }
 
-linked_list_t *linked_list_del(linked_list_t *root, linked_list_t *el) {
-    linked_list_t *last = root;
-    linked_list_t *prev = 0;
+arrow_linked_list_t *arrow_linked_list_del(arrow_linked_list_t *root, arrow_linked_list_t *el) {
+    arrow_linked_list_t *last = root;
+    arrow_linked_list_t *prev = 0;
     while ( last ) {
         if ( last == el) {
             if ( prev ) {
@@ -37,9 +37,9 @@ linked_list_t *linked_list_del(linked_list_t *root, linked_list_t *el) {
     return 0;
 }
 
-linked_list_t *linked_list_del_last(linked_list_t *root) {
-    linked_list_t *last = root;
-    linked_list_t *prev = 0;
+arrow_linked_list_t *arrow_linked_list_del_last(arrow_linked_list_t *root) {
+    arrow_linked_list_t *last = root;
+    arrow_linked_list_t *prev = 0;
     while ( last && last->next ) {
         prev = last;
         last = last->next;

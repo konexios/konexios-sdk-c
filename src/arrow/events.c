@@ -7,6 +7,9 @@
  */
 
 #include "arrow/events.h"
+
+#if !defined(NO_EVENTS)
+
 #include <arrow/device_command.h>
 #include <arrow/state.h>
 
@@ -18,6 +21,10 @@
 # include <arrow/software_update.h>
 #endif
 
+#if defined(DEVICE_STARTSTOP)
+#include <arrow/device_startstop.h>
+#endif
+
 #include <ctype.h>
 #include <debug.h>
 #include <http/client.h>
@@ -25,12 +32,21 @@
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
 
+#if defined(ARROW_THREAD)
+#include <sys/mutex.h>
+#define MQTT_EVENTS_QUEUE_LOCK      arrow_mutex_lock(_event_mutex)
+#define MQTT_EVENTS_QUEUE_UNLOCK    arrow_mutex_unlock(_event_mutex)
+#else
+#define MQTT_EVENTS_QUEUE_LOCK
+#define MQTT_EVENTS_QUEUE_UNLOCK
+#endif
+
 static void free_mqtt_event(mqtt_event_t *mq) {
   if ( mq->gateway_hid ) free(mq->gateway_hid);
   if ( mq->device_hid ) free(mq->device_hid);
   if ( mq->cmd ) free(mq->cmd);
-  if ( mq->payload ) free(mq->payload);
   if ( mq->name ) free(mq->name);
+  if ( mq->parameters ) json_delete(mq->parameters);
 }
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
@@ -41,21 +57,31 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
 }
 
 typedef int (*submodule)(void *, JsonNode *);
+typedef void (*module_init)();
+typedef void (*module_deinit)();
 typedef struct {
   char *name;
   submodule proc;
+  module_init init;
+  module_deinit deinit;
 } sub_t;
 
 sub_t sub_list[] = {
-  { "ServerToGateway_DeviceCommand", ev_DeviceCommand },
-  { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest },
+  { "ServerToGateway_DeviceCommand", ev_DeviceCommand, NULL, arrow_command_handler_free },
+  { "SendCommand", ev_DeviceCommand, NULL, NULL },
+  { "ServerToGateway_DeviceStateRequest", ev_DeviceStateRequest, NULL, NULL },
 #if !defined(NO_SOFTWARE_UPDATE)
-  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate },
+  { "ServerToGateway_GatewaySoftwareUpdate", ev_GatewaySoftwareUpdate, NULL, NULL },
 #endif
 #if !defined(NO_RELEASE_UPDATE)
-  { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease },
-  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease }
+  { "ServerToGateway_DeviceSoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL },
+  { "ServerToGateway_GatewaySoftwareRelease", ev_DeviceSoftwareRelease, NULL, NULL },
 #endif
+#if defined(DEVICE_STARTSTOP)
+    { "ServerToGateway_DeviceStart", ev_DeviceSoftwareRelease, NULL, NULL },
+    { "ServerToGateway_DeviceStop", ev_DeviceSoftwareRelease, NULL, NULL },
+#endif
+    { NULL, NULL, NULL, NULL }
 };
 
 // checker
@@ -74,9 +100,7 @@ static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
                                  ev->encrypted,
                                  can,
                                  "1");
-  if ( err ) {
-    return -1;
-  }
+  if ( err ) return -1;
   DBG("cmp { %s, %s }", sign, signature);
   return ( strcmp(sign, signature) == 0 ? 1 : 0 );
 }
@@ -139,66 +163,121 @@ static char *form_canonical_prm(JsonNode *param) {
   return canParam;
 }
 
+static mqtt_event_t *__event_queue = NULL;
+#if defined(ARROW_THREAD)
+static arrow_mutex *_event_mutex = NULL;
+#endif
+
+void arrow_mqtt_events_init(void) {
+#if defined(ARROW_THREAD)
+    arrow_mutex_init(&_event_mutex);
+#endif
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( sub_list[i].init ) sub_list[i].init();
+    }
+}
+
+int arrow_mqtt_has_events(void) {
+    int ret = -1;
+    MQTT_EVENTS_QUEUE_LOCK;
+    ret = __event_queue?1:0;
+    MQTT_EVENTS_QUEUE_UNLOCK;
+    return ret;
+}
+
+int arrow_mqtt_event_proc(void) {
+    mqtt_event_t *tmp = NULL;
+    MQTT_EVENTS_QUEUE_LOCK;
+    tmp = __event_queue;
+    if ( !tmp ) {
+        MQTT_EVENTS_QUEUE_UNLOCK;
+        return -1;
+    }
+    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
+    MQTT_EVENTS_QUEUE_UNLOCK;
+
+    submodule current_processor = NULL;
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( sub_list[i].name && strcmp(sub_list[i].name, tmp->name) == 0 ) {
+        current_processor = sub_list[i].proc;
+      }
+    }
+    int ret = -1;
+    if ( current_processor ) {
+      ret = current_processor(tmp, tmp->parameters);
+    } else {
+      DBG("No event processor for %s", tmp->name);
+      goto mqtt_event_proc_error;
+    }
+    if ( __event_queue ) ret = 1;
+mqtt_event_proc_error:
+    free_mqtt_event(tmp);
+    free(tmp);
+    return ret;
+}
+
 int process_event(const char *str) {
-  mqtt_event_t mqtt_e;
+  mqtt_event_t *mqtt_e = (mqtt_event_t *)calloc(1, sizeof(mqtt_event_t));
+  if ( !mqtt_e ) return -2;
   int ret = -1;
-  memset(&mqtt_e, 0x0, sizeof(mqtt_event_t));
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
       DBG("event payload decode failed %d", strlen(str));
       return -1;
   }
 
-  if ( fill_string_from_json(_main, "hid", &mqtt_e.gateway_hid) < 0 ) {
+  if ( fill_string_from_json(_main, "hid", &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
     goto error;
   }
-  DBG("ev ghid: %s", mqtt_e.gateway_hid);
+//  DBG("ev ghid: %s", mqtt_e->gateway_hid);
 
-  if ( fill_string_from_json(_main, "name", &mqtt_e.name) < 0 ) {
+  if ( fill_string_from_json(_main, "name", &mqtt_e->name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
-  DBG("ev name: %s", mqtt_e.name);
+//  DBG("ev name: %s", mqtt_e->name);
 
   JsonNode *_encrypted = json_find_member(_main, "encrypted");
   if ( !_encrypted ) goto error;
-  mqtt_e.encrypted = _encrypted->bool_;
+  mqtt_e->encrypted = _encrypted->bool_;
 
   JsonNode *_parameters = json_find_member(_main, "parameters");
   if ( !_parameters ) goto error;
   JsonNode *sign_version = json_find_member(_main, "signatureVersion");
   if ( sign_version ) {
-    DBG("signature vertsion: %s", sign_version->string_);
+//    DBG("signature vertsion: %s", sign_version->string_);
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
-    DBG("[%s]", can);
-    if ( !check_signature(sign_version->string_, sign->string_, &mqtt_e, can) ) {
+//    DBG("[%s]", can);
+    if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);
       goto error;
     }
     free(can);
   }
-
-  submodule current_processor = NULL;
-  int i = 0;
-  for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-    if ( strcmp(sub_list[i].name, mqtt_e.name) == 0 ) {
-      current_processor = sub_list[i].proc;
-    }
-  }
-
-  if ( current_processor ) {
-    ret = current_processor(&mqtt_e, _parameters);
-  } else {
-    DBG("No event processor for %s", mqtt_e.name);
-    goto error;
-  }
+  json_remove_from_parent(_parameters);
+  mqtt_e->parameters = _parameters;
+  arrow_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
 
 error:
-  free_mqtt_event(&mqtt_e);
   if ( _main ) json_delete(_main);
   return ret;
 }
+
+void arrow_mqtt_events_done() {
+#if defined(ARROW_THREAD)
+    arrow_mutex_deinit(_event_mutex);
+#endif
+    int i = 0;
+    for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
+      if ( sub_list[i].deinit ) sub_list[i].deinit();
+    }
+}
+#else
+typedef void __dummy;
+#endif

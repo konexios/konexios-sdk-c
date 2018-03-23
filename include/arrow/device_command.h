@@ -26,22 +26,17 @@ typedef int (*fp)(const char *);
 typedef struct __cmd_handler {
   char *name;
   fp callback;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } cmd_handler;
-
-// Find and execute 'name' command handler for this 'payload'
-int command_handler(const char *name,
-                    JsonNode *payload,
-                    JsonNode **error);
 
 // Is there any command handler was added
 int has_cmd_handler(void);
 
 // Add a new command handler ( set the callback )
-int add_cmd_handler(const char *name, fp callback);
+int arrow_command_handler_add(const char *name, fp callback);
 
 // erase all command handlers
-void free_cmd_handler(void);
+void arrow_command_handler_free(void);
 
 // DeviceCommand event handler
 int ev_DeviceCommand(void *ev, JsonNode *node);

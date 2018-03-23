@@ -1,4 +1,4 @@
-#include "mqtt/client/network.h"
+#include "network.h"
 #include <time/time.h>
 
 void TimerInit(TimerInterval* timer) {

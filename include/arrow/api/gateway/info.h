@@ -31,7 +31,7 @@ typedef struct _gateway_info_ {
     property_t type;
     property_t uid;
     property_t userHid;
-    linked_list_head_node;
+    arrow_linked_list_head_node;
 } gateway_info_t;
 
 void gateway_info_init(gateway_info_t *gi);

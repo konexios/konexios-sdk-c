@@ -18,7 +18,7 @@ int telemetry_response_data_list_init(telemetry_response_data_list_t *data, int 
 
 int telemetry_response_data_list_free(telemetry_response_data_list_t *data) {
     telemetry_data_info_t *tmp = NULL;
-    for_each_node_hard(tmp, data->data, telemetry_data_info_t) {
+    arrow_linked_list_for_each_safe(tmp, data->data, telemetry_data_info_t) {
         if ( tmp->deviceHid ) free(tmp->deviceHid);
         if ( tmp->name ) free(tmp->name);
         if ( tmp->type ) free(tmp->type);
@@ -39,7 +39,7 @@ int add_telemetry_data_info(telemetry_response_data_list_t *data,
     info->type = strdup(type);
     info->timestamp = timestamp;
     info->floatValue = flval;
-    linked_list_add_node_last(data->data, telemetry_data_info_t, info);
+    arrow_linked_list_add_node_last(data->data, telemetry_data_info_t, info);
     return 0;
 }
 

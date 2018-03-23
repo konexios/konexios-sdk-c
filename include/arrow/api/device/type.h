@@ -21,7 +21,7 @@ typedef struct _device_type_telemetry {
   char *description;
   char *name;
   char *type;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } device_type_telemetry_t;
 
 typedef struct _device_type {

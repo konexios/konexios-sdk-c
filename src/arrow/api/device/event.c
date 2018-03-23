@@ -36,7 +36,7 @@ int device_event_parse(device_event_t **list, const char *text) {
             json_fill_property(tmp, de, criteria);
             json_fill_property(tmp, de, deviceActionTypeName);
             json_fill_property(tmp, de, status);
-            linked_list_add_node_last(*list, device_event_t, de);
+            arrow_linked_list_add_node_last(*list, device_event_t, de);
         }
     }
     json_delete(_main);

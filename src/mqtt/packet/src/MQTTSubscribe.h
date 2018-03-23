@@ -15,8 +15,8 @@
  *    Xiang Rong - 442039 Add makefile to Embedded C client
  *******************************************************************************/
 
-#ifndef MQTTUNSUBSCRIBE_H_
-#define MQTTUNSUBSCRIBE_H_
+#ifndef MQTTSUBSCRIBE_H_
+#define MQTTSUBSCRIBE_H_
 
 #if !defined(DLLImport)
   #define DLLImport 
@@ -25,16 +25,15 @@
   #define DLLExport
 #endif
 
-#include "MQTTPacket.h"
+DLLExport int MQTTSerialize_subscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid,
+		int count, MQTTString topicFilters[], int requestedQoSs[]);
 
-DLLExport int MQTTSerialize_unsubscribe(unsigned char* buf, int buflen, unsigned char dup, unsigned short packetid,
-		int count, MQTTString topicFilters[]);
+DLLExport int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid,
+		int maxcount, int* count, MQTTString topicFilters[], int requestedQoSs[], unsigned char* buf, int len);
 
-DLLExport int MQTTDeserialize_unsubscribe(unsigned char* dup, unsigned short* packetid, int max_count, int* count, MQTTString topicFilters[],
-		unsigned char* buf, int len);
+DLLExport int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs);
 
-DLLExport int MQTTSerialize_unsuback(unsigned char* buf, int buflen, unsigned short packetid);
+DLLExport int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int len);
 
-DLLExport int MQTTDeserialize_unsuback(unsigned short* packetid, unsigned char* buf, int len);
 
-#endif /* MQTTUNSUBSCRIBE_H_ */
+#endif /* MQTTSUBSCRIBE_H_ */

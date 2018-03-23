@@ -17,7 +17,9 @@
  * @param n u16_t in host byte order
  * @return n in network byte order
  */
+#if !defined(htons)
 uint16_t htons(uint16_t n);
+#endif
 
 /**
  * Convert an u16_t from network- to host byte order.
@@ -25,7 +27,9 @@ uint16_t htons(uint16_t n);
  * @param n u16_t in network byte order
  * @return n in host byte order
  */
+#if !defined(ntohs)
 uint16_t ntohs(uint16_t n);
+#endif
 
 /**
  * Convert an u32_t from host- to network byte order.
@@ -33,7 +37,9 @@ uint16_t ntohs(uint16_t n);
  * @param n u32_t in host byte order
  * @return n in network byte order
  */
+#if !defined(htonl)
 uint32_t htonl(uint32_t n);
+#endif
 
 /**
  * Convert an u32_t from network- to host byte order.
@@ -41,7 +47,9 @@ uint32_t htonl(uint32_t n);
  * @param n u32_t in network byte order
  * @return n in host byte order
  */
+#if !defined(ntohl)
 uint32_t ntohl(uint32_t n);
+#endif
 
 
 #endif  // KRONOS_C_SDK_BSD_INET_H_

@@ -56,8 +56,10 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
 
 // set software release download callback
 // will be executed when download complete
-int arrow_software_release_init_set_cb( __download_init_cb icb );
-int arrow_software_release_dowload_set_cb(__download_payload_cb pcb, __download_complete_cb ccb);
+int arrow_software_release_dowload_set_cb(
+        __download_init_cb icb,
+        __download_payload_cb pcb,
+        __download_complete_cb ccb);
 
 int arrow_software_release(const char *token,
                            const char *chsum,

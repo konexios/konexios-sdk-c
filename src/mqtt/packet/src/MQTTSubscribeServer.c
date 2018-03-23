@@ -14,11 +14,11 @@
  *    Ian Craggs - initial API and implementation and/or initial documentation
  *******************************************************************************/
 
-#include "mqtt/packet/MQTTPacket.h"
-#include "mqtt/packet/StackTrace.h"
-
+#include "MQTTPacket.h"
+#include "StackTrace.h"
+#if defined(__USE_STD__)
 #include <string.h>
-
+#endif
 
 /**
   * Deserializes the supplied (wire) buffer into subscribe data
@@ -32,11 +32,11 @@
   * @param buflen the length in bytes of the data in the supplied buffer
   * @return the length of the serialized data.  <= 0 indicates error
   */
-static int __attribute__((used)) MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
+int MQTTDeserialize_subscribe(unsigned char* dup, unsigned short* packetid, int maxcount, int* count, MQTTString topicFilters[],
 	int requestedQoSs[], unsigned char* buf, int buflen)
 {
-  SSP_PARAMETER_NOT_USED(maxcount);
-  SSP_PARAMETER_NOT_USED(buflen);
+    SSP_PARAMETER_NOT_USED(maxcount);
+    SSP_PARAMETER_NOT_USED(buflen);
 	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
 	unsigned char* enddata = NULL;
@@ -81,7 +81,7 @@ exit:
   * @param grantedQoSs - array of granted QoS
   * @return the length of the serialized data.  <= 0 indicates error
   */
-static int __attribute__((used)) MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs)
+int MQTTSerialize_suback(unsigned char* buf, int buflen, unsigned short packetid, int count, int* grantedQoSs)
 {
 	MQTTHeader header = {0};
 	int rc = -1;

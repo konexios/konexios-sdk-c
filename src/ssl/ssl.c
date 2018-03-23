@@ -22,7 +22,7 @@ typedef struct socket_ssl {
   WOLFSSL_CTX     *ctx;
   WOLFSSL         *ssl;
   int socket;
-  linked_list_head_node;
+  arrow_linked_list_head_node;
 } socket_ssl_t;
 
 static socket_ssl_t *__sock = NULL;
@@ -90,7 +90,7 @@ int __attribute__((weak)) ssl_connect(int sock) {
     if (err != SSL_SUCCESS) {
         goto ssl_connect_error_ssl;
     } else {
-        linked_list_add_node_last(__sock, socket_ssl_t, s);
+        arrow_linked_list_add_node_last(__sock, socket_ssl_t, s);
         DBG("SSL connect done");
         return 0;
     }
@@ -132,7 +132,7 @@ int __attribute__((weak)) ssl_close(int sock) {
         wolfSSL_shutdown(s->ssl);
         wolfSSL_free(s->ssl);
         wolfSSL_CTX_free(s->ctx);
-        linked_list_del_node(__sock, socket_ssl_t, s);
+        arrow_linked_list_del_node(__sock, socket_ssl_t, s);
         free(s);
         if ( !__sock ) wolfSSL_Cleanup();
     }

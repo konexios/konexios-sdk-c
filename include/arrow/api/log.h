@@ -19,7 +19,7 @@ typedef struct _log_ {
     property_t objectHid;
     who_when_t created;
     JsonNode *parameters;
-    linked_list_head_node;
+    arrow_linked_list_head_node;
 } log_t;
 void log_init(log_t *gi);
 void log_free(log_t *gi);

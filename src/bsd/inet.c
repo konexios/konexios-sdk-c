@@ -8,6 +8,7 @@
 
 #include <config.h>
 #include <bsd/inet.h>
+typedef int __dummy;
 
 #if !defined(USER_BYTE_CONVERTER)
 
@@ -31,11 +32,20 @@ uint32_t be_htonl(uint32_t n) {
 }
 
 #if defined(__LE_MODE__)
+#if !defined(htons)
 uint16_t htons(uint16_t n) { return le_htons(n); }
+#endif
+#if !defined(htonl)
 uint32_t htonl(uint32_t n) { return le_htonl(n); }
+#endif
 #elif defined(__BE_MODE__)
+#if !defined(htons)
 uint16_t htons(uint16_t n) { return be_htons(n); }
+#endif
+#if !defined(htonl)
 uint32_t htonl(uint32_t n) { return be_htonl(n); }
+#endif
+
 #else
 // dynamic detect endianess
 enum {
@@ -83,14 +93,16 @@ uint32_t htonl(uint32_t n) {
 
 #endif
 
+#if !defined(ntohs)
 uint16_t ntohs(uint16_t n) {
   return htons(n);
 }
+#endif
 
+#if !defined(ntohl)
 uint32_t ntohl(uint32_t n) {
   return htonl(n);
 }
+#endif
 
-#else
-typedef int __dummy;
 #endif
