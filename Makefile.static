@@ -9,18 +9,19 @@ endif
 ifeq ($(SHELL_BASH),no)
  WIN_ENV := yes
 endif
+  dots = :
+  cross_abspath = $(if $(findstring $(dots),$(1)),$(1),$(abspath $(1)))
+else
+  cross_abspath = $(abspath $1)
 endif
 
 ifeq ($(WIN_ENV),yes)
-  dots = :
-  cross_abspath = $(if $(findstring $(dots),$(1)),$(1),$(abspath $(1)))
   RM		= del
   RMDIR   	= rd /s /q
   MAKEDIR 	= mkdir
   fix_slash  = $(subst /,\,$1)
   QUIET=>NUL 2>NUL & exit 0
 else
-  cross_abspath = $(abspath $1)
   RM      = rm -f
   MAKEDIR = mkdir -p
   RMDIR   = rm -rf
