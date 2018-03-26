@@ -1,18 +1,26 @@
+$(info shell: $(SHELL))
 ifeq ($(OS),Windows_NT)
-dots = :
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),)
+ SHELL_BASH := no
+else
+ SHELL_BASH := yes
+endif
+ifeq ($(SHELL_BASH),no)
+ WIN_ENV := yes
+endif
+  dots = :
   cross_abspath = $(if $(findstring $(dots),$(1)),$(1),$(abspath $(1)))
 else
   cross_abspath = $(abspath $1)
 endif
 
-CC_NAME ?= gcc
-
-ifeq ($(OS),Windows_NT)
+ifeq ($(WIN_ENV),yes)
   RM		= del
   RMDIR   	= rd /s /q
   MAKEDIR 	= mkdir
   fix_slash  = $(subst /,\,$1)
-  QUIET=>nul 2>nul & exit 0
+  QUIET=>NUL 2>NUL & exit 0
 else
   RM      = rm -f
   MAKEDIR = mkdir -p
@@ -20,6 +28,8 @@ else
   fix_slash  = $1
   QUIET=> /dev/null 2>&1 ; exit 0
 endif
+
+CC_NAME ?= gcc
 
 fix_pref = $(if $(1),$(1)-,$(1))
 fix_path = $(call fix_slash,$(if $(1),$(call cross_abspath,$(1))/$(call fix_pref,$(2)),$(call fix_pref,$(2))))
@@ -72,13 +82,12 @@ ifneq ($(PLATFORM),)
 CC_SYMBOLS += -D__$(PLATFORM)__
 endif
 
-PRIV_INC = $(SDK_PATH)/private.h
+PRIV_INC = $(call fix_slash,$(SDK_PATH)/private.h)
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(WIN_ENV),yes)
   file_exist = $(shell if exist $(1) (echo yes) else (echo no))
 else
-  file_exist = $(shell if [ -e $(PRIV_INC) ]; then echo yes; else echo no; fi)
-endif
+  file_exist = $(shell if [ -e $(1) ]; then echo yes; else echo no; fi)
 
 GET_VERSION_BIN=__get_version
 GET_VERSION=gcc $(SDK_PATH)/helper/__g.c -o $(GET_VERSION_BIN) -I$(SDK_PATH)/include -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__
@@ -88,5 +97,7 @@ GET_SETTINGS=gcc $(SDK_PATH)/helper/__dev.c -o $(GET_SETTINGS_BIN) -I$(SDK_PATH)
 
 CHECK_SETTINGS_BIN=__check_settings
 CHECK_SETTINGS=gcc $(SDK_PATH)/helper/__set.c -o $(CHECK_SETTINGS_BIN) -I$(SDK_PATH) -U__linux__ -D__${PLATFORM}__
+
+endif
 
 SDK_INCLUDES += ${PREV_SDK_INCLUDES}

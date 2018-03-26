@@ -1,6 +1,8 @@
 -include $(SDK_PATH)/Makefile.static
 -include $(SDK_PATH)/Makefile.wolf
 
+SDK_PATH := $(call cross_abspath,$(SDK_PATH))
+
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
@@ -17,10 +19,12 @@ OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.o))
 DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.d))
 
 $(info OS:   $(OS))
+$(info BASH: $(SHELL_BASH))
 $(info TARGET:   $(SDK_TARGET))
 
 CC_SYMBOLS += -DDEBUG
 
+$(info PRIVATE: $(PRIV_INC))
 $(info PRIVATE: $(call file_exist,$(PRIV_INC)))
 
 ifneq ($(call file_exist,$(PRIV_INC)),yes)
