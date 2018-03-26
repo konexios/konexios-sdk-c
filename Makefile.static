@@ -1,7 +1,9 @@
-ifeq ($(findstring cmd.exe,$(SHELL)),cmd.exe)
- SHELL_BASH := no
-else
+$(info fs: $(findstring cmd.exe,$(SHELL)))
+$(info she: $(SHELL))
+ifeq ($(findstring bash,$(SHELL)),bash)
  SHELL_BASH := yes
+else
+ SHELL_BASH := no
 endif
 
 ifeq ($(OS),Windows_NT)
