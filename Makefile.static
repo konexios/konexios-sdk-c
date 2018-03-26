@@ -1,12 +1,11 @@
-$(info fs: $(findstring cmd.exe,$(SHELL)))
-$(info she: $(SHELL))
-ifeq ($(findstring bash,$(SHELL)),bash)
- SHELL_BASH := yes
-else
- SHELL_BASH := no
-endif
-
+$(info shell: $(SHELL))
 ifeq ($(OS),Windows_NT)
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),)
+ SHELL_BASH := no
+else
+ SHELL_BASH := yes
+endif
 ifeq ($(SHELL_BASH),no)
  WIN_ENV := yes
 endif
