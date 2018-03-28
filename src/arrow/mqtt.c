@@ -48,7 +48,7 @@ static int _mqtt_init_common(mqtt_env_t *env) {
     env->buf.buf = (unsigned char*)malloc(env->buf.size);
     env->readbuf.size = MQTT_BUF_LEN;
     env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size);
-    env->timeout = 3000;
+    env->timeout = DEFAULT_MQTT_TIMEOUT;
     env->port = MQTT_PORT;
     env->init = 0;
     return 0;

@@ -347,16 +347,19 @@ int MQTTYield(MQTTClient* c, int timeout_ms)
 
     TimerInit(&timer);
     TimerCountdownMS(&timer, timeout_ms);
+    int total_size = 0;
 
 	  do
     {
-        if (cycle(c, &timer) < 0)
-        {
+        if ( (rc = cycle(c, &timer)) < 0) {
             rc = FAILURE;
             break;
+        } else {
+            total_size += rc;
         }
   	} while (!TimerIsExpired(&timer));
 
+    if ( total_size > 0 ) return rc = MQTT_SUCCESS;
     return rc;
 }
 

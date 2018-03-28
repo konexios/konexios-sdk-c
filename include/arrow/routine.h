@@ -77,6 +77,7 @@ arrow_routine_error_t arrow_mqtt_terminate_telemetry_routine(void);
 
 // command specific
 arrow_routine_error_t arrow_mqtt_connect_event_routine(void);
+arrow_routine_error_t arrow_mqtt_subscribe_event_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void);
 arrow_routine_error_t arrow_mqtt_terminate_event_routine(void);
 
