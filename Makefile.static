@@ -1,10 +1,11 @@
 $(info shell: $(SHELL))
 ifeq ($(OS),Windows_NT)
-UNAME := $(shell uname -s)
-ifeq ($(UNAME),)
- SHELL_BASH := no
-else
+UNAME := $(shell echo 1 > NUL && rm NUL && echo linux)
+$(info UNAME $(UNAME))
+ifeq ($(UNAME),linux)
  SHELL_BASH := yes
+else
+ SHELL_BASH := no
 endif
 ifeq ($(SHELL_BASH),no)
  WIN_ENV := yes
