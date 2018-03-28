@@ -240,13 +240,7 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
   if ( ret != ROUTINE_SUCCESS ) return ret;
 
   // process postponed messages
-  if ( arrow_mqtt_event_receive_routine() == ROUTINE_RECEIVE_EVENT ) {
-      while ( arrow_mqtt_has_events() ) {
-          arrow_mqtt_event_proc();
-          // try to get next message
-          arrow_mqtt_event_receive_routine();
-      }
-  } else {
+  if ( arrow_mqtt_event_receive_routine() != ROUTINE_RECEIVE_EVENT ) {
       arrow_mqtt_subscribe_event_routine();
   }
 #endif
