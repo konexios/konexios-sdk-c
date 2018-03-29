@@ -252,7 +252,7 @@ int process_event(const char *str) {
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
-//    DBG("[%s]", can);
+    DBG("[%s]", can);
     if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);

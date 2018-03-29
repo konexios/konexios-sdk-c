@@ -19,7 +19,13 @@
 
 # if defined(USE_HEAP)
 #define FREE_CHUNK(ptr) free(ptr)
+#define CHECK_CHUNK(ptr, act) \
+    if ( !ptr ) { \
+      DBG("CHUNK: alloc memory fail"); \
+      { act; } \
+    }
 #else
+#define CHECK_CHUNK(ptr, act)
 #define FREE_CHUNK(ptr)
 # endif
 
