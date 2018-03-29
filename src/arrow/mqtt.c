@@ -24,6 +24,10 @@
 
 static mqtt_env_t *__mqtt_channels = NULL;
 
+#if defined(STATIC_MQTT_ENV)
+static mqtt_env_t static_telemetry_channel;
+#endif
+
 extern mqtt_driver_t iot_driver;
 #if defined(__IBM__)
 extern mqtt_driver_t ibm_driver;
@@ -159,6 +163,14 @@ static mqtt_env_t *get_telemetry_env() {
                           mqtt_env_t,
                           mqttchannelseq,
                           mqttmask );
+    if ( !tmp ) {
+        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
+        _mqtt_init_common(tmp);
+        tmp->mask = mqttmask;
+        arrow_linked_list_add_node_last(__mqtt_channels,
+                                  mqtt_env_t,
+                                  tmp);
+    }
     return tmp;
 }
 
@@ -186,13 +198,8 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
     i_args args = { device, gateway, config };
     mqtt_env_t *tmp = get_telemetry_env();
     if ( !tmp ) {
-        tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
-        memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
-        _mqtt_init_common(tmp);
-        tmp->mask = mqttmask;
-        arrow_linked_list_add_node_last(__mqtt_channels,
-                                  mqtt_env_t,
-                                  tmp);
+        DBG("Telemetry memory error");
+        return -1;
     }
     if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
@@ -215,9 +222,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
 
 int mqtt_telemetry_disconnect(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) {
-        return -1;
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) )
         _mqtt_env_close(tmp);
     else
@@ -227,9 +232,7 @@ int mqtt_telemetry_disconnect(void) {
 
 int mqtt_telemetry_terminate(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) {
-        return -1;
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) ) {
         arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
         _mqtt_env_free(tmp);
@@ -289,6 +292,14 @@ static mqtt_env_t *get_event_env() {
                           mqtt_env_t,
                           mqttchannelseq,
                           ACN_num );
+    if ( !tmp ) {
+        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
+        _mqtt_init_common(tmp);
+        tmp->mask = ACN_num;
+        arrow_linked_list_add_node_last(__mqtt_channels,
+                                  mqtt_env_t,
+                                  tmp);
+    }
     return tmp;
 }
 
@@ -298,14 +309,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
     mqtt_driver_t *drv = &iot_driver;
     i_args args = { device, gateway, config };
     mqtt_env_t *tmp = get_event_env();
-    if ( !tmp ) {
-        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
-        _mqtt_init_common(tmp);
-        tmp->mask = ACN_num;
-        arrow_linked_list_add_node_last(__mqtt_channels,
-                                  mqtt_env_t,
-                                  tmp);
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
         _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
