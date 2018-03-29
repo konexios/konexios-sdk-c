@@ -134,7 +134,11 @@ static char *form_canonical_prm(JsonNode *param) {
     int alloc_len = child->tag==JSON_STRING?strlen(child->string_):50;
     alloc_len += strlen(json_key(child));
     alloc_len += 10;
-    can_list[count] = malloc( alloc_len );
+    can_list[count] = (char*)malloc( alloc_len );
+    if ( !can_list[count] ) {
+        DBG("GATEWAY SIGN: not enough memory");
+        goto can_list_error;
+    }
     total_len += alloc_len;
     unsigned int i;
     for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower((int)json_key(child)[i]);
@@ -151,7 +155,11 @@ static char *form_canonical_prm(JsonNode *param) {
     }
     count++;
   }
-  canParam = malloc(total_len);
+  canParam = (char*)malloc(total_len);
+  if ( !canParam ) {
+      DBG("GATEWAY SIGN: not enough memory %d", total_len);
+      goto can_list_error;
+  }
   *canParam = 0;
   qsort(can_list, count, sizeof(char *), cmpstringp);
   int i = 0;
@@ -161,6 +169,11 @@ static char *form_canonical_prm(JsonNode *param) {
     free(can_list[i]);
   }
   return canParam;
+can_list_error:
+  for (i=0; i < count; i++) {
+    free(can_list[i]);
+  }
+  return NULL;
 }
 
 static mqtt_event_t *__event_queue = NULL;
@@ -252,7 +265,7 @@ int process_event(const char *str) {
     JsonNode *sign = json_find_member(_main, "signature");
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
-    DBG("[%s]", can);
+//    DBG("[%s]", can);
     if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
       DBG("Alarm! signature is failed...");
       free(can);

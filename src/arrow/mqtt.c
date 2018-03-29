@@ -45,9 +45,9 @@ static int _mqtt_init_common(mqtt_env_t *env) {
     property_init(&env->addr);
     data_prep(&env->data);
     env->buf.size = MQTT_BUF_LEN;
-    env->buf.buf = (unsigned char*)malloc(env->buf.size);
+    env->buf.buf = (unsigned char*)malloc(env->buf.size+1);
     env->readbuf.size = MQTT_BUF_LEN;
-    env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size);
+    env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size+1);
     env->timeout = DEFAULT_MQTT_TIMEOUT;
     env->port = MQTT_PORT;
     env->init = 0;
@@ -131,15 +131,8 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 #if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
-    char *nt_str = (char*)malloc(message->payloadlen+1);
-    if ( !nt_str ) {
-        DBG("Can't allocate more memory [%d]", message->payloadlen+1);
-        return;
-    }
-    memcpy(nt_str, message->payload, message->payloadlen);
-    nt_str[message->payloadlen] = 0x0;
-    process_event(nt_str);
-    free(nt_str);
+    *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
+    process_event(message->payload);
 }
 #endif
 
