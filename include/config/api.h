@@ -41,6 +41,7 @@
 #define ARROW_API_NODE_TYPE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/nodes/types"
 #define ARROW_API_TESTSUITE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/testsuite"
 #define ARROW_API_SOFTWARE_RELEASE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/transactions"
+#define ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/schedules"
 
 /* default gateway and device configuration */
 /* default gateway configuration */

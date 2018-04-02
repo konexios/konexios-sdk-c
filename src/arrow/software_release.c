@@ -327,3 +327,61 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
   STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, (void*)checksum, "File download fail");
 }
 #endif
+
+// schedules
+int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw_hid, property_t user_hid) {
+    sch->device_category = category;
+    property_init(&sch->software_release_hid);
+    property_init(&sch->user_hid);
+    sch->_hids = NULL;
+    return 0;
+}
+
+int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
+    struct object_hid_list *objhid = (struct object_hid_list *)calloc(1, sizeof(struct object_hid_list));
+    property_copy(&objhid->hid, hid);
+    arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
+    return 0;
+}
+
+int arrow_schedule_model_free(arrow_schedule_t *sch) {
+    property_free(&sch->software_release_hid);
+    property_free(&sch->user_hid);
+    struct object_hid_list *tmp = NULL;
+    arrow_linked_list_for_each_safe(tmp, sch->_hids, struct object_hid_list) {
+        property_free(&tmp->hid);
+        free(tmp);
+    }
+    return 0;
+}
+
+static void _software_releases_schedule_start_init(http_request_t *request, void *arg) {
+    arrow_schedule_t *sch = (arrow_schedule_t *)arg;
+    CREATE_CHUNK(uri, URI_LEN);
+    int n = snprintf(uri, URI_LEN, "%s/start", ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
+    if (n < 0) return;
+    uri[n] = 0x0;
+    http_request_init(request, POST, uri);
+    JsonNode *_main = json_mkobject();
+    if ( sch->device_category == schedule_GATEWAY ) {
+        json_append_member(_main, "deviceCategory", json_mkstring("GATEWAY"));
+    } else {
+        json_append_member(_main, "deviceCategory", json_mkstring("DEVICE"));
+    }
+    json_append_member(_main, "softwareReleaseHid", json_mkstring(P_VALUE(sch->software_release_hid)));
+    json_append_member(_main, "userHid", json_mkstring(P_VALUE(sch->user_hid)));
+    JsonNode *hids = json_mkarray();
+    struct object_hid_list *tmp = NULL;
+    arrow_linked_list_for_each(tmp, sch->_hids, struct object_hid_list) {
+        json_append_element(hids, json_mkstring(P_VALUE(tmp->hid)));
+    }
+    json_append_member(_main, "objectHids", hids);
+    http_request_set_payload(request, p_heap(json_encode(_main)));
+    json_delete(_main);
+    FREE_CHUNK(uri);
+    wdt_feed();
+}
+
+int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
+    STD_ROUTINE(_software_releases_schedule_start_init, (void*)sch, NULL, NULL, "Schedule fail");
+}

@@ -1,8 +1,6 @@
 -include $(SDK_PATH)/Makefile.static
 -include $(SDK_PATH)/Makefile.wolf
 
-SDK_PATH := $(call cross_abspath,$(SDK_PATH))
-
 $(info SDK: $(SDK_PATH))
 
 LIBDIR ?= .
@@ -48,8 +46,6 @@ make_dst_path:
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c) $(QUIET)
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c/src) $(QUIET)
-	@ echo $(LIBDIR)/acn-sdk-c/src/  -- $(SDK_PATH)/src/
-	@ echo $(SDK_TARGET)
 
 $(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
 	$(MAKEDIR) $(call fix_slash,$(dir $@)) $(QUIET)

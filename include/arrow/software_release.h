@@ -7,6 +7,7 @@ extern "C" {
 
 #include <arrow/gateway.h>
 #include <arrow/device.h>
+#include <data/linkedlist.h>
 
 enum arrow_ota_result {
     FW_SUCCESS = 0x00,
@@ -67,6 +68,41 @@ int arrow_software_release(const char *token,
                            const char *to);
 
 int arrow_software_release_set_cb(__release_cb cb);
+
+// schedule
+/* model
+ * {
+ *   "deviceCategory": "GATEWAY",
+ *   "objectHids": [
+ *     "string"
+ *   ],
+ *   "softwareReleaseHid": "string",
+ *   "userHid": "string"
+ * }
+ */
+enum schedule_device_category {
+    schedule_GATEWAY,
+    schedule_DEVICE
+};
+
+struct object_hid_list {
+    property_t hid;
+    arrow_linked_list_head_node;
+};
+
+typedef struct _schedule_ {
+  int device_category;
+  property_t software_release_hid;
+  property_t user_hid;
+  struct object_hid_list *_hids;
+} arrow_schedule_t;
+
+int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw_hid, property_t user_hid);
+int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid);
+int arrow_schedule_model_free(arrow_schedule_t *sch);
+
+//POST /api/v1/kronos/software/releases/schedules/start
+int arrow_software_releases_schedules_start(arrow_schedule_t *sch);
 
 #if defined(__cplusplus)
 }
