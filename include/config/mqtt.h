@@ -18,8 +18,16 @@
 # define MQTT_CIPHER
 #endif
 
+#if defined(__IBM__) || defined(__AZURE__)
+#define MQTT_TWO_CHANNEL
+#endif
+
 #if !defined(MQTT_BUF_LEN)
-#define MQTT_BUF_LEN 1200
+#define MQTT_BUF_LEN 400
+#endif
+
+#if !defined(MQTT_RECVBUF_LEN)
+#define MQTT_RECVBUF_LEN 1200
 #endif
 
 #if defined(ARROW_THREAD) &&  \
