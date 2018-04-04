@@ -125,6 +125,13 @@ typedef struct _put_dev_ {
   int put_type;
 } put_dev_t;
 
+int state_handler(char *str) {
+  SSP_PARAMETER_NOT_USED(str);
+  DBG("weak state handler [%s]", str);
+  return 0;
+} // __attribute__((weak))
+
+#if !defined(NO_EVENTS)
 static void _state_put_init(http_request_t *request, void *arg) {
   put_dev_t *pd = (put_dev_t *)arg;
   JsonNode *_error = NULL;
@@ -164,12 +171,6 @@ static int _arrow_put_state(const char *device_hid, _st_put_api put_type, const 
     put_dev_t pd = {device_hid, trans_hid, put_type};
     STD_ROUTINE(_state_put_init, &pd, NULL, NULL, "State put failed...");
 }
-
-int state_handler(char *str) {
-  SSP_PARAMETER_NOT_USED(str);
-  DBG("weak state handler [%s]", str);
-  return 0;
-} // __attribute__((weak))
 
 int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
@@ -215,3 +216,4 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   }
   return 0;
 }
+#endif

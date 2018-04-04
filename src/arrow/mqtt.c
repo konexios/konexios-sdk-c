@@ -28,15 +28,17 @@ static mqtt_env_t *__mqtt_channels = NULL;
 static uint8_t telemetry_recvbuf[MQTT_RECVBUF_LEN+1];
 static uint8_t telemetry_buf[MQTT_BUF_LEN+1];
 static mqtt_env_t static_telemetry_channel;
-# if defined(MQTT_TWO_CHANNEL)
+# if !defined(NO_EVENTS)
+#  if defined(MQTT_TWO_CHANNEL)
 static uint8_t command_recvbuf[MQTT_RECVBUF_LEN+1];
 static uint8_t command_buf[MQTT_BUF_LEN+1];
 static mqtt_env_t static_command_channel;
 static mqtt_env_t *static_command_channel_ptr = &static_command_channel;
-#else
+# else
 static mqtt_env_t *static_command_channel_ptr = &static_telemetry_channel;
 static uint8_t *command_recvbuf = telemetry_recvbuf;
 static uint8_t *command_buf = telemetry_buf;
+#  endif
 # endif
 #endif
 
