@@ -17,11 +17,10 @@
 #define LINE_CHUNK 40
 
 typedef struct __session_flags {
-  int _new   : 16;
-  int _close : 16;
+  uint16_t _new;
+  uint8_t _close;
+  uint8_t _cipher;
 } __session_flags_t;
-
-typedef int (*rw_func)(void *, uint8_t *, uint16_t);
 
 typedef struct {
   int sock;
@@ -29,8 +28,6 @@ typedef struct {
   int response_code;
   __session_flags_t flags;
   ring_buffer_t  *queue;
-  rw_func         _r_func;
-  rw_func         _w_func;
 } http_client_t;
 
 void http_session_close_set(http_client_t *cli, bool mode);

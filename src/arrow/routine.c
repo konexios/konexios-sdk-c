@@ -263,8 +263,11 @@ arrow_routine_error_t arrow_mqtt_terminate_routine() {
 
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ||
-       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
+       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE)
+#if !defined(NO_EVENTS)
+       || !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE)
+#endif
+       ) {
       DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
       return ROUTINE_NOT_INITIALIZE;
   }

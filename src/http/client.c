@@ -19,10 +19,6 @@
 
 #include <ssl/ssl.h>
 
-#if !defined(MAX_BUFFER_SIZE)
-#define MAX_BUFFER_SIZE 1024
-#endif
-
 #define CHUNK_SIZE RINGBUFFER_SIZE
 
 uint8_t tmpbuffer[CHUNK_SIZE];
@@ -51,17 +47,20 @@ bool http_session_close(http_client_t *cli) {
     return -1; \
   }
 
-#define client_send(cli)                    (*(cli->_w_func))((cli), NULL, 0)
-#define client_send_direct(cli, buf, size)  (*(cli->_w_func))((cli), (uint8_t*)(buf), (size))
-#define client_recv(cli, size)              (*(cli->_r_func))((cli), NULL, (size))
+#define client_send(cli)                    simple_write((cli), NULL, 0)
+#define client_send_direct(cli, buf, size)  simple_write((cli), (uint8_t*)(buf), (size))
 
-static int simple_read(void *c, uint8_t *buf, uint16_t len) {
-    SSP_PARAMETER_NOT_USED(buf);
+static int client_recv(void *c, uint16_t len) {
     CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
     http_client_t *cli = (http_client_t *)c;
     if ( len > ringbuf_capacity(cli->queue) )
         len = ringbuf_capacity(cli->queue);
-    int ret = recv(cli->sock, tmp, len, 0);
+    int ret = -1;
+    if ( cli->flags._cipher ) {
+        ret = ssl_recv(cli->sock, tmp, (int)len);
+    } else {
+        ret = recv(cli->sock, tmp, len, 0);
+    }
     if ( ret > 0 ) {
         if ( ringbuf_push(cli->queue, (uint8_t*)tmp, ret) < 0 ) {
             FREE_CHUNK(tmp);
@@ -85,42 +84,12 @@ static int simple_write(void *c, uint8_t *buf, uint16_t len) {
         if ( !len ) len = strlen((char*)buf);
     }
     HTTP_DBG("%d|%s|", len, buf);
-    int ret = send(cli->sock, buf, len, 0);
-    FREE_CHUNK(tmp);
-    return ret;
-}
-
-static int ssl_read(void *c, uint8_t *buf, uint16_t len) {
-    SSP_PARAMETER_NOT_USED(buf);
-    CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
-    http_client_t *cli = (http_client_t *)c;
-    if ( len > ringbuf_capacity(cli->queue) )
-        len = ringbuf_capacity(cli->queue);
-    int ret = ssl_recv(cli->sock, tmp, (int)len);
-    if ( ret > 0 ) {
-        if ( ringbuf_push(cli->queue, (uint8_t*)tmp, ret) < 0 ) {
-            FREE_CHUNK(tmp);
-            return -1;
-        }
-    }
-    HTTP_DBG("[%d]{%s}", ret, tmp);
-    FREE_CHUNK(tmp);
-    return ret;
-}
-
-static int ssl_write(void *c, uint8_t *buf, uint16_t len) {
-    CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
-    http_client_t *cli = (http_client_t *)c;
-    if ( !buf ) {
-        if ( !len ) len = ringbuf_size(cli->queue);
-        if ( ringbuf_pop(cli->queue, (uint8_t*)tmp, len) < 0 )
-            return -1;
-        buf = (uint8_t*)tmp;
+    int ret = -1;
+    if ( cli->flags._cipher ) {
+        ret = ssl_send(cli->sock, (char*)buf, (int)len);
     } else {
-        if ( !len ) len = strlen((char*)buf);
+        ret = send(cli->sock, buf, len, 0);
     }
-    HTTP_DBG("[%d]|%s|", len, buf);
-    int ret = ssl_send(cli->sock, (char*)buf, (int)len);
     FREE_CHUNK(tmp);
     return ret;
 }
@@ -136,24 +105,17 @@ void http_client_init(http_client_t *cli) {
     }
     if ( cli->flags._new ) {
         cli->sock = -1;
+        cli->flags._cipher = 0;
         cli->timeout = DEFAULT_API_TIMEOUT;
-#if defined(HTTP_CIPHER)
-        cli->_r_func = simple_read;
-        cli->_w_func = simple_write;
-#else
-        cli->_r_func = simple_read;
-        cli->_w_func = simple_write;
-#endif
     }
 }
 
 void http_client_free(http_client_t *cli) {
   if ( cli->flags._close ) {
     if ( cli->sock >= 0 ) {
-#if defined(HTTP_CIPHER)
-      ssl_close(cli->sock);
-#endif
-      soc_close(cli->sock);
+        if ( cli->flags._cipher )
+            ssl_close(cli->sock);
+        soc_close(cli->sock);
     }
     ringbuf_free(cli->queue);
     free(cli->queue);
@@ -467,6 +429,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     	}
     	HTTP_DBG("connect done");
     	if ( req->is_cipher ) {
+            cli->flags._cipher = 1;
     		if ( ssl_connect(cli->sock) < 0 ) {
     			HTTP_DBG("SSL connect fail");
     			ssl_close(cli->sock);
@@ -474,12 +437,7 @@ int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res
     			cli->sock = -1;
     			return -1;
     		}
-    		cli->_r_func = ssl_read;
-    		cli->_w_func = ssl_write;
-    	} else {
-    		cli->_r_func = simple_read;
-    		cli->_w_func = simple_write;
-    	}
+        }
     }
 
     if ( send_start(cli, req, cli->queue) < 0 ) {
