@@ -24,6 +24,24 @@
 
 static mqtt_env_t *__mqtt_channels = NULL;
 
+#if defined(STATIC_MQTT_ENV)
+static uint8_t telemetry_recvbuf[MQTT_RECVBUF_LEN+1];
+static uint8_t telemetry_buf[MQTT_BUF_LEN+1];
+static mqtt_env_t static_telemetry_channel;
+# if !defined(NO_EVENTS)
+#  if defined(MQTT_TWO_CHANNEL)
+static uint8_t command_recvbuf[MQTT_RECVBUF_LEN+1];
+static uint8_t command_buf[MQTT_BUF_LEN+1];
+static mqtt_env_t static_command_channel;
+static mqtt_env_t *static_command_channel_ptr = &static_command_channel;
+# else
+static mqtt_env_t *static_command_channel_ptr = &static_telemetry_channel;
+static uint8_t *command_recvbuf = telemetry_recvbuf;
+static uint8_t *command_buf = telemetry_buf;
+#  endif
+# endif
+#endif
+
 extern mqtt_driver_t iot_driver;
 #if defined(__IBM__)
 extern mqtt_driver_t ibm_driver;
@@ -44,10 +62,12 @@ static int _mqtt_init_common(mqtt_env_t *env) {
     property_init(&env->username);
     property_init(&env->addr);
     data_prep(&env->data);
+#if !defined(STATIC_MQTT_ENV)
     env->buf.size = MQTT_BUF_LEN;
     env->buf.buf = (unsigned char*)malloc(env->buf.size+1);
     env->readbuf.size = MQTT_BUF_LEN;
     env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size+1);
+#endif
     env->timeout = DEFAULT_MQTT_TIMEOUT;
     env->port = MQTT_PORT;
     env->init = 0;
@@ -62,8 +82,10 @@ static int _mqtt_deinit_common(mqtt_env_t *env) {
     property_free(&env->s_topic);
     property_free(&env->username);
     property_free(&env->addr);
+#if !defined(STATIC_MQTT_ENV)
     free(env->buf.buf);
     free(env->readbuf.buf);
+#endif
     env->buf.size = 0;
     env->readbuf.size = 0;
     return 0;
@@ -159,6 +181,24 @@ static mqtt_env_t *get_telemetry_env() {
                           mqtt_env_t,
                           mqttchannelseq,
                           mqttmask );
+    if ( !tmp ) {
+#if defined(STATIC_MQTT_ENV)
+        tmp = &static_telemetry_channel;
+#else
+        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
+#endif
+        _mqtt_init_common(tmp);
+#if defined(STATIC_MQTT_ENV)
+        tmp->buf.size = sizeof(telemetry_buf)-1;
+        tmp->buf.buf = (unsigned char*)telemetry_buf;
+        tmp->readbuf.size = sizeof(telemetry_recvbuf)-1;
+        tmp->readbuf.buf = (unsigned char*)telemetry_recvbuf;
+#endif
+        tmp->mask = mqttmask;
+        arrow_linked_list_add_node_last(__mqtt_channels,
+                                  mqtt_env_t,
+                                  tmp);
+    }
     return tmp;
 }
 
@@ -186,13 +226,8 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
     i_args args = { device, gateway, config };
     mqtt_env_t *tmp = get_telemetry_env();
     if ( !tmp ) {
-        tmp = (mqtt_env_t *)malloc(sizeof(mqtt_env_t));
-        memset(tmp, 0x0, sizeof(sizeof(mqtt_env_t)));
-        _mqtt_init_common(tmp);
-        tmp->mask = mqttmask;
-        arrow_linked_list_add_node_last(__mqtt_channels,
-                                  mqtt_env_t,
-                                  tmp);
+        DBG("Telemetry memory error");
+        return -1;
     }
     if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
@@ -215,9 +250,7 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
 
 int mqtt_telemetry_disconnect(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) {
-        return -1;
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) )
         _mqtt_env_close(tmp);
     else
@@ -227,13 +260,13 @@ int mqtt_telemetry_disconnect(void) {
 
 int mqtt_telemetry_terminate(void) {
     mqtt_env_t *tmp = get_telemetry_env();
-    if ( !tmp ) {
-        return -1;
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) ) {
         arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
         _mqtt_env_free(tmp);
+#if !defined(STATIC_MQTT_ENV)
         free(tmp);
+#endif
     } else
         _mqtt_env_unset_init(tmp, MQTT_TELEMETRY_INIT);
     return 0;
@@ -276,7 +309,9 @@ void mqtt_terminate(void) {
     arrow_linked_list_for_each_safe ( curr, __mqtt_channels, mqtt_env_t ) {
         if ( curr->init )
             _mqtt_env_free(curr);
+#if !defined(STATIC_MQTT_ENV)
         free(curr);
+#endif
     }
     __mqtt_channels = NULL;
 }
@@ -289,6 +324,24 @@ static mqtt_env_t *get_event_env() {
                           mqtt_env_t,
                           mqttchannelseq,
                           ACN_num );
+    if ( !tmp ) {
+#if defined(STATIC_MQTT_ENV)
+        tmp = static_command_channel_ptr;
+#else
+        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
+#endif
+        _mqtt_init_common(tmp);
+#if defined(STATIC_MQTT_ENV)
+        tmp->buf.size = MQTT_BUF_LEN;
+        tmp->buf.buf = (unsigned char*)command_buf;
+        tmp->readbuf.size = MQTT_RECVBUF_LEN;
+        tmp->readbuf.buf = (unsigned char*)command_recvbuf;
+#endif
+        tmp->mask = ACN_num;
+        arrow_linked_list_add_node_last(__mqtt_channels,
+                                  mqtt_env_t,
+                                  tmp);
+    }
     return tmp;
 }
 
@@ -298,14 +351,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
     mqtt_driver_t *drv = &iot_driver;
     i_args args = { device, gateway, config };
     mqtt_env_t *tmp = get_event_env();
-    if ( !tmp ) {
-        tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
-        _mqtt_init_common(tmp);
-        tmp->mask = ACN_num;
-        arrow_linked_list_add_node_last(__mqtt_channels,
-                                  mqtt_env_t,
-                                  tmp);
-    }
+    if ( !tmp ) return -1;
     if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
         drv->common_init(tmp, &args);
         _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
@@ -353,7 +399,9 @@ int mqtt_subscribe_terminate(void) {
     if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) ) {
         arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
         _mqtt_env_free(tmp);
+#if !defined(STATIC_MQTT_ENV)
         free(tmp);
+#endif
     } else
         _mqtt_env_unset_init(tmp, MQTT_SUBSCRIBE_INIT);
     return 0;

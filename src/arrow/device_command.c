@@ -7,6 +7,7 @@
  */
 
 #include "arrow/device_command.h"
+#if !defined(NO_EVENTS)
 #include <http/routine.h>
 #include <json/json.h>
 #include <sys/mem.h>
@@ -171,3 +172,6 @@ device_command_done:
   }
   return 0;
 }
+#else
+typedef void __dummy;
+#endif
