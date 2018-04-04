@@ -326,7 +326,6 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
   token_hid_t th = { token, tr_hid };
   STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, (void*)checksum, "File download fail");
 }
-#endif
 
 // schedules
 int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw_hid, property_t user_hid) {
@@ -385,3 +384,4 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
 int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
     STD_ROUTINE(_software_releases_schedule_start_init, (void*)sch, NULL, NULL, "Schedule fail");
 }
+#endif
