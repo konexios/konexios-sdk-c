@@ -19,7 +19,7 @@
 
 #include <ssl/ssl.h>
 
-#define CHUNK_SIZE RINGBUFFER_SIZE
+#define CHUNK_SIZE (RINGBUFFER_SIZE/2)
 
 uint8_t tmpbuffer[CHUNK_SIZE];
 #define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)

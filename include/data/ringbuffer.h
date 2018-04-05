@@ -20,7 +20,11 @@ extern "C" {
 #endif
 
 typedef struct _ring_buffer_ {
+#if defined(RING_BUFFER_ARRAY)
+    uint8_t buffer[RINGBUFFER_SIZE];
+#else
     uint8_t *buffer;
+#endif
     uint16_t total;
     uint16_t size;
     uint16_t shift;
