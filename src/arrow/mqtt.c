@@ -291,7 +291,8 @@ int mqtt_publish(arrow_device_t *device, void *d) {
 int mqtt_is_telemetry_connect(void) {
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
-        if ( _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT ) )
+        if ( _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT ) &&
+             _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) )
             return 1;
     }
     return 0;

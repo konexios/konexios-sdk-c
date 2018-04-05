@@ -305,6 +305,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
     SSP_PARAMETER_NOT_USED(arg);
     char *checksum = (char *)arg;
     wdt_feed();
+    if ( response->m_httpResponseCode != 200 ) return -1;
     if ( __download ) {
         char hash[18];
         char hash_hex[34];
