@@ -19,6 +19,10 @@ extern "C" {
 #define RINGBUFFER_SIZE 512
 #endif
 
+#if defined(RING_BUFFER_ARRAY)
+#define RingBuffer_initializer { {0}, RINGBUFFER_SIZE, 0, 0 }
+#endif
+
 typedef struct _ring_buffer_ {
 #if defined(RING_BUFFER_ARRAY)
     uint8_t buffer[RINGBUFFER_SIZE];

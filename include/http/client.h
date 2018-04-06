@@ -27,6 +27,9 @@ typedef struct {
   uint32_t timeout;
   int response_code;
   __session_flags_t flags;
+#if defined(STATIC_HTTP_CLIENT)
+  ring_buffer_t  static_queue;
+#endif
   ring_buffer_t  *queue;
 } http_client_t;
 

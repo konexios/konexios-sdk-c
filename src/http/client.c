@@ -97,7 +97,11 @@ static int simple_write(void *c, uint8_t *buf, uint16_t len) {
 void http_client_init(http_client_t *cli) {
     cli->response_code = 0;
     if ( !cli->queue ) {
-        cli->queue = (ring_buffer_t *)malloc(sizeof(ring_buffer_t));
+#if defined(STATIC_HTTP_CLIENT)
+        cli->queue = &cli->static_queue;
+#else
+        cli->queue = alloc_type(ring_buffer_t);
+#endif
         int ret = ringbuf_init(cli->queue, RINGBUFFER_SIZE);
         if ( ret < 0 ) {
             DBG("HTTP: ringbuffer init failed %d", ret);
@@ -118,7 +122,9 @@ void http_client_free(http_client_t *cli) {
         soc_close(cli->sock);
     }
     ringbuf_free(cli->queue);
+#if !defined(STATIC_HTTP_CLIENT)
     free(cli->queue);
+#endif
     cli->queue = NULL;
     cli->flags._new = 1;
   } else {

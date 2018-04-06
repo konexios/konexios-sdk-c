@@ -66,7 +66,7 @@ int gateway_info_parse(gateway_info_t **list, const char *s) {
     if ( _data ) {
         JsonNode *tmp = NULL;
         json_foreach(tmp, _data) {
-            gateway_info_t *gi = (gateway_info_t *)malloc(sizeof(gateway_info_t));
+            gateway_info_t *gi = alloc_type(gateway_info_t);
             gateway_info_init(gi);
             who_when_parse(tmp, &gi->created, "createdDate", "createdBy");
             who_when_parse(tmp, &gi->lastModified, "lastModifiedDate", "lastModifiedBy");
