@@ -39,6 +39,8 @@ extern "C" {
 # define __attribute_packed__ __attribute__((__packed__))
 #endif
 
+#define __attribute_weak__ __attribute__((weak))
+
 #if defined(__cplusplus)
 }
 #endif

@@ -35,6 +35,12 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
+void http_session_close_now(http_client_t *cli) {
+    __session_flags_t new_flag = {1, 1};
+    cli->flags = new_flag;
+
+}
+
 bool http_session_close(http_client_t *cli) {
   return cli->flags._close;
 }
@@ -428,7 +434,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
     return 0;
 }
 
-int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
+int __attribute_weak__ http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
     int ret;
     http_response_init(res, &req->_response_payload_meth);
     if ( cli->sock < 0 ) {

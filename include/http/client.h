@@ -34,6 +34,7 @@ typedef struct {
 } http_client_t;
 
 void http_session_close_set(http_client_t *cli, bool mode);
+void http_session_close_now(http_client_t *cli);
 bool http_session_close(http_client_t *cli);
 
 void http_client_init(http_client_t *cli);
