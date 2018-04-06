@@ -28,7 +28,7 @@ int has_cmd_handler(void) {
 }
 
 int arrow_command_handler_add(const char *name, fp callback) {
-    cmd_handler *h = malloc(sizeof(cmd_handler));
+    cmd_handler *h = alloc_type(cmd_handler);
     if ( !h ) return -1;
     h->name = strdup(name);
     h->callback = callback;

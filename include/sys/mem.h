@@ -41,6 +41,8 @@ extern "C" {
 
 #define __attribute_weak__ __attribute__((weak))
 
+#define alloc_type(type) (type*)calloc(1, sizeof(type))
+
 #if defined(__cplusplus)
 }
 #endif

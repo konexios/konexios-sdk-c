@@ -33,7 +33,7 @@ int add_telemetry_data_info(telemetry_response_data_list_t *data,
                             const char *type,
                             time_t timestamp,
                             int flval) {
-    telemetry_data_info_t *info = (telemetry_data_info_t *) malloc(sizeof(telemetry_data_info_t));
+    telemetry_data_info_t *info = alloc_type(telemetry_data_info_t);
     info->deviceHid = strdup(deviceHid);
     info->name = strdup(name);
     info->type = strdup(type);

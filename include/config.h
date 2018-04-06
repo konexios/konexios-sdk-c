@@ -50,6 +50,10 @@
 # define SSP_PARAMETER_NOT_USED(x) (void)((x))
 #endif
 
+#if defined(STATIC_HTTP_CLIENT)
+# define RING_BUFFER_ARRAY
+#endif
+
 // for AP mode only
 #if !defined(MAIN_WLAN_SSID)
 #  define MAIN_WLAN_SSID      "ACN_WIFI"

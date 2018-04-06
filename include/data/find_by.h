@@ -69,7 +69,7 @@ int find_by_validate_key(find_by_t *fb);
     va_start(args, n); \
     int i = 0; \
     for (i=0; i < n; i++) { \
-      find_by_t *tmp = (find_by_t *)malloc(sizeof(find_by_t)); \
+      find_by_t *tmp = alloc_type(find_by_t); \
       *tmp = va_arg(args, find_by_t); \
       arrow_linked_list_add_node_last(params, find_by_t, tmp); \
     } \
