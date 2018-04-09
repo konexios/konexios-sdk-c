@@ -49,7 +49,7 @@ property_map_t *property_map_find(property_map_t *root, property_t key) {
 int property_map_assign(property_map_t *root, property_t key, property_t value) {
     property_map_t *el = property_map_find(root, key);
     if ( el ) {
-        el->value = value;
+        property_copy(&el->value, value);
         return 0;
     }
     return -1;

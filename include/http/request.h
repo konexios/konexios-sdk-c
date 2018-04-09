@@ -69,6 +69,8 @@ typedef struct __attribute_packed__ {
 void http_request_init(http_request_t *req, int meth, const char *url);
 void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, property_t key, property_t value);
+void http_request_set_header(http_request_t *req, property_t key, property_t value);
+int  http_request_find_header(http_request_t *req, property_t key, property_t *value);
 void http_request_add_query(http_request_t *req, property_t key, property_t value);
 void http_request_set_content_type(http_request_t *req, property_t value);
 property_map_t *http_request_first_header(http_request_t *req);

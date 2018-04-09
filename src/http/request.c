@@ -108,6 +108,16 @@ void http_request_add_header(http_request_t *req, property_t key, property_t val
     property_map_add(&req->header, key, value);
 }
 
+void http_request_set_header(http_request_t *req, property_t key, property_t value) {
+    property_map_assign(req->header, key, value);
+}
+int  http_request_find_header(http_request_t *req, property_t key, property_t *value) {
+    property_map_t *fm = property_map_find(req->header, key);
+    if ( !fm ) return -1;
+    if (value) property_copy(value, fm->value);
+    return 0;
+}
+
 void http_request_add_query(http_request_t *req, property_t key, property_t value) {
   property_map_add(&req->query, key, value);
 }
