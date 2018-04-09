@@ -333,6 +333,8 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
     sch->device_category = category;
     property_init(&sch->software_release_hid);
     property_init(&sch->user_hid);
+    property_copy(&sch->software_release_hid, sw_hid);
+    property_copy(&sch->user_hid, user_hid);
     sch->_hids = NULL;
     return 0;
 }
@@ -362,6 +364,9 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     if (n < 0) return;
     uri[n] = 0x0;
     http_request_init(request, POST, uri);
+    http_request_add_header(request,
+                            p_const("x-arrow-apikey"),
+                            p_const(DEFAULT_API_KEY));
     JsonNode *_main = json_mkobject();
     if ( sch->device_category == schedule_GATEWAY ) {
         json_append_member(_main, "deviceCategory", json_mkstring("GATEWAY"));

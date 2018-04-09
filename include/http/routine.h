@@ -19,8 +19,12 @@ extern "C" {
 typedef void(*response_init_f)(http_request_t *request, void *arg);
 typedef int (*response_proc_f)(http_response_t *response, void *arg);
 
+int __http_init(void);
+
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc);
+
+int __http_done(void);
 
 #define STD_ROUTINE(init, i_arg, proc, p_arg, ...) { \
   int ret = __http_routine(init, i_arg, proc, p_arg); \

@@ -14,14 +14,14 @@
 #include <data/ringbuffer.h>
 #include <debug.h>
 
-static http_client_t _cli = { -1, -1, 0, {1, 1, 0},
-#if defined(STATIC_HTTP_CLIENT)
-                              RingBuffer_initializer,
-#endif
-                              NULL };
+static http_client_t _cli;
 
 http_client_t *current_client(void) {
   return &_cli;
+}
+
+int __http_init(void) {
+    return http_client_init(&_cli);
 }
 
 int __http_routine(response_init_f req_init, void *arg_init,
@@ -29,12 +29,12 @@ int __http_routine(response_init_f req_init, void *arg_init,
   int ret = 0;
   http_request_t request;
   http_response_t response;
-  http_client_init(&_cli);
   req_init(&request, arg_init);
   sign_request(&request);
-  ret = http_client_do(&_cli, &request, &response);
+  http_client_open(&_cli, &request);
+  ret = http_client_do(&_cli, &response);
   http_request_close(&request);
-  http_client_free(&_cli);
+  http_client_close(&_cli);
   if ( ret < 0 ) goto http_error;
   if ( resp_proc ) {
     ret = resp_proc(&response, arg_proc);
@@ -47,4 +47,8 @@ int __http_routine(response_init_f req_init, void *arg_init,
 http_error:
   http_response_free(&response);
   return ret;
+}
+
+int __http_done(void) {
+    return http_client_free(&_cli);
 }

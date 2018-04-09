@@ -11,13 +11,12 @@
 
 #include <http/request.h>
 #include <http/response.h>
-
 #include <data/ringbuffer.h>
 
 #define LINE_CHUNK 40
+#define HTTP_VERS " HTTP/1.1\r\n"
 
 typedef struct __session_flags {
-  uint16_t _new;
   uint8_t _close;
   uint8_t _cipher;
 } __session_flags_t;
@@ -31,15 +30,17 @@ typedef struct {
   ring_buffer_t  static_queue;
 #endif
   ring_buffer_t  *queue;
+  http_request_t *request;
 } http_client_t;
 
 void http_session_close_set(http_client_t *cli, bool mode);
 void http_session_close_now(http_client_t *cli);
-bool http_session_close(http_client_t *cli);
 
-void http_client_init(http_client_t *cli);
-void http_client_free(http_client_t *cli);
+int http_client_init(http_client_t *cli);
+int http_client_free(http_client_t *cli);
+int http_client_open(http_client_t *cli, http_request_t *req);
+int http_client_close(http_client_t *cli);
 
-int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res);
+int http_client_do(http_client_t *cli, http_response_t *res);
 
 #endif /* ACN_SDK_C_HTTP_CLIENT_H_ */

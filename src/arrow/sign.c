@@ -163,9 +163,11 @@ void sign_request(http_request_t *req) {
       get_canonical_string(canonicalQuery, req);
     }
     get_time(ts);
-    http_request_add_header(req,
-                            p_const("x-arrow-apikey"),
-                            p_const(get_api_key()));
+    if ( http_request_find_header(req, p_const("x-arrow-apikey"), NULL) < 0 ) {
+        http_request_add_header(req,
+                                p_const("x-arrow-apikey"),
+                                p_const(get_api_key()));
+    }
     http_request_add_header(req,
                             p_const("x-arrow-date"),
                             p_const(ts));
