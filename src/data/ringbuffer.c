@@ -16,6 +16,10 @@ int ringbuf_init(ring_buffer_t *buf, int32_t size) {
     if ( size == 0 ) size = RINGBUFFER_SIZE;
 #else
     buf->buffer = (uint8_t *)malloc(size);
+    if ( !buf->buffer ) {
+        DBG("Not enough ememory %d", size);
+        return -1;
+    }
 #endif
     buf->shift = 0;
     buf->size = 0;

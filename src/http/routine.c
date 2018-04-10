@@ -31,7 +31,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   http_response_t response;
   req_init(&request, arg_init);
   sign_request(&request);
-  http_client_open(&_cli, &request);
+  if ( http_client_open(&_cli, &request) < 0 ) return -1;
   ret = http_client_do(&_cli, &response);
   http_request_close(&request);
   http_client_close(&_cli);

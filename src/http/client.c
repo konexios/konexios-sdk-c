@@ -125,6 +125,7 @@ int __attribute_weak__ http_client_free(http_client_t *cli) {
 }
 
 int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req) {
+    if ( !cli->queue ) return -1;
     ringbuf_clear(cli->queue);
     cli->response_code = 0;
     cli->request = req;
