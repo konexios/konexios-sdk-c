@@ -24,7 +24,7 @@ typedef int (*__release_cb)(const char *url,
                            const char *from,
                            const char *to);
 
-typedef int (*__download_init_cb)(void);
+typedef int (*__download_init_cb)(void *arg);
 typedef int (*__download_payload_cb)(const char *,int,int);
 typedef int (*__download_complete_cb)(int);
 

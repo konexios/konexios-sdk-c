@@ -180,6 +180,10 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
                 return -1;
             }
         }
+        if (socket_connect_done(cli->sock) < 0 ) {
+            http_client_close(cli);
+            return -1;
+        }
     }
     return 0;
 }

@@ -201,7 +201,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
   }
   if ( __download_init ) {
-      ret = __download_init();
+      ret = __download_init(_checksum);
       if ( ret < 0 ) goto software_release_done;
   }
   ret = arrow_software_release_download(_token, trans_hid, _checksum);
@@ -398,3 +398,4 @@ int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
                 _software_releases_schedule_start_proc, NULL, "Schedule fail");
 }
 #endif
+
