@@ -124,7 +124,12 @@ int __attribute_weak__ http_client_free(http_client_t *cli) {
     return -1;
 }
 
+int default_http_client_open(http_client_t *cli, http_request_t *req);
 int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req) {
+    return default_http_client_open(cli, req);
+}
+
+int default_http_client_open(http_client_t *cli, http_request_t *req) {
     if ( !cli->queue ) return -1;
     ringbuf_clear(cli->queue);
     cli->response_code = 0;
@@ -179,7 +184,12 @@ int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req)
     return 0;
 }
 
+int default_http_client_close(http_client_t *cli);
 int __attribute_weak__ http_client_close(http_client_t *cli) {
+    return default_http_client_close(cli);
+}
+
+int default_http_client_close(http_client_t *cli) {
     if ( cli->sock < 0 ) return -1;
     if ( !cli->flags._close ) return 0;
     if ( cli->flags._cipher ) {
@@ -453,7 +463,12 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
     return 0;
 }
 
+int default_http_client_do(http_client_t *cli, http_response_t *res);
 int __attribute_weak__ http_client_do(http_client_t *cli, http_response_t *res) {
+
+}
+
+int default_http_client_do(http_client_t *cli, http_response_t *res) {
     int ret;
     http_request_t *req = cli->request;
     if ( !req ) return -1;

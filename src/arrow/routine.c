@@ -74,7 +74,9 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   if ( restore_device_info(device) < 0 ) {
     if ( arrow_register_device(gateway, device) < 0 ) return -1;
     save_device_info(device);
-  } else {
+  }
+#if defined(CHECK_DEVICE_REG)
+  else {
       device_info_t list;
       if ( arrow_device_find_by_hid(&list, P_VALUE(device->hid)) < 0 ) {
           return -1;
@@ -85,6 +87,7 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
           device_info_free(&list);
       }
   }
+#endif
   return 0;
 }
 

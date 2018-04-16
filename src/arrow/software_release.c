@@ -387,7 +387,14 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     wdt_feed();
 }
 
+static int _software_releases_schedule_start_proc(http_response_t *response, void *arg) {
+    SSP_PARAMETER_NOT_USED(arg);
+    if ( response->m_httpResponseCode != 200 ) return -1;
+    return 0;
+}
+
 int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
-    STD_ROUTINE(_software_releases_schedule_start_init, (void*)sch, NULL, NULL, "Schedule fail");
+    STD_ROUTINE(_software_releases_schedule_start_init, (void*)sch,
+                _software_releases_schedule_start_proc, NULL, "Schedule fail");
 }
 #endif
