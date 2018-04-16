@@ -469,7 +469,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
 
 int default_http_client_do(http_client_t *cli, http_response_t *res);
 int __attribute_weak__ http_client_do(http_client_t *cli, http_response_t *res) {
-
+    return default_http_client_do(cli, res);
 }
 
 int default_http_client_do(http_client_t *cli, http_response_t *res) {
