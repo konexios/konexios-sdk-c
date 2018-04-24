@@ -3,6 +3,8 @@
 #include <http/routine.h>
 #include <debug.h>
 
+#include <data/chunk.h>
+
 #define URI_LEN sizeof(ARROW_API_NODE_TYPE_ENDPOINT) + 50
 
 static void _node_type_list_init(http_request_t *request, void *arg) {
@@ -54,10 +56,10 @@ int arrow_node_type_create(arrow_node_type_t *node) {
 
 static void _node_type_update_init(http_request_t *request, void *arg) {
   arrow_node_type_t *node = (arrow_node_type_t *) arg;
-  char *uri = (char *)malloc(URI_LEN);
+  CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_NODE_TYPE_ENDPOINT, node->hid);
   http_request_init(request, PUT, uri);
-  free(uri);
+  FREE_CHUNK(uri);
   http_request_set_payload(request, p_heap(arrow_node_type_serialize(node)));
 }
 

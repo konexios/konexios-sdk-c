@@ -30,7 +30,7 @@ int device_event_parse(device_event_t **list, const char *text) {
     if ( _data ) {
         JsonNode *tmp = NULL;
         json_foreach(tmp, _data) {
-            device_event_t *de = (device_event_t *)malloc(sizeof(device_event_t));
+            device_event_t *de = alloc_type(device_event_t);
             device_event_init(de);
             who_when_parse(tmp, &de->created, "createdDate", "createdBy");
             json_fill_property(tmp, de, criteria);

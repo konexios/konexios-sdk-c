@@ -114,5 +114,9 @@ int NetworkConnect(Network* n, char* addr, int port) {
     	return -3;
     }
 #endif
+    if (socket_connect_done(n->my_socket) < 0 ) {
+        NetworkDisconnect(n);
+        return -4;
+    }
     return n->my_socket;
 }

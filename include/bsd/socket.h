@@ -31,6 +31,8 @@ extern "C" {
 
 #include <bsd/sockdef.h>
 
+int socket_connect_done(int sock);
+
 #if defined(__cplusplus)
 }
 #endif

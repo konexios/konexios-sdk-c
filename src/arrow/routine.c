@@ -44,6 +44,14 @@ arrow_gateway_config_t *current_gateway_config(void) {
     return &_gateway_config;
 }
 
+arrow_routine_error_t arrow_init(void) {
+    if ( __http_init() < 0 ) return ROUTINE_ERROR;
+#if !defined(NO_EVENTS)
+    arrow_mqtt_events_init();
+#endif
+    return ROUTINE_SUCCESS;
+}
+
 int arrow_connect_gateway(arrow_gateway_t *gateway){
   arrow_prepare_gateway(gateway);
   int ret = restore_gateway_info(gateway);
@@ -66,7 +74,9 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   if ( restore_device_info(device) < 0 ) {
     if ( arrow_register_device(gateway, device) < 0 ) return -1;
     save_device_info(device);
-  } else {
+  }
+#if defined(CHECK_DEVICE_REG)
+  else {
       device_info_t list;
       if ( arrow_device_find_by_hid(&list, P_VALUE(device->hid)) < 0 ) {
           return -1;
@@ -77,6 +87,7 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
           device_info_free(&list);
       }
   }
+#endif
   return 0;
 }
 
@@ -263,8 +274,11 @@ arrow_routine_error_t arrow_mqtt_terminate_routine() {
 
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
   if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ||
-       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
+       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE)
+#if !defined(NO_EVENTS)
+       || !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE)
+#endif
+       ) {
       DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
       return ROUTINE_NOT_INITIALIZE;
   }
@@ -307,8 +321,12 @@ void arrow_close(void) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
     arrow_gateway_config_free(&_gateway_config);
+#if !defined(NO_EVENTS)
+    arrow_mqtt_events_done();
+#endif
     _init_done = 0;
   }
+  __http_done();
 }
 
 arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data) {

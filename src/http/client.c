@@ -19,11 +19,7 @@
 
 #include <ssl/ssl.h>
 
-#if !defined(MAX_BUFFER_SIZE)
-#define MAX_BUFFER_SIZE 1024
-#endif
-
-#define CHUNK_SIZE RINGBUFFER_SIZE
+#define CHUNK_SIZE (RINGBUFFER_SIZE/2)
 
 uint8_t tmpbuffer[CHUNK_SIZE];
 #define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)
@@ -35,8 +31,9 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
-bool http_session_close(http_client_t *cli) {
-  return cli->flags._close;
+void http_session_close_now(http_client_t *cli) {
+  cli->flags._close = true;
+  http_client_close(cli);
 }
 
 #define CHECK_CONN_ERR(ret) \
@@ -51,17 +48,20 @@ bool http_session_close(http_client_t *cli) {
     return -1; \
   }
 
-#define client_send(cli)                    (*(cli->_w_func))((cli), NULL, 0)
-#define client_send_direct(cli, buf, size)  (*(cli->_w_func))((cli), (uint8_t*)(buf), (size))
-#define client_recv(cli, size)              (*(cli->_r_func))((cli), NULL, (size))
+#define client_send(cli)                    simple_write((cli), NULL, 0)
+#define client_send_direct(cli, buf, size)  simple_write((cli), (uint8_t*)(buf), (size))
 
-static int simple_read(void *c, uint8_t *buf, uint16_t len) {
-    SSP_PARAMETER_NOT_USED(buf);
+static int client_recv(void *c, uint16_t len) {
     CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
     http_client_t *cli = (http_client_t *)c;
     if ( len > ringbuf_capacity(cli->queue) )
         len = ringbuf_capacity(cli->queue);
-    int ret = recv(cli->sock, tmp, len, 0);
+    int ret = -1;
+    if ( cli->flags._cipher ) {
+        ret = ssl_recv(cli->sock, tmp, (int)len);
+    } else {
+        ret = recv(cli->sock, tmp, len, 0);
+    }
     if ( ret > 0 ) {
         if ( ringbuf_push(cli->queue, (uint8_t*)tmp, ret) < 0 ) {
             FREE_CHUNK(tmp);
@@ -85,87 +85,126 @@ static int simple_write(void *c, uint8_t *buf, uint16_t len) {
         if ( !len ) len = strlen((char*)buf);
     }
     HTTP_DBG("%d|%s|", len, buf);
-    int ret = send(cli->sock, buf, len, 0);
-    FREE_CHUNK(tmp);
-    return ret;
-}
-
-static int ssl_read(void *c, uint8_t *buf, uint16_t len) {
-    SSP_PARAMETER_NOT_USED(buf);
-    CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
-    http_client_t *cli = (http_client_t *)c;
-    if ( len > ringbuf_capacity(cli->queue) )
-        len = ringbuf_capacity(cli->queue);
-    int ret = ssl_recv(cli->sock, tmp, (int)len);
-    if ( ret > 0 ) {
-        if ( ringbuf_push(cli->queue, (uint8_t*)tmp, ret) < 0 ) {
-            FREE_CHUNK(tmp);
-            return -1;
-        }
-    }
-    HTTP_DBG("[%d]{%s}", ret, tmp);
-    FREE_CHUNK(tmp);
-    return ret;
-}
-
-static int ssl_write(void *c, uint8_t *buf, uint16_t len) {
-    CREATE_CHUNK(tmp, MAX_TMP_BUF_SIZE);
-    http_client_t *cli = (http_client_t *)c;
-    if ( !buf ) {
-        if ( !len ) len = ringbuf_size(cli->queue);
-        if ( ringbuf_pop(cli->queue, (uint8_t*)tmp, len) < 0 )
-            return -1;
-        buf = (uint8_t*)tmp;
+    int ret = -1;
+    if ( cli->flags._cipher ) {
+        ret = ssl_send(cli->sock, (char*)buf, (int)len);
     } else {
-        if ( !len ) len = strlen((char*)buf);
+        ret = send(cli->sock, buf, len, 0);
     }
-    HTTP_DBG("[%d]|%s|", len, buf);
-    int ret = ssl_send(cli->sock, (char*)buf, (int)len);
     FREE_CHUNK(tmp);
     return ret;
 }
 
-void http_client_init(http_client_t *cli) {
+// allocated resources for the http client
+int __attribute_weak__ http_client_init(http_client_t *cli) {
+#if defined(STATIC_HTTP_CLIENT)
+    cli->queue = &cli->static_queue;
+#else
+    cli->queue = alloc_type(ring_buffer_t);
+#endif
+    if ( !cli->queue ) return -1;
+    int ret = ringbuf_init(cli->queue, RINGBUFFER_SIZE);
+    if ( ret < 0 ) {
+        DBG("HTTP: ringbuffer init failed %d", ret);
+        return ret;
+    }
+    cli->sock = -1;
+    cli->flags._close = true;
+    cli->flags._cipher = 0;
+    cli->timeout = DEFAULT_API_TIMEOUT;
+    return 0;
+}
+
+int __attribute_weak__ http_client_free(http_client_t *cli) {
+    ringbuf_free(cli->queue);
+#if !defined(STATIC_HTTP_CLIENT)
+    free(cli->queue);
+#endif
+    cli->queue = NULL;
+    return -1;
+}
+
+int default_http_client_open(http_client_t *cli, http_request_t *req);
+int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req) {
+    return default_http_client_open(cli, req);
+}
+
+int default_http_client_open(http_client_t *cli, http_request_t *req) {
+    if ( !cli->queue ) return -1;
+    ringbuf_clear(cli->queue);
     cli->response_code = 0;
-    if ( !cli->queue ) {
-        cli->queue = (ring_buffer_t *)malloc(sizeof(ring_buffer_t));
-        int ret = ringbuf_init(cli->queue, RINGBUFFER_SIZE);
+    cli->request = req;
+    if ( cli->sock < 0 ) {
+        DBG("new TCP connection");
+        int ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         if ( ret < 0 ) {
-            DBG("HTTP: ringbuffer init failed %d", ret);
+            DBG("HTTP: socket failed");
+            return ret;
+        }
+        cli->sock = ret;
+        // resolve the host
+        struct sockaddr_in serv;
+        struct hostent *serv_resolve;
+        serv_resolve = gethostbyname(P_VALUE(req->host));
+        if (serv_resolve == NULL) {
+            DBG("ERROR, no such host");
+            return -1;
+        }
+        memset(&serv, 0, sizeof(serv));
+        serv.sin_family = PF_INET;
+        bcopy((char *)serv_resolve->h_addr,
+                (char *)&serv.sin_addr.s_addr,
+                (uint32_t)serv_resolve->h_length);
+        serv.sin_port = htons(req->port);
+
+        // set timeout
+        struct timeval tv;
+        tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
+        tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);
+        setsockopt(cli->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+        ret = connect(cli->sock, (struct sockaddr*)&serv, sizeof(serv));
+        if ( ret < 0 ) {
+            DBG("connect fail");
+            soc_close(cli->sock);
+            cli->sock = -1;
+            return -1;
+        }
+        HTTP_DBG("connect done");
+        if ( req->is_cipher ) {
+            cli->flags._cipher = true;
+            if ( ssl_connect(cli->sock) < 0 ) {
+                HTTP_DBG("SSL connect fail");
+                cli->flags._close = true;
+                http_client_close(cli);
+                return -1;
+            }
+        }
+        if (socket_connect_done(cli->sock) < 0 ) {
+            http_client_close(cli);
+            return -1;
         }
     }
-    if ( cli->flags._new ) {
-        cli->sock = -1;
-        cli->timeout = DEFAULT_API_TIMEOUT;
-#if defined(HTTP_CIPHER)
-        cli->_r_func = simple_read;
-        cli->_w_func = simple_write;
-#else
-        cli->_r_func = simple_read;
-        cli->_w_func = simple_write;
-#endif
-    }
+    return 0;
 }
 
-void http_client_free(http_client_t *cli) {
-  if ( cli->flags._close ) {
-    if ( cli->sock >= 0 ) {
-#if defined(HTTP_CIPHER)
-      ssl_close(cli->sock);
-#endif
-      soc_close(cli->sock);
-    }
-    ringbuf_free(cli->queue);
-    free(cli->queue);
-    cli->queue = NULL;
-    cli->flags._new = 1;
-  } else {
-    cli->flags._new = 0;
-    ringbuf_clear(cli->queue);
-  }
+int default_http_client_close(http_client_t *cli);
+int __attribute_weak__ http_client_close(http_client_t *cli) {
+    return default_http_client_close(cli);
 }
 
-#define HTTP_VERS " HTTP/1.1\r\n"
+int default_http_client_close(http_client_t *cli) {
+    if ( cli->sock < 0 ) return -1;
+    if ( !cli->flags._close ) return 0;
+    if ( cli->flags._cipher ) {
+        ssl_close(cli->sock);
+        cli->flags._cipher = 0;
+    }
+    soc_close(cli->sock);
+    cli->sock = -1;
+    return 0;
+}
+
 static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *buf) {
     ringbuf_clear(buf);
     int ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE,
@@ -428,59 +467,16 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
     return 0;
 }
 
-int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res) {
+int default_http_client_do(http_client_t *cli, http_response_t *res);
+int __attribute_weak__ http_client_do(http_client_t *cli, http_response_t *res) {
+    return default_http_client_do(cli, res);
+}
+
+int default_http_client_do(http_client_t *cli, http_response_t *res) {
     int ret;
+    http_request_t *req = cli->request;
+    if ( !req ) return -1;
     http_response_init(res, &req->_response_payload_meth);
-    if ( cli->sock < 0 ) {
-        DBG("new TCP connection");
-        ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if ( ret < 0 ) return ret;
-        ringbuf_clear(cli->queue);
-        cli->sock = ret;
-        // resolve the host
-    	struct sockaddr_in serv;
-    	struct hostent *serv_resolve;
-        serv_resolve = gethostbyname(P_VALUE(req->host));
-    	if (serv_resolve == NULL) {
-    		DBG("ERROR, no such host");
-    		return -1;
-    	}
-    	memset(&serv, 0, sizeof(serv));
-    	serv.sin_family = PF_INET;
-    	bcopy((char *)serv_resolve->h_addr,
-    			(char *)&serv.sin_addr.s_addr,
-				(uint32_t)serv_resolve->h_length);
-    	serv.sin_port = htons(req->port);
-
-        // set timeout
-    	struct timeval tv;
-    	tv.tv_sec =     (time_t)        ( cli->timeout / 1000 );
-    	tv.tv_usec =    (suseconds_t)   (( cli->timeout % 1000 ) * 1000);
-    	setsockopt(cli->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-
-    	ret = connect(cli->sock, (struct sockaddr*)&serv, sizeof(serv));
-    	if ( ret < 0 ) {
-    		DBG("connect fail");
-    		soc_close(cli->sock);
-    		cli->sock = -1;
-    		return -1;
-    	}
-    	HTTP_DBG("connect done");
-    	if ( req->is_cipher ) {
-    		if ( ssl_connect(cli->sock) < 0 ) {
-    			HTTP_DBG("SSL connect fail");
-    			ssl_close(cli->sock);
-    			soc_close(cli->sock);
-    			cli->sock = -1;
-    			return -1;
-    		}
-    		cli->_r_func = ssl_read;
-    		cli->_w_func = ssl_write;
-    	} else {
-    		cli->_r_func = simple_read;
-    		cli->_w_func = simple_write;
-    	}
-    }
 
     if ( send_start(cli, req, cli->queue) < 0 ) {
         DBG("send start fail");

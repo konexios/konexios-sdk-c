@@ -11,34 +11,36 @@
 
 #include <http/request.h>
 #include <http/response.h>
-
 #include <data/ringbuffer.h>
 
 #define LINE_CHUNK 40
+#define HTTP_VERS " HTTP/1.1\r\n"
 
 typedef struct __session_flags {
-  int _new   : 16;
-  int _close : 16;
+  uint8_t _close;
+  uint8_t _cipher;
 } __session_flags_t;
-
-typedef int (*rw_func)(void *, uint8_t *, uint16_t);
 
 typedef struct {
   int sock;
   uint32_t timeout;
   int response_code;
   __session_flags_t flags;
+#if defined(STATIC_HTTP_CLIENT)
+  ring_buffer_t  static_queue;
+#endif
   ring_buffer_t  *queue;
-  rw_func         _r_func;
-  rw_func         _w_func;
+  http_request_t *request;
 } http_client_t;
 
 void http_session_close_set(http_client_t *cli, bool mode);
-bool http_session_close(http_client_t *cli);
+void http_session_close_now(http_client_t *cli);
 
-void http_client_init(http_client_t *cli);
-void http_client_free(http_client_t *cli);
+int http_client_init(http_client_t *cli);
+int http_client_free(http_client_t *cli);
+int http_client_open(http_client_t *cli, http_request_t *req);
+int http_client_close(http_client_t *cli);
 
-int http_client_do(http_client_t *cli, http_request_t *req, http_response_t *res);
+int http_client_do(http_client_t *cli, http_response_t *res);
 
 #endif /* ACN_SDK_C_HTTP_CLIENT_H_ */

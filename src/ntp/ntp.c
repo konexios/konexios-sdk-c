@@ -31,6 +31,6 @@ int ntp_set_time_common(
             if ( try_times >= 0 && i++ >= try_times ) return -1;
         }
         DBG(" time diff %d %d ", (int)time(NULL), (int)build_time());
-    } while(time(NULL) <= build_time());
+    } while(time(NULL) <= build_time() - 86400);
     return 0;
 }

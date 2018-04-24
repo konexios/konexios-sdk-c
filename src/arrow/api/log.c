@@ -31,7 +31,7 @@ int log_parse(log_t **list, const char *text) {
     if ( _data ) {
         JsonNode *tmp = NULL;
         json_foreach(tmp, _data) {
-            log_t *gl = (log_t *)malloc(sizeof(log_t));
+            log_t *gl = alloc_type(log_t);
             log_init(gl);
             who_when_parse(tmp, &gl->created, "createdDate", "createdBy");
             json_fill_property(tmp, gl, productName);

@@ -11,7 +11,16 @@
 #include <sys/mem.h>
 
 int ringbuf_init(ring_buffer_t *buf, int32_t size) {
+#if defined(RING_BUFFER_ARRAY)
+    if ( size > RINGBUFFER_SIZE ) return -1;
+    if ( size == 0 ) size = RINGBUFFER_SIZE;
+#else
     buf->buffer = (uint8_t *)malloc(size);
+    if ( !buf->buffer ) {
+        DBG("Not enough ememory %d", size);
+        return -1;
+    }
+#endif
     buf->shift = 0;
     buf->size = 0;
     buf->total = size;
@@ -19,7 +28,9 @@ int ringbuf_init(ring_buffer_t *buf, int32_t size) {
 }
 
 void ringbuf_free(ring_buffer_t *buf) {
+#if !defined(RING_BUFFER_ARRAY)
     if ( buf->buffer ) free(buf->buffer);
+#endif
     buf->size = 0;
     buf->shift = 0;
     buf->total = 0;

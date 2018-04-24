@@ -60,7 +60,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 			set_secret_key(tmp->string_);
 		}
 	} else {
-		DBG("There is no keys!");
+        DBG("There are no keys!");
 		return -1;
 	}
 #if defined(__IBM__)

@@ -30,7 +30,11 @@ static int mqtt_common_init_iot(
 
     int ret = snprintf(username,
                        USERNAME_LEN,
+                   #if defined(DEV_ENV)
+                       "/themis.dev:%s",
+                   #else
                        "/pegasus:%s",
+                   #endif
                        P_VALUE(args->gateway->hid));
     if ( ret < 0 ) return -1;
     username[ret] = 0x0;
@@ -40,7 +44,11 @@ static int mqtt_common_init_iot(
     env->data.clientID.cstring = P_VALUE(args->gateway->hid);
     env->data.username.cstring = P_VALUE(env->username);
     env->data.password.cstring = (char*)get_api_key();
+#if defined(DEV_ENV)
+    property_copy(&env->addr, p_const("pgsdev01.arrowconnect.io"));
+#else
     property_copy(&env->addr, p_const("mqtt-a01.arrowconnect.io"));
+#endif
 
     FREE_CHUNK(username);
 

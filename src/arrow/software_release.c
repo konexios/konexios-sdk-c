@@ -201,7 +201,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
   }
   if ( __download_init ) {
-      ret = __download_init();
+      ret = __download_init(_checksum);
       if ( ret < 0 ) goto software_release_done;
   }
   ret = arrow_software_release_download(_token, trans_hid, _checksum);
@@ -341,6 +341,8 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
 
 int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
     struct object_hid_list *objhid = (struct object_hid_list *)calloc(1, sizeof(struct object_hid_list));
+    // FIXME
+    hid.flags = is_const;
     property_copy(&objhid->hid, hid);
     arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
     return 0;
@@ -388,10 +390,7 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
 }
 
 static int _software_releases_schedule_start_proc(http_response_t *response, void *arg) {
-    SSP_PARAMETER_NOT_USED(response);
     SSP_PARAMETER_NOT_USED(arg);
-    if ( response->payload.size )
-        DBG("[%s]", P_VALUE(response->payload.buf));
     if ( response->m_httpResponseCode != 200 ) return -1;
     return 0;
 }
@@ -401,3 +400,4 @@ int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
                 _software_releases_schedule_start_proc, NULL, "Schedule fail");
 }
 #endif
+
