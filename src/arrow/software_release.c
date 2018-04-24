@@ -341,6 +341,8 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
 
 int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
     struct object_hid_list *objhid = (struct object_hid_list *)calloc(1, sizeof(struct object_hid_list));
+    // FIXME
+    hid.flags = is_const;
     property_copy(&objhid->hid, hid);
     arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
     return 0;

@@ -1236,9 +1236,13 @@ static void emit_number(SB *out, double num)
 	char buf[64];
 	double intg;
 	double fraction = modf(num, &intg);
-	if ( fraction > 0.0 || fraction < 0.0 )
-	    sprintf(buf, "%.16g", num);
-	else
+    if ( fraction > 0.0 || fraction < 0.0 ) {
+        sprintf(buf, "%.16g", num);
+        if ( !number_is_valid(buf) ) {
+            // there is no float implementation
+            sprintf(buf, "%d.%03d", (int)intg, (int)(fraction * 1000));
+        }
+    } else
 	    sprintf(buf, "%d", (int)num);
 	
 	if (number_is_valid(buf))
