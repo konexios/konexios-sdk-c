@@ -21,11 +21,11 @@ typedef enum {
 } handler_result;
 
 
-typedef int (*fp)(const char *);
+typedef int (*__cmd_cb)(const char *);
 
 typedef struct __cmd_handler {
   char *name;
-  fp callback;
+  __cmd_cb callback;
   arrow_linked_list_head_node;
 } cmd_handler;
 
@@ -33,7 +33,7 @@ typedef struct __cmd_handler {
 int has_cmd_handler(void);
 
 // Add a new command handler ( set the callback )
-int arrow_command_handler_add(const char *name, fp callback);
+int arrow_command_handler_add(const char *name, __cmd_cb callback);
 
 // erase all command handlers
 void arrow_command_handler_free(void);

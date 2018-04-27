@@ -73,9 +73,9 @@ int arrow_device_type_list(void) {
 
 static char  *device_type_serialize(device_type_t *dev) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "description", json_mkstring(dev->description));
-  json_append_member(_main, "enabled", json_mkbool(dev->enabled));
-  json_append_member(_main, "name", json_mkstring(dev->name));
+  json_append_member(_main, p_const("description"), json_mkstring(dev->description));
+  json_append_member(_main, p_const("enabled"), json_mkbool(dev->enabled));
+  json_append_member(_main, p_const("name"), json_mkstring(dev->name));
   JsonNode *tls = json_mkarray();
   device_type_telemetry_t *t = NULL;
   arrow_linked_list_for_each( t, dev->telemetries, device_type_telemetry_t ) {
@@ -84,17 +84,17 @@ static char  *device_type_serialize(device_type_t *dev) {
     property_map_t *var = NULL;
     arrow_linked_list_for_each ( var, t->variables, property_map_t ) {
         JsonNode *tl_variables = json_mkobject();
-        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->key)));
-        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->value)));
+        json_append_member(tl_element, p_const("description"), json_mkstring(P_VALUE(var->key)));
+        json_append_member(tl_element, p_const("description"), json_mkstring(P_VALUE(var->value)));
         json_append_element(var_array, tl_variables);
     }
-    json_append_member(tl_element, "variables", var_array);
-    json_append_member(tl_element, "description", json_mkstring(t->description));
-    json_append_member(tl_element, "name", json_mkstring(t->name));
-    json_append_member(tl_element, "type", json_mkstring(t->type));
+    json_append_member(tl_element, p_const("variables"), var_array);
+    json_append_member(tl_element, p_const("description"), json_mkstring(t->description));
+    json_append_member(tl_element, p_const("name"), json_mkstring(t->name));
+    json_append_member(tl_element, p_const("type"), json_mkstring(t->type));
     json_append_element(tls, tl_element);
   }
-  json_append_member(_main, "telemetries", tls);
+  json_append_member(_main, p_const("telemetries"), tls);
   char *payload = json_encode(_main);
   DBG("type pay: [%s]", payload);
   json_delete(_main);

@@ -125,9 +125,14 @@ static int readPacket(MQTTClient* c, TimerInterval* timer)
     /* 2. read the remaining length.  This is variable in itself */
     decodePacket(c, &rem_len, TimerLeftMS(timer));
     len += MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
-
     if ((size_t)rem_len > (c->readbuf_size - len))
     {
+        while ( rem_len ) {
+            int chunk = rem_len < ((int)c->readbuf_size - len - 1) ? rem_len : ((int)c->readbuf_size - len - 1);
+            int r = c->ipstack->mqttread(c->ipstack, c->readbuf + len, chunk, TimerLeftMS(timer));
+            if ( r > 0 ) rem_len -= r;
+            else break;
+        }
         rc = BUFFER_OVERFLOW;
         goto exit;
     }
@@ -554,8 +559,8 @@ int MQTTSubscribeWithResults(MQTTClient* c, const char* topicFilter, enum QoS qo
         rc = FAILURE;
 
 exit:
-    if (rc == FAILURE)
-        MQTTCloseSession(c);
+//    if (rc == FAILURE)
+//        MQTTCloseSession(c);
 #if defined(MQTT_TASK)
 	  MutexUnlock(&c->mutex);
 #endif

@@ -42,24 +42,26 @@ void arrow_device_free(arrow_device_t *dev) {
 
 void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value) {
   if ( !dev->info) dev->info = json_mkobject();
-  json_append_member(dev->info, key, json_mkstring(value));
+  // FIXME property
+  json_append_member(dev->info, p_stack(key), json_mkstring(value));
 }
 
 void arrow_device_add_property(arrow_device_t *dev, const char *key, const char *value) {
   if ( !dev->prop ) dev->prop = json_mkobject();
-  json_append_member(dev->prop, key, json_mkstring(value));
+  // FIXME
+  json_append_member(dev->prop, p_stack(key), json_mkstring(value));
 }
 
 char *arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "name", json_mkstring(P_VALUE(dev->name)));
-  json_append_member(_main, "type", json_mkstring(P_VALUE(dev->type)));
-  json_append_member(_main, "uid", json_mkstring(P_VALUE(dev->uid)));
-  json_append_member(_main, "gatewayHid", json_mkstring(P_VALUE(dev->gateway_hid)));
-  json_append_member(_main, "softwareName", json_mkstring(P_VALUE(dev->softwareName)));
-  json_append_member(_main, "softwareName", json_mkstring(P_VALUE(dev->softwareVersion)));
-  if ( dev->info ) json_append_member(_main, "info", dev->info);
-  if ( dev->prop ) json_append_member(_main, "properties", dev->prop);
+  json_append_member(_main, p_const("name"), json_mkstring(P_VALUE(dev->name)));
+  json_append_member(_main, p_const("type"), json_mkstring(P_VALUE(dev->type)));
+  json_append_member(_main, p_const("uid"), json_mkstring(P_VALUE(dev->uid)));
+  json_append_member(_main, p_const("gatewayHid"), json_mkstring(P_VALUE(dev->gateway_hid)));
+  json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareName)));
+  json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareVersion)));
+  if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
+  if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
   char *dev_str = json_encode(_main);
   if ( dev->info ) json_remove_from(_main, dev->info);
   if ( dev->prop ) json_remove_from(_main, dev->prop);
@@ -70,11 +72,11 @@ char *arrow_device_serialize(arrow_device_t *dev) {
 int arrow_device_parse(arrow_device_t *dev, const char *str) {
     JsonNode *_main = json_decode(str);
     if ( !_main ) return -1;
-    JsonNode *hid = json_find_member(_main, "hid");
+    JsonNode *hid = json_find_member(_main, p_const("hid"));
     if ( !hid || hid->tag != JSON_STRING ) return -1;
     P_COPY(dev->hid, p_stack(hid->string_));
 #if defined(__IBM__)
-    JsonNode *eid = json_find_member(_main, "externalId");
+    JsonNode *eid = json_find_member(_main, p_const("externalId"));
     if ( !eid || eid->tag != JSON_STRING ) return -1;
     P_COPY(dev->eid, p_stack(eid->string_));
 #endif

@@ -15,10 +15,13 @@ extern "C" {
 
 #include <sys/mem.h>
 
+#define property_mask 0x03
+
 enum prop_flags {
   is_stack    = 0x0,
   is_dynamic  = 0x1,
-  is_const    = 0x2
+  is_const    = 0x1 << 1,
+  is_weak    =  0x1 << 2
 };
 
 typedef struct __attribute_packed__ _property {
@@ -43,6 +46,7 @@ typedef struct __attribute_packed__ _property {
 
 void property_init(property_t *dst);
 void property_copy(property_t *dst, const property_t src);
+void property_weak_copy(property_t *dst, const property_t src);
 void property_move(property_t *dst, property_t *src);
 void property_n_copy(property_t *dst, const char *src, int n);
 void property_free(property_t *dst);

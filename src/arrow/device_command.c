@@ -15,6 +15,8 @@
 #include <time/time.h>
 #include <debug.h>
 
+#include <data/chunk.h>
+
 static cmd_handler *__handlers = NULL;
 
 // handlers
@@ -27,7 +29,7 @@ int has_cmd_handler(void) {
 	return -1;
 }
 
-int arrow_command_handler_add(const char *name, fp callback) {
+int arrow_command_handler_add(const char *name, __cmd_cb callback) {
     cmd_handler *h = alloc_type(cmd_handler);
     if ( !h ) return -1;
     h->name = strdup(name);
@@ -45,8 +47,7 @@ void arrow_command_handler_free(void) {
 }
 
 // events
-static char *form_evetns_url(const char *hid, cmd_type ev) {
-    char *uri = (char *)malloc(sizeof(ARROW_API_EVENTS_ENDPOINT) + strlen(hid) + 15);
+static void form_evetns_url(const char *hid, cmd_type ev, char *uri) {
     strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
     strcat(uri, "/");
     strcat(uri, hid);
@@ -55,7 +56,6 @@ static char *form_evetns_url(const char *hid, cmd_type ev) {
         case received:  strcat(uri, "/received"); break;
         case succeeded: strcat(uri, "/succeeded"); break;
     }
-    return uri;
 }
 
 typedef struct _event_data {
@@ -65,10 +65,11 @@ typedef struct _event_data {
 } event_data_t;
 
 static void _event_ans_init(http_request_t *request, void *arg) {
+    CREATE_CHUNK(uri, sizeof(ARROW_API_EVENTS_ENDPOINT) + 100);
     event_data_t *data = (event_data_t *)arg;
-	char *uri = form_evetns_url(data->hid, data->ev);
+    form_evetns_url(data->hid, data->ev, uri);
     http_request_init(request, PUT, uri);
-	free(uri);
+    FREE_CHUNK(uri);
 	if ( data->payload ) {
         http_request_set_payload(request, p_stack(data->payload));
 	}
@@ -83,7 +84,7 @@ int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload) {
 
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) __attribute__((used));
 static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
-  JsonNode *tmp = json_find_member(_node, name);
+  JsonNode *tmp = json_find_member(_node, p_const(name));
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
   *str = strdup(tmp->string_);
   return 0;
@@ -106,31 +107,31 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   }
   DBG("start device command processing");
 
-  JsonNode *tmp = json_find_member(_parameters, "deviceHid");
+  JsonNode *tmp = json_find_member(_parameters, p_const("deviceHid"));
   if ( !tmp || tmp->tag != JSON_STRING ) {
       _error = json_mkobject();
-      json_append_member(_error, "error",
+      json_append_member(_error, p_const("error"),
                          json_mkstring("There is no device HID"));
       goto device_command_done;
   }
 
   // FIXME workaround actually
-  JsonNode *cmd = json_find_member(_parameters, "command");
-  if ( !cmd ) cmd = json_find_member(_parameters, "Command");
+  JsonNode *cmd = json_find_member(_parameters, p_const("command"));
+  if ( !cmd ) cmd = json_find_member(_parameters, p_const("Command"));
   if ( !cmd || cmd->tag != JSON_STRING ) {
       _error = json_mkobject();
-      json_append_member(_error, "error",
+      json_append_member(_error, p_const("error"),
                          json_mkstring("There is no command"));
       goto device_command_done;
   }
   DBG("ev cmd: %s", cmd->string_);
 
   // FIXME workaround actually
-  JsonNode *pay = json_find_member(_parameters, "payload");
-  if ( !pay ) pay = json_find_member(_parameters, "Payload");
+  JsonNode *pay = json_find_member(_parameters, p_const("payload"));
+  if ( !pay ) pay = json_find_member(_parameters, p_const("Payload"));
   if ( !pay || pay->tag != JSON_STRING ) {
       _error = json_mkobject();
-      json_append_member(_error, "error",
+      json_append_member(_error, p_const("error"),
                          json_mkstring("There is no payload"));
       goto device_command_done;
   }
@@ -142,13 +143,13 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
     ret = cmd_h->callback(pay->string_);
     if ( ret < 0 ) {
       _error = json_mkobject();
-      json_append_member(_error, "error",
+      json_append_member(_error, p_const("error"),
                          json_mkstring("Something went wrong"));
     }
   } else {
     DBG("There is no handler");
     _error = json_mkobject();
-    json_append_member(_error, "error",
+    json_append_member(_error, p_const("error"),
                        json_mkstring("There is no a command handler"));
   }
   // close session after next request

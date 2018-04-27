@@ -24,23 +24,23 @@ void who_when_move(who_when_t *dst, who_when_t *src) {
 
 JsonNode *parse_size_data(JsonNode *_main, page_size_t *ps) {
     if ( ps ) memset(ps, 0x0, sizeof(page_size_t));
-    JsonNode *_size = json_find_member(_main, "size");
+    JsonNode *_size = json_find_member(_main, p_const("size"));
     if ( !_size && _size->tag != JSON_NUMBER ) return NULL;
     int __size = (int)_size->number_;
     if ( __size ) {
         if ( ps ) {
             ps->size = __size;
-            JsonNode *_page = json_find_member(_main, "page");
+            JsonNode *_page = json_find_member(_main, p_const("page"));
             if ( !_page && _page->tag != JSON_NUMBER ) return NULL;
             ps->page = _page->number_;
-            JsonNode *_totalSize = json_find_member(_main, "totalSize");
+            JsonNode *_totalSize = json_find_member(_main, p_const("totalSize"));
             if ( !_totalSize && _totalSize->tag != JSON_NUMBER ) return NULL;
             ps->totalSize = _totalSize->number_;
-            JsonNode *_totalPages = json_find_member(_main, "totalPages");
+            JsonNode *_totalPages = json_find_member(_main, p_const("totalPages"));
             if ( !_totalPages && _totalPages->tag != JSON_NUMBER ) return NULL;
             ps->totalPages = _totalPages->number_;
         }
-        JsonNode *_data = json_find_member(_main, "data");
+        JsonNode *_data = json_find_member(_main, p_const("data"));
         if ( !_data ) return NULL;
         return _data;
     }
@@ -50,10 +50,11 @@ JsonNode *parse_size_data(JsonNode *_main, page_size_t *ps) {
 
 int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person) {
     // FIXME parse timestamp
-    JsonNode *t = json_find_member(tmp, date);
+    // FIXME property
+    JsonNode *t = json_find_member(tmp, p_stack(date));
     if ( t && t->tag == JSON_STRING )
         strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &ww->date);
-    t = json_find_member(tmp, person);
+    t = json_find_member(tmp, p_stack(person));
     if ( t && t->tag == JSON_STRING )
         property_copy( &ww->by, p_stack(t->string_));
     return 0;

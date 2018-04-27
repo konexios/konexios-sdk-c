@@ -190,7 +190,7 @@ static void _device_errors_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
-  json_append_member(error, "error", json_mkstring(de->error));
+  json_append_member(error, p_const("error"), json_mkstring(de->error));
   http_request_set_payload(request, p_heap(json_encode(error)));
   json_delete(error);
 }

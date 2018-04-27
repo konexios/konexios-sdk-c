@@ -23,19 +23,19 @@ void arrow_gateway_init(arrow_gateway_t *gate) {
 char *arrow_gateway_serialize(arrow_gateway_t *gate) {
   JsonNode *_main = json_mkobject();
   if ( !IS_EMPTY( gate->name ) )
-    json_append_member(_main, "name", json_mkstring( P_VALUE(gate->name) ));
+    json_append_member(_main, p_const("name"), json_mkstring( P_VALUE(gate->name) ));
   if ( !IS_EMPTY( gate->uid ) )
-    json_append_member(_main, "uid", json_mkstring( P_VALUE(gate->uid) ));
+    json_append_member(_main, p_const("uid"), json_mkstring( P_VALUE(gate->uid) ));
   if ( !IS_EMPTY(gate->os) )
-    json_append_member(_main, "osName", json_mkstring( P_VALUE(gate->os) ));
+    json_append_member(_main, p_const("osName"), json_mkstring( P_VALUE(gate->os) ));
   if ( !IS_EMPTY(gate->type) )
-    json_append_member(_main, "type", json_mkstring( P_VALUE(gate->type) ));
+    json_append_member(_main, p_const("type"), json_mkstring( P_VALUE(gate->type) ));
   if ( !IS_EMPTY(gate->software_name) )
-    json_append_member(_main, "softwareName", json_mkstring( P_VALUE(gate->software_name) ));
+    json_append_member(_main, p_const("softwareName"), json_mkstring( P_VALUE(gate->software_name) ));
   if ( !IS_EMPTY(gate->software_version) )
-    json_append_member(_main, "softwareVersion", json_mkstring( P_VALUE(gate->software_version) ));
+    json_append_member(_main, p_const("softwareVersion"), json_mkstring( P_VALUE(gate->software_version) ));
   if ( !IS_EMPTY(gate->sdkVersion) )
-    json_append_member(_main, "sdkVersion", json_mkstring( P_VALUE(gate->sdkVersion) ));
+    json_append_member(_main, p_const("sdkVersion"), json_mkstring( P_VALUE(gate->sdkVersion) ));
   char *str = json_encode(_main);
   json_delete(_main);
   return str;
@@ -46,7 +46,7 @@ int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
   DBG("parse this: %s", str);
   JsonNode *_main = json_decode(str);
   if ( !_main ) return -1;
-  JsonNode *hid = json_find_member(_main, "hid");
+  JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   if ( hid->tag != JSON_STRING ) return -1;
   property_copy( &gate->hid, p_stack(hid->string_));

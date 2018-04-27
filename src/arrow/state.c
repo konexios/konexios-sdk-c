@@ -15,7 +15,8 @@ int state_handler(char *str) __attribute__((weak));
 
 void add_state(const char *name, const char *value) {
   if ( !state_tree ) state_tree = json_mkobject();
-  json_append_member(state_tree, name, json_mkstring(value));
+  // FIXME should be propery
+  json_append_member(state_tree, p_stack(name), json_mkstring(value));
 }
 
 int arrow_state_mqtt_is_running(void) {
@@ -84,10 +85,10 @@ static void _state_post_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, uri);
   {
     _state = json_mkobject();
-    json_append_member(_state, "states", state_tree);
+    json_append_member(_state, p_const("states"), state_tree);
     char ts[30];
     get_time(ts);
-    json_append_member(_state, "timestamp", json_mkstring(ts));
+    json_append_member(_state, p_const("timestamp"), json_mkstring(ts));
   }
   http_request_set_payload(request, p_heap(json_encode(_state)));
   if (_state) {
@@ -152,7 +153,7 @@ static void _state_put_init(http_request_t *request, void *arg) {
     case st_error: {
       strcat(uri, "/error");
       _error = json_mkobject();
-      json_append_member(_error, "error", json_mkstring("unknown"));
+      json_append_member(_error, p_const("error"), json_mkstring("unknown"));
     }
     break;
     default:
@@ -177,19 +178,19 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(ev);
   if ( !_device_hid ) return -1;
 
-  JsonNode *device_hid = json_find_member(_parameters, "deviceHid");
+  JsonNode *device_hid = json_find_member(_parameters, p_const("deviceHid"));
   if ( !device_hid ) {
       DBG("cannot find device HID");
       return -1;
   }
 
-  JsonNode *trans_hid = json_find_member(_parameters, "transHid");
+  JsonNode *trans_hid = json_find_member(_parameters, p_const("transHid"));
   if ( !trans_hid ) {
       DBG("cannot find trans HID");
       return -1;
   }
 
-  JsonNode *payload = json_find_member(_parameters, "payload");
+  JsonNode *payload = json_find_member(_parameters, p_const("payload"));
   if ( !payload ) {
       DBG("cannot find payload");
       return -1;

@@ -154,7 +154,12 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
-    process_event(message->payload);
+    DBG("message arrived %d", message->payloadlen);
+    //
+    if ( message->payloadlen < MQTT_RECVBUF_LEN )
+        if ( process_event(message->payload) < 0 ) {
+            DBG("MQTT message process fail");
+        }
 }
 #endif
 

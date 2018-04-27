@@ -40,7 +40,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		DBG("Parse error");
 		return -1;
 	}
-    JsonNode *_cloud = json_find_member(_main, "cloudPlatform");
+    JsonNode *_cloud = json_find_member(_main, p_const("cloudPlatform"));
     if ( !_cloud && _cloud->tag != JSON_STRING ) {
         DBG("no Cloud Platform");
         return -1;
@@ -48,14 +48,14 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
     if ( strcmp(_cloud->string_, "IotConnect") == 0 ) {
         config->type = IoT;
     } // FIXME iot connect ibm, azure
-	JsonNode *_main_key = json_find_member(_main, "key");
+    JsonNode *_main_key = json_find_member(_main, p_const("key"));
 	if ( _main_key ) {
         JsonNode *tmp = NULL;
-		tmp = json_find_member(_main_key, "apiKey");
+        tmp = json_find_member(_main_key, p_const("apiKey"));
 		if (tmp) {
 			set_api_key(tmp->string_);
 		}
-		tmp = json_find_member(_main_key, "secretKey");
+        tmp = json_find_member(_main_key, p_const("secretKey"));
 		if (tmp) {
 			set_secret_key(tmp->string_);
 		}
@@ -64,26 +64,26 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		return -1;
 	}
 #if defined(__IBM__)
-	JsonNode *_main_ibm = json_find_member(_main, "ibm");
+    JsonNode *_main_ibm = json_find_member(_main, p_const("ibm"));
 	if ( _main_ibm ) {
         JsonNode *tmp = NULL;
-		tmp = json_find_member(_main_ibm, "organizationId");
+        tmp = json_find_member(_main_ibm, p_const("organizationId"));
         if ( tmp ) property_copy(&config->organizationId, p_stack(tmp->string_));
-		tmp = json_find_member(_main_ibm, "gatewayType");
+        tmp = json_find_member(_main_ibm, p_const("gatewayType"));
         if ( tmp ) property_copy(&config->gatewayType, p_stack(tmp->string_));
-		tmp = json_find_member(_main_ibm, "gatewayId");
+        tmp = json_find_member(_main_ibm, p_const("gatewayId"));
         if ( tmp ) property_copy(&config->gatewayId, p_stack(tmp->string_));
-		tmp = json_find_member(_main_ibm, "authToken");
+        tmp = json_find_member(_main_ibm, p_const("authToken"));
         if ( tmp ) property_copy(&config->authToken, p_stack(tmp->string_));
-		tmp = json_find_member(_main_ibm, "authMethod");
+        tmp = json_find_member(_main_ibm, p_const("authMethod"));
         if ( tmp ) property_copy(&config->authMethod, p_stack(tmp->string_));
 	}
 #elif defined(__AZURE__)
-	JsonNode *_main_azure = json_find_member(_main, "azure");
+    JsonNode *_main_azure = json_find_member(_main, p_const("azure"));
 	if ( _main_azure ) {
-		tmp = json_find_member(_main_azure, "host");
+        tmp = json_find_member(_main_azure, p_const("host"));
 		if ( tmp ) arrow_gateway_config_add_host(config, tmp->string_);
-		tmp = json_find_member(_main_azure, "accessKey");
+        tmp = json_find_member(_main_azure, p_const("accessKey"));
 		if ( tmp ) arrow_gateway_config_add_accessKey(config, tmp->string_);
 	}
 #endif
@@ -288,9 +288,9 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   http_request_init(request, GET, uri);
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "command", json_mkstring(gdc->cmd));
-  json_append_member(_main, "deviceHid", json_mkstring(gdc->d_hid));
-  json_append_member(_main, "payload", json_mkstring(gdc->payload));
+  json_append_member(_main, p_const("command"), json_mkstring(gdc->cmd));
+  json_append_member(_main, p_const("deviceHid"), json_mkstring(gdc->d_hid));
+  json_append_member(_main, p_const("payload"), json_mkstring(gdc->payload));
   http_request_set_payload(request, p_heap(json_encode(_main)));
   json_delete(_main);
 }
@@ -318,7 +318,7 @@ static void _gateway_errors_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
-  json_append_member(error, "error", json_mkstring(de->error));
+  json_append_member(error, p_const("error"), json_mkstring(de->error));
   http_request_set_payload(request, p_heap(json_encode(error)));
   json_delete(error);
 }

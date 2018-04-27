@@ -16,6 +16,7 @@
 #include <debug.h>
 #include <bsd/socket.h>
 #include <time/time.h>
+#include <arrow/utf8.h>
 
 #include <ssl/ssl.h>
 
@@ -346,7 +347,10 @@ static int receive_response(http_client_t *cli, http_response_t *res) {
     } while ( !crlf );
     *crlf = 0x0;
     DBG("resp: {%s}", tmp);
-    if( sscanf((char*)tmp, "HTTP/1.1 %4hu", &res->m_httpResponseCode) != 1 ) {
+    char *p = strstr(tmp, "HTTP/1.1 ");
+    if ( !p ) return -1;
+    p = copy_till_to_int(p + 9, " OK", (int*)&res->m_httpResponseCode);
+    if( !p ) {
         DBG("Not a correct HTTP answer : %s", tmp);
         FREE_CHUNK(tmp);
         return -1;
@@ -371,11 +375,22 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
             break;
         }
 
-        int n = sscanf((char*)tmp, "%256[^:]: %256[^\r\n]", key, value);
-        if ( n == 2 ) {
+        char *p = copy_till(tmp, ": ", key);
+        if ( !p ) {
+            DBG("Could not parse key");
+            ret = -1;
+            goto recv_header_end;
+        }
+        p = copy_till(p, "\r\n", value);
+        if ( !p ) {
+            DBG("Could not parse value");
+            ret = -1;
+            goto recv_header_end;
+        }
+
             HTTP_DBG("Read header : %s: %s", key, value);
             if( !strcmp(key, "Content-Length") ) {
-                sscanf(value, "%8d", (int *)&res->recvContentLength);
+                res->recvContentLength = atoi(value);
             } else if( !strcmp(key, "Transfer-Encoding") ) {
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
@@ -388,11 +403,6 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
                                          p_stack(value));
 #endif
             }
-        } else {
-            DBG("Could not parse header");
-            ret = -1;
-            goto recv_header_end;
-        }
     }
 recv_header_end:
     FREE_CHUNK(tmp);
@@ -409,8 +419,8 @@ static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     int chunk_len = 0;
     uint8_t *crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE);
     if ( !crlf ) return -1; // no \r\n - wrong string
-    int ret = sscanf((char*)tmp, "%8x\r\n", (unsigned int*)&chunk_len);
-    if ( ret != 1 ) {
+    char *p = copy_till_hex_to_int((char*)tmp, "\r\n", &chunk_len);
+    if ( !p ) {
         // couldn't read a chunk size - fail
         chunk_len = 0;
         FREE_CHUNK(tmp);

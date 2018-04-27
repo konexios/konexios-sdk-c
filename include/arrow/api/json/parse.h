@@ -36,7 +36,7 @@ void who_when_move(who_when_t *dst, who_when_t *src);
 int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person);
 
 #define json_fill_property(tmp, gx, x) do { \
-    JsonNode *t = json_find_member(tmp, xstr(x)); \
+    JsonNode *t = json_find_member(tmp, p_const(xstr(x))); \
     if ( t && t->tag == JSON_STRING ) \
         property_copy( &(gx)->x, p_stack(t->string_)); \
   } while(0)

@@ -27,9 +27,9 @@ int arrow_node_type_list(void) {
 
 static char *arrow_node_type_serialize(arrow_node_type_t *node) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "description", json_mkstring(node->description));
-  json_append_member(_main, "enabled", json_mkbool(node->enabled));
-  json_append_member(_main, "name", json_mkstring(node->name));
+  json_append_member(_main, p_const("description"), json_mkstring(node->description));
+  json_append_member(_main, p_const("enabled"), json_mkbool(node->enabled));
+  json_append_member(_main, p_const("name"), json_mkstring(node->name));
   char *payload = json_encode(_main);
   json_delete(_main);
   return payload;

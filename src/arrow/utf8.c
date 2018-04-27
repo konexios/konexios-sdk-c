@@ -72,6 +72,33 @@ int utf8check(const char *s) {
   return 1;
 }
 
+char *copy_till(const char *src, const char *end_pattern, char *dst) {
+    int pattern_len = strlen(end_pattern);
+    char *str_end = strstr(src, end_pattern);
+    if ( !str_end ) return NULL;
+    int size = (int)(str_end - src);
+    memcpy(dst, src, size);
+    dst[size] = 0x0;
+    return str_end + pattern_len;
+}
+
+char *copy_till_to_int(const char *src, const char *end_pattern, int *i) {
+    char v[8] = {0};
+    char *p = copy_till(src, end_pattern, v);
+    if ( !p ) return NULL;
+    *i = atoi(v);
+    return p;
+}
+
+char *copy_till_hex_to_int(const char *src, const char *end_pattern, int *i) {
+    char v[8] = {0};
+    char *p = copy_till(src, end_pattern, v);
+    if ( !p ) return NULL;
+    *i = (int)strtol(v, NULL, 16);
+    return p;
+}
+
+
 void fix_urldecode(char *query) {
     int len = (int)strlen(query);
     char *_perc = strstr(query, "%");
@@ -117,9 +144,8 @@ void hex_encode(char *dst, const char *src, int size) {
 
 void hex_decode(char *dst, const char *src, int size) {
     int i = 0;
-    uint8_t data = 0;
     for (i=0; i<size; i++) {
-        sscanf(src+i*2, "%02x", (unsigned int*)&data);
-        dst[i] = data;
+        char d[3] = { *(src+i*2), *(src+i*2 + 1), '\0' };
+        dst[i] = (uint8_t)strtol(d, NULL, 16);
     }
 }

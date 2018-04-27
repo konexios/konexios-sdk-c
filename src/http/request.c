@@ -67,12 +67,13 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   if ( !host_end ) { req->is_corrupt = 1; return; }
   property_n_copy(&req->host, host_start, (host_end - host_start));
 
-  uint16_t port = 0;
-  int res = sscanf(host_end+1, "%8hu", &port);
-  if ( res!=1 ) { req->is_corrupt = 1; return; }
-  req->port = port;
+  int port = 0;
+  char *uri_start = copy_till_to_int(host_end+1, "/", &port);
+  if ( !uri_start ) { req->is_corrupt = 1; return; }
+  req->port = (uint16_t)port;
 
-  char *uri_start = strstr(host_end+1, "/");
+//   strstr(host_end+1, "/");
+  uri_start--;
   property_copy(&req->uri, p_stack(uri_start));
 
   DBG("meth: %s", P_VALUE(req->meth) );
@@ -80,7 +81,6 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   DBG("host: %s", P_VALUE(req->host));
   DBG("port: %d", req->port);
   DBG("uri: %s", P_VALUE(req->uri));
-  DBG("res: %d", res);
 
   req->header = NULL;
   req->query = NULL;

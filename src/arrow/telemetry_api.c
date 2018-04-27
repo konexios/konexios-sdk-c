@@ -138,34 +138,34 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
   if ( response->m_httpResponseCode != 200 ) return -1;
   DBG("telem appl: %s", P_VALUE(response->payload.buf));
   JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
-  JsonNode *size  = json_find_member(_main, "size");
+  JsonNode *size  = json_find_member(_main, p_const("size"));
   if ( !size ) return -1;
-  JsonNode *page  = json_find_member(_main, "page");
+  JsonNode *page  = json_find_member(_main, p_const("page"));
   if ( !page ) return -1;
-  JsonNode *totalSize  = json_find_member(_main, "totalSize");
+  JsonNode *totalSize  = json_find_member(_main, p_const("totalSize"));
   if ( !totalSize ) return -1;
-  JsonNode *totalPages  = json_find_member(_main, "totalPages");
+  JsonNode *totalPages  = json_find_member(_main, p_const("totalPages"));
   if ( !totalPages ) return -1;
   telemetry_response_data_list_init(t, json_number(size),
                                     json_number(page),
                                     json_number(totalSize),
                                     json_number(totalPages));
-  JsonNode *data  = json_find_member(_main, "data");
+  JsonNode *data  = json_find_member(_main, p_const("data"));
   if ( !data ) return 0;
   int i = 0;
   for ( i = 0; i < t->size; i++ ) {
     JsonNode *info = json_find_element(data, i);
     if ( !info ) goto parse_error;
 
-    JsonNode *deviceHid = json_find_member(info, "deviceHid");
+    JsonNode *deviceHid = json_find_member(info, p_const("deviceHid"));
     if ( !deviceHid ) goto parse_error;
-    JsonNode *name = json_find_member(info, "name");
+    JsonNode *name = json_find_member(info, p_const("name"));
     if ( !name ) goto parse_error;
-    JsonNode *type = json_find_member(info, "type");
+    JsonNode *type = json_find_member(info, p_const("type"));
     if ( !type ) goto parse_error;
-    JsonNode *timestamp = json_find_member(info, "timestamp");
+    JsonNode *timestamp = json_find_member(info, p_const("timestamp"));
     if ( !timestamp ) goto parse_error;
-    JsonNode *floatValue = json_find_member(info, "floatValue");
+    JsonNode *floatValue = json_find_member(info, p_const("floatValue"));
     if ( !floatValue ) goto parse_error;
 
     add_telemetry_data_info(t,

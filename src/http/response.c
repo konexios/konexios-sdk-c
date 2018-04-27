@@ -37,7 +37,7 @@ int default_add_payload_handler(void *r,
     res->payload.buf.flags = is_dynamic;
     return 0;
   } else {
-    switch(res->payload.buf.flags) {
+    switch(res->payload.buf.flags & property_mask) {
       case is_dynamic:
         res->payload.buf.value = realloc(res->payload.buf.value, res->payload.size + size + 1);
         if ( IS_EMPTY(res->payload.buf) ) {
