@@ -11,8 +11,8 @@
 
 #include <http/request.h>
 
-#if !defined(CANONICAL_QUERY_LEN)
-#define CANONICAL_QUERY_LEN 256
+#if !defined(SIGN_BUFFER_LEN)
+#define SIGN_BUFFER_LEN 512
 #endif
 
 // API key

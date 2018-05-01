@@ -389,7 +389,10 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
 
 static int _software_releases_schedule_start_proc(http_response_t *response, void *arg) {
     SSP_PARAMETER_NOT_USED(arg);
-    if ( response->m_httpResponseCode != 200 ) return -1;
+    if ( response->m_httpResponseCode != 200 ) {
+        DBG("ERROR(%d): %s", response->m_httpResponseCode, P_VALUE(response->payload.buf));
+        return -1;
+    }
     return 0;
 }
 

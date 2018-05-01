@@ -15,7 +15,7 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(_ev);
   DBG("start software update processing");
 //  mqtt_event_t *ev = (mqtt_event_t *)_ev;
-  JsonNode *tmp = json_find_member(_parameters, "url");
+  JsonNode *tmp = json_find_member(_parameters, p_const("url"));
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   DBG("update url: %s", tmp->string_);
 

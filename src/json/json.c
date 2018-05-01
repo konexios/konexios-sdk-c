@@ -47,7 +47,6 @@ static char *json_strdup(const char *str)
 	char *ret = (char*) malloc(strlen(str) + 1);
 	if (ret == NULL)
 		out_of_memory();
-    DBG("JSON strdup malloc %p [%d]", ret, strlen(str) + 1);
 	strcpy(ret, str);
 	return ret;
 }
@@ -66,7 +65,6 @@ static void sb_init(SB *sb)
 	sb->start = (char*) malloc(17);
 	if (sb->start == NULL)
 		out_of_memory();
-    DBG("JSON sb_init malloc %p [%d]", sb->start, 17);
 	sb->cur = sb->start;
 	sb->end = sb->start + 16;
 }
@@ -89,7 +87,6 @@ static void sb_grow(SB *sb, int need)
 	sb->start = (char*) realloc(sb->start, alloc + 1);
 	if (sb->start == NULL)
 		out_of_memory();
-    DBG("JSON sb_grow realloc %p [%d]", sb->start, alloc + 1);
 	sb->cur = sb->start + length;
 	sb->end = sb->start + alloc;
 }

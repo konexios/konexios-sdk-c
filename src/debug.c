@@ -1,5 +1,5 @@
+#if !defined(ARCH_DEBUG)
 #include "debug.h"
-
 #include <sys/mem.h>
 
 char dbg_buffer[DBG_LINE_SIZE] __attribute__((weak));
@@ -41,3 +41,6 @@ __attribute__((weak)) void hex_dump(const char *data, int size) {
   *(s-1) = 0;
   if ( str[0] ) DBG("%s", str);
 }
+#else
+typedef void __dummy;
+#endif

@@ -103,7 +103,10 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
 #else
     cli->queue = alloc_type(ring_buffer_t);
 #endif
-    if ( !cli->queue ) return -1;
+    if ( !cli->queue ) {
+        DBG("HTTP: queue alloc fail");
+        return -1;
+    }
     int ret = ringbuf_init(cli->queue, RINGBUFFER_SIZE);
     if ( ret < 0 ) {
         DBG("HTTP: ringbuffer init failed %d", ret);
@@ -131,7 +134,10 @@ int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req)
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req) {
-    if ( !cli->queue ) return -1;
+    if ( !cli->queue ) {
+        DBG("HTTP: There is no queue");
+        return -1;
+    }
     ringbuf_clear(cli->queue);
     cli->response_code = 0;
     cli->request = req;
@@ -196,7 +202,7 @@ int __attribute_weak__ http_client_close(http_client_t *cli) {
 
 int default_http_client_close(http_client_t *cli) {
     if ( cli->sock < 0 ) return -1;
-    if ( !cli->flags._close ) return 0;
+    if ( !cli->flags._close ) return 1;
     if ( cli->flags._cipher ) {
         ssl_close(cli->sock);
         cli->flags._cipher = 0;

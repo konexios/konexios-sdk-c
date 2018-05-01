@@ -81,10 +81,9 @@ void MQTTClientInit(MQTTClient* c, Network* network, unsigned int command_timeou
 #endif
 }
 
-
 static int decodePacket(MQTTClient* c, int* value, int timeout)
 {
-    unsigned char i;
+    unsigned char i = 0x0;
     int multiplier = 1;
     int len = 0;
     const int MAX_NO_OF_REMAINING_LENGTH_BYTES = 4;
@@ -93,15 +92,13 @@ static int decodePacket(MQTTClient* c, int* value, int timeout)
     do
     {
         int rc = MQTTPACKET_READ_ERROR;
-
-        if (++len > MAX_NO_OF_REMAINING_LENGTH_BYTES)
-        {
-            rc = MQTTPACKET_READ_ERROR; /* bad data */
-            goto exit;
-        }
         rc = c->ipstack->mqttread(c->ipstack, &i, 1, timeout);
         if (rc != 1)
             goto exit;
+        if (++len > MAX_NO_OF_REMAINING_LENGTH_BYTES) {
+            rc = MQTTPACKET_READ_ERROR; /* bad data */
+            goto exit;
+        }
         *value += (i & 127) * multiplier;
         multiplier *= 128;
     } while ((i & 128) != 0);
@@ -124,6 +121,11 @@ static int readPacket(MQTTClient* c, TimerInterval* timer)
     len = 1;
     /* 2. read the remaining length.  This is variable in itself */
     decodePacket(c, &rem_len, TimerLeftMS(timer));
+    if ( rem_len <= 0 ) {
+        // didn't receive decode byte
+        rc = 0;
+        goto exit;
+    }
     len += MQTTPacket_encode(c->readbuf + 1, rem_len); /* put the original remaining length back into the buffer */
     if ((size_t)rem_len > (c->readbuf_size - len))
     {
