@@ -56,6 +56,7 @@ arrow_routine_error_t arrow_deinit(void) {
 #if !defined(NO_EVENTS)
     arrow_mqtt_events_done();
 #endif
+    arrow_state_mqtt_stop();
   __http_done();
     return ROUTINE_SUCCESS;
 }
