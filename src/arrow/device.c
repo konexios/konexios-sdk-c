@@ -59,7 +59,7 @@ char *arrow_device_serialize(arrow_device_t *dev) {
   json_append_member(_main, p_const("uid"), json_mkstring(P_VALUE(dev->uid)));
   json_append_member(_main, p_const("gatewayHid"), json_mkstring(P_VALUE(dev->gateway_hid)));
   json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareName)));
-  json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareVersion)));
+  json_append_member(_main, p_const("softwareVersion"), json_mkstring(P_VALUE(dev->softwareVersion)));
   if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
   if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
   char *dev_str = json_encode(_main);

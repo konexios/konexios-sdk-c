@@ -17,6 +17,16 @@
 
 #include <data/chunk.h>
 
+#if defined(STATIC_DEVICE_COMMANDS)
+# include <data/static_alloc.h>
+static_object_pool_type(cmd_handler, ARROW_MAX_DEVICE_COMMANDS)
+# define ALLOC static_allocator
+# define FREE(p)  static_free(cmd_handler, p)
+#else
+# define ALLOC alloc_type
+# define FREE free
+#endif
+
 static cmd_handler *__handlers = NULL;
 
 // handlers
@@ -30,9 +40,9 @@ int has_cmd_handler(void) {
 }
 
 int arrow_command_handler_add(const char *name, __cmd_cb callback) {
-    cmd_handler *h = alloc_type(cmd_handler);
+    cmd_handler *h = ALLOC(cmd_handler);
     if ( !h ) return -1;
-    h->name = strdup(name);
+    property_copy(&h->name, p_const(name));
     h->callback = callback;
     arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
     return 0;
@@ -41,8 +51,8 @@ int arrow_command_handler_add(const char *name, __cmd_cb callback) {
 void arrow_command_handler_free(void) {
   cmd_handler *curr = NULL;
   arrow_linked_list_for_each_safe ( curr, __handlers , cmd_handler ) {
-      free(curr->name);
-      free(curr);
+      property_free(&curr->name);
+      FREE(curr);
   }
 }
 
@@ -90,8 +100,8 @@ static int fill_string_from_json(JsonNode *_node, const char *name, char **str) 
   return 0;
 }
 
-static int cmdeq( cmd_handler *s, const char *name ) {
-    if ( strcmp(s->name, name) == 0 ) return 0;
+static int cmdeq( cmd_handler *s, property_t name ) {
+    if ( property_cmp(&s->name, &name) == 0 ) return 0;
     return -1;
 }
 
@@ -138,7 +148,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 //  DBG("ev msg: %s", pay->string_);
 
   cmd_handler *cmd_h = NULL;
-  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
+  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, p_stack(cmd->string_) );
   if ( cmd_h ) {
     ret = cmd_h->callback(pay->string_);
     if ( ret < 0 ) {

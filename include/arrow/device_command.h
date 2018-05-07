@@ -24,7 +24,7 @@ typedef enum {
 typedef int (*__cmd_cb)(const char *);
 
 typedef struct __cmd_handler {
-  char *name;
+  property_t name;
   __cmd_cb callback;
   arrow_linked_list_head_node;
 } cmd_handler;

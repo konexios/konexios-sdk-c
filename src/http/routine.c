@@ -46,7 +46,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   }
 http_error:
   http_response_free(&response);
-  http_session_close_now(&_cli);
+  if ( ret < 0 ) http_session_close_now(&_cli);
   return ret;
 }
 

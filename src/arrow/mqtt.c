@@ -54,6 +54,7 @@ static void data_prep(MQTTPacket_connectData *data) {
     MQTTPacket_connectData d = MQTTPacket_connectData_initializer;
     *data = d;
     data->cleansession = MQTT_CLEAN_SESSION;
+    data->keepAliveInterval = 10;
 }
 
 static int _mqtt_init_common(mqtt_env_t *env) {

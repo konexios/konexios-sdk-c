@@ -3,7 +3,7 @@
 #include <debug.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 100
+#define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 256
 
 //gateways
 
@@ -93,7 +93,12 @@ static void _test_device_init(http_request_t *request, void *arg) {
 
 static int _test_device_proc(http_response_t *response, void *arg) {
   property_t *res_his = (property_t *)arg;
-  if ( response->m_httpResponseCode != 200 ) return -1;
+  if ( response->m_httpResponseCode != 200 ) {
+      if ( !IS_EMPTY(response->payload.buf) ) {
+          DBG("TEST FAILED [%s]", P_VALUE(response->payload.buf));
+      }
+      return -1;
+  }
   JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
   JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
