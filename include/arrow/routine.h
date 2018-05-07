@@ -41,6 +41,7 @@ arrow_gateway_config_t *current_gateway_config(void);
 // This function implemented the algorithm to get complete information about a gateway and device.
 // The WDT function is used.
 arrow_routine_error_t arrow_init(void);
+arrow_routine_error_t arrow_deinit(void);
 
 arrow_routine_error_t arrow_initialize_routine(void);
 

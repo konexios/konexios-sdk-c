@@ -52,6 +52,14 @@ arrow_routine_error_t arrow_init(void) {
     return ROUTINE_SUCCESS;
 }
 
+arrow_routine_error_t arrow_deinit(void) {
+#if !defined(NO_EVENTS)
+    arrow_mqtt_events_done();
+#endif
+  __http_done();
+    return ROUTINE_SUCCESS;
+}
+
 int arrow_connect_gateway(arrow_gateway_t *gateway){
   arrow_prepare_gateway(gateway);
   int ret = restore_gateway_info(gateway);
@@ -321,12 +329,8 @@ void arrow_close(void) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
     arrow_gateway_config_free(&_gateway_config);
-#if !defined(NO_EVENTS)
-    arrow_mqtt_events_done();
-#endif
     _init_done = 0;
   }
-  __http_done();
 }
 
 arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data) {
