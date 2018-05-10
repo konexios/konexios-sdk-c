@@ -61,7 +61,7 @@ static void _device_type_list_init(http_request_t *request, void *arg) {
 static int _device_type_list_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("types[%s]", P_VALUE(response->payload.buf));
+    DBG("types[%s]", P_VALUE(response->payload));
   } else return -1;
   return 0;
 }
@@ -71,7 +71,7 @@ int arrow_device_type_list(void) {
   STD_ROUTINE(_device_type_list_init, NULL, _device_type_list_proc, NULL, "Device Type list");
 }
 
-static char  *device_type_serialize(device_type_t *dev) {
+static property_t device_type_serialize(device_type_t *dev) {
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("description"), json_mkstring(dev->description));
   json_append_member(_main, p_const("enabled"), json_mkbool(dev->enabled));
@@ -95,7 +95,7 @@ static char  *device_type_serialize(device_type_t *dev) {
     json_append_element(tls, tl_element);
   }
   json_append_member(_main, p_const("telemetries"), tls);
-  char *payload = json_encode(_main);
+  property_t payload = json_encode_property(_main);
   DBG("type pay: [%s]", payload);
   json_delete(_main);
   return payload;
@@ -107,7 +107,7 @@ static void _device_type_create_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(device_type_serialize(dev_type)));
+  http_request_set_payload(request, device_type_serialize(dev_type));
 }
 
 int arrow_device_type_create(device_type_t *dev_type) {
@@ -127,7 +127,7 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
            P_VALUE(ddt->dev->hid));
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(device_type_serialize(ddt->type)));
+  http_request_set_payload(request, device_type_serialize(ddt->type));
 }
 
 int arrow_device_type_update(arrow_device_t *dev, device_type_t *dev_type) {

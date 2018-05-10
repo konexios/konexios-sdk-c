@@ -54,7 +54,7 @@ typedef struct __attribute_packed__ {
 } arrow_gateway_config_t;
 
 void arrow_gateway_init(arrow_gateway_t *gate);
-char *arrow_gateway_serialize(arrow_gateway_t *gate);
+property_t arrow_gateway_serialize(arrow_gateway_t *gate);
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str);
 void arrow_gateway_free(arrow_gateway_t *gate);
 

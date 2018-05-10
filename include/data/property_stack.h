@@ -6,19 +6,23 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_TELEMETRY_H_
-#define ARROW_TELEMETRY_H_
+#ifndef _ACN_SDK_C_PROPERTY_STACK_H_
+#define _ACN_SDK_C_PROPERTY_STACK_H_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-#include <arrow/device.h>
-    
-property_t telemetry_serialize(arrow_device_t *device, void *data);
+#include <data/property_base.h>
+
+#define PROPERTY_STACK_TAG      3
+
+#define p_stack(x)  property(x, PROPERTY_STACK_TAG | is_owner, strlen((char *)x))
+
+property_dispetcher_t *property_type_get_stack();
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* ARROW_TELEMETRY_H_ */
+#endif  // _ACN_SDK_C_PROPERTY_STACK_H_

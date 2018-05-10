@@ -36,10 +36,7 @@ enum Scheme {
   Scheme_count
 };
 
-typedef struct __attribute_packed__ {
-    uint32_t size;
-    property_t buf;
-} http_payload_t;
+typedef property_t http_payload_t;
 
 // the payload handler for response
 // for OTA firmware update

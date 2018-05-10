@@ -20,7 +20,7 @@ void arrow_gateway_init(arrow_gateway_t *gate) {
   memset(gate, 0, sizeof(arrow_gateway_t));
 }
 
-char *arrow_gateway_serialize(arrow_gateway_t *gate) {
+property_t arrow_gateway_serialize(arrow_gateway_t *gate) {
   JsonNode *_main = json_mkobject();
   if ( !IS_EMPTY( gate->name ) )
     json_append_member(_main, p_const("name"), json_mkstring( P_VALUE(gate->name) ));
@@ -36,9 +36,9 @@ char *arrow_gateway_serialize(arrow_gateway_t *gate) {
     json_append_member(_main, p_const("softwareVersion"), json_mkstring( P_VALUE(gate->software_version) ));
   if ( !IS_EMPTY(gate->sdkVersion) )
     json_append_member(_main, p_const("sdkVersion"), json_mkstring( P_VALUE(gate->sdkVersion) ));
-  char *str = json_encode(_main);
+  property_t tmp = json_encode_property(_main);
   json_delete(_main);
-  return str;
+  return tmp;
 }
 
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
@@ -103,6 +103,7 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   uidlen += 12;
   uid[uidlen] = '\0';
   DBG("uid: [%s]", uid);
-  property_copy( &gateway->uid, p_heap(uid));
+  property_t tmp = p_heap(uid);
+  property_move( &gateway->uid, &tmp);
   return 0;
 }

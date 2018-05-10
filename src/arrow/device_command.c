@@ -167,13 +167,13 @@ device_command_done:
   http_session_close_set(current_client(), true);
   RETRY_CR(retry);
   if ( _error ) {
-    char *_error_str = json_encode(_error);
-    DBG("error string: %s", _error_str);
-    while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_str) < 0 ) {
+    property_t _error_prop = json_encode_property(_error);
+    DBG("error string: %s", P_VALUE(_error_prop));
+    while ( arrow_send_event_ans(ev->gateway_hid, failed, P_VALUE(_error_prop)) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
-    free(_error_str);
+    property_free(&_error_prop);
     json_delete(_error);
   } else {
     while ( arrow_send_event_ans(ev->gateway_hid, succeeded, NULL) < 0 ) {

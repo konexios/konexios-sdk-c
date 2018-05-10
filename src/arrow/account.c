@@ -24,8 +24,7 @@ static void _account_request(http_request_t *request, void *arg) {
   json_append_member(_main, p_const("name"), json_mkstring(acc->name));
   json_append_member(_main, p_const("email"), json_mkstring(acc->email));
   json_append_member(_main, p_const("password"), json_mkstring(acc->password));
-  char *payload = json_encode(_main);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, json_encode_property(_main));
   json_delete(_main);
 }
 

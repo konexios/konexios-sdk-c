@@ -49,24 +49,37 @@ extern int default_add_payload_handler(void *r,
                                        property_t buf,
                                        int size);
 
+#if defined(STATIC_HTTP_CLIENT)
+static char static_host[RINGBUFFER_SIZE/2];
+#endif
+
 void http_request_init(http_request_t *req, int meth, const char *url) {
   req->is_corrupt = 0;
   property_init(&req->meth);
   property_init(&req->scheme);
   property_init(&req->host);
   property_init(&req->uri);
-  property_init(&req->payload.buf);
+  property_init(&req->payload);
   property_copy(&req->meth, p_const(get_METH(meth)));
   char *sch_end = strstr((char*)url, "://");
   if ( !sch_end ) { req->is_corrupt = 1; return; }
   int sch = cmp_n_Scheme(url, (int)(sch_end - url));
   property_copy(&req->scheme, p_const(get_Scheme(sch)));
+  // FIXME overhead I suppose remove this parsing
   req->is_cipher = sch;
   char *host_start = sch_end + 3; //sch_end + strlen("://");
   char *host_end = strstr(host_start, ":");
   if ( !host_end ) { req->is_corrupt = 1; return; }
-  property_n_copy(&req->host, host_start, (host_end - host_start));
-
+#if defined(STATIC_HTTP_CLIENT)
+  memcpy(static_host, host_start, (host_end - host_start));
+  static_host[(host_end - host_start)] = 0x0;
+  req->host = p_const(static_host);
+#else
+  char *dynamic_host = (char *)malloc((host_end - host_start) + 1);
+  memcpy(dynamic_host, host_start, (host_end - host_start));
+  dynamic_host[(host_end - host_start)] = 0x0;
+  req->host = p_heap(dynamic_host);
+#endif
   int port = 0;
   char *uri_start = copy_till_to_int(host_end+1, "/", &port);
   if ( !uri_start ) { req->is_corrupt = 1; return; }
@@ -96,8 +109,7 @@ void http_request_close(http_request_t *req) {
   property_free(&req->scheme);
   property_free(&req->host);
   property_free(&req->uri);
-  property_free(&req->payload.buf);
-  req->payload.size = 0;
+  property_free(&req->payload);
   property_map_clear(&req->header);
   property_map_clear(&req->query);
   property_free(&req->content_type.value);
@@ -123,7 +135,7 @@ void http_request_add_query(http_request_t *req, property_t key, property_t valu
 }
 
 void http_request_set_content_type(http_request_t *req, property_t value) {
-  req->content_type.key = property(CONTENT_TYPE, is_const);
+  req->content_type.key = p_const(CONTENT_TYPE);
   req->content_type.value = value;
 }
 
@@ -132,9 +144,8 @@ property_map_t *http_request_first_header(http_request_t *req) {
 }
 
 void http_request_set_payload(http_request_t *req, property_t payload) {
-  req->payload.size = P_SIZE(payload);
-  property_copy(&req->payload.buf, payload);
-  if ( IS_EMPTY(req->payload.buf) ) {
+  property_move(&req->payload, &payload);
+  if ( IS_EMPTY(req->payload) ) {
     DBG("[http] set_payload: fail");
   }
 }

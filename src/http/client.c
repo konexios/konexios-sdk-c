@@ -152,7 +152,9 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         // resolve the host
         struct sockaddr_in serv;
         struct hostent *serv_resolve;
-        serv_resolve = gethostbyname(P_VALUE(req->host));
+        property_t null_term_host = property_as_null_terminated(&req->host);
+        serv_resolve = gethostbyname(P_VALUE(null_term_host));
+        property_free(&null_term_host);
         if (serv_resolve == NULL) {
             DBG("ERROR, no such host");
             return -1;
@@ -253,13 +255,13 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
 static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *buf) {
     int ret;
     ringbuf_clear(buf);
-    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload) && property_size(&req->payload) ) {
         if ( req->is_chunked ) {
             ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
         } else {
             ret = snprintf((char*)tmpbuffer,
                            ringbuf_capacity(cli->queue),
-                           "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
+                           "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
             if ( ret < 0 ) return ret;
             if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 )
                 return -1;
@@ -288,10 +290,10 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
 }
 
 static int send_payload(http_client_t *cli, http_request_t *req) {
-    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload) && property_size(&req->payload)) {
         if ( req->is_chunked ) {
-            char *data = P_VALUE(req->payload.buf);
-            int len = (int)req->payload.size;
+            char *data = P_VALUE(req->payload);
+            int len = (int)property_size(&req->payload);
             int trData = 0;
             while ( len >= 0 ) {
                 char buf[6];
@@ -306,7 +308,7 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
             }
             return 0;
         } else {
-          int ret = client_send_direct(cli, P_VALUE(req->payload.buf), req->payload.size);
+          int ret = client_send_direct(cli, P_VALUE(req->payload), property_size(&req->payload));
           return ret;
         }
     }
@@ -401,7 +403,7 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
             } else if( !strcmp(key, "Content-Type") ) {
-                http_response_set_content_type(res, property(value, is_stack));
+                http_response_set_content_type(res, p_stack(value));
             } else {
 #if defined(HTTP_PARSE_HEADER)
                 http_response_add_header(res,
@@ -479,7 +481,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         }
     } while(1);
 
-    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
+    HTTP_DBG("body{%s}", P_VALUE(res->payload));
     return 0;
 }
 
@@ -504,7 +506,7 @@ int default_http_client_do(http_client_t *cli, http_response_t *res) {
         return -1;
     }
 
-    if ( !IS_EMPTY(req->payload.buf) ) {
+    if ( !IS_EMPTY(req->payload) ) {
         if ( send_payload(cli, req) < 0 ) {
             DBG("send payload fail");
             return -1;

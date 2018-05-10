@@ -75,8 +75,11 @@ struct __attribute_packed__ JsonNode
 JsonNode   *json_decode         (const char *json);
 char       *json_encode         (const JsonNode *node);
 char       *json_encode_string  (const char *str);
+property_t  json_encode_property(const JsonNode *node);
 char       *json_stringify      (const JsonNode *node, const char *space);
 void        json_delete         (JsonNode *node);
+char       *json_strdup         (const char *str);
+void        json_delete_string  (char *json_str);
 
 bool        json_validate       (const char *json);
 

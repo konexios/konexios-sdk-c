@@ -13,6 +13,7 @@
 #include <arrow/api/device/device.h>
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
+#include <json/property_json.h>
 
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"
@@ -45,6 +46,8 @@ arrow_gateway_config_t *current_gateway_config(void) {
 }
 
 arrow_routine_error_t arrow_init(void) {
+    property_types_init();
+    property_type_add(property_type_get_json());
     if ( __http_init() < 0 ) return ROUTINE_ERROR;
 #if !defined(NO_EVENTS)
     arrow_mqtt_events_init();

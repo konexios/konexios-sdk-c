@@ -80,7 +80,7 @@ static char static_sign_buffer[SIGN_BUFFER_LEN];
 
 void sign(char *signature,
           const char *timestamp,
-          const char *meth,
+          property_t *meth,
           const char *uri,
           const char *canQueryString,
           const char *payload,
@@ -91,7 +91,7 @@ void sign(char *signature,
 #else
     char *canonicalRequest = (char *)malloc(sizeof(api_key) + SIGN_BUFFER_LEN);
 #endif
-    strcpy(canonicalRequest, meth);
+    strncpy(canonicalRequest, P_VALUE(*meth), property_size(meth));
     strcat(canonicalRequest, "\n");
     strcat(canonicalRequest, uri);
     strcat(canonicalRequest, "\n");
@@ -188,9 +188,9 @@ void sign_request(http_request_t *req) {
                             p_const("x-arrow-version"),
                             p_const("1"));
 
-    sign(signature, ts, P_VALUE(req->meth),
+    sign(signature, ts, &req->meth,
          P_VALUE(req->uri), canonicalQuery,
-         P_VALUE(req->payload.buf), "1");
+         P_VALUE(req->payload), "1");
 
 #if !defined(STATIC_SIGN)
     if (canonicalQuery) free(canonicalQuery);

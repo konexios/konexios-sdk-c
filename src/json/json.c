@@ -23,6 +23,7 @@
 
 #include "json/json.h"
 
+#include <json/property_json.h>
 #include <sys/mem.h>
 #if defined(__USE_STD__)
 #include <assert.h>
@@ -34,7 +35,9 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_alloc.h>
+#include <data/static_buf.h>
 static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
+CREATE_BUFFER(jsonbuf, 64)
 #endif
 
 #define out_of_memory() do {                    \
@@ -42,9 +45,12 @@ static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
 	} while (0)
 
 /* Sadly, strdup is not portable. */
-static char *json_strdup(const char *str)
-{
+char *json_strdup(const char *str) {
+#if defined(STATIC_JSON)
+    char *ret = (char*) static_buf_alloc(jsonbuf, strlen(str) + 1);
+#else
 	char *ret = (char*) malloc(strlen(str) + 1);
+#endif
 	if (ret == NULL)
 		out_of_memory();
 	strcpy(ret, str);
@@ -62,7 +68,11 @@ typedef struct
 
 static void sb_init(SB *sb)
 {
+#if defined(STATIC_JSON)
+    sb->start = (char*) static_buf_alloc(jsonbuf, 17);
+#else
 	sb->start = (char*) malloc(17);
+#endif
 	if (sb->start == NULL)
 		out_of_memory();
 	sb->cur = sb->start;
@@ -83,8 +93,11 @@ static void sb_grow(SB *sb, int need)
 	do {
 		alloc *= 2;
 	} while (alloc < length + (size_t)need);
-	
+#if defined(STATIC_JSON)
+    sb->start = (char*) static_buf_realloc(jsonbuf, sb->start, alloc + 1);
+#else
 	sb->start = (char*) realloc(sb->start, alloc + 1);
+#endif
 	if (sb->start == NULL)
 		out_of_memory();
 	sb->cur = sb->start + length;
@@ -119,7 +132,11 @@ static char *sb_finish(SB *sb)
 static void sb_free(SB *sb)
 {
     if ( sb && sb->start )
+#if defined(STATIC_JSON)
+        static_buf_free(jsonbuf, sb->start);
+#else
         free(sb->start);
+#endif
 }
 
 /*
@@ -384,6 +401,12 @@ JsonNode *json_decode(const char *json)
 	return ret;
 }
 
+property_t json_encode_property(const JsonNode *node) {
+    char *alloc_string = json_stringify(node, NULL);
+    property_t t = p_json(alloc_string);
+    return t;
+}
+
 char *json_encode(const JsonNode *node)
 {
 	return json_stringify(node, NULL);
@@ -419,7 +442,11 @@ void json_delete(JsonNode *node)
 		
 		switch (node->tag) {
 			case JSON_STRING:
+#if defined(STATIC_JSON)
+                static_buf_free(jsonbuf, node->string_);
+#else
 				free(node->string_);
+#endif
 				break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
@@ -439,6 +466,14 @@ void json_delete(JsonNode *node)
 		free(node);
 #endif
 	}
+}
+
+void json_delete_string(char *json_str) {
+#if defined(STATIC_JSON)
+                static_buf_free(jsonbuf, json_str);
+#else
+                free(json_str);
+#endif
 }
 
 bool json_validate(const char *json)
@@ -778,7 +813,7 @@ static bool parse_object(const char **sp, JsonNode **out)
 		skip_space(&s);
 		
 		if (out)
-            append_member(ret, p_heap(key), value);
+            append_member(ret, p_json(key), value);
 		
 		if (*s == '}') {
 			s++;
@@ -798,7 +833,11 @@ success:
 
 failure_free_key:
 	if (out)
+#if defined(STATIC_JSON)
+        static_buf_free(jsonbuf, key);
+#else
 		free(key);
+#endif
 failure:
 	json_delete(ret);
 	return false;

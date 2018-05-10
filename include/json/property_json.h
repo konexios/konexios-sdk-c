@@ -6,19 +6,23 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_TELEMETRY_H_
-#define ARROW_TELEMETRY_H_
+#ifndef _ACN_SDK_C_PROPERTY_JSON_H_
+#define _ACN_SDK_C_PROPERTY_JSON_H_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-#include <arrow/device.h>
-    
-property_t telemetry_serialize(arrow_device_t *device, void *data);
+#include <data/property_base.h>
+
+#define PROPERTY_JSON_TAG 4
+
+#define p_json(x)  property(x, PROPERTY_JSON_TAG | is_owner, strlen((char *)(x)))
+
+property_dispetcher_t *property_type_get_json();
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* ARROW_TELEMETRY_H_ */
+#endif  // _ACN_SDK_C_PROPERTY_JSON_H_

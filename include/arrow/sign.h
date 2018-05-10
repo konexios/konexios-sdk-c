@@ -9,6 +9,10 @@
 #ifndef ARROW_SIGN_H_
 #define ARROW_SIGN_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <http/request.h>
 
 #if !defined(SIGN_BUFFER_LEN)
@@ -30,7 +34,7 @@ void set_secret_key(char *newkey);
 // create a signature by the Arrow algorithm
 void sign(char *signature,
           const char* timestamp,
-          const char *meth,
+          property_t *meth,
           const char *uri,
           const char *canQueryString,
           const char *payload,
@@ -38,5 +42,9 @@ void sign(char *signature,
 
 // Add needed headers for the Arrow cloud
 void sign_request(http_request_t *req);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* ARROW_SIGN_H_ */

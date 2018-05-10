@@ -54,7 +54,7 @@ static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
   request->is_chunked = 1;
-  http_request_set_payload(request, p_heap(telemetry_serialize(dt->device, dt->data)));
+  http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
 }
 
 int arrow_send_telemetry(arrow_device_t *device, void *d) {
@@ -74,15 +74,15 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
   int i = 0;
   char *_main = NULL;
   for( i = 0; i < dt->count; i++ ) {
-    char *tmp = telemetry_serialize(dt->device, (int*)dt->data + i);
+    property_t tmp = telemetry_serialize(dt->device, (int*)dt->data + i);
     if ( !_main ) {
-      _main = (char*)malloc(strlen(tmp) * ( dt->count + 1 ));
+      _main = (char*)malloc(property_size(&tmp) * ( dt->count + 1 ));
       strcpy(_main, "[");
     }
-    strcat(_main, tmp);
+    strcat(_main, tmp.value);
     if ( i != dt->count - 1 ) strcat(_main, ",");
     else strcat(_main, "]");
-    free(tmp);
+    property_free(&tmp);
   }
   DBG("main: %s", _main);
   http_request_set_payload(request, p_heap(_main));
@@ -111,7 +111,7 @@ static void _telemetry_find_by_application_hid_init(http_request_t *request, voi
 
 static int _telemetry_find_by_application_hid_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("telem appl: %s", P_VALUE(response->payload.buf));
+  DBG("telem appl: %s", P_VALUE(response->payload));
   return 0;
 }
 
@@ -136,8 +136,8 @@ static void _telemetry_find_by_device_hid_init(http_request_t *request, void *ar
 static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *arg) {
   telemetry_response_data_list_t* t = (telemetry_response_data_list_t*)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("telem appl: %s", P_VALUE(response->payload.buf));
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
+  DBG("telem appl: %s", P_VALUE(response->payload));
+  JsonNode *_main = json_decode(P_VALUE(response->payload));
   JsonNode *size  = json_find_member(_main, p_const("size"));
   if ( !size ) return -1;
   JsonNode *page  = json_find_member(_main, p_const("page"));
@@ -207,7 +207,7 @@ static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg)
 
 static int _telemetry_find_by_node_hid_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("telem appl: %s", P_VALUE(response->payload.buf));
+  DBG("telem appl: %s", P_VALUE(response->payload));
   return 0;
 }
 

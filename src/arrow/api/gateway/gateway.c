@@ -33,15 +33,15 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( response->m_httpResponseCode != 200 ) {
 		return -1;
 	}
-    DBG("pay: {%s}", P_VALUE(response->payload.buf));
+    DBG("pay: {%s}", P_VALUE(response->payload));
 
-	JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
+    JsonNode *_main = json_decode(P_VALUE(response->payload));
 	if ( !_main ) {
 		DBG("Parse error");
 		return -1;
 	}
     JsonNode *_cloud = json_find_member(_main, p_const("cloudPlatform"));
-    if ( !_cloud && _cloud->tag != JSON_STRING ) {
+    if ( !_cloud || _cloud->tag != JSON_STRING ) {
         DBG("no Cloud Platform");
         return -1;
     }
@@ -101,14 +101,13 @@ int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *confi
 static void _gateway_register_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
-  char *payload = arrow_gateway_serialize(gateway);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, arrow_gateway_serialize(gateway));
 }
 
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   if ( response->m_httpResponseCode == 200 ) {
-      if ( arrow_gateway_parse(gateway, P_VALUE(response->payload.buf)) < 0 ) {
+      if ( arrow_gateway_parse(gateway, P_VALUE(response->payload)) < 0 ) {
           DBG("parse error");
           return -1;
       } else {
@@ -175,7 +174,7 @@ static void _gateway_find_init(http_request_t *request, void *arg) {
 static int _gateway_find_proc(http_response_t *response, void *arg) {
     gateway_info_t *info = (gateway_info_t *)arg;
     gateway_info_t *list;
-    int ret = gateway_info_parse(&list, P_VALUE(response->payload.buf));
+    int ret = gateway_info_parse(&list, P_VALUE(response->payload));
     if ( ret < 0 ) return -1;
     if ( list ) {
         gateway_info_move(info, list);
@@ -203,7 +202,7 @@ static void _gateway_find_by_init(http_request_t *request, void *arg) {
 static int _gateway_find_by_proc(http_response_t *response, void *arg) {
   gateway_info_t **info = (gateway_info_t **)arg;
   *info = NULL;
-  return gateway_info_parse(info, P_VALUE(response->payload.buf));
+  return gateway_info_parse(info, P_VALUE(response->payload));
 }
 
 
@@ -236,7 +235,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
 static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
     log_t **logs = (log_t **)arg;
     *logs = NULL;
-    return log_parse(logs, P_VALUE(response->payload.buf));
+    return log_parse(logs, P_VALUE(response->payload));
 }
 
 int arrow_gateway_logs_list(log_t **logs, arrow_gateway_t *gateway, int n, ...) {
@@ -260,7 +259,7 @@ static void _gateway_devices_list_init(http_request_t *request, void *arg) {
 static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
     device_info_t **devs = (device_info_t **)arg;
     *devs = NULL;
-    return device_info_parse(devs, P_VALUE(response->payload.buf));
+    return device_info_parse(devs, P_VALUE(response->payload));
 }
 
 int arrow_gateway_devices_list(device_info_t **list, const char *hid) {
@@ -291,7 +290,7 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   json_append_member(_main, p_const("command"), json_mkstring(gdc->cmd));
   json_append_member(_main, p_const("deviceHid"), json_mkstring(gdc->d_hid));
   json_append_member(_main, p_const("payload"), json_mkstring(gdc->payload));
-  http_request_set_payload(request, p_heap(json_encode(_main)));
+  http_request_set_payload(request, json_encode_property(_main));
   json_delete(_main);
 }
 
@@ -319,7 +318,7 @@ static void _gateway_errors_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, p_const("error"), json_mkstring(de->error));
-  http_request_set_payload(request, p_heap(json_encode(error)));
+  http_request_set_payload(request, json_encode_property(error));
   json_delete(error);
 }
 
@@ -340,7 +339,7 @@ static void _gateway_update_init(http_request_t *request, void *arg) {
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(arrow_gateway_serialize(gate)));
+  http_request_set_payload(request, arrow_gateway_serialize(gate));
 }
 
 static int _gateway_update_proc(http_response_t *response, void *arg) {

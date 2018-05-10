@@ -27,8 +27,7 @@ static void _device_action_create_init(http_request_t *request, void *arg) {
   json_append_member(_main, p_const("expiration"), json_mknumber(dm->model->expiration));
   json_append_member(_main, p_const("index"), json_mknumber(dm->model->index));
   json_append_member(_main, p_const("systemName"), json_mkstring(dm->model->systemName));
-  char *payload = json_encode(_main);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, json_encode_property(_main));
   json_delete(_main);
 }
 
@@ -71,7 +70,7 @@ static int _device_action_list_process(http_response_t *response, void *arg) {
   DBG("dev list", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
-  DBG("[%s]", P_VALUE(response->payload.buf));
+  DBG("[%s]", P_VALUE(response->payload));
   return 0;
 }
 
@@ -95,7 +94,7 @@ static int _action_type_list_process(http_response_t *response, void *arg) {
   DBG("act list", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
-  DBG("[%s]", P_VALUE(response->payload.buf));
+  DBG("[%s]", P_VALUE(response->payload));
   return 0;
 }
 
@@ -121,8 +120,7 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
   json_append_member(_main, p_const("expiration"), json_mknumber(dm->model->expiration));
   json_append_member(_main, p_const("index"), json_mknumber(dm->model->index));
   json_append_member(_main, p_const("systemName"), json_mkstring(dm->model->systemName));
-  char *payload = json_encode(_main);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, json_encode_property(_main));
   json_delete(_main);
 }
 

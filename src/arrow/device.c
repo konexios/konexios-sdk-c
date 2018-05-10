@@ -26,11 +26,11 @@ void arrow_device_init(arrow_device_t *dev) {
 }
 
 void arrow_device_free(arrow_device_t *dev) {
-  P_FREE(dev->name);
-  P_FREE(dev->type);
-  P_FREE(dev->uid);
-  P_FREE(dev->gateway_hid);
-  P_FREE(dev->hid);
+  property_free(&dev->name);
+  property_free(&dev->type);
+  property_free(&dev->uid);
+  property_free(&dev->gateway_hid);
+  property_free(&dev->hid);
   property_free(&dev->softwareName);
   property_free(&dev->softwareVersion);
   if ( dev->info ) json_delete(dev->info);
@@ -52,7 +52,7 @@ void arrow_device_add_property(arrow_device_t *dev, const char *key, const char 
   json_append_member(dev->prop, p_stack(key), json_mkstring(value));
 }
 
-char *arrow_device_serialize(arrow_device_t *dev) {
+property_t arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("name"), json_mkstring(P_VALUE(dev->name)));
   json_append_member(_main, p_const("type"), json_mkstring(P_VALUE(dev->type)));
@@ -62,11 +62,11 @@ char *arrow_device_serialize(arrow_device_t *dev) {
   json_append_member(_main, p_const("softwareVersion"), json_mkstring(P_VALUE(dev->softwareVersion)));
   if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
   if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
-  char *dev_str = json_encode(_main);
+  property_t dev_property = json_encode_property(_main);
   if ( dev->info ) json_remove_from(_main, dev->info);
   if ( dev->prop ) json_remove_from(_main, dev->prop);
   json_delete(_main);
-  return dev_str;
+  return dev_property;
 }
 
 int arrow_device_parse(arrow_device_t *dev, const char *str) {
@@ -74,11 +74,11 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, p_const("hid"));
     if ( !hid || hid->tag != JSON_STRING ) return -1;
-    P_COPY(dev->hid, p_stack(hid->string_));
+    property_copy(&dev->hid, p_stack(hid->string_));
 #if defined(__IBM__)
     JsonNode *eid = json_find_member(_main, p_const("externalId"));
     if ( !eid || eid->tag != JSON_STRING ) return -1;
-    P_COPY(dev->eid, p_stack(eid->string_));
+    property_copy(&dev->eid, p_stack(eid->string_));
 #endif
     json_delete(_main);
     return 0;
@@ -86,9 +86,9 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   arrow_device_init(device);
-  P_COPY(device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
-  P_COPY(device->name, p_const(DEVICE_NAME));
-  P_COPY(device->type, p_const(DEVICE_TYPE));
+  property_copy(&device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
+  property_copy(&device->name, p_const(DEVICE_NAME));
+  property_copy(&device->type, p_const(DEVICE_TYPE));
   property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
   property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
@@ -96,6 +96,7 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   strcpy(uid, P_VALUE(gateway->uid) );
   strcat(uid, "-");
   strcat(uid, DEVICE_UID_SUFFIX);
-  P_COPY(device->uid, p_heap(uid));
+  property_t tmp = p_heap(uid);
+  property_move(&device->uid, &tmp);
   return 0;
 }

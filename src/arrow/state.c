@@ -90,7 +90,7 @@ static void _state_post_init(http_request_t *request, void *arg) {
     get_time(ts);
     json_append_member(_state, p_const("timestamp"), json_mkstring(ts));
   }
-  http_request_set_payload(request, p_heap(json_encode(_state)));
+  http_request_set_payload(request, json_encode_property(_state));
   if (_state) {
     json_remove_from(_state, state_tree);
     json_delete(_state);
@@ -163,7 +163,7 @@ static void _state_put_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
   http_request_init(request, PUT, uri);
   if ( _error ) {
-    http_request_set_payload(request, p_heap(json_encode(_error)));
+    http_request_set_payload(request, json_encode_property(_error));
     json_delete(_error);
   }
 }
