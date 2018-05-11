@@ -16,6 +16,8 @@ extern "C" {
 #include <data/property.h>
 #include <json/json.h>
 
+#define GATEWAY_UID_SIZE sizeof(GATEWAY_UID_PREFIX) + 14
+
 typedef struct __attribute_packed__ _arrow_gateway_ {
   property_t name;
   property_t uid;

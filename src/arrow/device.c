@@ -84,6 +84,10 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     return 0;
 }
 
+#if defined(STATIC_ACN)
+static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
+#endif
+
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   arrow_device_init(device);
   property_copy(&device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
@@ -92,11 +96,19 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
   property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
+#if defined(STATIC_ACN)
+  char *uid = static_device_uid;
+#else
   char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
+#endif
   strcpy(uid, P_VALUE(gateway->uid) );
   strcat(uid, "-");
   strcat(uid, DEVICE_UID_SUFFIX);
+#if defined(STATIC_ACN)
+  property_t tmp = p_const(uid);
+#else
   property_t tmp = p_heap(uid);
+#endif
   property_move(&device->uid, &tmp);
   return 0;
 }

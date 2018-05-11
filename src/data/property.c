@@ -82,7 +82,6 @@ property_t property_as_null_terminated(property_t *src) {
         memcpy(tmp.value, src->value, src->size);
         tmp.value[tmp.size] = 0x0; // null termination
         tmp.flags |= ( is_owner | PROPERTY_DYNAMIC_TAG );
-        printf("as null terminated [%d|%s] [%s]\r\n", src->size, src->value, P_VALUE(tmp));
     } else {
         property_weak_copy(&tmp, *src);
     }
