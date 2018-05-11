@@ -293,7 +293,7 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
 #endif
       int get_data_result = data_cb(data);
       if ( get_data_result < 0 ) {
-          DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+//          DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
           return ROUTINE_GET_TELEMETRY_FAILED;
       } else if (get_data_result > 0 ) {
           // skip this
@@ -340,7 +340,7 @@ arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *da
         msleep(TELEMETRY_DELAY);
         int get_data_result = data_cb(data);
         if ( get_data_result < 0 ) {
-            DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+//            DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
             return ROUTINE_GET_TELEMETRY_FAILED;
         } else if (get_data_result > 0 ) {
             // skip this
