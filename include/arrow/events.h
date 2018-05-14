@@ -9,9 +9,9 @@ extern "C" {
 #include <data/linkedlist.h>
 
 typedef struct {
-  char *gateway_hid;
-  char *device_hid;
-  char *name;
+  property_t gateway_hid;
+  property_t device_hid;
+  property_t name;
   int encrypted;
   char *cmd;
   JsonNode *parameters;

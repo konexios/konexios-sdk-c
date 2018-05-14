@@ -16,7 +16,7 @@ void dynmc_copy(property_t *dst, property_t *src) {
         dst->flags = src->flags;
         return;
     }
-    if ( dst->flags & is_raw ) {
+    if ( src->flags & is_raw ) {
         dst->value = (char *)strndup(src->value, src->size);
     } else {
         dst->value = (char *)strdup(src->value);

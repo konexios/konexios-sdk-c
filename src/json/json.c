@@ -37,7 +37,7 @@
 #include <data/static_alloc.h>
 #include <data/static_buf.h>
 static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
-CREATE_BUFFER(jsonbuf, 64)
+CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
 #endif
 
 #define out_of_memory() do {                    \
@@ -53,8 +53,14 @@ char *json_strdup(const char *str) {
 #endif
 	if (ret == NULL)
 		out_of_memory();
-	strcpy(ret, str);
+    if ( ret ) strcpy(ret, str);
 	return ret;
+}
+
+property_t  json_strdup_property(const char *str) {
+    char *tmp = json_strdup(str);
+    if ( !tmp ) return p_null();
+    return p_json(tmp);
 }
 
 /* String buffer */

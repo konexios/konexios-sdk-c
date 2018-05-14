@@ -18,6 +18,7 @@ extern "C" {
 #define PROPERTY_DYNAMIC_TAG    2
 
 #define p_heap(x)   property(x, PROPERTY_DYNAMIC_TAG | is_owner, strlen((char *)x))
+#define p_heap_raw(x, len)  property(x, PROPERTY_DYNAMIC_TAG | is_owner | is_raw, (len))
 
 property_dispetcher_t *property_type_get_dynamic();
 

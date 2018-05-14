@@ -50,7 +50,9 @@ extern int default_add_payload_handler(void *r,
                                        int size);
 
 #if defined(STATIC_HTTP_CLIENT)
-static char static_host[RINGBUFFER_SIZE/2];
+// FIXME use static property
+static char static_host[256];
+static char static_uri[RINGBUFFER_SIZE/2];
 #endif
 
 void http_request_init(http_request_t *req, int meth, const char *url) {
@@ -87,7 +89,14 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
 
 //   strstr(host_end+1, "/");
   uri_start--;
+
+#if defined(STATIC_HTTP_CLIENT)
+  strcpy(static_uri, uri_start);
+  req->uri = p_const(static_uri);
+#else
   property_copy(&req->uri, p_stack(uri_start));
+#endif
+
 
   DBG("meth: %s", P_VALUE(req->meth) );
   DBG("scheme: %s", P_VALUE(req->scheme));

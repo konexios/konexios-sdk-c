@@ -41,7 +41,7 @@ typedef struct __attribute_packed__ _property {
 # define property(x, y, z) _property(x, y, z)
 #else
 # define property_nt(x, y) (property_t){ .value=(char*)x, .flags=y, .size=strlen((char*)x) }
-# define property(x, y, z) (property_t){ .value=(char*)x, .flags=((y) | is_raw), .size=(z) }
+# define property(x, y, z) (property_t){ .value=(char*)x, .flags=(y), .size=(z) }
 #endif
 
 #define p_null()    property(NULL, 0, 0)

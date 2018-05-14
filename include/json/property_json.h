@@ -18,6 +18,7 @@ extern "C" {
 #define PROPERTY_JSON_TAG 4
 
 #define p_json(x)  property(x, PROPERTY_JSON_TAG | is_owner, strlen((char *)(x)))
+#define p_json_raw(x, len)  property(x, PROPERTY_JSON_TAG | is_owner | is_raw, (len))
 
 property_dispetcher_t *property_type_get_json();
 

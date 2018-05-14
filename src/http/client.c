@@ -402,15 +402,16 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
             } else if( !strcmp(key, "Transfer-Encoding") ) {
                 if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
                     res->is_chunked = 1;
-            } else if( !strcmp(key, "Content-Type") ) {
+            }
+#if defined(HTTP_PARSE_HEADER)
+            else if( !strcmp(key, "Content-Type") ) {
                 http_response_set_content_type(res, p_stack(value));
             } else {
-#if defined(HTTP_PARSE_HEADER)
                 http_response_add_header(res,
                                          p_stack(key),
                                          p_stack(value));
-#endif
             }
+#endif
     }
 recv_header_end:
     FREE_CHUNK(tmp);
@@ -464,7 +465,9 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             }
             HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
             if ( ringbuf_pop(cli->queue, tmpbuffer, need_to_read) < 0 ) return -1;
-            if ( http_response_add_payload(res, p_stack(tmpbuffer), need_to_read) < 0 ) {
+            if ( http_response_add_payload(res,
+                                           p_stack_raw(tmpbuffer, need_to_read),
+                                           need_to_read) < 0 ) {
                 ringbuf_clear(cli->queue);
                 DBG("Payload is failed");
                 return -1;

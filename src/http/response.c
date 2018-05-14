@@ -17,7 +17,7 @@ int default_set_payload_handler(void *r,
                             property_t buf,
                             int size) {
   http_response_t *res = (http_response_t *)r;
-  property_copy(&res->payload, buf);
+  property_move(&res->payload, &buf);
   if ( IS_EMPTY(res->payload) ) {
     DBG("[http] set_payload: fail");
   }
@@ -32,7 +32,6 @@ int default_add_payload_handler(void *r,
     http_response_t *res = (http_response_t *)r;
     if ( IS_EMPTY(res->payload) ) {
         property_move(&res->payload, &payload);
-        return 0;
     } else {
         property_t tmp = property_concat(&res->payload, &payload);
         property_free(&res->payload);

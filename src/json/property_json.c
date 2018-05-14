@@ -26,6 +26,7 @@ void json_move(property_t *dst, property_t *src) {
     dst->value = src->value;
     dst->size = src->size;
     dst->flags = is_owner | PROPERTY_JSON_TAG;
+    src->flags &= ~is_owner;
 }
 
 void json_destroy(property_t *dst) {

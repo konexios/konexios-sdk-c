@@ -284,6 +284,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
         property_t payload = telemetry_serialize(device, d);
+        if ( IS_EMPTY(payload) ) return -1;
         msg.payload = P_VALUE(payload);
         msg.payloadlen = property_size(&payload);
         ret = MQTTPublish(&tmp->client,

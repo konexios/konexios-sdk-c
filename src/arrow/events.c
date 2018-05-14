@@ -45,19 +45,27 @@
 #define MQTT_EVENTS_QUEUE_UNLOCK
 #endif
 
-static void free_mqtt_event(mqtt_event_t *mq) {
-  if ( mq->gateway_hid ) free(mq->gateway_hid);
-  if ( mq->device_hid ) free(mq->device_hid);
+static void mqtt_event_init(mqtt_event_t *mq) {
+    property_init(&mq->gateway_hid);
+    property_init(&mq->device_hid);
+    property_init(&mq->name);
+    mq->cmd = NULL;
+    mq->parameters = NULL;
+}
+
+static void mqtt_event_free(mqtt_event_t *mq) {
+  property_free(&mq->gateway_hid);
+  property_free(&mq->device_hid);
+  property_free(&mq->name);
   if ( mq->cmd ) free(mq->cmd);
-  if ( mq->name ) free(mq->name);
   if ( mq->parameters ) json_delete(mq->parameters);
 }
 
-static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
-    // FIXME property
-  JsonNode *tmp = json_find_member(_node, p_stack(name));
+static int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
+  JsonNode *tmp = json_find_member(_node, name);
   if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = strdup(tmp->string_);
+  property_t t = json_strdup_property(tmp->string_);
+  property_move(p, &t);
   return 0;
 }
 
@@ -100,8 +108,8 @@ struct check_signature_t {
 static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
   char signature[65] = {0};
   int err = gateway_payload_sign(signature,
-                                 ev->gateway_hid,
-                                 ev->name,
+                                 P_VALUE(ev->gateway_hid),
+                                 P_VALUE(ev->name),
                                  ev->encrypted,
                                  can,
                                  "1");
@@ -349,7 +357,7 @@ int arrow_mqtt_event_proc(void) {
     submodule current_processor = NULL;
     int i = 0;
     for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-      if ( sub_list[i].name && strcmp(sub_list[i].name, tmp->name) == 0 ) {
+      if ( sub_list[i].name && strcmp(sub_list[i].name, P_VALUE(tmp->name)) == 0 ) {
         current_processor = sub_list[i].proc;
       }
     }
@@ -362,7 +370,7 @@ int arrow_mqtt_event_proc(void) {
     }
     if ( __event_queue ) ret = 1;
 mqtt_event_proc_error:
-    free_mqtt_event(tmp);
+    mqtt_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
     static_free(mqtt_event_t, tmp);
 #else
@@ -387,6 +395,7 @@ int process_event(const char *str) {
       DBG("PROCESS EVENT: not enough memory");
       return -2;
   }
+  mqtt_event_init(mqtt_e);
   int ret = -1;
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
@@ -394,7 +403,7 @@ int process_event(const char *str) {
       return -1;
   }
 
-  if ( fill_string_from_json(_main, "hid", &mqtt_e->gateway_hid) < 0 ) {
+  if ( fill_string_from_json(_main, p_const("hid"), &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
     goto error;
   }
@@ -402,13 +411,17 @@ int process_event(const char *str) {
   DBG("ev ghid: %s", mqtt_e->gateway_hid);
 #endif
 
-  if ( fill_string_from_json(_main, "name", &mqtt_e->name) < 0 ) {
+  if ( fill_string_from_json(_main, p_const("name"), &mqtt_e->name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
   DBG("ev name: %s", mqtt_e->name);
 #endif
+
+  if ( IS_EMPTY(mqtt_e->gateway_hid) || IS_EMPTY(mqtt_e->name) ) {
+      DBG("EMPTY parameters {%s, %s}", P_VALUE(mqtt_e->gateway_hid), P_VALUE(mqtt_e->name));
+  }
 
   JsonNode *_encrypted = json_find_member(_main, p_const("encrypted"));
   if ( !_encrypted ) goto error;
@@ -446,6 +459,7 @@ int process_event(const char *str) {
 
 error:
   if ( ret < 0 ) {
+      mqtt_event_free(mqtt_e);
 #if defined(STATIC_MQTT_ENV)
       static_free(mqtt_event_t, mqtt_e);
 #else
