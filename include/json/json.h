@@ -82,6 +82,8 @@ char       *json_strdup         (const char *str);
 property_t  json_strdup_property(const char *str);
 void        json_delete_string  (char *json_str);
 
+int         fill_string_from_json(JsonNode *_node, property_t name, property_t *p);
+
 bool        json_validate       (const char *json);
 
 /*** Lookup and traversal ***/

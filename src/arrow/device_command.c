@@ -92,14 +92,6 @@ int arrow_send_event_ans(property_t hid, cmd_type ev, const char *payload) {
                 "Arrow Event answer failed...");
 }
 
-static int fill_string_from_json(JsonNode *_node, const char *name, char **str) __attribute__((used));
-static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
-  JsonNode *tmp = json_find_member(_node, p_const(name));
-  if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = strdup(tmp->string_);
-  return 0;
-}
-
 static int cmdeq( cmd_handler *s, property_t name ) {
     if ( property_cmp(&s->name, &name) == 0 ) return 0;
     return -1;

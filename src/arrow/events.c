@@ -61,14 +61,6 @@ static void mqtt_event_free(mqtt_event_t *mq) {
   if ( mq->parameters ) json_delete(mq->parameters);
 }
 
-static int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
-  JsonNode *tmp = json_find_member(_node, name);
-  if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  property_t t = json_strdup_property(tmp->string_);
-  property_move(p, &t);
-  return 0;
-}
-
 typedef int (*submodule)(void *, JsonNode *);
 typedef void (*module_init)();
 typedef void (*module_deinit)();
@@ -173,14 +165,12 @@ void swap(str_t *s1, str_t *s2) {
             if ( current_pos < s1->len ) next_pos = s2->len + current_pos;
             else next_pos = current_pos - s1->len;
             char t = s1->start[next_pos];
-            //printf("move %d [%c] -> %d [%c]\r\n", current_pos, saved, next_pos, buffer[next_pos]);
             s1->start[next_pos] = saved;
             saved = t;
             i++;
             current_pos = next_pos;
         } while ( start_pos != current_pos );
         start_pos++;
-        //  printf("\t %d [%s]\r\n", i+1, buffer);
     }
     int size1 = s1->len;
     s1->len = s2->len;
