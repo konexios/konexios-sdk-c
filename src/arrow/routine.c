@@ -281,6 +281,7 @@ arrow_routine_error_t arrow_mqtt_disconnect_routine() {
 
 arrow_routine_error_t arrow_mqtt_terminate_routine() {
     mqtt_terminate();
+    _init_mqtt = 0;
     return ROUTINE_SUCCESS;
 }
 
