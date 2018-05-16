@@ -116,6 +116,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
     cli->flags._close = true;
     cli->flags._cipher = 0;
     cli->timeout = DEFAULT_API_TIMEOUT;
+    cli->via_mqtt = 0;
     return 0;
 }
 

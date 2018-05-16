@@ -460,6 +460,28 @@ error:
   return ret;
 }
 
+int as_event_sign(char *signature,
+                  property_t ghid,
+                  const char *name,
+                  int encrypted,
+                  JsonNode *_parameters) {
+    char *can = form_canonical_prm(_parameters);
+    if ( !can ) goto sign_error;
+    int err = gateway_payload_sign(signature,
+                                   P_VALUE(ghid),
+                                   name,
+                                   encrypted,
+                                   can,
+                                   "1");
+    if ( err < 0 ) goto sign_error;
+#if !defined(STATIC_MQTT_ENV)
+    free(can);
+#endif
+    return 0;
+sign_error:
+  return -1;
+}
+
 void arrow_mqtt_events_done() {
 #if defined(ARROW_THREAD)
     arrow_mutex_deinit(_event_mutex);

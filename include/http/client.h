@@ -31,6 +31,8 @@ typedef struct {
 #endif
   ring_buffer_t  *queue;
   http_request_t *request;
+
+  int via_mqtt;
 } http_client_t;
 
 void http_session_close_set(http_client_t *cli, bool mode);

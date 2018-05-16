@@ -87,6 +87,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 
 int arrow_send_event_ans(property_t hid, cmd_type ev, const char *payload) {
   event_data_t edata = {P_VALUE(hid), ev, (char *)payload};
+  current_client()->via_mqtt = 1;
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
                 "Arrow Event answer failed...");
