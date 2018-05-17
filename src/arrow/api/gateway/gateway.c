@@ -28,6 +28,7 @@ static void _gateway_config_init(http_request_t *request, void *arg) {
 }
 
 static int _gateway_config_proc(http_response_t *response, void *arg) {
+    int ret = -1;
 	arrow_gateway_config_t *config = (arrow_gateway_config_t *)arg;
     arrow_gateway_config_init(config);
 	if ( response->m_httpResponseCode != 200 ) {
@@ -38,12 +39,12 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
     JsonNode *_main = json_decode(P_VALUE(response->payload));
 	if ( !_main ) {
 		DBG("Parse error");
-		return -1;
+        goto gateway_config_error;
 	}
     JsonNode *_cloud = json_find_member(_main, p_const("cloudPlatform"));
     if ( !_cloud || _cloud->tag != JSON_STRING ) {
         DBG("no Cloud Platform");
-        return -1;
+        goto gateway_config_error;
     }
     if ( strcmp(_cloud->string_, "IotConnect") == 0 ) {
         config->type = IoT;
@@ -61,7 +62,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		}
 	} else {
         DBG("There are no keys!");
-		return -1;
+        goto gateway_config_error;
 	}
 #if defined(__IBM__)
     JsonNode *_main_ibm = json_find_member(_main, p_const("ibm"));
@@ -87,8 +88,10 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		if ( tmp ) arrow_gateway_config_add_accessKey(config, tmp->string_);
 	}
 #endif
+    ret = 0;
+gateway_config_error:
 	json_delete(_main);
-	return 0;
+    return ret;
 }
 
 int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *config) {

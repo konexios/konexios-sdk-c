@@ -87,7 +87,6 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 
 int arrow_send_event_ans(property_t hid, cmd_type ev, const char *payload) {
   event_data_t edata = {P_VALUE(hid), ev, (char *)payload};
-  current_client()->via_mqtt = 1;
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
                 "Arrow Event answer failed...");
@@ -104,6 +103,8 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   int retry = 0;
   http_session_close_set(current_client(), false);
+  // FIXME defined it
+  http_session_set_protocol(current_client(), 1);
   while( arrow_send_event_ans(ev->gateway_hid, received, NULL) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
@@ -174,6 +175,7 @@ device_command_done:
         msleep(ARROW_RETRY_DELAY);
     }
   }
+  http_session_set_protocol(current_client(), api_via_http);
   return 0;
 }
 #else

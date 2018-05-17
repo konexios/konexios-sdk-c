@@ -59,12 +59,13 @@
 #  define MQTT_COMMAND_ADDR "pgsdev01.arrowconnect.io"
 # else
 #  define MQTT_COMMAND_ADDR "mqtt-a01.arrowconnect.io"
+# endif
 #endif
 
 #if !defined(VHOST)
 # if defined(DEV_ENV)
 #  define VHOST "/themis.dev:"
-#else
+# else
 #  define VHOST "/pegasus:"
 # endif
 #endif
