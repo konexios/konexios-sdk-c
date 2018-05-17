@@ -25,8 +25,9 @@
 #define CCAN_JSON_H
 
 #include <sys/mem.h>
+#include <data/property.h>
 
-# define json_key(x)  (x)->key
+# define json_key(x)  P_VALUE((x)->key)
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
 
@@ -41,14 +42,14 @@ typedef enum {
 
 typedef struct JsonNode JsonNode;
 
-struct JsonNode
+struct __attribute_packed__ JsonNode
 {
 	/* only if parent is an object or array (NULL otherwise) */
 	JsonNode *parent;
 	JsonNode *prev, *next;
 	
 	/* only if parent is an object (NULL otherwise) */
-	char *key; /* Must be valid UTF-8. */
+    property_t key; /* Must be valid UTF-8. */
 	
 	JsonTag tag;
   union {
@@ -74,15 +75,21 @@ struct JsonNode
 JsonNode   *json_decode         (const char *json);
 char       *json_encode         (const JsonNode *node);
 char       *json_encode_string  (const char *str);
+property_t  json_encode_property(const JsonNode *node);
 char       *json_stringify      (const JsonNode *node, const char *space);
 void        json_delete         (JsonNode *node);
+char       *json_strdup         (const char *str);
+property_t  json_strdup_property(const char *str);
+void        json_delete_string  (char *json_str);
+
+int         fill_string_from_json(JsonNode *_node, property_t name, property_t *p);
 
 bool        json_validate       (const char *json);
 
 /*** Lookup and traversal ***/
 
 JsonNode   *json_find_element   (JsonNode *array, int index);
-JsonNode   *json_find_member    (JsonNode *object, const char *key);
+JsonNode   *json_find_member    (JsonNode *object, property_t key);
 
 JsonNode   *json_first_child    (const JsonNode *node);
 
@@ -102,8 +109,8 @@ JsonNode *json_mkobject(void);
 
 void json_append_element(JsonNode *array, JsonNode *element);
 void json_prepend_element(JsonNode *array, JsonNode *element);
-void json_append_member(JsonNode *object, const char *key, JsonNode *value);
-void json_prepend_member(JsonNode *object, const char *key, JsonNode *value);
+void json_append_member(JsonNode *object, const property_t key, JsonNode *value);
+void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value);
 
 void json_remove_from_parent(JsonNode *node);
 

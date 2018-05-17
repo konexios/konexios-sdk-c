@@ -41,26 +41,47 @@
 
 #if defined(MQTT_CIPHER)
 #  define MQTT_SCH "tls"
-#  define MQTT_PORT 8883
+#  define MQTT_PORT 1883
 #else
 # define MQTT_SCH "tcp"
 # define MQTT_PORT 1883
 #endif
 
-#if defined(__IBM__)
-#  define MQTT_ADDR ".messaging.internetofthings.ibmcloud.com"
-#elif defined(__AZURE__)
-#  define MQTT_ADDR "pgshubdev01.azure-devices.net"
-#  define VHOST "iothubowner"
-#else
+#if !defined(S_TOP_NAME)
+#define S_TOP_NAME "krs/cmd/stg/"
+#endif
+#if !defined(P_TOP_NAME)
+#define P_TOP_NAME "krs.tel.gts."
+#endif
+
+#if !defined(MQTT_COMMAND_ADDR)
 # if defined(DEV_ENV)
-#  define MQTT_ADDR "pgsdev01.arrowconnect.io"
+#  define MQTT_COMMAND_ADDR "pgsdev01.arrowconnect.io"
+# else
+#  define MQTT_COMMAND_ADDR "mqtt-a01.arrowconnect.io"
+# endif
+#endif
+
+#if !defined(VHOST)
+# if defined(DEV_ENV)
 #  define VHOST "/themis.dev:"
 # else
-#  define MQTT_ADDR "mqtt-a01.arrowconnect.io"
 #  define VHOST "/pegasus:"
 # endif
 #endif
+
+#if defined(__IBM__)
+#  define MQTT_TELEMETRY_ADDR ".messaging.internetofthings.ibmcloud.com"
+#elif defined(__AZURE__)
+#  define MQTT_TELEMETRY_ADDR "pgshubdev01.azure-devices.net"
+#  define VHOST "iothubowner"
+#else
+# if !defined(MQTT_TELEMETRY_ADDR)
+#  define MQTT_TELEMETRY_ADDR MQTT_COMMAND_ADDR
+# endif
+#endif
+
+
 
 //#define MQTTCLIENT_PLATFORM_HEADER network.h
 

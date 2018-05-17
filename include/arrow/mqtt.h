@@ -46,6 +46,8 @@ typedef struct _mqtt_env_ {
     property_t username;
     property_t s_topic;
     property_t p_topic;
+    property_t s_api_topic;
+    property_t p_api_topic;
     property_t addr;
     short port;
     short init;
@@ -82,6 +84,7 @@ int mqtt_telemetry_terminate(void);
 // Send the telemetry data to the cloud
 // there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
 int mqtt_publish(arrow_device_t *device, void *data);
+int mqtt_api_publish(property_t data);
 
 #if !defined(NO_EVENTS)
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,

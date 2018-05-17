@@ -23,6 +23,7 @@
 
 #include "json/json.h"
 
+#include <json/property_json.h>
 #include <sys/mem.h>
 #if defined(__USE_STD__)
 #include <assert.h>
@@ -32,18 +33,33 @@
 #include <math.h>
 #include <debug.h>
 
-#define out_of_memory() do {                    \
-        DBG("JSON: Out of memory");    \
-	} while (0)
+#if defined(STATIC_JSON)
+#include <data/static_alloc.h>
+#include <data/static_buf.h>
+static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
+CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
+#endif
+
+#define out_of_memory() { DBG("JSON: Out of memory"); }
 
 /* Sadly, strdup is not portable. */
-static char *json_strdup(const char *str)
-{
+char *json_strdup(const char *str) {
+#if defined(STATIC_JSON)
+    char *ret = (char*) static_buf_alloc(jsonbuf, strlen(str) + 1);
+#else
 	char *ret = (char*) malloc(strlen(str) + 1);
-	if (ret == NULL)
+#endif
+    if (ret == NULL) {
 		out_of_memory();
-	strcpy(ret, str);
+    } else
+        strcpy(ret, str);
 	return ret;
+}
+
+property_t  json_strdup_property(const char *str) {
+    char *tmp = json_strdup(str);
+    if ( !tmp ) return p_null();
+    return p_json(tmp);
 }
 
 /* String buffer */
@@ -55,22 +71,23 @@ typedef struct
 	char *start;
 } SB;
 
-static void sb_init(SB *sb)
+static int sb_init(SB *sb)
 {
+#if defined(STATIC_JSON)
+    sb->start = (char*) static_buf_alloc(jsonbuf, 17);
+#else
 	sb->start = (char*) malloc(17);
-	if (sb->start == NULL)
+#endif
+    if (sb->start == NULL) {
 		out_of_memory();
+        return -1;
+    }
 	sb->cur = sb->start;
 	sb->end = sb->start + 16;
+    return 0;
 }
 
-/* sb and need may be evaluated multiple times. */
-#define sb_need(sb, need) do {                  \
-		if ((sb)->end - (sb)->cur < (need))     \
-			sb_grow(sb, need);                  \
-	} while (0)
-
-static void sb_grow(SB *sb, int need)
+static int sb_grow(SB *sb, int need)
 {
 	size_t length = (size_t)(sb->cur - sb->start);
 	size_t alloc = (size_t)(sb->end - sb->start);
@@ -78,12 +95,25 @@ static void sb_grow(SB *sb, int need)
 	do {
 		alloc *= 2;
 	} while (alloc < length + (size_t)need);
-	
+#if defined(STATIC_JSON)
+    sb->start = (char*) static_buf_realloc(jsonbuf, sb->start, alloc + 1);
+#else
 	sb->start = (char*) realloc(sb->start, alloc + 1);
-	if (sb->start == NULL)
+#endif
+    if (sb->start == NULL) {
 		out_of_memory();
+        return -1;
+    }
 	sb->cur = sb->start + length;
 	sb->end = sb->start + alloc;
+    return 0;
+}
+
+/* sb and need may be evaluated multiple times. */
+static int sb_need(SB *sb, int need) {
+    if ((sb)->end - (sb)->cur < need)
+        return sb_grow(sb, need);
+    return 0;
 }
 
 static void sb_put(SB *sb, const char *bytes, int count)
@@ -113,8 +143,13 @@ static char *sb_finish(SB *sb)
 
 static void sb_free(SB *sb)
 {
-    if ( sb && sb->start )
+    if ( sb && sb->start ) {
+#if defined(STATIC_JSON)
+        static_buf_free(jsonbuf, sb->start);
+#else
         free(sb->start);
+#endif
+    }
 }
 
 /*
@@ -355,7 +390,7 @@ static int write_hex16(char *out, uint16_t val);
 static JsonNode *mknode(JsonTag tag);
 static void append_node(JsonNode *parent, JsonNode *child);
 static void prepend_node(JsonNode *parent, JsonNode *child);
-static void append_member(JsonNode *object, char *key, JsonNode *value);
+static void append_member(JsonNode *object, property_t key, JsonNode *value);
 
 /* Assertion-friendly validity checks */
 static bool tag_is_valid(unsigned int tag);
@@ -379,6 +414,13 @@ JsonNode *json_decode(const char *json)
 	return ret;
 }
 
+property_t json_encode_property(const JsonNode *node) {
+    char *alloc_string = json_stringify(node, NULL);
+    if ( !alloc_string ) return p_null();
+    property_t t = p_json(alloc_string);
+    return t;
+}
+
 char *json_encode(const JsonNode *node)
 {
 	return json_stringify(node, NULL);
@@ -387,7 +429,7 @@ char *json_encode(const JsonNode *node)
 char *json_encode_string(const char *str)
 {
 	SB sb;
-	sb_init(&sb);
+    if ( sb_init(&sb) < 0 ) return NULL;
 	
 	emit_string(&sb, str);
 	
@@ -397,7 +439,7 @@ char *json_encode_string(const char *str)
 char *json_stringify(const JsonNode *node, const char *space)
 {
 	SB sb;
-	sb_init(&sb);
+    if ( sb_init(&sb) < 0 ) return NULL;
 	
 	if (space != NULL)
 		emit_value_indented(&sb, node, space, 0);
@@ -414,7 +456,11 @@ void json_delete(JsonNode *node)
 		
 		switch (node->tag) {
 			case JSON_STRING:
+#if defined(STATIC_JSON)
+                static_buf_free(jsonbuf, node->string_);
+#else
 				free(node->string_);
+#endif
 				break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
@@ -428,9 +474,28 @@ void json_delete(JsonNode *node)
 			}
 			default:;
 		}
-		
+#if defined(STATIC_JSON)
+        static_free(JsonNode, node);
+#else
 		free(node);
+#endif
 	}
+}
+
+void json_delete_string(char *json_str) {
+#if defined(STATIC_JSON)
+    static_buf_free(jsonbuf, json_str);
+#else
+    free(json_str);
+#endif
+}
+
+int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
+    JsonNode *tmp = json_find_member(_node, name);
+    if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
+    property_t t = json_strdup_property(tmp->string_);
+    property_move(p, &t);
+    return 0;
 }
 
 bool json_validate(const char *json)
@@ -465,7 +530,7 @@ JsonNode *json_find_element(JsonNode *array, int index)
 	return NULL;
 }
 
-JsonNode *json_find_member(JsonNode *object, const char *name)
+JsonNode *json_find_member(JsonNode *object, property_t name)
 {
 	JsonNode *member;
 	
@@ -473,7 +538,7 @@ JsonNode *json_find_member(JsonNode *object, const char *name)
 		return NULL;
 	
 	json_foreach(member, object)
-		if (strcmp(member->key, name) == 0)
+        if (property_cmp(&member->key, &name) == 0)
 			return member;
 	
 	return NULL;
@@ -488,11 +553,16 @@ JsonNode *json_first_child(const JsonNode *node)
 
 static JsonNode *mknode(JsonTag tag)
 {
-	JsonNode *ret = (JsonNode*) calloc(1, sizeof(JsonNode));
-	if (ret == NULL)
-		out_of_memory();
-	ret->tag = tag;
-	return ret;
+#if defined(STATIC_JSON)
+    JsonNode *ret = static_allocator(JsonNode);
+#else
+    JsonNode *ret = (JsonNode*) calloc(1, sizeof(JsonNode));
+#endif
+    if (ret == NULL) {
+        out_of_memory();
+    } else
+        ret->tag = tag;
+    return ret;
 }
 
 JsonNode *json_mknull(void)
@@ -562,9 +632,9 @@ static void prepend_node(JsonNode *parent, JsonNode *child)
 	parent->children.head = child;
 }
 
-static void append_member(JsonNode *object, char *key, JsonNode *value)
+static void append_member(JsonNode *object, property_t key, JsonNode *value)
 {
-	value->key = key;
+    property_move(&value->key, &key);
 	append_node(object, value);
 }
 
@@ -584,20 +654,20 @@ void json_prepend_element(JsonNode *array, JsonNode *element)
 	prepend_node(array, element);
 }
 
-void json_append_member(JsonNode *object, const char *key, JsonNode *value)
+void json_append_member(JsonNode *object, const property_t key, JsonNode *value)
 {
 	assert(object->tag == JSON_OBJECT);
 	assert(value->parent == NULL);
 	
-	append_member(object, json_strdup(key), value);
+    append_member(object, key, value);
 }
 
-void json_prepend_member(JsonNode *object, const char *key, JsonNode *value)
+void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value)
 {
 	assert(object->tag == JSON_OBJECT);
 	assert(value->parent == NULL);
 	
-	value->key = json_strdup(key);
+    property_copy(&value->key, key);
 	prepend_node(object, value);
 }
 
@@ -615,11 +685,10 @@ void json_remove_from_parent(JsonNode *node)
 		else
 			parent->children.tail = node->prev;
 		
-		free(node->key);
+        property_free(&node->key);
 		
 		node->parent = NULL;
 		node->prev = node->next = NULL;
-		node->key = NULL;
 	}
 }
 
@@ -767,7 +836,7 @@ static bool parse_object(const char **sp, JsonNode **out)
 		skip_space(&s);
 		
 		if (out)
-			append_member(ret, key, value);
+            append_member(ret, p_json(key), value);
 		
 		if (*s == '}') {
 			s++;
@@ -786,8 +855,13 @@ success:
 	return true;
 
 failure_free_key:
-	if (out)
+    if (out) {
+#if defined(STATIC_JSON)
+        static_buf_free(jsonbuf, key);
+#else
 		free(key);
+#endif
+    }
 failure:
 	json_delete(ret);
 	return false;
@@ -805,7 +879,7 @@ bool parse_string(const char **sp, char **out)
 		return false;
 	
 	if (out) {
-		sb_init(&sb);
+        if ( sb_init(&sb) < 0 ) return false;
 		sb_need(&sb, 4);
 		b = sb.cur;
 	} else {
@@ -903,7 +977,7 @@ bool parse_string(const char **sp, char **out)
 	return true;
 
 failed:
-	if (out)
+    if (out)
 		sb_free(&sb);
 	return false;
 }
@@ -1071,7 +1145,7 @@ static void emit_object(SB *out, const JsonNode *object)
 	
 	sb_putc(out, '{');
 	json_foreach(member, object) {
-		emit_string(out, member->key);
+        emit_string(out, P_VALUE(member->key));
 		sb_putc(out, ':');
 		emit_value(out, member);
 		if (member->next != NULL)
@@ -1094,7 +1168,7 @@ static void emit_object_indented(SB *out, const JsonNode *object, const char *sp
 	while (member != NULL) {
 		for (i = 0; i < indent_level + 1; i++)
 			sb_puts(out, space);
-		emit_string(out, member->key);
+        emit_string(out, P_VALUE(member->key));
 		sb_puts(out, ": ");
 		emit_value_indented(out, member, space, indent_level + 1);
 		
@@ -1330,7 +1404,7 @@ bool json_check(const JsonNode *node, char errmsg[256])
 			return false; \
 		} while (0)
 	
-	if (node->key != NULL && !utf8_validate(node->key))
+    if ( !IS_EMPTY(node->key) && !utf8_validate(P_VALUE(node->key)))
 		problem("key contains invalid UTF-8");
 	
 	if (!tag_is_valid(node->tag))
@@ -1373,9 +1447,9 @@ bool json_check(const JsonNode *node, char errmsg[256])
 				if (child->next != NULL && child->next->prev != child)
 					problem("child->next does not point back to child");
 				
-				if (node->tag == JSON_ARRAY && child->key != NULL)
+                if (node->tag == JSON_ARRAY && !IS_EMPTY(child->key))
 					problem("Array element's key is not NULL");
-				if (node->tag == JSON_OBJECT && child->key == NULL)
+                if (node->tag == JSON_OBJECT && !IS_EMPTY(child->key))
 					problem("Object member's key is NULL");
 				
 				if (!json_check(child, errmsg))

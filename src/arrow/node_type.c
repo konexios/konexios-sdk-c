@@ -15,7 +15,7 @@ static void _node_type_list_init(http_request_t *request, void *arg) {
 static int _node_type_list_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("gateway hid: %s", P_VALUE(response->payload.buf));
+  DBG("gateway hid: %s", P_VALUE(response->payload));
   return 0;
 }
 
@@ -25,12 +25,12 @@ int arrow_node_type_list(void) {
               "Arrow Node Type list failed...");
 }
 
-static char *arrow_node_type_serialize(arrow_node_type_t *node) {
+static property_t arrow_node_type_serialize(arrow_node_type_t *node) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "description", json_mkstring(node->description));
-  json_append_member(_main, "enabled", json_mkbool(node->enabled));
-  json_append_member(_main, "name", json_mkstring(node->name));
-  char *payload = json_encode(_main);
+  json_append_member(_main, p_const("description"), json_mkstring(node->description));
+  json_append_member(_main, p_const("enabled"), json_mkbool(node->enabled));
+  json_append_member(_main, p_const("name"), json_mkstring(node->name));
+  property_t payload = json_encode_property(_main);
   json_delete(_main);
   return payload;
 }
@@ -38,13 +38,13 @@ static char *arrow_node_type_serialize(arrow_node_type_t *node) {
 static void _node_type_create_init(http_request_t *request, void *arg) {
   arrow_node_type_t *node = (arrow_node_type_t *) arg;
   http_request_init(request, POST, ARROW_API_NODE_TYPE_ENDPOINT);
-  http_request_set_payload(request, p_heap(arrow_node_type_serialize(node)));
+  http_request_set_payload(request, arrow_node_type_serialize(node));
 }
 
 static int _node_type_create_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("ans: %s", P_VALUE(response->payload.buf));
+  DBG("ans: %s", P_VALUE(response->payload));
   return 0;
 }
 
@@ -60,13 +60,13 @@ static void _node_type_update_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_NODE_TYPE_ENDPOINT, node->hid);
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(arrow_node_type_serialize(node)));
+  http_request_set_payload(request, arrow_node_type_serialize(node));
 }
 
 static int _node_type_update_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode != 200 ) return -1;
-  DBG("ans: %s", P_VALUE(response->payload.buf));
+  DBG("ans: %s", P_VALUE(response->payload));
   return 0;
 }
 

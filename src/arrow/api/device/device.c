@@ -15,14 +15,13 @@ static void _device_register_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
   http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
   arrow_prepare_device(gd->gateway, gd->device);
-  char *payload = arrow_device_serialize(gd->device);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, arrow_device_serialize(gd->device));
 }
 
 static int _device_register_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
-      DBG("Parse error");
+  if ( arrow_device_parse(dev, P_VALUE(response->payload)) < 0) {
+      DBG("Parse error [%s]", P_VALUE(response->payload));
       return -1;
   } else {
       DBG("device hid: %s", P_VALUE(dev->hid));
@@ -46,7 +45,7 @@ static void _device_find_by_init(http_request_t *request, void *arg) {
 static int _device_find_by_proc(http_response_t *response, void *arg) {
     device_info_t **devs = (device_info_t **)arg;
     *devs = NULL;
-    return device_info_parse(devs, P_VALUE(response->payload.buf));
+    return device_info_parse(devs, P_VALUE(response->payload));
 }
 
 int arrow_device_find_by(device_info_t **list, int n, ...) {
@@ -71,7 +70,7 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
     device_info_t *info = (device_info_t *)arg;
     device_info_init(info);
-    JsonNode *t = json_decode(P_VALUE(response->payload.buf));
+    JsonNode *t = json_decode(P_VALUE(response->payload));
     int ret = _device_info_parse(info, t);
     json_delete(t);
     return ret;
@@ -94,13 +93,12 @@ static void _device_update_init(http_request_t *request, void *arg) {
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
-  char *payload = arrow_device_serialize(gd->device);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, arrow_device_serialize(gd->device));
 }
 
 static int _device_update_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
-  if ( arrow_device_parse(dev, P_VALUE(response->payload.buf)) < 0) {
+  if ( arrow_device_parse(dev, P_VALUE(response->payload)) < 0) {
       DBG("Parse error");
       return -1;
   } else {
@@ -136,7 +134,7 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
 static int _device_list_events_proc(http_response_t *response, void *arg) {
     device_event_t **evns = (device_event_t **)arg;
     *evns = NULL;
-    return device_event_parse(evns, P_VALUE(response->payload.buf));
+    return device_event_parse(evns, P_VALUE(response->payload));
 }
 
 int arrow_list_device_events(device_event_t **list, arrow_device_t *device, int n, ...) {
@@ -163,7 +161,7 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
 static int _device_list_logs_proc(http_response_t *response, void *arg) {
   log_t **logs = (log_t **)arg;
   *logs = NULL;
-  return log_parse(logs, P_VALUE(response->payload.buf));
+  return log_parse(logs, P_VALUE(response->payload));
 }
 
 int arrow_list_device_logs(log_t **list, arrow_device_t *device, int n, ...) {
@@ -190,8 +188,8 @@ static void _device_errors_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
-  json_append_member(error, "error", json_mkstring(de->error));
-  http_request_set_payload(request, p_heap(json_encode(error)));
+  json_append_member(error, p_const("error"), json_mkstring(de->error));
+  http_request_set_payload(request, json_encode_property(error));
   json_delete(error);
 }
 

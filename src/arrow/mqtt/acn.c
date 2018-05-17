@@ -14,8 +14,6 @@
 #include <data/chunk.h>
 
 #define USERNAME_LEN 80
-#define S_TOP_NAME "krs/cmd/stg/"
-#define P_TOP_NAME "krs.tel.gts."
 #define S_TOP_LEN sizeof(S_TOP_NAME) + 66
 #define P_TOP_LEN sizeof(P_TOP_NAME) + 66
 
@@ -30,11 +28,7 @@ static int mqtt_common_init_iot(
 
     int ret = snprintf(username,
                        USERNAME_LEN,
-                   #if defined(DEV_ENV)
-                       "/themis.dev:%s",
-                   #else
-                       "/pegasus:%s",
-                   #endif
+                       VHOST "%s",
                        P_VALUE(args->gateway->hid));
     if ( ret < 0 ) return -1;
     username[ret] = 0x0;
@@ -44,12 +38,7 @@ static int mqtt_common_init_iot(
     env->data.clientID.cstring = P_VALUE(args->gateway->hid);
     env->data.username.cstring = P_VALUE(env->username);
     env->data.password.cstring = (char*)get_api_key();
-#if defined(DEV_ENV)
-    property_copy(&env->addr, p_const("pgsdev01.arrowconnect.io"));
-#else
-    property_copy(&env->addr, p_const("mqtt-a01.arrowconnect.io"));
-#endif
-
+    property_copy(&env->addr, p_const(MQTT_COMMAND_ADDR));
     FREE_CHUNK(username);
 
     return 0;
@@ -69,6 +58,15 @@ static int mqtt_telemetry_init_iot(
   p_topic[ret] = 0x0;
   property_copy(&env->p_topic, p_stack(p_topic));
 
+  ret = snprintf(p_topic,
+                     P_TOP_LEN,
+                     "%s%s",
+                     PX_TOP_NAME,
+                     P_VALUE(args->gateway->hid));
+  if ( ret < 0 ) return -1;
+  p_topic[ret] = 0x0;
+  property_copy(&env->p_api_topic, p_stack(p_topic));
+
   FREE_CHUNK(p_topic);
   return 0;
 }
@@ -85,6 +83,17 @@ static int mqtt_subscribe_init_iot(
     if ( ret < 0 ) return -1;
     s_topic[ret] = 0x0;
     property_copy(&env->s_topic, p_stack(s_topic));
+    DBG("sub %s",  s_topic);
+
+    // API topic
+    ret = snprintf(s_topic,
+                       S_TOP_LEN,
+                       "%s%s",
+                       SX_TOP_NAME,
+                       P_VALUE(args->gateway->hid));
+    if ( ret < 0 ) return -1;
+    s_topic[ret] = 0x0;
+    property_copy(&env->s_api_topic, p_stack(s_topic));
     DBG("sub %s",  s_topic);
     FREE_CHUNK(s_topic);
     return 0;

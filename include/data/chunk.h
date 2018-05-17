@@ -25,7 +25,8 @@
       { act; } \
     }
 #else
-#define CHECK_CHUNK(ptr, act)
+#define CHECK_CHUNK(ptr, act) \
+ { (void)(ptr); if (0) { act; } }
 #define FREE_CHUNK(ptr)
 # endif
 

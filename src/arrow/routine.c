@@ -13,6 +13,7 @@
 #include <arrow/api/device/device.h>
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
+#include <json/property_json.h>
 
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"
@@ -45,10 +46,21 @@ arrow_gateway_config_t *current_gateway_config(void) {
 }
 
 arrow_routine_error_t arrow_init(void) {
+    property_types_init();
+    property_type_add(property_type_get_json());
     if ( __http_init() < 0 ) return ROUTINE_ERROR;
 #if !defined(NO_EVENTS)
     arrow_mqtt_events_init();
 #endif
+    return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_deinit(void) {
+#if !defined(NO_EVENTS)
+    arrow_mqtt_events_done();
+#endif
+    arrow_state_mqtt_stop();
+  __http_done();
     return ROUTINE_SUCCESS;
 }
 
@@ -269,6 +281,7 @@ arrow_routine_error_t arrow_mqtt_disconnect_routine() {
 
 arrow_routine_error_t arrow_mqtt_terminate_routine() {
     mqtt_terminate();
+    _init_mqtt = 0;
     return ROUTINE_SUCCESS;
 }
 
@@ -321,12 +334,8 @@ void arrow_close(void) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
     arrow_gateway_config_free(&_gateway_config);
-#if !defined(NO_EVENTS)
-    arrow_mqtt_events_done();
-#endif
     _init_done = 0;
   }
-  __http_done();
 }
 
 arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data) {

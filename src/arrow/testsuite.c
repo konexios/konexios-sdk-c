@@ -3,7 +3,7 @@
 #include <debug.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 100
+#define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 256
 
 //gateways
 
@@ -20,8 +20,8 @@ static void _test_gateway_init(http_request_t *request, void *arg) {
 static int _test_gateway_proc(http_response_t *response, void *arg) {
   property_t *res_hid = (property_t *)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
-  JsonNode *test_res = json_find_member(_main, "hid");
+  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);
     return -1;
@@ -93,9 +93,14 @@ static void _test_device_init(http_request_t *request, void *arg) {
 
 static int _test_device_proc(http_response_t *response, void *arg) {
   property_t *res_his = (property_t *)arg;
-  if ( response->m_httpResponseCode != 200 ) return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
-  JsonNode *test_res = json_find_member(_main, "hid");
+  if ( response->m_httpResponseCode != 200 ) {
+      if ( !IS_EMPTY(response->payload) ) {
+          DBG("TEST FAILED [%s]", P_VALUE(response->payload));
+      }
+      return -1;
+  }
+  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);
     return -1;
@@ -253,10 +258,10 @@ static void _test_step_fail_end_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   if ( st->code )
-      json_append_member(_main, "code", json_mkstring(st->code));
+      json_append_member(_main, p_const("code"), json_mkstring(st->code));
   if ( st->error )
-      json_append_member(_main, "error", json_mkstring(st->error));
-  http_request_set_payload(request, p_heap(json_encode(_main)));
+      json_append_member(_main, p_const("error"), json_mkstring(st->error));
+  http_request_set_payload(request, json_encode_property(_main));
   json_delete(_main);
 }
 

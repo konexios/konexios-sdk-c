@@ -16,15 +16,19 @@ extern "C" {
 #include <config.h>
 
 //Debug is disabled by default
-#ifdef DEBUG
+#if defined(DEBUG)
 
-#if !defined(DBG_LINE_SIZE)
-#define DBG_LINE_SIZE 256
-#endif
+#if defined(ARCH_DEBUG)
+# include <sys/arch/debug.h>
+#else
+# if !defined(DBG_LINE_SIZE)
+#  define DBG_LINE_SIZE 256
+# endif
 void dbg_line(const char *fmt, ...);
-#define DBG(...) dbg_line(__VA_ARGS__);
+# define DBG(...) dbg_line(__VA_ARGS__);
 
 void hex_dump(const char *data, int size);
+#endif
 
 #else
 # define DBG(...)

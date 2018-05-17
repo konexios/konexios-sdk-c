@@ -37,7 +37,7 @@ int log_parse(log_t **list, const char *text) {
             json_fill_property(tmp, gl, productName);
             json_fill_property(tmp, gl, type);
             json_fill_property(tmp, gl, objectHid);
-            JsonNode *t = json_find_member(tmp, "parameters");
+            JsonNode *t = json_find_member(tmp, p_const("parameters"));
             json_remove_from_parent(t);
             gl->parameters = t;
             arrow_linked_list_add_node_last(*list, log_t, gl);

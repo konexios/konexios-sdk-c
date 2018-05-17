@@ -26,12 +26,14 @@ static __download_init_cb __download_init = NULL;
 static __download_payload_cb  __payload = NULL;
 static __download_complete_cb __download = NULL;
 
-static char *serialize_software_trans(const char *hid, release_sched_t *rs) {
+static property_t serialize_software_trans(const char *hid, release_sched_t *rs) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "objectHid", json_mkstring(hid));
-  json_append_member(_main, "softwareReleaseScheduleHid", json_mkstring(rs->schedule_hid));
-  json_append_member(_main, "toSoftwareReleaseHid", json_mkstring(rs->release_hid));
-  return json_encode(_main);
+  json_append_member(_main, p_const("objectHid"), json_mkstring(hid));
+  json_append_member(_main, p_const("softwareReleaseScheduleHid"), json_mkstring(rs->schedule_hid));
+  json_append_member(_main, p_const("toSoftwareReleaseHid"), json_mkstring(rs->release_hid));
+  property_t tmp = json_encode_property(_main);
+  json_delete(_main);
+  return tmp;
 }
 
 typedef struct _gateway_software_sched_ {
@@ -46,15 +48,14 @@ static void _gateway_software_releases_trans_init(http_request_t *request, void 
   strcat(uri, "/gateways/upgrade");
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
-  char *payload = serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
 
 static int _gateway_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
-  if ( IS_EMPTY(response->payload.buf) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
-  JsonNode *hid = json_find_member(_main, "hid");
+  if ( IS_EMPTY(response->payload) )  return -1;
+  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   property_copy(&rs->trans_hid, p_stack(hid->string_));
   return 0;
@@ -78,15 +79,14 @@ static void _device_software_releases_trans_init(http_request_t *request, void *
   strcat(uri, "/devices/upgrade");
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
-  char *payload = serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs);
-  http_request_set_payload(request, p_heap(payload));
+  http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
 
 static int _device_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
-  if ( IS_EMPTY(response->payload.buf) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload.buf));
-  JsonNode *hid = json_find_member(_main, "hid");
+  if ( IS_EMPTY(response->payload) )  return -1;
+  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   property_copy(&rs->trans_hid, p_stack(hid->string_));
   return 0;
@@ -133,8 +133,8 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
   if ( ans->state == fail && ans->error ) {
     JsonNode *_error = json_mkobject();
-    json_append_member(_error, "error", json_mkstring(ans->error));
-    http_request_set_payload(request, p_heap(json_encode(_error)));
+    json_append_member(_error, p_const("error"), json_mkstring(ans->error));
+    http_request_set_payload(request, json_encode_property(_error));
     json_delete(_error);
   }
 }
@@ -171,7 +171,7 @@ int arrow_software_releases_trans_start(const char *hid) {
 int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   SSP_PARAMETER_NOT_USED(_ev);
   int ret = -1;
-  JsonNode *tmp = json_find_member(_parameters, "softwareReleaseTransHid");
+  JsonNode *tmp = json_find_member(_parameters, p_const("softwareReleaseTransHid"));
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
   wdt_feed();
@@ -182,18 +182,18 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
     msleep(ARROW_RETRY_DELAY);
   }
   wdt_feed();
-  tmp = json_find_member(_parameters, "tempToken");
+  tmp = json_find_member(_parameters, p_const("tempToken"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_token = tmp->string_;
   DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
-  tmp = json_find_member(_parameters, "fromSoftwareVersion");
+  tmp = json_find_member(_parameters, p_const("fromSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_from = tmp->string_;
-  tmp = json_find_member(_parameters, "toSoftwareVersion");
+  tmp = json_find_member(_parameters, p_const("toSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_to = tmp->string_;
-  tmp = json_find_member(_parameters, "md5checksum");
+  tmp = json_find_member(_parameters, p_const("md5checksum"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
   char *_checksum = tmp->string_;
   wdt_feed();
@@ -341,9 +341,7 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
 
 int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
     struct object_hid_list *objhid = (struct object_hid_list *)calloc(1, sizeof(struct object_hid_list));
-    // FIXME
-    hid.flags = is_const;
-    property_copy(&objhid->hid, hid);
+    property_weak_copy(&objhid->hid, hid);
     arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
     return 0;
 }
@@ -371,19 +369,19 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
                             p_const(DEFAULT_API_KEY));
     JsonNode *_main = json_mkobject();
     if ( sch->device_category == schedule_GATEWAY ) {
-        json_append_member(_main, "deviceCategory", json_mkstring("GATEWAY"));
+        json_append_member(_main, p_const("deviceCategory"), json_mkstring("GATEWAY"));
     } else {
-        json_append_member(_main, "deviceCategory", json_mkstring("DEVICE"));
+        json_append_member(_main, p_const("deviceCategory"), json_mkstring("DEVICE"));
     }
-    json_append_member(_main, "softwareReleaseHid", json_mkstring(P_VALUE(sch->software_release_hid)));
-    json_append_member(_main, "userHid", json_mkstring(P_VALUE(sch->user_hid)));
+    json_append_member(_main, p_const("softwareReleaseHid"), json_mkstring(P_VALUE(sch->software_release_hid)));
+    json_append_member(_main, p_const("userHid"), json_mkstring(P_VALUE(sch->user_hid)));
     JsonNode *hids = json_mkarray();
     struct object_hid_list *tmp = NULL;
     arrow_linked_list_for_each(tmp, sch->_hids, struct object_hid_list) {
         json_append_element(hids, json_mkstring(P_VALUE(tmp->hid)));
     }
-    json_append_member(_main, "objectHids", hids);
-    http_request_set_payload(request, p_heap(json_encode(_main)));
+    json_append_member(_main, p_const("objectHids"), hids);
+    http_request_set_payload(request, json_encode_property(_main));
     json_delete(_main);
     FREE_CHUNK(uri);
     wdt_feed();
@@ -391,7 +389,10 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
 
 static int _software_releases_schedule_start_proc(http_response_t *response, void *arg) {
     SSP_PARAMETER_NOT_USED(arg);
-    if ( response->m_httpResponseCode != 200 ) return -1;
+    if ( response->m_httpResponseCode != 200 ) {
+        DBG("ERROR(%d): %s", response->m_httpResponseCode, P_VALUE(response->payload));
+        return -1;
+    }
     return 0;
 }
 

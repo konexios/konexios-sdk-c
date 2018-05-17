@@ -16,6 +16,7 @@
 #include <debug.h>
 #include <bsd/socket.h>
 #include <time/time.h>
+#include <arrow/utf8.h>
 
 #include <ssl/ssl.h>
 
@@ -34,6 +35,10 @@ void http_session_close_set(http_client_t *cli, bool mode) {
 void http_session_close_now(http_client_t *cli) {
   cli->flags._close = true;
   http_client_close(cli);
+}
+
+void http_session_set_protocol(http_client_t *cli, int prot) {
+    cli->protocol = prot;
 }
 
 #define CHECK_CONN_ERR(ret) \
@@ -102,7 +107,10 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
 #else
     cli->queue = alloc_type(ring_buffer_t);
 #endif
-    if ( !cli->queue ) return -1;
+    if ( !cli->queue ) {
+        DBG("HTTP: queue alloc fail");
+        return -1;
+    }
     int ret = ringbuf_init(cli->queue, RINGBUFFER_SIZE);
     if ( ret < 0 ) {
         DBG("HTTP: ringbuffer init failed %d", ret);
@@ -112,6 +120,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
     cli->flags._close = true;
     cli->flags._cipher = 0;
     cli->timeout = DEFAULT_API_TIMEOUT;
+    cli->protocol = api_via_http;
     return 0;
 }
 
@@ -121,7 +130,8 @@ int __attribute_weak__ http_client_free(http_client_t *cli) {
     free(cli->queue);
 #endif
     cli->queue = NULL;
-    return -1;
+    cli->protocol = api_via_http;
+    return 0;
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req);
@@ -130,10 +140,14 @@ int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req)
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req) {
-    if ( !cli->queue ) return -1;
-    ringbuf_clear(cli->queue);
     cli->response_code = 0;
     cli->request = req;
+    if ( cli->protocol != api_via_http ) return -1;
+    if ( !cli->queue ) {
+        DBG("HTTP: There is no queue");
+        return -1;
+    }
+    ringbuf_clear(cli->queue);
     if ( cli->sock < 0 ) {
         DBG("new TCP connection");
         int ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -145,7 +159,9 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         // resolve the host
         struct sockaddr_in serv;
         struct hostent *serv_resolve;
-        serv_resolve = gethostbyname(P_VALUE(req->host));
+        property_t null_term_host = property_as_null_terminated(&req->host);
+        serv_resolve = gethostbyname(P_VALUE(null_term_host));
+        property_free(&null_term_host);
         if (serv_resolve == NULL) {
             DBG("ERROR, no such host");
             return -1;
@@ -153,8 +169,8 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         memset(&serv, 0, sizeof(serv));
         serv.sin_family = PF_INET;
         bcopy((char *)serv_resolve->h_addr,
-                (char *)&serv.sin_addr.s_addr,
-                (uint32_t)serv_resolve->h_length);
+              (char *)&serv.sin_addr.s_addr,
+              (uint32_t)serv_resolve->h_length);
         serv.sin_port = htons(req->port);
 
         // set timeout
@@ -194,8 +210,9 @@ int __attribute_weak__ http_client_close(http_client_t *cli) {
 }
 
 int default_http_client_close(http_client_t *cli) {
+    if ( cli->protocol != api_via_http ) return  -1;
     if ( cli->sock < 0 ) return -1;
-    if ( !cli->flags._close ) return 0;
+    if ( !cli->flags._close ) return 1;
     if ( cli->flags._cipher ) {
         ssl_close(cli->sock);
         cli->flags._cipher = 0;
@@ -246,13 +263,13 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
 static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *buf) {
     int ret;
     ringbuf_clear(buf);
-    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload) && property_size(&req->payload) ) {
         if ( req->is_chunked ) {
             ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
         } else {
             ret = snprintf((char*)tmpbuffer,
                            ringbuf_capacity(cli->queue),
-                           "Content-Length: %lu\r\n", (long unsigned int)req->payload.size);
+                           "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
             if ( ret < 0 ) return ret;
             if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 )
                 return -1;
@@ -281,10 +298,10 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
 }
 
 static int send_payload(http_client_t *cli, http_request_t *req) {
-    if ( !IS_EMPTY(req->payload.buf) && req->payload.size > 0 ) {
+    if ( !IS_EMPTY(req->payload) && property_size(&req->payload)) {
         if ( req->is_chunked ) {
-            char *data = P_VALUE(req->payload.buf);
-            int len = (int)req->payload.size;
+            char *data = P_VALUE(req->payload);
+            int len = (int)property_size(&req->payload);
             int trData = 0;
             while ( len >= 0 ) {
                 char buf[6];
@@ -299,7 +316,7 @@ static int send_payload(http_client_t *cli, http_request_t *req) {
             }
             return 0;
         } else {
-          int ret = client_send_direct(cli, P_VALUE(req->payload.buf), req->payload.size);
+          int ret = client_send_direct(cli, P_VALUE(req->payload), property_size(&req->payload));
           return ret;
         }
     }
@@ -346,7 +363,10 @@ static int receive_response(http_client_t *cli, http_response_t *res) {
     } while ( !crlf );
     *crlf = 0x0;
     DBG("resp: {%s}", tmp);
-    if( sscanf((char*)tmp, "HTTP/1.1 %4hu", &res->m_httpResponseCode) != 1 ) {
+    char *p = strstr(tmp, "HTTP/1.1 ");
+    if ( !p ) return -1;
+    p = copy_till_to_int(p + 9, " OK", (int*)&res->m_httpResponseCode);
+    if( !p ) {
         DBG("Not a correct HTTP answer : %s", tmp);
         FREE_CHUNK(tmp);
         return -1;
@@ -371,28 +391,35 @@ static int receive_headers(http_client_t *cli, http_response_t *res) {
             break;
         }
 
-        int n = sscanf((char*)tmp, "%256[^:]: %256[^\r\n]", key, value);
-        if ( n == 2 ) {
-            HTTP_DBG("Read header : %s: %s", key, value);
-            if( !strcmp(key, "Content-Length") ) {
-                sscanf(value, "%8d", (int *)&res->recvContentLength);
-            } else if( !strcmp(key, "Transfer-Encoding") ) {
-                if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
-                    res->is_chunked = 1;
-            } else if( !strcmp(key, "Content-Type") ) {
-                http_response_set_content_type(res, property(value, is_stack));
-            } else {
-#if defined(HTTP_PARSE_HEADER)
-                http_response_add_header(res,
-                                         p_stack(key),
-                                         p_stack(value));
-#endif
-            }
-        } else {
-            DBG("Could not parse header");
+        char *p = copy_till(tmp, ": ", key);
+        if ( !p ) {
+            DBG("Could not parse key");
             ret = -1;
             goto recv_header_end;
         }
+        p = copy_till(p, "\r\n", value);
+        if ( !p ) {
+            DBG("Could not parse value");
+            ret = -1;
+            goto recv_header_end;
+        }
+
+            HTTP_DBG("Read header : %s: %s", key, value);
+            if( !strcmp(key, "Content-Length") ) {
+                res->recvContentLength = atoi(value);
+            } else if( !strcmp(key, "Transfer-Encoding") ) {
+                if( !strcmp(value, "Chunked") || !strcmp(value, "chunked") )
+                    res->is_chunked = 1;
+            }
+#if defined(HTTP_PARSE_HEADER)
+            else if( !strcmp(key, "Content-Type") ) {
+                http_response_set_content_type(res, p_stack(value));
+            } else {
+                http_response_add_header(res,
+                                         p_stack(key),
+                                         p_stack(value));
+            }
+#endif
     }
 recv_header_end:
     FREE_CHUNK(tmp);
@@ -409,8 +436,8 @@ static int get_chunked_payload_size(http_client_t *cli, http_response_t *res) {
     int chunk_len = 0;
     uint8_t *crlf = wait_line(cli, (uint8_t*)tmp, RINGBUFFER_SIZE);
     if ( !crlf ) return -1; // no \r\n - wrong string
-    int ret = sscanf((char*)tmp, "%8x\r\n", (unsigned int*)&chunk_len);
-    if ( ret != 1 ) {
+    char *p = copy_till_hex_to_int((char*)tmp, "\r\n", &chunk_len);
+    if ( !p ) {
         // couldn't read a chunk size - fail
         chunk_len = 0;
         FREE_CHUNK(tmp);
@@ -446,7 +473,9 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             }
             HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
             if ( ringbuf_pop(cli->queue, tmpbuffer, need_to_read) < 0 ) return -1;
-            if ( http_response_add_payload(res, p_stack(tmpbuffer), need_to_read) < 0 ) {
+            if ( http_response_add_payload(res,
+                                           p_stack_raw(tmpbuffer, need_to_read),
+                                           need_to_read) < 0 ) {
                 ringbuf_clear(cli->queue);
                 DBG("Payload is failed");
                 return -1;
@@ -463,7 +492,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         }
     } while(1);
 
-    HTTP_DBG("body{%s}", P_VALUE(res->payload.buf));
+    HTTP_DBG("body{%s}", P_VALUE(res->payload));
     return 0;
 }
 
@@ -488,7 +517,7 @@ int default_http_client_do(http_client_t *cli, http_response_t *res) {
         return -1;
     }
 
-    if ( !IS_EMPTY(req->payload.buf) ) {
+    if ( !IS_EMPTY(req->payload) ) {
         if ( send_payload(cli, req) < 0 ) {
             DBG("send payload fail");
             return -1;

@@ -11,8 +11,8 @@
 #include "http/routine.h"
 #include <http/client.h>
 #include <arrow/sign.h>
-#include <data/ringbuffer.h>
 #include <debug.h>
+#include <http/client_mqtt.h>
 
 static http_client_t _cli;
 
@@ -24,17 +24,40 @@ int __http_init(void) {
     return http_client_init(&_cli);
 }
 
+typedef struct protocol_handler_ {
+    int (*client_open) (http_client_t *cli, http_request_t *req);
+    int (*client_close)(http_client_t *cli);
+    int (*client_do)   (http_client_t *cli, http_response_t *res);
+} protocol_handler_t;
+
+protocol_handler_t client_protocols[] = {
+    { http_client_open,
+      http_client_close,
+      http_client_do },
+    { http_mqtt_client_open,
+      http_mqtt_client_close,
+      http_mqtt_client_do }
+};
+
+#define client_protocol_size (sizeof(client_protocols)/sizeof(protocol_handler_t))
+
 int __http_routine(response_init_f req_init, void *arg_init,
                    response_proc_f resp_proc, void *arg_proc) {
   int ret = 0;
   http_request_t request;
   http_response_t response;
+  if ( _cli.protocol > client_protocol_size ) {
+      DBG("Unknown client protocol %d", _cli.protocol);
+      return -2;
+  }
   req_init(&request, arg_init);
   sign_request(&request);
-  if ( http_client_open(&_cli, &request) < 0 ) return -1;
-  ret = http_client_do(&_cli, &response);
+
+  protocol_handler_t *ph = &client_protocols[_cli.protocol];
+  if ( ph->client_open(&_cli, &request) < 0 ) return -1;
+  ret = ph->client_do(&_cli, &response);
   http_request_close(&request);
-  http_client_close(&_cli);
+  ph->client_close(&_cli);
   if ( ret < 0 ) goto http_error;
   if ( resp_proc ) {
     ret = resp_proc(&response, arg_proc);
@@ -46,6 +69,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   }
 http_error:
   http_response_free(&response);
+  if ( ret < 0 ) http_session_close_now(&_cli);
   return ret;
 }
 
