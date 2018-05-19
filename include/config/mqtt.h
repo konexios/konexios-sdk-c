@@ -54,6 +54,13 @@
 #define P_TOP_NAME "krs.tel.gts."
 #endif
 
+#if !defined(PX_TOP_NAME)
+#define PX_TOP_NAME "krs.api.gts."
+#endif
+#if !defined(SX_TOP_NAME)
+#define SX_TOP_NAME "krs/api/stg/"
+#endif
+
 #if !defined(MQTT_COMMAND_ADDR)
 # if defined(DEV_ENV)
 #  define MQTT_COMMAND_ADDR "pgsdev01.arrowconnect.io"

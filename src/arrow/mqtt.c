@@ -167,6 +167,7 @@ static void messageArrived(MessageData* md) {
         }
 }
 
+#if defined(HTTP_VIA_MQTT)
 static void arrived_api_mqtt(MessageData* md) {
     MQTTMessage* message = md->message;
     *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
@@ -177,6 +178,7 @@ static void arrived_api_mqtt(MessageData* md) {
             DBG("MQTT message process fail");
         }
 }
+#endif
 #endif
 
 static int mqttchannelseq( mqtt_env_t *ch, uint32_t num ) {
@@ -260,6 +262,13 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
             DBG("MQTT telemetry setting fail");
             return ret;
         }
+#if defined(HTTP_VIA_MQTT)
+        ret = drv->api_publish_init(tmp, &args);
+        if ( ret < 0 ) {
+            DBG("MQTT API publish setting fail");
+            return ret;
+        }
+#endif
         _mqtt_env_set_init(tmp, MQTT_TELEMETRY_INIT);
     }
     if ( !_mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
@@ -310,6 +319,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     return ret;
 }
 
+#if defined(HTTP_VIA_MQTT)
 int mqtt_api_publish(property_t data) {
     MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
     int ret = -1;
@@ -325,6 +335,7 @@ int mqtt_api_publish(property_t data) {
     }
     return ret;
 }
+#endif
 
 int mqtt_is_telemetry_connect(void) {
     mqtt_env_t *tmp = get_telemetry_env();
@@ -401,6 +412,13 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
             DBG("MQTT subscribe setting fail");
             return ret;
         }
+#if defined(HTTP_VIA_MQTT)
+        ret = drv->api_subscribe_init(tmp, &args);
+        if ( ret < 0 ) {
+            DBG("MQTT API subscribe setting fail");
+            return ret;
+        }
+#endif
         _mqtt_env_set_init(tmp, MQTT_SUBSCRIBE_INIT);
     }
     if ( MQTTSetMessageHandler(&tmp->client,
@@ -408,11 +426,13 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                                messageArrived) < 0 ) {
         DBG("MQTT handler fail");
     }
+#if defined(HTTP_VIA_MQTT)
     if ( MQTTSetMessageHandler(&tmp->client,
                                P_VALUE(tmp->s_api_topic),
                                arrived_api_mqtt) < 0 ) {
         DBG("MQTT API handler fail");
     }
+#endif
     if ( ! _mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
         int ret = _mqtt_env_connect(tmp);
         if ( ret < 0 ) {
@@ -457,18 +477,8 @@ int mqtt_subscribe(void) {
          _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) &&
          !_mqtt_env_is_init(tmp, MQTT_COMMANDS_INIT) ) {
 
-        DBG("Subscribing API to %s", P_VALUE(tmp->s_api_topic));
-        int rc = MQTTSubscribe(&tmp->client,
-                               P_VALUE(tmp->s_api_topic),
-                               QOS2,
-                               arrived_api_mqtt);
-
-        if ( rc < 0 ) {
-            DBG("Subscribe API failed %d\n", rc);
-        }
-
         DBG("Subscribing to %s", P_VALUE(tmp->s_topic));
-        rc = MQTTSubscribe(&tmp->client,
+        int rc = MQTTSubscribe(&tmp->client,
                                P_VALUE(tmp->s_topic),
                                QOS2,
                                messageArrived);
@@ -477,6 +487,18 @@ int mqtt_subscribe(void) {
             DBG("Subscribe failed %d\n", rc);
             return rc;
         }
+
+#if defined(HTTP_VIA_MQTT)
+        DBG("Subscribing API to %s", P_VALUE(tmp->s_api_topic));
+        rc = MQTTSubscribe(&tmp->client,
+                               P_VALUE(tmp->s_api_topic),
+                               QOS2,
+                               arrived_api_mqtt);
+
+        if ( rc < 0 ) {
+            DBG("Subscribe API failed %d\n", rc);
+        }
+#endif
         _mqtt_env_set_init(tmp, MQTT_COMMANDS_INIT);
     }
     return 0;

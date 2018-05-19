@@ -44,6 +44,45 @@ static int mqtt_common_init_iot(
     return 0;
 }
 
+#if defined(HTTP_VIA_MQTT)
+static int mqtt_api_publish_init_iot(
+        mqtt_env_t *env,
+        i_args *args) {
+  CREATE_CHUNK(p_topic, P_TOP_LEN);
+
+  int ret = snprintf(p_topic,
+                     P_TOP_LEN,
+                     "%s%s",
+                     PX_TOP_NAME,
+                     P_VALUE(args->gateway->hid));
+  if ( ret < 0 ) return -1;
+  p_topic[ret] = 0x0;
+  property_copy(&env->p_api_topic, p_stack(p_topic));
+
+  FREE_CHUNK(p_topic);
+  return 0;
+}
+
+static int mqtt_api_subscribe_init_iot(
+        mqtt_env_t *env,
+        i_args *args) {
+    CREATE_CHUNK(s_topic, S_TOP_LEN);
+    // API topic
+    int ret = snprintf(s_topic,
+                       S_TOP_LEN,
+                       "%s%s",
+                       SX_TOP_NAME,
+                       P_VALUE(args->gateway->hid));
+    if ( ret < 0 ) return -1;
+    s_topic[ret] = 0x0;
+    property_copy(&env->s_api_topic, p_stack(s_topic));
+    DBG("sub %s",  s_topic);
+
+    FREE_CHUNK(s_topic);
+    return 0;
+}
+#endif
+
 static int mqtt_telemetry_init_iot(
         mqtt_env_t *env,
         i_args *args) {
@@ -57,15 +96,6 @@ static int mqtt_telemetry_init_iot(
   if ( ret < 0 ) return -1;
   p_topic[ret] = 0x0;
   property_copy(&env->p_topic, p_stack(p_topic));
-
-  ret = snprintf(p_topic,
-                     P_TOP_LEN,
-                     "%s%s",
-                     PX_TOP_NAME,
-                     P_VALUE(args->gateway->hid));
-  if ( ret < 0 ) return -1;
-  p_topic[ret] = 0x0;
-  property_copy(&env->p_api_topic, p_stack(p_topic));
 
   FREE_CHUNK(p_topic);
   return 0;
@@ -85,21 +115,15 @@ static int mqtt_subscribe_init_iot(
     property_copy(&env->s_topic, p_stack(s_topic));
     DBG("sub %s",  s_topic);
 
-    // API topic
-    ret = snprintf(s_topic,
-                       S_TOP_LEN,
-                       "%s%s",
-                       SX_TOP_NAME,
-                       P_VALUE(args->gateway->hid));
-    if ( ret < 0 ) return -1;
-    s_topic[ret] = 0x0;
-    property_copy(&env->s_api_topic, p_stack(s_topic));
-    DBG("sub %s",  s_topic);
     FREE_CHUNK(s_topic);
     return 0;
 }
 
 mqtt_driver_t iot_driver = {
+#if defined(HTTP_VIA_MQTT)
+    mqtt_api_publish_init_iot,
+    mqtt_api_subscribe_init_iot,
+#endif
     mqtt_telemetry_init_iot,
     mqtt_subscribe_init_iot,
     mqtt_common_init_iot

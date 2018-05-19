@@ -34,9 +34,11 @@ protocol_handler_t client_protocols[] = {
     { http_client_open,
       http_client_close,
       http_client_do },
+#if defined(HTTP_VIA_MQTT)
     { http_mqtt_client_open,
       http_mqtt_client_close,
       http_mqtt_client_do }
+#endif
 };
 
 #define client_protocol_size (sizeof(client_protocols)/sizeof(protocol_handler_t))

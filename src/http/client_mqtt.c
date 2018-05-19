@@ -7,6 +7,7 @@
 */
 
 #include "http/client_mqtt.h"
+#if defined(HTTP_VIA_MQTT)
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>
 #include <arrow/events.h>
@@ -113,3 +114,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
 
     return ret;
 }
+
+#else
+typedef void __dummy;
+#endif

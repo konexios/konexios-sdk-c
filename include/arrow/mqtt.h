@@ -63,6 +63,10 @@ typedef struct _i_args {
 } i_args;
 
 typedef struct _mqtt_driver {
+#if defined(HTTP_VIA_MQTT)
+    int (*api_publish_init)(mqtt_env_t *env, i_args *arg);
+    int (*api_subscribe_init)(mqtt_env_t *env, i_args *arg);
+#endif
     int (*telemetry_init)(mqtt_env_t *env, i_args *arg);
     int (*commands_init)(mqtt_env_t *env, i_args *arg);
     int (*common_init)(mqtt_env_t *env, i_args *arg);
