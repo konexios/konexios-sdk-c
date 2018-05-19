@@ -143,12 +143,13 @@ static char *sb_finish(SB *sb)
 
 static void sb_free(SB *sb)
 {
-    if ( sb && sb->start )
+    if ( sb && sb->start ) {
 #if defined(STATIC_JSON)
         static_buf_free(jsonbuf, sb->start);
 #else
         free(sb->start);
 #endif
+    }
 }
 
 /*
@@ -483,9 +484,9 @@ void json_delete(JsonNode *node)
 
 void json_delete_string(char *json_str) {
 #if defined(STATIC_JSON)
-                static_buf_free(jsonbuf, json_str);
+    static_buf_free(jsonbuf, json_str);
 #else
-                free(json_str);
+    free(json_str);
 #endif
 }
 
@@ -555,7 +556,7 @@ static JsonNode *mknode(JsonTag tag)
 #if defined(STATIC_JSON)
     JsonNode *ret = static_allocator(JsonNode);
 #else
-    JsonNode *ret = (JsonNode*) calloc(1, sizeof(JsonNode);
+    JsonNode *ret = (JsonNode*) calloc(1, sizeof(JsonNode));
 #endif
     if (ret == NULL) {
         out_of_memory();
@@ -633,7 +634,7 @@ static void prepend_node(JsonNode *parent, JsonNode *child)
 
 static void append_member(JsonNode *object, property_t key, JsonNode *value)
 {
-    property_copy(&value->key, key);
+    property_move(&value->key, &key);
 	append_node(object, value);
 }
 
@@ -854,12 +855,13 @@ success:
 	return true;
 
 failure_free_key:
-	if (out)
+    if (out) {
 #if defined(STATIC_JSON)
         static_buf_free(jsonbuf, key);
 #else
 		free(key);
 #endif
+    }
 failure:
 	json_delete(ret);
 	return false;
@@ -975,7 +977,7 @@ bool parse_string(const char **sp, char **out)
 	return true;
 
 failed:
-	if (out)
+    if (out)
 		sb_free(&sb);
 	return false;
 }
