@@ -42,7 +42,7 @@ void arrow_command_handler_free(void);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
 // send the answer by DeviceCommand: failed, received or succeeded (cmd_type)
-int arrow_send_event_ans(property_t hid, cmd_type ev, const char *payload);
+int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload);
 
 #if defined(__cplusplus)
 }

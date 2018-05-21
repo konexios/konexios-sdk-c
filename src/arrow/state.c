@@ -11,12 +11,40 @@
 static JsonNode *state_tree = NULL;
 static property_t _device_hid = {0};
 
-int state_handler(char *str) __attribute__((weak));
+int arrow_device_state_handler(char *str) __attribute__((weak));
 
-void add_state(const char *name, const char *value) {
+void arrow_device_state_add(property_t name,
+                            JsonTag tag,
+                            void *value) {
   if ( !state_tree ) state_tree = json_mkobject();
-  // FIXME should be propery
-  json_append_member(state_tree, p_stack(name), json_mkstring(value));
+  switch(tag) {
+  case JSON_STRING:
+      json_append_member(state_tree, name, json_mkstring(value));
+      break;
+  case JSON_NUMBER:
+      json_append_member(state_tree, name, json_mknumber(*((double*)value)));
+      break;
+  case JSON_BOOL:
+      json_append_member(state_tree, name, json_mkbool(*((bool*)value)));
+      break;
+  default:
+      break;
+  }
+}
+
+void arrow_device_state_add_string(property_t name,
+                                   const char *value) {
+    arrow_device_state_add(name, JSON_STRING, (void *)value);
+}
+
+void arrow_device_state_add_number(property_t name,
+                                   int value) {
+    arrow_device_state_add(name, JSON_NUMBER, (void *)&value);
+}
+
+void arrow_device_state_add_bool(property_t name,
+                                 bool value) {
+    arrow_device_state_add(name, JSON_BOOL, (void *)&value);
 }
 
 int arrow_state_mqtt_is_running(void) {
@@ -31,7 +59,7 @@ int arrow_state_mqtt_stop(void) {
 }
 
 int arrow_state_mqtt_run(arrow_device_t *device) {
-  if ( !IS_EMPTY(_device_hid) ) {
+  if ( IS_EMPTY(_device_hid) ) {
     property_weak_copy(&_device_hid, device->hid);
   }
   return arrow_state_mqtt_is_running();
@@ -48,8 +76,14 @@ static void _state_get_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
 }
 
-int arrow_get_state(arrow_device_t *device) {
-  STD_ROUTINE(_state_get_init, device, NULL, NULL, "State get failed...");
+static int _state_get_proc(http_response_t *response, void *arg) {
+    if ( response->m_httpResponseCode != 200 ) return -1;
+    printf("|%s|\r\n", P_VALUE(response->payload));
+    return 0;
+}
+
+int arrow_state_receive(arrow_device_t *device) {
+  STD_ROUTINE(_state_get_init, device, _state_get_proc, NULL, "State get failed...");
 }
 
 typedef enum {
@@ -126,9 +160,44 @@ typedef struct _put_dev_ {
   int put_type;
 } put_dev_t;
 
-int state_handler(char *str) {
-  SSP_PARAMETER_NOT_USED(str);
+int arrow_device_state_handler(char *str) {
   DBG("weak state handler [%s]", str);
+  JsonNode *_main = json_decode(str);
+
+  JsonNode *tmp = NULL;
+  json_foreach(tmp, _main) {
+      DBG(" KEY -- %s", P_VALUE(tmp->key));
+      JsonNode *dev_state = json_find_member(state_tree, tmp->key);
+      if ( dev_state ) {
+          JsonNode *value = json_find_member(tmp, p_const("value"));
+          if ( value ) {
+              DBG(" TAG -- %d", value->tag);
+              DBG(" VAL -- %s", value->string_);
+              switch ( dev_state->tag ) {
+              case JSON_BOOL: {
+                  if ( strcmp(value->string_, "true") == 0 )
+                      dev_state->bool_ = true;
+                  else
+                      dev_state->bool_ = false;
+              } break;
+              case JSON_NUMBER:
+                  dev_state->number_ = atof(value->string_);
+                  break;
+              case JSON_STRING:
+                  json_remove_from_parent(dev_state);
+                  json_delete(dev_state);
+                  json_append_member(state_tree,
+                                     tmp->key,
+                                     json_mkstring(value->string_));
+                  break;
+              default:
+                  DBG("Unknown tag! %d", dev_state->tag);
+              }
+          }
+      }
+  }
+
+  json_delete(_main);
   return 0;
 } // __attribute__((weak))
 
@@ -168,7 +237,7 @@ static void _state_put_init(http_request_t *request, void *arg) {
   }
 }
 
-static int _arrow_put_state(property_t device_hid, _st_put_api put_type, const char *trans_hid) {
+static int arrow_device_state_answer(property_t device_hid, _st_put_api put_type, const char *trans_hid) {
     put_dev_t pd = {device_hid, trans_hid, put_type};
     STD_ROUTINE(_state_put_init, &pd, NULL, NULL, "State put failed...");
 }
@@ -176,7 +245,7 @@ static int _arrow_put_state(property_t device_hid, _st_put_api put_type, const c
 int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   SSP_PARAMETER_NOT_USED(ev);
-  if ( !IS_EMPTY(_device_hid) ) return -1;
+  if ( IS_EMPTY(_device_hid) ) return -1;
 
   JsonNode *device_hid = json_find_member(_parameters, p_const("deviceHid"));
   if ( !device_hid ) {
@@ -197,20 +266,21 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   }
   int retry = 0;
 
-  while ( _arrow_put_state(_device_hid, st_received, trans_hid->string_) < 0 ) {
+  while ( arrow_device_state_answer(_device_hid, st_received, trans_hid->string_) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
   }
 
-  int ret = state_handler(payload->string_);
+  // FIXME is there a real handler?
+  int ret = arrow_device_state_handler(payload->string_);
 
   if ( ret < 0 ) {
-    while ( _arrow_put_state(_device_hid, st_error, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_error, trans_hid->string_) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
   } else {
-    while ( _arrow_put_state(_device_hid, st_complete, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_complete, trans_hid->string_) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }

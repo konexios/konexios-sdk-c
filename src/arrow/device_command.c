@@ -57,10 +57,10 @@ void arrow_command_handler_free(void) {
 }
 
 // events
-static void form_evetns_url(const char *hid, cmd_type ev, char *uri) {
+static void form_evetns_url(property_t hid, cmd_type ev, char *uri) {
     strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
     strcat(uri, "/");
-    strcat(uri, hid);
+    strcat(uri, P_VALUE(hid));
     switch(ev) {
         case failed:    strcat(uri, "/failed"); break;
         case received:  strcat(uri, "/received"); break;
@@ -69,9 +69,9 @@ static void form_evetns_url(const char *hid, cmd_type ev, char *uri) {
 }
 
 typedef struct _event_data {
-	char *hid;
+    property_t hid;
 	cmd_type ev;
-  char *payload; // FIXME property
+    property_t payload;
 } event_data_t;
 
 static void _event_ans_init(http_request_t *request, void *arg) {
@@ -80,13 +80,15 @@ static void _event_ans_init(http_request_t *request, void *arg) {
     form_evetns_url(data->hid, data->ev, uri);
     http_request_init(request, PUT, uri);
     FREE_CHUNK(uri);
-	if ( data->payload ) {
-        http_request_set_payload(request, p_stack(data->payload));
+    if ( !IS_EMPTY(data->payload) ) {
+        http_request_set_payload(request, data->payload);
 	}
 }
 
-int arrow_send_event_ans(property_t hid, cmd_type ev, const char *payload) {
-  event_data_t edata = {P_VALUE(hid), ev, (char *)payload};
+int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
+    event_data_t edata = {p_null(), ev, p_null()};
+    property_weak_copy(&edata.hid, hid);
+    property_weak_copy(&edata.payload, payload);
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
                 "Arrow Event answer failed...");
@@ -103,7 +105,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   int retry = 0;
   http_session_close_set(current_client(), false);
-  while( arrow_send_event_ans(ev->gateway_hid, received, NULL) < 0 ) {
+  while( arrow_send_event_ans(ev->gateway_hid, received, p_null()) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
   }
@@ -161,14 +163,14 @@ device_command_done:
   if ( _error ) {
     property_t _error_prop = json_encode_property(_error);
     DBG("error string: %s", P_VALUE(_error_prop));
-    while ( arrow_send_event_ans(ev->gateway_hid, failed, P_VALUE(_error_prop)) < 0 ) {
+    while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
     property_free(&_error_prop);
     json_delete(_error);
   } else {
-    while ( arrow_send_event_ans(ev->gateway_hid, succeeded, NULL) < 0 ) {
+    while ( arrow_send_event_ans(ev->gateway_hid, succeeded, p_null()) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }

@@ -14,8 +14,7 @@
 
 // default functions to process payload for the http response
 int default_set_payload_handler(void *r,
-                            property_t buf,
-                            int size) {
+                            property_t buf) {
   http_response_t *res = (http_response_t *)r;
   property_move(&res->payload, &buf);
   if ( IS_EMPTY(res->payload) ) {
@@ -24,11 +23,8 @@ int default_set_payload_handler(void *r,
   return 0;
 }
 
-// FIXME payoad size
-int default_add_payload_handler(void *r,
-                            property_t payload,
-                            int size) {
-    SSP_PARAMETER_NOT_USED(size);
+int default_add_payload_handler( void *r,
+                            property_t payload ) {
     http_response_t *res = (http_response_t *)r;
     if ( IS_EMPTY(res->payload) ) {
         property_move(&res->payload, &payload);
@@ -62,16 +58,14 @@ void http_response_set_content_type(http_response_t *res, property_t value) {
   property_copy(&res->content_type.value, value);
 }
 
-void http_response_set_payload(http_response_t *res, property_t payload, uint32_t size) {
-  if ( ! size ) size = P_SIZE(payload);
-  res->_p_meth._p_set_handler(res, payload, size);
+void http_response_set_payload(http_response_t *res, property_t payload) {
+  res->_p_meth._p_set_handler(res, payload);
   res->processed_payload_chunk = 1;
 }
 
-int http_response_add_payload(http_response_t *res, property_t payload, uint32_t size) {
-  if ( !size ) size = P_SIZE(payload);
+int http_response_add_payload(http_response_t *res, property_t payload) {
   int ret = 0;
-  ret = res->_p_meth._p_add_handler(res, payload, size);
+  ret = res->_p_meth._p_add_handler(res, payload);
   if ( ret < 0 ) return -1;
   res->processed_payload_chunk ++ ;
   return 0;
