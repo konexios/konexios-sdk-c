@@ -363,6 +363,7 @@ int MQTTYield(MQTTClient* c, int timeout_ms)
             break;
         } else {
             total_size += rc;
+            return total_size;
         }
   	} while (!TimerIsExpired(&timer));
 

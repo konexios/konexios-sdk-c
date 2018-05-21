@@ -41,7 +41,7 @@
 
 #if defined(MQTT_CIPHER)
 #  define MQTT_SCH "tls"
-#  define MQTT_PORT 1883
+#  define MQTT_PORT 8883
 #else
 # define MQTT_SCH "tcp"
 # define MQTT_PORT 1883
