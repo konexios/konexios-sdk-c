@@ -164,15 +164,15 @@ arrow_routine_error_t arrow_initialize_routine(void) {
 }
 
 arrow_routine_error_t arrow_device_states_sync() {
-
+    if ( !_init_done ) return ROUTINE_ERROR;
+    arrow_post_state_request(current_device());
     return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_device_states_update() {
-    arrow_state_receive(current_device());
-  if ( !_init_done ) return ROUTINE_ERROR;
-  arrow_post_state_update(&_device);
-  return ROUTINE_SUCCESS;
+    if ( !_init_done ) return ROUTINE_ERROR;
+    arrow_post_state_update(&_device);
+    return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_send_telemetry_routine(void *data) {
