@@ -40,16 +40,14 @@ void arrow_device_free(arrow_device_t *dev) {
 #endif
 }
 
-void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value) {
+void arrow_device_add_info(arrow_device_t *dev, property_t key, const char *value) {
   if ( !dev->info) dev->info = json_mkobject();
-  // FIXME property
-  json_append_member(dev->info, p_stack(key), json_mkstring(value));
+  json_append_member(dev->info, key, json_mkstring(value));
 }
 
-void arrow_device_add_property(arrow_device_t *dev, const char *key, const char *value) {
+void arrow_device_add_property(arrow_device_t *dev, property_t key, const char *value) {
   if ( !dev->prop ) dev->prop = json_mkobject();
-  // FIXME
-  json_append_member(dev->prop, p_stack(key), json_mkstring(value));
+  json_append_member(dev->prop, key, json_mkstring(value));
 }
 
 property_t arrow_device_serialize(arrow_device_t *dev) {
@@ -90,7 +88,7 @@ static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   arrow_device_init(device);
-  property_copy(&device->gateway_hid, p_const(P_VALUE(gateway->hid)) ); // FIXME weak pointer
+  property_weak_copy(&device->gateway_hid, (gateway->hid) );
   property_copy(&device->name, p_const(DEVICE_NAME));
   property_copy(&device->type, p_const(DEVICE_TYPE));
   property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));

@@ -370,7 +370,6 @@ mqtt_event_proc_error:
 }
 
 int process_event(const char *str) {
-
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;

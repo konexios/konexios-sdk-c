@@ -21,7 +21,7 @@ static void _device_register_init(http_request_t *request, void *arg) {
 static int _device_register_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
   if ( arrow_device_parse(dev, P_VALUE(response->payload)) < 0) {
-      DBG("Parse error");
+      DBG("Parse error [%s]", P_VALUE(response->payload));
       return -1;
   } else {
       DBG("device hid: %s", P_VALUE(dev->hid));

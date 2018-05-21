@@ -272,8 +272,7 @@ int arrow_software_release_dowload_set_cb(
 
 // this is a special payload handler for the OTA
 int arrow_software_release_payload_handler(void *r,
-                                           property_t payload,
-                                           int size) {
+                                           property_t payload) {
   http_response_t *res = (http_response_t *)r;
   int flag = FW_FIRST;
   if ( __payload ) {
@@ -282,8 +281,8 @@ int arrow_software_release_payload_handler(void *r,
           md5_chunk_init();
       } else
           flag |= FW_NEXT;
-      md5_chunk(payload.value, size);
-      return __payload(payload.value, size, flag);
+      md5_chunk(payload.value, property_size(&payload));
+      return __payload(payload.value, property_size(&payload), flag);
   }
   return -1;
 }

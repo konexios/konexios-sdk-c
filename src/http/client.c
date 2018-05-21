@@ -466,8 +466,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
             if ( ringbuf_pop(cli->queue, tmpbuffer, need_to_read) < 0 ) return -1;
             if ( http_response_add_payload(res,
-                                           p_stack_raw(tmpbuffer, need_to_read),
-                                           need_to_read) < 0 ) {
+                                           p_stack_raw(tmpbuffer, need_to_read) ) < 0 ) {
                 ringbuf_clear(cli->queue);
                 DBG("Payload is failed");
                 return -1;

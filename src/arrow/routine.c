@@ -163,13 +163,16 @@ arrow_routine_error_t arrow_initialize_routine(void) {
   return ROUTINE_SUCCESS;
 }
 
-arrow_routine_error_t arrow_update_state(const char *name, const char *value) {
-  add_state(name, value);
-  if ( _init_done ) {
+arrow_routine_error_t arrow_device_states_sync() {
+    if ( !_init_done ) return ROUTINE_ERROR;
+    arrow_post_state_request(current_device());
+    return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_device_states_update() {
+    if ( !_init_done ) return ROUTINE_ERROR;
     arrow_post_state_update(&_device);
     return ROUTINE_SUCCESS;
-  }
-  return ROUTINE_ERROR;
 }
 
 arrow_routine_error_t arrow_send_telemetry_routine(void *data) {

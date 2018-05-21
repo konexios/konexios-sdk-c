@@ -43,11 +43,9 @@ CMP_INIT(METH)
 CMP_INIT(Scheme)
 
 extern int default_set_payload_handler(void *r,
-                                       property_t buf,
-                                       int size);
+                                       property_t buf);
 extern int default_add_payload_handler(void *r,
-                                       property_t buf,
-                                       int size);
+                                       property_t buf);
 
 #if defined(STATIC_HTTP_CLIENT)
 // FIXME use static property
