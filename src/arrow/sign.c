@@ -164,6 +164,7 @@ static void get_canonical_string(char *buffer, http_request_t *req){
 }
 
 void sign_request(http_request_t *req) {
+    timestamp_t timest;
     static char ts[25];
     static char signature[70];
     char *canonicalQuery = NULL;
@@ -175,7 +176,8 @@ void sign_request(http_request_t *req) {
 #endif
       get_canonical_string(canonicalQuery, req);
     }
-    get_time(ts);
+    timestamp(&timest);
+    timestamp_string(&timest, ts);
     if ( http_request_find_header(req, p_const("x-arrow-apikey"), NULL) < 0 ) {
         http_request_add_header(req,
                                 p_const("x-arrow-apikey"),

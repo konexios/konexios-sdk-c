@@ -164,6 +164,7 @@ arrow_routine_error_t arrow_initialize_routine(void) {
 }
 
 arrow_routine_error_t arrow_device_states_sync() {
+    arrow_state_receive(current_device());
     if ( !_init_done ) return ROUTINE_ERROR;
     arrow_post_state_request(current_device());
     return ROUTINE_SUCCESS;

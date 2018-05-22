@@ -7,6 +7,7 @@
  */
 
 #include <arrow/api/json/parse.h>
+#include <arrow/utf8.h>
 
 void who_when_init(who_when_t *ww) {
     memset(&ww->date, 0x0, sizeof(struct tm));
@@ -57,5 +58,39 @@ int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *
     t = json_find_member(tmp, p_stack(person));
     if ( t && t->tag == JSON_STRING )
         property_copy( &ww->by, p_stack(t->string_));
+    return 0;
+}
+
+// pasre this for ex "2018-05-21T13:40:32.173Z"
+int timestamp_parse(timestamp_t *t, const char *s) {
+    // parse year
+    int tmp;
+    char *p = copy_till_to_int(s, "-", &tmp);
+    if ( !p ) return -1;
+    t->year = tmp;
+    // mon
+    p = copy_till_to_int(p, "-", &tmp);
+    if ( !p ) return -1;
+    t->mon = tmp;
+    // day
+    p = copy_till_to_int(p, "T", &tmp);
+    if ( !p ) return -1;
+    t->day = tmp;
+    // hour
+    p = copy_till_to_int(p, ":", &tmp);
+    if ( !p ) return -1;
+    t->hour = tmp;
+    // min
+    p = copy_till_to_int(p, ":", &tmp);
+    if ( !p ) return -1;
+    t->min = tmp;
+    // sec
+    p = copy_till_to_int(p, ".", &tmp);
+    if ( !p ) return -1;
+    t->sec = tmp;
+    // msec
+    p = copy_till_to_int(p, "Z", &tmp);
+    if ( !p ) return -1;
+    t->msec = tmp;
     return 0;
 }
