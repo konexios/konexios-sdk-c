@@ -436,7 +436,6 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
       msleep(ARROW_RETRY_DELAY);
   }
 
-  // FIXME is there a real handler?
   JsonNode *_states = json_decode(payload->string_);
   int ret = arrow_device_state_handler(_states);
 
