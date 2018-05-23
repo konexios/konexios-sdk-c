@@ -6,8 +6,6 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#define MODULE_NAME "HTTP_Request"
-
 #include "http/routine.h"
 #include <http/client.h>
 #include <arrow/sign.h>

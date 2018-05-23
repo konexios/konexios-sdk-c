@@ -104,7 +104,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int retry = 0;
   http_session_close_set(current_client(), false);
   // FIXME defined it
+#if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
+#endif
   while( arrow_send_event_ans(ev->gateway_hid, received, NULL) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
