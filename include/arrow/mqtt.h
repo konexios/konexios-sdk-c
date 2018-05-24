@@ -110,6 +110,7 @@ int mqtt_subscribe(void);
 // Wait some event from the cloud
 // The user's command or software update command
 int mqtt_yield(int timeout_ms);
+int mqtt_receive(int timeout_ms);
 // Terminate all connections
 void mqtt_disconnect(void);
 void mqtt_terminate(void);
