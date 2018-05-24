@@ -54,8 +54,9 @@ int __http_routine(response_init_f req_init, void *arg_init,
   sign_request(&request);
 
   protocol_handler_t *ph = &client_protocols[_cli.protocol];
-  if ( ph->client_open(&_cli, &request) < 0 ) return -1;
-  ret = ph->client_do(&_cli, &response);
+  if ( (ret = ph->client_open(&_cli, &request)) >= 0 ) {
+      ret = ph->client_do(&_cli, &response);
+  }
   http_request_close(&request);
   ph->client_close(&_cli);
   if ( ret < 0 ) goto http_error;
@@ -69,7 +70,10 @@ int __http_routine(response_init_f req_init, void *arg_init,
   }
 http_error:
   http_response_free(&response);
-  if ( ret < 0 ) http_session_close_now(&_cli);
+  if ( ret < 0 ) {
+      http_session_close_set(&_cli, true);
+      ph->client_close(&_cli);
+  }
   return ret;
 }
 

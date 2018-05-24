@@ -46,8 +46,10 @@ typedef struct _mqtt_env_ {
     property_t username;
     property_t s_topic;
     property_t p_topic;
+#if defined(HTTP_VIA_MQTT)
     property_t s_api_topic;
     property_t p_api_topic;
+#endif
     property_t addr;
     short port;
     short init;

@@ -13,6 +13,8 @@
 #include <arrow/events.h>
 #include <debug.h>
 
+#define MQTT_DBG(...)
+
 #define USE_STATIC
 #include <data/chunk.h>
 
@@ -60,8 +62,10 @@ static void data_prep(MQTTPacket_connectData *data) {
 static int _mqtt_init_common(mqtt_env_t *env) {
     property_init(&env->p_topic);
     property_init(&env->s_topic);
+#if defined(HTTP_VIA_MQTT)
     property_init(&env->p_api_topic);
     property_init(&env->s_api_topic);
+#endif
     property_init(&env->username);
     property_init(&env->addr);
     data_prep(&env->data);
@@ -83,8 +87,10 @@ static int _mqtt_deinit_common(mqtt_env_t *env) {
 #endif
     property_free(&env->p_topic);
     property_free(&env->s_topic);
+#if defined(HTTP_VIA_MQTT)
     property_free(&env->p_api_topic);
     property_free(&env->s_api_topic);
+#endif
     property_free(&env->username);
     property_free(&env->addr);
 #if !defined(STATIC_MQTT_ENV)
@@ -327,6 +333,7 @@ int mqtt_api_publish(property_t data) {
         if ( IS_EMPTY(data) ) return -1;
         msg.payload = P_VALUE(data);
         msg.payloadlen = property_size(&data);
+        MQTT_DBG("[%d][%s]",msg.payloadlen, msg.payload);
         ret = MQTTPublish(&tmp->client,
                           P_VALUE(tmp->p_api_topic),
                           &msg);

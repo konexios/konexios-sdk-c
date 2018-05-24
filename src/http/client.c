@@ -32,11 +32,6 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
-void http_session_close_now(http_client_t *cli) {
-  cli->flags._close = true;
-  http_client_close(cli);
-}
-
 void http_session_set_protocol(http_client_t *cli, int prot) {
     cli->protocol = prot;
 }
