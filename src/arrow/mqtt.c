@@ -171,8 +171,7 @@ static void messageArrived(MessageData* md) {
 static void arrived_api_mqtt(MessageData* md) {
     MQTTMessage* message = md->message;
     *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
-    DBG("message arrived %d", message->payloadlen);
-    //
+    DBG("api message arrived %d", message->payloadlen);
     if ( message->payloadlen < MQTT_RECVBUF_LEN )
         if ( process_http_payload(message->payload) < 0 ) {
             DBG("MQTT message process fail");

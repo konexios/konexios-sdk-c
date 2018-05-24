@@ -103,7 +103,6 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   int retry = 0;
   http_session_close_set(current_client(), false);
-  // FIXME defined it
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
 #endif

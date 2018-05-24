@@ -36,10 +36,13 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     http_response_init(res, &req->_response_payload_meth);
 
     JsonNode *_node = json_mkobject();
-    property_t reqhid = p_const("ABC-123");
+    property_map_t *tmp = NULL;
+    char reqhid[50];
+    strcpy(reqhid, "GS-");
+    get_time(reqhid+3);
     json_append_member(_node,
                        p_const("requestId"),
-                       json_mkstring(P_VALUE(reqhid)));
+                       json_mkstring(reqhid));
     json_append_member(_node,
                        p_const("eventName"),
                        json_mkstring("GatewayToServer_ApiRequest"));
@@ -54,15 +57,18 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     json_append_member(_parameters,
                        p_const("method"),
                        json_mkstring(P_VALUE(req->meth)));
-    json_append_member(_parameters,
-                       p_const("apiKey"),
-                       json_mkstring(get_api_key()));
+
+    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-apikey");
+    if ( tmp ) {
+        json_append_member(_parameters,
+                           p_const("apiKey"),
+                           json_mkstring(P_VALUE(tmp->value)));
+    }
     if ( !IS_EMPTY(req->payload) ) {
         json_append_member(_parameters,
                            p_const("body"),
                            json_mkstring(P_VALUE(req->payload)));
     }
-    property_map_t *tmp = NULL;
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-signature");
     if ( tmp ) {
         json_append_member(_parameters,
@@ -93,7 +99,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                              JsonNode *_parameters);
     json_append_member(_node, p_const("parameters"), _parameters);
     as_event_sign(sig,
-                  reqhid,
+                  p_stack(reqhid),
                   "GatewayToServer_ApiRequest",
                   0,
                   _parameters );
