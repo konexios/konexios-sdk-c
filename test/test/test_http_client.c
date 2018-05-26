@@ -18,6 +18,7 @@
 
 #include "mock_mac.h"
 #include "mock_sockdecl.h"
+#include "socket_weak.h"
 
 #include "http_cb.h"
 #include "fakedns.h"
@@ -31,7 +32,7 @@ void tearDown(void)
 {
 }
 
-static http_client_t _test_cli = { -1, -1, 0, {1, 1}, NULL, NULL, NULL };
+static http_client_t _test_cli;
 
 void test_client_init(void) {
     http_client_init(&_test_cli);
@@ -68,13 +69,16 @@ void test_http_client_do( void ) {
     send_StubWithCallback(send_cb);
     recv_StubWithCallback(recv_cb);
 
-    int ret = http_client_do(&_test_cli, &request, &response);
+    http_client_open(&_test_cli, &request);
+
+    int ret = http_client_do(&_test_cli, &response);
     TEST_ASSERT_EQUAL_INT(0, ret);
     TEST_ASSERT_EQUAL_INT(200, response.m_httpResponseCode);
 }
 
 void test_http_client_free( void ) {
     soc_close_Expect(0);
+    http_client_close(&_test_cli);
     http_client_free(&_test_cli);
     TEST_ASSERT(!_test_cli.queue);
 }

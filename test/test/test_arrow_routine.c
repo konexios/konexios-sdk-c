@@ -5,6 +5,7 @@
 #include "api_gateway_info.h"
 #include "http_routine.h"
 #include "api_device_device.h"
+#include "socket_weak.h"
 
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
@@ -70,8 +71,8 @@
 #include "fakedns.h"
 #include "fakesock.h"
 
-void setUp(void)
-{
+void setUp(void) {
+    __http_init();
 }
 
 void tearDown(void)

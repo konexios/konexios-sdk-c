@@ -5,6 +5,7 @@
 #include "api_gateway_info.h"
 #include "http_routine.h"
 #include "api_device_device.h"
+#include "socket_weak.h"
 
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
@@ -79,6 +80,7 @@ static arrow_gateway_config_t _test_gateway_config;
 static arrow_device_t _test_device;
 
 void setUp(void) {
+    __http_init();
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
