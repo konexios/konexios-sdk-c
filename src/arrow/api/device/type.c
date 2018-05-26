@@ -61,7 +61,7 @@ static void _device_type_list_init(http_request_t *request, void *arg) {
 static int _device_type_list_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   if ( response->m_httpResponseCode == 200 ) {
-    DBG("types[%s]", P_VALUE(response->payload.buf));
+    DBG("types[%s]", P_VALUE(response->payload));
   } else return -1;
   return 0;
 }
@@ -71,11 +71,11 @@ int arrow_device_type_list(void) {
   STD_ROUTINE(_device_type_list_init, NULL, _device_type_list_proc, NULL, "Device Type list");
 }
 
-static char  *device_type_serialize(device_type_t *dev) {
+static property_t device_type_serialize(device_type_t *dev) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, "description", json_mkstring(dev->description));
-  json_append_member(_main, "enabled", json_mkbool(dev->enabled));
-  json_append_member(_main, "name", json_mkstring(dev->name));
+  json_append_member(_main, p_const("description"), json_mkstring(dev->description));
+  json_append_member(_main, p_const("enabled"), json_mkbool(dev->enabled));
+  json_append_member(_main, p_const("name"), json_mkstring(dev->name));
   JsonNode *tls = json_mkarray();
   device_type_telemetry_t *t = NULL;
   arrow_linked_list_for_each( t, dev->telemetries, device_type_telemetry_t ) {
@@ -84,18 +84,18 @@ static char  *device_type_serialize(device_type_t *dev) {
     property_map_t *var = NULL;
     arrow_linked_list_for_each ( var, t->variables, property_map_t ) {
         JsonNode *tl_variables = json_mkobject();
-        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->key)));
-        json_append_member(tl_element, "description", json_mkstring(P_VALUE(var->value)));
+        json_append_member(tl_element, p_const("description"), json_mkstring(P_VALUE(var->key)));
+        json_append_member(tl_element, p_const("description"), json_mkstring(P_VALUE(var->value)));
         json_append_element(var_array, tl_variables);
     }
-    json_append_member(tl_element, "variables", var_array);
-    json_append_member(tl_element, "description", json_mkstring(t->description));
-    json_append_member(tl_element, "name", json_mkstring(t->name));
-    json_append_member(tl_element, "type", json_mkstring(t->type));
+    json_append_member(tl_element, p_const("variables"), var_array);
+    json_append_member(tl_element, p_const("description"), json_mkstring(t->description));
+    json_append_member(tl_element, p_const("name"), json_mkstring(t->name));
+    json_append_member(tl_element, p_const("type"), json_mkstring(t->type));
     json_append_element(tls, tl_element);
   }
-  json_append_member(_main, "telemetries", tls);
-  char *payload = json_encode(_main);
+  json_append_member(_main, p_const("telemetries"), tls);
+  property_t payload = json_encode_property(_main);
   DBG("type pay: [%s]", payload);
   json_delete(_main);
   return payload;
@@ -107,7 +107,7 @@ static void _device_type_create_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(device_type_serialize(dev_type)));
+  http_request_set_payload(request, device_type_serialize(dev_type));
 }
 
 int arrow_device_type_create(device_type_t *dev_type) {
@@ -127,7 +127,7 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
            P_VALUE(ddt->dev->hid));
   http_request_init(request, PUT, uri);
   FREE_CHUNK(uri);
-  http_request_set_payload(request, p_heap(device_type_serialize(ddt->type)));
+  http_request_set_payload(request, device_type_serialize(ddt->type));
 }
 
 int arrow_device_type_update(arrow_device_t *dev, device_type_t *dev_type) {

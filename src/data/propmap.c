@@ -8,6 +8,16 @@
 
 #include "data/propmap.h"
 
+#if defined(STATIC_PROPERTY)
+#include <data/static_alloc.h>
+static_object_pool_type(property_map_t, ARROW_MAX_PROPERTY)
+#define ALLOC static_allocator
+#define FREE(ptr)  static_free(property_map_t, ptr)
+#else
+#define ALLOC alloc_type
+#define FREE(ptr)  free(ptr)
+#endif
+
 static int propkeyeq( property_map_t *s, property_t key ) {
     if ( property_cmp ( &s->key, &key ) == 0 ) return 0;
     return -1;
@@ -20,7 +30,8 @@ int property_map_init(property_map_t *root) {
 }
 
 int property_map_add(property_map_t **root, property_t key, property_t value) {
-    property_map_t *el = (property_map_t *) calloc(1, sizeof(property_map_t));
+    property_map_t *el = ALLOC(property_map_t);
+    if ( !el ) return -1;
     property_init(&el->key);
     property_init(&el->value);
     property_copy(&el->key, key);
@@ -34,7 +45,7 @@ int property_map_delete(property_map_t **root, property_t key) {
     linked_list_find_node(rm, *root, property_map_t, propkeyeq, key);
     if ( rm ) {
         arrow_linked_list_del_node( *root, property_map_t, rm );
-        free(rm);
+        FREE(rm);
         return 0;
     }
     return -1;
@@ -60,7 +71,7 @@ int property_map_clear(property_map_t **root) {
     arrow_linked_list_for_each_safe( tmp, *root, property_map_t) {
         property_free(&tmp->key);
         property_free(&tmp->value);
-        free(tmp);
+        FREE(tmp);
     }
     return 0;
 }

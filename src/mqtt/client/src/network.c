@@ -10,6 +10,7 @@
 #endif
 
 static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
+    if ( len <= 0 ) return -1;
     struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
     if ((int)interval.tv_sec < 0 || (interval.tv_sec == 0 && interval.tv_usec <= 0)) {
         interval.tv_sec = 0;
@@ -27,7 +28,7 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 #else
     	rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
 #endif
-//      if (rc) DBG("mqtt recv %d/%d", rc, len);
+//      DBG("mqtt recv %d/%d", rc, len);
         if (rc < 0) {
 #if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
             DBG("error(%d): %s", rc, strerror(errno));

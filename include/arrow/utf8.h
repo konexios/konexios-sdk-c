@@ -9,6 +9,9 @@
 #ifndef ARROW_UTF8_H_
 #define ARROW_UTF8_H_
 
+char *copy_till(const char *src, const char *end_pattern, char *dst);
+char *copy_till_to_int(const char *src, const char *end_pattern, int *i);
+char *copy_till_hex_to_int(const char *src, const char *end_pattern, int *i);
 int utf8check(const char *s);
 void fix_urldecode(char *query);
 void urlencode(char *dst, char *src, int len);

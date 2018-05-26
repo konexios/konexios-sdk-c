@@ -32,6 +32,10 @@
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
 
+#if defined(STATIC_MQTT_ENV)
+#include <data/static_alloc.h>
+#endif
+
 #if defined(ARROW_THREAD)
 #include <sys/mutex.h>
 #define MQTT_EVENTS_QUEUE_LOCK      arrow_mutex_lock(_event_mutex)
@@ -41,19 +45,20 @@
 #define MQTT_EVENTS_QUEUE_UNLOCK
 #endif
 
-static void free_mqtt_event(mqtt_event_t *mq) {
-  if ( mq->gateway_hid ) free(mq->gateway_hid);
-  if ( mq->device_hid ) free(mq->device_hid);
-  if ( mq->cmd ) free(mq->cmd);
-  if ( mq->name ) free(mq->name);
-  if ( mq->parameters ) json_delete(mq->parameters);
+static void mqtt_event_init(mqtt_event_t *mq) {
+    property_init(&mq->gateway_hid);
+    property_init(&mq->device_hid);
+    property_init(&mq->name);
+    mq->cmd = NULL;
+    mq->parameters = NULL;
 }
 
-static int fill_string_from_json(JsonNode *_node, const char *name, char **str) {
-  JsonNode *tmp = json_find_member(_node, name);
-  if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-  *str = strdup(tmp->string_);
-  return 0;
+static void mqtt_event_free(mqtt_event_t *mq) {
+  property_free(&mq->gateway_hid);
+  property_free(&mq->device_hid);
+  property_free(&mq->name);
+  if ( mq->cmd ) free(mq->cmd);
+  if ( mq->parameters ) json_delete(mq->parameters);
 }
 
 typedef int (*submodule)(void *, JsonNode *);
@@ -95,14 +100,14 @@ struct check_signature_t {
 static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
   char signature[65] = {0};
   int err = gateway_payload_sign(signature,
-                                 ev->gateway_hid,
-                                 ev->name,
+                                 P_VALUE(ev->gateway_hid),
+                                 P_VALUE(ev->name),
                                  ev->encrypted,
                                  can,
                                  "1");
   if ( err ) return -1;
   DBG("cmp { %s, %s }", sign, signature);
-  return ( strcmp(sign, signature) == 0 ? 1 : 0 );
+  return ( strcmp(sign, signature) == 0 ? 0 : -1 );
 }
 
 static struct check_signature_t checker_collection[] = {
@@ -120,11 +125,125 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_t *ev,
   return -1;
 }
 
+#if defined(STATIC_MQTT_ENV)
+static char static_canonical_prm[MQTT_RECVBUF_LEN];
+static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
+#else
 static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
+#endif
+
+typedef struct _str_t {
+  char *start;
+  int len;
+} str_t;
+
+int less(str_t *s1, str_t *s2) {
+    int _min = (s1->len < s2->len ? s1->len : s2->len);
+    int i = 0;
+    for ( i = 0; i<_min; i++) {
+        if ( s1->start[i] == s2->start[i] ) continue;
+        if ( s1->start[i] < s2->start[i] ) {
+            return 1;
+        } else return -1;
+    }
+    return 0;
+}
+
+void swap(str_t *s1, str_t *s2) {
+    char saved;
+    int start_pos = s1->len-1;
+    int current_pos = start_pos;
+    int i = 0;
+    start_pos = 0;
+    while (i < s1->len + s2->len ) {
+        current_pos = start_pos;
+        saved = s1->start[current_pos];
+        do {
+            int next_pos = 0;
+            if ( current_pos < s1->len ) next_pos = s2->len + current_pos;
+            else next_pos = current_pos - s1->len;
+            char t = s1->start[next_pos];
+            s1->start[next_pos] = saved;
+            saved = t;
+            i++;
+            current_pos = next_pos;
+        } while ( start_pos != current_pos );
+        start_pos++;
+    }
+    int size1 = s1->len;
+    s1->len = s2->len;
+    s2->len = size1;
+    s2->start = s1->start + s1->len;
+}
+
+int booble(str_t *s, int len) {
+    int do_sort = 1;
+    while(do_sort) {
+        do_sort = 0;
+        int i = 0;
+        for ( i = 0; i<len-1; i++ ) {
+            if ( less (&s[i], &s[i+1]) == -1 ) {
+                swap(&s[i], &s[i+1]);
+                do_sort = 1;
+            }
+        }
+    }
+    return 0;
+}
 
 static char *form_canonical_prm(JsonNode *param) {
+  JsonNode *child;
+  char *canParam = static_canonical_prm;
+  str_t can_list[MAX_PARAM_LINE];
+  int total = 0;
+  int count = 0;
+  json_foreach(child, param) {
+      can_list[count].start = canParam + total;
+      int i;
+      int key_len = strlen(json_key(child));
+      for ( i=0; i < key_len; i++ )
+          *(can_list[count].start+i) = tolower((int)json_key(child)[i]);
+      *(can_list[count].start+i) = '=';
+      can_list[count].len = key_len + 1;
+
+      int r = 0;
+      switch(child->tag) {
+      case JSON_STRING:
+          r = snprintf(can_list[count].start+can_list[count].len,
+                       sizeof(static_canonical_prm) - total,
+                       "%s",
+                       child->string_);
+          break;
+      case JSON_BOOL:
+          r = snprintf(can_list[count].start+can_list[count].len,
+                       sizeof(static_canonical_prm) - total,
+                       "%s",
+                       (child->bool_?"true":"false"));
+          break;
+      default:
+          r = snprintf(can_list[count].start+can_list[count].len,
+                       16,
+                       "%f",
+                       child->number_);
+      }
+
+      can_list[count].len += r;
+      can_list[count].start[can_list[count].len] = '\n';
+      can_list[count].len++;
+      total += can_list[count].len;
+      count++;
+  }
+  can_list[count-1].start[can_list[count-1].len-1] = '\0';
+  can_list[count-1].len--;
+  total--;
+  booble(can_list, count);
+  return canParam;
+}
+
+#if 0
+static __attribute_used__ char *form_canonical_prm2(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
@@ -155,7 +274,14 @@ static char *form_canonical_prm(JsonNode *param) {
     }
     count++;
   }
+#if defined(STATIC_MQTT_ENV)
+  if ( (size_t)total_len > sizeof(static_canonical_prm) ) goto can_list_error;
+  canParam = static_canonical_prm;
+  DBG("GATEWAY SIGN: static mem %d", total_len);
+#else
   canParam = (char*)malloc(total_len);
+  DBG("GATEWAY SIGN: alloc memory %d", total_len);
+#endif
   if ( !canParam ) {
       DBG("GATEWAY SIGN: not enough memory %d", total_len);
       goto can_list_error;
@@ -175,6 +301,9 @@ can_list_error:
   }
   return NULL;
 }
+#endif
+
+
 
 static mqtt_event_t *__event_queue = NULL;
 #if defined(ARROW_THREAD)
@@ -194,7 +323,12 @@ void arrow_mqtt_events_init(void) {
 int arrow_mqtt_has_events(void) {
     int ret = -1;
     MQTT_EVENTS_QUEUE_LOCK;
-    ret = __event_queue?1:0;
+    if ( !__event_queue ) return 0;
+    ret = 0;
+    mqtt_event_t *tmp = NULL;
+    arrow_linked_list_for_each(tmp, __event_queue, mqtt_event_t) {
+        ret++;
+    }
     MQTT_EVENTS_QUEUE_UNLOCK;
     return ret;
 }
@@ -213,7 +347,7 @@ int arrow_mqtt_event_proc(void) {
     submodule current_processor = NULL;
     int i = 0;
     for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
-      if ( sub_list[i].name && strcmp(sub_list[i].name, tmp->name) == 0 ) {
+      if ( sub_list[i].name && strcmp(sub_list[i].name, P_VALUE(tmp->name)) == 0 ) {
         current_processor = sub_list[i].proc;
       }
     }
@@ -226,17 +360,31 @@ int arrow_mqtt_event_proc(void) {
     }
     if ( __event_queue ) ret = 1;
 mqtt_event_proc_error:
-    free_mqtt_event(tmp);
+    mqtt_event_free(tmp);
+#if defined(STATIC_MQTT_ENV)
+    static_free(mqtt_event_t, tmp);
+#else
     free(tmp);
+#endif
     return ret;
 }
 
 int process_event(const char *str) {
+#if defined(ARROW_MAX_MQTT_COMMANDS)
+    if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
+        return -1;
+#endif
+
+#if defined(STATIC_MQTT_ENV)
+    mqtt_event_t *mqtt_e = static_allocator(mqtt_event_t);
+#else
   mqtt_event_t *mqtt_e = (mqtt_event_t *)calloc(1, sizeof(mqtt_event_t));
+#endif
   if ( !mqtt_e ) {
       DBG("PROCESS EVENT: not enough memory");
       return -2;
   }
+  mqtt_event_init(mqtt_e);
   int ret = -1;
   JsonNode *_main = json_decode(str);
   if ( !_main ) {
@@ -244,7 +392,7 @@ int process_event(const char *str) {
       return -1;
   }
 
-  if ( fill_string_from_json(_main, "hid", &mqtt_e->gateway_hid) < 0 ) {
+  if ( fill_string_from_json(_main, p_const("hid"), &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
     goto error;
   }
@@ -252,7 +400,7 @@ int process_event(const char *str) {
   DBG("ev ghid: %s", mqtt_e->gateway_hid);
 #endif
 
-  if ( fill_string_from_json(_main, "name", &mqtt_e->name) < 0 ) {
+  if ( fill_string_from_json(_main, p_const("name"), &mqtt_e->name) < 0 ) {
     DBG("cannot find name");
     goto error;
   }
@@ -260,35 +408,53 @@ int process_event(const char *str) {
   DBG("ev name: %s", mqtt_e->name);
 #endif
 
-  JsonNode *_encrypted = json_find_member(_main, "encrypted");
+  if ( IS_EMPTY(mqtt_e->gateway_hid) || IS_EMPTY(mqtt_e->name) ) {
+      DBG("EMPTY parameters {%s, %s}", P_VALUE(mqtt_e->gateway_hid), P_VALUE(mqtt_e->name));
+  }
+
+  JsonNode *_encrypted = json_find_member(_main, p_const("encrypted"));
   if ( !_encrypted ) goto error;
   mqtt_e->encrypted = _encrypted->bool_;
 
-  JsonNode *_parameters = json_find_member(_main, "parameters");
+  JsonNode *_parameters = json_find_member(_main, p_const("parameters"));
   if ( !_parameters ) goto error;
-  JsonNode *sign_version = json_find_member(_main, "signatureVersion");
+  JsonNode *sign_version = json_find_member(_main, p_const("signatureVersion"));
   if ( sign_version ) {
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
       DBG("signature vertsion: %s", sign_version->string_);
 #endif
-    JsonNode *sign = json_find_member(_main, "signature");
+    JsonNode *sign = json_find_member(_main, p_const("signature"));
     if ( !sign ) goto error;
     char *can = form_canonical_prm(_parameters);
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
     DBG("[%s]", can);
 #endif
-    if ( !check_signature(sign_version->string_, sign->string_, mqtt_e, can) ) {
+    if ( !can ) goto error;
+    if ( check_signature(sign_version->string_, sign->string_, mqtt_e, can) < 0 ) {
       DBG("Alarm! signature is failed...");
+#if !defined(STATIC_MQTT_ENV)
       free(can);
+#endif
       goto error;
     }
+#if !defined(STATIC_MQTT_ENV)
     free(can);
+#endif
   }
   json_remove_from_parent(_parameters);
   mqtt_e->parameters = _parameters;
+  ret = 0;
   arrow_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
 
 error:
+  if ( ret < 0 ) {
+      mqtt_event_free(mqtt_e);
+#if defined(STATIC_MQTT_ENV)
+      static_free(mqtt_event_t, mqtt_e);
+#else
+      free(mqtt_e);
+#endif
+  }
   if ( _main ) json_delete(_main);
   return ret;
 }

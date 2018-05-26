@@ -54,6 +54,7 @@ static void data_prep(MQTTPacket_connectData *data) {
     MQTTPacket_connectData d = MQTTPacket_connectData_initializer;
     *data = d;
     data->cleansession = MQTT_CLEAN_SESSION;
+    data->keepAliveInterval = 10;
 }
 
 static int _mqtt_init_common(mqtt_env_t *env) {
@@ -154,7 +155,12 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 static void messageArrived(MessageData* md) {
     MQTTMessage* message = md->message;
     *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
-    process_event(message->payload);
+    DBG("message arrived %d", message->payloadlen);
+    //
+    if ( message->payloadlen < MQTT_RECVBUF_LEN )
+        if ( process_event(message->payload) < 0 ) {
+            DBG("MQTT message process fail");
+        }
 }
 #endif
 
@@ -277,13 +283,14 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     int ret = -1;
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
-        char *payload = telemetry_serialize(device, d);
-        msg.payload = payload;
-        msg.payloadlen = strlen(payload);
+        property_t payload = telemetry_serialize(device, d);
+        if ( IS_EMPTY(payload) ) return -1;
+        msg.payload = P_VALUE(payload);
+        msg.payloadlen = property_size(&payload);
         ret = MQTTPublish(&tmp->client,
                           P_VALUE(tmp->p_topic),
                           &msg);
-        free(payload);
+        property_free(&payload);
     }
     return ret;
 }

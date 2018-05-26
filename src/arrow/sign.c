@@ -74,18 +74,24 @@ void set_secret_key(char *newkey) {
   set_key(&secret, newkey);
 }
 
-static char canonicalRequest[sizeof(api_key) + 512];
+#if defined(STATIC_SIGN)
+static char static_sign_buffer[SIGN_BUFFER_LEN];
+#endif
 
 void sign(char *signature,
           const char *timestamp,
-          const char *meth,
+          property_t *meth,
           const char *uri,
           const char *canQueryString,
           const char *payload,
           const char *apiVersion) {
-    int i;
-
-    strcpy(canonicalRequest, meth);
+    int i = 0;
+#if defined(STATIC_SIGN)
+    char *canonicalRequest = static_sign_buffer;
+#else
+    char *canonicalRequest = (char *)malloc(sizeof(api_key) + SIGN_BUFFER_LEN);
+#endif
+    strncpy(canonicalRequest, P_VALUE(*meth), property_size(meth));
     strcat(canonicalRequest, "\n");
     strcat(canonicalRequest, uri);
     strcat(canonicalRequest, "\n");
@@ -140,6 +146,9 @@ void sign(char *signature,
     for (i=0; i<32; i++) sprintf(signature+i*2, "%02x", (unsigned char)(tmp[i]));
     signature[64] = '\0';
     FREE_CHUNK(tmp);
+#if !defined(STATIC_SIGN)
+    free(canonicalRequest);
+#endif
     DBG_SIGN("sign: %s", signature);
 }
 
@@ -155,14 +164,20 @@ static void get_canonical_string(char *buffer, http_request_t *req){
 }
 
 void sign_request(http_request_t *req) {
+    timestamp_t timest;
     static char ts[25];
     static char signature[70];
     char *canonicalQuery = NULL;
     if ( req->query ) {
-      canonicalQuery = (char*)malloc(CANONICAL_QUERY_LEN);
+#if defined(STATIC_SIGN)
+      canonicalQuery = static_sign_buffer;
+#else
+      canonicalQuery = (char*)malloc(SIGN_BUFFER_LEN);
+#endif
       get_canonical_string(canonicalQuery, req);
     }
-    get_time(ts);
+    timestamp(&timest);
+    timestamp_string(&timest, ts);
     if ( http_request_find_header(req, p_const("x-arrow-apikey"), NULL) < 0 ) {
         http_request_add_header(req,
                                 p_const("x-arrow-apikey"),
@@ -175,11 +190,13 @@ void sign_request(http_request_t *req) {
                             p_const("x-arrow-version"),
                             p_const("1"));
 
-    sign(signature, ts, P_VALUE(req->meth),
+    sign(signature, ts, &req->meth,
          P_VALUE(req->uri), canonicalQuery,
-         P_VALUE(req->payload.buf), "1");
+         P_VALUE(req->payload), "1");
 
+#if !defined(STATIC_SIGN)
     if (canonicalQuery) free(canonicalQuery);
+#endif
     http_request_add_header(req,
                             p_const("x-arrow-signature"),
                             p_const(signature));

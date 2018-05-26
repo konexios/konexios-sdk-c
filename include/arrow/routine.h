@@ -41,6 +41,7 @@ arrow_gateway_config_t *current_gateway_config(void);
 // This function implemented the algorithm to get complete information about a gateway and device.
 // The WDT function is used.
 arrow_routine_error_t arrow_init(void);
+arrow_routine_error_t arrow_deinit(void);
 
 arrow_routine_error_t arrow_initialize_routine(void);
 
@@ -64,7 +65,8 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device);
 arrow_routine_error_t arrow_send_telemetry_routine(void *data);
 
 // Funtion set the new state for this device
-arrow_routine_error_t arrow_update_state(const char *name, const char *value);
+arrow_routine_error_t arrow_device_states_sync();
+arrow_routine_error_t arrow_device_states_update();
 
 // Routine for MQTT connection establishing
 // Automatically prepare needed information and send it to the cloud MQTT

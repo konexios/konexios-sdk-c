@@ -38,10 +38,10 @@ char *arrow_device_get_gateway_hid(arrow_device_t *dev);
 void arrow_device_add_gateway_hid(arrow_device_t *dev, const char *name);
 void arrow_device_add_uid(arrow_device_t *dev, const char *name);
 
-void arrow_device_add_info(arrow_device_t *dev, const char *key, const char *value);
-void arrow_device_add_property(arrow_device_t *dev, const char *key, const char *value);
+void arrow_device_add_info(arrow_device_t *dev, property_t key, const char *value);
+void arrow_device_add_property(arrow_device_t *dev, property_t key, const char *value);
 
-char *arrow_device_serialize(arrow_device_t *dev);
+property_t arrow_device_serialize(arrow_device_t *dev);
 int arrow_device_parse(arrow_device_t *dev, const char *str);
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device);

@@ -13,44 +13,25 @@
 extern "C" {
 #endif
 
-#include <sys/mem.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
 
-enum prop_flags {
-  is_stack    = 0x0,
-  is_dynamic  = 0x1,
-  is_const    = 0x2
-};
-
-typedef struct __attribute_packed__ _property {
-  char *value;
-  uint8_t flags;
-#if defined(__cplusplus)
-  _property() : value(NULL), flags(0x00) {}
-  _property(const char *val, uint8_t f) : value(const_cast<char*>(val)), flags(f) {}
-#endif
-} property_t;
-
-#if defined(__cplusplus)
-# define property(x, y) _property(x, y)
-#else
-# define property(x, y) (property_t){ .value=(char*)x, .flags=y }
-#endif
-
-#define p_const(x)  property(x, is_const)
-#define p_stack(x)  property(x, is_stack)
-#define p_heap(x)   property(x, is_dynamic)
-#define p_null()    property(NULL, 0)
+void property_types_init();
+void property_type_add(property_dispetcher_t *disp);
 
 void property_init(property_t *dst);
-void property_copy(property_t *dst, const property_t src);
+void property_copy(property_t *dst, property_t src);
+void property_weak_copy(property_t *dst, property_t src);
 void property_move(property_t *dst, property_t *src);
-void property_n_copy(property_t *dst, const char *src, int n);
 void property_free(property_t *dst);
 int property_cmp(property_t *src, property_t *dst);
 
-#define P_COPY(dst, src) property_copy(&dst, src)
-#define P_NCOPY(dst, str, n)  property_n_copy(&dst, str, n)
-#define P_FREE(prop) property_free(&(prop))
+property_t property_as_null_terminated(property_t *src);
+property_t property_concat(property_t *src1, property_t *src2);
+
+size_t property_size(property_t *src);
 
 #define IS_EMPTY(field) ( (field).value ? 0 : 1 )
 #define P_VALUE(field) ( (field).value )

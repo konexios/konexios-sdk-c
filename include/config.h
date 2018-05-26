@@ -12,10 +12,23 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SDK_VERSION 1.3.9
+#define SDK_VERSION 1.3.10
 
 #if !defined(_KEYS_)
 #include "private.h"
+#endif
+
+#if !defined(RINGBUFFER_SIZE)
+#define RINGBUFFER_SIZE		    1024
+#endif
+
+#if defined(STATIC_ACN)
+#define STATIC_MQTT_ENV
+#define STATIC_HTTP_CLIENT
+#define STATIC_SIGN
+# if !defined(ARROW_MAX_MQTT_COMMANDS)
+# define ARROW_MAX_MQTT_COMMANDS 10
+# endif
 #endif
 
 #if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) || \

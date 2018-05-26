@@ -21,11 +21,11 @@ typedef enum {
 } handler_result;
 
 
-typedef int (*fp)(const char *);
+typedef int (*__cmd_cb)(const char *);
 
 typedef struct __cmd_handler {
-  char *name;
-  fp callback;
+  property_t name;
+  __cmd_cb callback;
   arrow_linked_list_head_node;
 } cmd_handler;
 
@@ -33,7 +33,7 @@ typedef struct __cmd_handler {
 int has_cmd_handler(void);
 
 // Add a new command handler ( set the callback )
-int arrow_command_handler_add(const char *name, fp callback);
+int arrow_command_handler_add(const char *name, __cmd_cb callback);
 
 // erase all command handlers
 void arrow_command_handler_free(void);
@@ -42,7 +42,7 @@ void arrow_command_handler_free(void);
 int ev_DeviceCommand(void *ev, JsonNode *node);
 
 // send the answer by DeviceCommand: failed, received or succeeded (cmd_type)
-int arrow_send_event_ans(const char *hid, cmd_type ev, const char *payload);
+int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload);
 
 #if defined(__cplusplus)
 }

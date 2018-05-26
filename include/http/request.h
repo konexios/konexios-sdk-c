@@ -36,15 +36,12 @@ enum Scheme {
   Scheme_count
 };
 
-typedef struct __attribute_packed__ {
-    uint32_t size;
-    property_t buf;
-} http_payload_t;
+typedef property_t http_payload_t;
 
 // the payload handler for response
 // for OTA firmware update
 // if it's impossible to allocate memory for binary file
-typedef int(*__payload_handler)(void *,property_t,int);
+typedef int(*__payload_handler)(void *, property_t);
 typedef struct __payload_meth {
   __payload_handler _p_set_handler;
   __payload_handler _p_add_handler;

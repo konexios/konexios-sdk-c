@@ -28,7 +28,7 @@ void http_response_init(http_response_t *req, _payload_meth_t *handler);
 void http_response_free(http_response_t *res);
 void http_response_add_header(http_response_t *req, property_t key, property_t value);
 void http_response_set_content_type(http_response_t *req, property_t value);
-void http_response_set_payload(http_response_t *req, property_t payload, uint32_t size);
-int http_response_add_payload(http_response_t *req, property_t payload, uint32_t size);
+void http_response_set_payload(http_response_t *req, property_t payload);
+int http_response_add_payload(http_response_t *req, property_t payload);
 
 #endif /* ACN_SDK_C_HTTP_RESPONSE_H_ */

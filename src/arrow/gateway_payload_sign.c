@@ -5,7 +5,11 @@
 #include <debug.h>
 #include <arrow/utf8.h>
 
+#if defined(STATIC_ACN)
+#define USE_STATIC
+#else
 #define USE_HEAP
+#endif
 #include <data/chunk.h>
 
 int gateway_payload_sign(char *signature,
@@ -21,7 +25,13 @@ int gateway_payload_sign(char *signature,
   total_size += strlen(canParString);
   total_size += strlen(signatureVersion);
   total_size += 50;
+#if defined(STATIC_ACN)
+  // canParString should be less than MQTT_RECVBUF_LEN
+  if ( total_size > MQTT_RECVBUF_LEN ) return -1;
+  CREATE_CHUNK(canonicalRequest, MQTT_RECVBUF_LEN);
+#else
   CREATE_CHUNK(canonicalRequest, total_size);
+#endif
   CHECK_CHUNK(canonicalRequest, return ret);
   strcpy(canonicalRequest, hid);
   strcat(canonicalRequest, "\n");

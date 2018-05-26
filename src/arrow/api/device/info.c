@@ -58,13 +58,13 @@ int _device_info_parse(device_info_t *gd, JsonNode *tmp) {
     json_fill_property(tmp, gd, name);
     json_fill_property(tmp, gd, type);
     json_fill_property(tmp, gd, gatewayHid);
-    JsonNode *t = json_find_member(tmp, "enabled");
+    JsonNode *t = json_find_member(tmp, p_const("enabled"));
     if ( t && t->tag == JSON_BOOL )
         gd->enabled = t->bool_;
-    t = json_find_member(tmp, "info");
+    t = json_find_member(tmp, p_const("info"));
     json_remove_from_parent(t);
     gd->info = t;
-    t = json_find_member(tmp, "properties");
+    t = json_find_member(tmp, p_const("properties"));
     json_remove_from_parent(t);
     gd->properties = t;
     return 0;
