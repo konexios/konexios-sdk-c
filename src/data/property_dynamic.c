@@ -20,7 +20,7 @@ static void *static_strndup(char *ptr, int size) {
         return NULL;
     }
     memcpy(p, ptr, size);
-    ((char *)p)[size + 1] = 0x0;
+    ((char *)p)[size] = 0x0;
     return p;
 }
 

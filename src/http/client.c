@@ -32,9 +32,8 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
-void http_session_close_now(http_client_t *cli) {
-  cli->flags._close = true;
-  http_client_close(cli);
+void http_session_set_protocol(http_client_t *cli, int prot) {
+    cli->protocol = prot;
 }
 
 #define CHECK_CONN_ERR(ret) \
@@ -116,6 +115,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
     cli->flags._close = true;
     cli->flags._cipher = 0;
     cli->timeout = DEFAULT_API_TIMEOUT;
+    cli->protocol = api_via_http;
     return 0;
 }
 
@@ -125,7 +125,8 @@ int __attribute_weak__ http_client_free(http_client_t *cli) {
     free(cli->queue);
 #endif
     cli->queue = NULL;
-    return -1;
+    cli->protocol = api_via_http;
+    return 0;
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req);
@@ -134,13 +135,14 @@ int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req)
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req) {
+    cli->response_code = 0;
+    cli->request = req;
+    if ( cli->protocol != api_via_http ) return -1;
     if ( !cli->queue ) {
         DBG("HTTP: There is no queue");
         return -1;
     }
     ringbuf_clear(cli->queue);
-    cli->response_code = 0;
-    cli->request = req;
     if ( cli->sock < 0 ) {
         DBG("new TCP connection");
         int ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -162,8 +164,8 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         memset(&serv, 0, sizeof(serv));
         serv.sin_family = PF_INET;
         bcopy((char *)serv_resolve->h_addr,
-                (char *)&serv.sin_addr.s_addr,
-                (uint32_t)serv_resolve->h_length);
+              (char *)&serv.sin_addr.s_addr,
+              (uint32_t)serv_resolve->h_length);
         serv.sin_port = htons(req->port);
 
         // set timeout
@@ -203,6 +205,7 @@ int __attribute_weak__ http_client_close(http_client_t *cli) {
 }
 
 int default_http_client_close(http_client_t *cli) {
+    if ( cli->protocol != api_via_http ) return  -1;
     if ( cli->sock < 0 ) return -1;
     if ( !cli->flags._close ) return 1;
     if ( cli->flags._cipher ) {

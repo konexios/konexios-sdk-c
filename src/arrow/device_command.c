@@ -105,6 +105,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   int retry = 0;
   http_session_close_set(current_client(), false);
+#if defined(HTTP_VIA_MQTT)
+  http_session_set_protocol(current_client(), 1);
+#endif
   while( arrow_send_event_ans(ev->gateway_hid, received, p_null()) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
@@ -175,6 +178,7 @@ device_command_done:
         msleep(ARROW_RETRY_DELAY);
     }
   }
+  http_session_set_protocol(current_client(), api_via_http);
   return 0;
 }
 #else

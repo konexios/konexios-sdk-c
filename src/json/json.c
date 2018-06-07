@@ -51,8 +51,9 @@ char *json_strdup(const char *str) {
 #endif
     if (ret == NULL) {
 		out_of_memory();
-    } else
+    } else {
         strcpy(ret, str);
+    }
 	return ret;
 }
 

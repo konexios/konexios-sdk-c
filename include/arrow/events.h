@@ -7,6 +7,7 @@ extern "C" {
 
 #include <json/json.h>
 #include <data/linkedlist.h>
+#include <http/response.h>
 
 typedef struct {
   property_t gateway_hid;
@@ -18,13 +19,31 @@ typedef struct {
   arrow_linked_list_head_node;
 } mqtt_event_t;
 
+typedef struct {
+  property_t id;
+  property_t name;
+  int encrypted;
+  JsonNode *parameters;
+  arrow_linked_list_head_node;
+} mqtt_api_event_t;
+
 void arrow_mqtt_events_init(void);
 void arrow_mqtt_events_done(void);
 int process_event_init();
 int process_event(const char *str, int len);
 int process_event_finish();
+
+int process_http_init();
+int process_http(const char *str, int len);
+int process_http_finish();
+
+
 int arrow_mqtt_has_events(void);
 int arrow_mqtt_event_proc(void);
+
+int arrow_mqtt_api_has_events(void);
+int arrow_mqtt_api_event_proc(http_response_t *res);
+int process_http_payload(const char *s);
 
 #define MAX_PARAM_LINE 20
 
