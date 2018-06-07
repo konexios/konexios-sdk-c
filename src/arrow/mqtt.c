@@ -294,20 +294,17 @@ static json_encode_machine_t em;
 
 
 int p_init() {
-    printf("-------------------------init--\r\n");
     int r = json_encode_init(&em, mqtt_pub_pay);
     return r;
 }
 
 int p_part(char *ptr, int len) {
-    printf("-------------------------part--\r\n");
     int r = json_encode_part(&em, ptr, len);
     printf("-%s-\r\n", ptr);
     return r;
 }
 
 int p_fin() {
-    printf("-------------------------fin--\r\n");
     return json_encode_fin(&em);
 }
 

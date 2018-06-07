@@ -861,12 +861,16 @@ int MQTTPublish_part(MQTTClient* c,
     ptr = c->buf;
     // send packet body
     int total = message->payloadlen;
-    len = 20;
+    len = c->buf_size;
     drive->init();
     while( total ) {
         int chunk = total < len ? total : len;
-        rc = drive->part((char*)ptr, chunk);
-        if ( rc < 0 ) goto exit;
+        chunk = drive->part((char*)ptr, chunk);
+
+        if ( chunk < 0 ) {
+            rc = FAILURE;
+            goto exit;
+        }
         if ((rc = sendPacket(c, chunk, &timer)) != MQTT_SUCCESS) // send the subscribe packet
             goto exit;
         total -= chunk;
