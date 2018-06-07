@@ -2,14 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
+#include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
+#include <json/json.h>
 
-void setUp(void)
-{
+void setUp(void) {
+    property_types_init();
+    property_type_add(property_type_get_json());
 }
 
-void tearDown(void)
-{
+void tearDown(void) {
+    property_types_deinit();
 }
 
 typedef struct test_prop {
@@ -30,7 +38,7 @@ void test_property_copy_const( void ) {
     P_CLEAR(test.name);
     property_copy(&test.name, p_const(NAME));
     TEST_ASSERT( test.name.value == NAME );
-    TEST_ASSERT_EQUAL_INT(is_const, test.name.flags);
+    TEST_ASSERT_EQUAL_INT(PROPERTY_CONST_TAG, PROPERTY_BASE_MASK & test.name.flags);
     TEST_ASSERT_EQUAL_STRING(NAME, P_VALUE(test.name));
     property_free(&test.name);
     TEST_ASSERT( !test.name.value );
@@ -53,7 +61,7 @@ void test_property_copy_dynamic( void ) {
     P_CLEAR(test.name);
     property_copy(&test.name, p_stack(NAME));
     TEST_ASSERT( test.name.value != NAME );
-    TEST_ASSERT_EQUAL_INT(is_dynamic, test.name.flags);
+    TEST_ASSERT_EQUAL_INT(PROPERTY_DYNAMIC_TAG, PROPERTY_BASE_MASK & test.name.flags);
     TEST_ASSERT_EQUAL_STRING(NAME, P_VALUE(test.name));
     property_free(&test.name);
     TEST_ASSERT( !test.name.value );
@@ -62,20 +70,20 @@ void test_property_copy_dynamic( void ) {
 void test_property_copy_malloc( void ) {
     test_p_t test;
     P_CLEAR(test.name);
-    char *name = (char *)malloc(6);
-    strcpy(name, NAME);
-    property_copy(&test.name, p_heap(name));
+    char *name = strdup(NAME);
+    property_t p = p_heap(name);
+    property_move(&test.name, &p);
     TEST_ASSERT( test.name.value == name );
-    TEST_ASSERT_EQUAL_INT(is_dynamic, test.name.flags);
+    TEST_ASSERT_EQUAL_INT(PROPERTY_DYNAMIC_TAG, PROPERTY_BASE_MASK & test.name.flags);
     TEST_ASSERT_EQUAL_STRING(NAME, P_VALUE(test.name));
     property_free(&test.name);
     TEST_ASSERT( !test.name.value );
 }
 
-void test_property_n_copy( void ) {
+void test_property_json_copy( void ) {
     test_p_t test;
-    P_CLEAR(test.name);
-    property_n_copy(&test.name, NAME, 5);
+    property_init(&test.name);
+    property_copy(&test.name, json_strdup_property(NAME));
     TEST_ASSERT_EQUAL_STRING(NAME, P_VALUE(test.name));
     property_free(&test.name);
     TEST_ASSERT( !test.name.value );

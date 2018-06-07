@@ -29,7 +29,7 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     	rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
 #endif
 //      DBG("mqtt recv %d/%d", rc, len);
-        if (rc < 0) {
+        if (rc <= 0) {
 #if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
             DBG("error(%d): %s", rc, strerror(errno));
 #endif

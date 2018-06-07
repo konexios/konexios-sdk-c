@@ -83,6 +83,7 @@ typedef struct MQTTMessage
     unsigned short id;
     void *payload;
     size_t payloadlen;
+    size_t offset;
 } MQTTMessage;
 
 typedef struct MessageData
@@ -167,6 +168,20 @@ DLLExport int MQTTConnect(MQTTClient* client, MQTTPacket_connectData* options);
  *  @param message - the message to send
  *  @return success code
  */
+
+typedef int(*payload_border)(void);
+typedef int(*payload_part)(char *, int);
+typedef struct mqtt_payload_drive {
+    payload_border init;
+    payload_part   part;
+    payload_border fin;
+} mqtt_payload_drive_t;
+
+int MQTTPublish_part(MQTTClient* c,
+                     const char* topicName,
+                     MQTTMessage* message,
+                     mqtt_payload_drive_t *drive);
+
 DLLExport int MQTTPublish(MQTTClient* client, const char*, MQTTMessage*);
 
 /** MQTT SetMessageHandler - set or remove a per topic message handler

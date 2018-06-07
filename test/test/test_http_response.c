@@ -2,8 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
+#include <arrow/utf8.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <json/json.h>
@@ -12,23 +18,21 @@
 #include <http/response.h>
 #include <data/find_by.h>
 
-void setUp(void)
-{
+void setUp(void) {
+    property_types_init();
 }
 
-void tearDown(void)
-{
+void tearDown(void) {
+    property_types_deinit();
 }
 
 static http_response_t _test_response;
 
 extern int default_set_payload_handler(void *r,
-                            property_t buf,
-                            int size);
+                            property_t buf);
 
 extern int default_add_payload_handler(void *r,
-                            property_t payload,
-                            int size);
+                            property_t payload);
 
 void test_http_response_init(void) {
     _payload_meth_t def_handler = { default_set_payload_handler,
@@ -37,8 +41,7 @@ void test_http_response_init(void) {
     TEST_ASSERT(_test_response._p_meth._p_add_handler);
     TEST_ASSERT(_test_response._p_meth._p_set_handler);
     TEST_ASSERT_EQUAL_INT(0, _test_response.is_chunked);
-    TEST_ASSERT( IS_EMPTY(_test_response.payload.buf) );
-    TEST_ASSERT_EQUAL_INT(0, _test_response.payload.size);
+    TEST_ASSERT( IS_EMPTY(_test_response.payload) );
     TEST_ASSERT( ! _test_response.header );
     TEST_ASSERT( IS_EMPTY(_test_response.content_type.value) );
     TEST_ASSERT( IS_EMPTY(_test_response.content_type.key) );

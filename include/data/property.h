@@ -19,6 +19,7 @@ extern "C" {
 #include <data/property_stack.h>
 
 void property_types_init();
+void property_types_deinit();
 void property_type_add(property_dispetcher_t *disp);
 
 void property_init(property_t *dst);

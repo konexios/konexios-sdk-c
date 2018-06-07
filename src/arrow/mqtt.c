@@ -153,14 +153,25 @@ static int _mqtt_env_free(mqtt_env_t *env) {
 
 #if !defined(NO_EVENTS)
 static void messageArrived(MessageData* md) {
+//    static int is_message_refuse = 0;
     MQTTMessage* message = md->message;
-    *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
-    DBG("message arrived %d", message->payloadlen);
+//    *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
+    DBG("message arrived %d/%d", message->payloadlen, message->offset);
     //
-    if ( message->payloadlen < MQTT_RECVBUF_LEN )
-        if ( process_event(message->payload) < 0 ) {
+    // FIXME refuse message
+    switch ( message->offset ) {
+    case 0: {
+        process_event_init();
+    } break;
+    case 1: {
+        if ( process_event(message->payload, message->payloadlen) < 0 ) {
             DBG("MQTT message process fail");
         }
+    } break;
+    case 2: {
+        process_event_finish();
+    } break;
+    }
 }
 #endif
 
@@ -278,19 +289,50 @@ int mqtt_telemetry_terminate(void) {
     return 0;
 }
 
+static JsonNode *mqtt_pub_pay = NULL;
+static json_encode_machine_t em;
+
+
+int p_init() {
+    printf("-------------------------init--\r\n");
+    int r = json_encode_init(&em, mqtt_pub_pay);
+    return r;
+}
+
+int p_part(char *ptr, int len) {
+    printf("-------------------------part--\r\n");
+    int r = json_encode_part(&em, ptr, len);
+    printf("-%s-\r\n", ptr);
+    return r;
+}
+
+int p_fin() {
+    printf("-------------------------fin--\r\n");
+    return json_encode_fin(&em);
+}
+
+mqtt_payload_drive_t mqtt_json_drive = {
+    p_init,
+    p_part,
+    p_fin
+};
+
 int mqtt_publish(arrow_device_t *device, void *d) {
     MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
     int ret = -1;
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
-        property_t payload = telemetry_serialize(device, d);
-        if ( IS_EMPTY(payload) ) return -1;
-        msg.payload = P_VALUE(payload);
-        msg.payloadlen = property_size(&payload);
-        ret = MQTTPublish(&tmp->client,
-                          P_VALUE(tmp->p_topic),
-                          &msg);
-        property_free(&payload);
+        mqtt_pub_pay = telemetry_serialize_json(device, d);
+//        property_t payload = telemetry_serialize(device, d);
+//        if ( IS_EMPTY(payload) ) return -1;
+//        msg.payload = P_VALUE(payload);
+        msg.payloadlen = json_size(mqtt_pub_pay);
+        ret = MQTTPublish_part(&tmp->client,
+                               P_VALUE(tmp->p_topic),
+                               &msg,
+                               &mqtt_json_drive);
+//        property_free(&payload);
+        json_delete(mqtt_pub_pay);
     }
     return ret;
 }

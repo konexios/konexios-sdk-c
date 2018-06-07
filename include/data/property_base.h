@@ -21,6 +21,8 @@ enum prop_flags {
   is_owner  = 0x1 << 7
 };
 
+#define PROPERTY_BASE_MASK 0x3f
+
 typedef struct __attribute_packed__ _property {
   char *value;
   uint8_t flags;

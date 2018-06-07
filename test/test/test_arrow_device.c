@@ -5,16 +5,26 @@
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 #include <sys/mem.h>
+#include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
 #include <json/json.h>
+
 #include "mock_mac.h"
 
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"
 #define DEVICE_UID GATEWAY_UID "-" DEVICE_UID_SUFFIX
 static arrow_gateway_t _test_gateway;
+static arrow_device_t _test_device;
+static int test_count = 0;
 
 void setUp(void) {
+    if ( !test_count ) property_types_init();
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
@@ -23,13 +33,12 @@ void setUp(void) {
     property_copy(&_test_gateway.hid, p_const(TEST_GATEWAY_HID));
 }
 
-void tearDown(void)
-{
+void tearDown(void) {
+    if ( test_count == 2 ) property_types_deinit();
 }
 
-static arrow_device_t _test_device;
-
 void test_device_init(void) {
+    test_count++;
     arrow_device_init(&_test_device);
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_device.hid));
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_device.gateway_hid));
@@ -43,6 +52,7 @@ void test_device_init(void) {
 }
 
 void test_device_prepare( void ) {
+    test_count++;
     arrow_prepare_device(&_test_gateway, &_test_device);
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_device.hid));
     TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_device.gateway_hid));

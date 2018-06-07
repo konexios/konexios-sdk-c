@@ -19,6 +19,11 @@
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <data/find_by.h>
@@ -38,11 +43,11 @@
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
 
+#include <time/time.h>
 #include "acnsdkc_time.h"
 #include <network.h>
 
 #include "timer.h"
-#include "acnsdkc_time.h"
 #include "acnsdkc_ssl.h"
 #include <MQTTClient.h>
 #include <MQTTPacket.h>
@@ -71,13 +76,12 @@
 #include "fakedns.h"
 #include "fakesock.h"
 
-void setUp(void)
-{
-    __http_init();
+void setUp(void) {
+    arrow_init();
 }
 
-void tearDown(void)
-{
+void tearDown(void) {
+    arrow_deinit();
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"

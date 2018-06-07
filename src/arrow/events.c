@@ -126,7 +126,8 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_t *ev,
 }
 
 #if defined(STATIC_MQTT_ENV)
-static char static_canonical_prm[MQTT_RECVBUF_LEN];
+// FIXME buffer len?
+static char static_canonical_prm[2000];
 static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
 #else
 static int cmpstringp(const void *p1, const void *p2) {
@@ -369,12 +370,23 @@ mqtt_event_proc_error:
     return ret;
 }
 
-int process_event(const char *str) {
+static json_parse_machine_t sm;
+
+int process_event_init() {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
 #endif
+    return json_decode_init(&sm);
+}
 
+int process_event(const char *str, int len) {
+    int r = json_decode_part(&sm, str, len);
+    if ( r != len ) return -1;
+    return 0;
+}
+
+int process_event_finish() {
 #if defined(STATIC_MQTT_ENV)
     mqtt_event_t *mqtt_e = static_allocator(mqtt_event_t);
 #else
@@ -386,9 +398,9 @@ int process_event(const char *str) {
   }
   mqtt_event_init(mqtt_e);
   int ret = -1;
-  JsonNode *_main = json_decode(str);
+  JsonNode *_main = json_decode_finish(&sm);
   if ( !_main ) {
-      DBG("event payload decode failed %d", strlen(str));
+      DBG("event payload decode failed");
       return -1;
   }
 
@@ -418,6 +430,7 @@ int process_event(const char *str) {
 
   JsonNode *_parameters = json_find_member(_main, p_const("parameters"));
   if ( !_parameters ) goto error;
+
   JsonNode *sign_version = json_find_member(_main, p_const("signatureVersion"));
   if ( sign_version ) {
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
@@ -457,6 +470,7 @@ error:
   }
   if ( _main ) json_delete(_main);
   return ret;
+
 }
 
 void arrow_mqtt_events_done() {

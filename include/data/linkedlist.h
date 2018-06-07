@@ -93,6 +93,12 @@ arrow_linked_list_t *arrow_linked_list_del_last(arrow_linked_list_t *root);
   else root = NULL; \
 }
 
+#define arrow_linked_list_next_node(tmp, root, type) { \
+    arrow_linked_list_t *next_p = (root)?(root)->node.next:NULL; \
+    if ( next_p ) tmp = container_of(next_p, type, node); \
+    else tmp = NULL; \
+  }
+
 #if defined(__cplusplus)
 }
 #endif

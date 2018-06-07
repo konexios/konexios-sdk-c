@@ -61,7 +61,8 @@ arrow_routine_error_t arrow_deinit(void) {
 #endif
     arrow_state_mqtt_stop();
   __http_done();
-    return ROUTINE_SUCCESS;
+  property_types_deinit();
+  return ROUTINE_SUCCESS;
 }
 
 int arrow_connect_gateway(arrow_gateway_t *gateway){

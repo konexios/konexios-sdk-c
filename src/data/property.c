@@ -25,6 +25,12 @@ void property_types_init() {
   property_type_add(property_type_get_stack());
 }
 
+void property_types_deinit() {
+  while( prop_disp ) {
+      arrow_linked_list_del_node_last(prop_disp, property_dispetcher_t);
+  }
+}
+
 void property_init(property_t *dst) {
     dst->flags = 0x00;
     dst->size = 0;

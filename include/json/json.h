@@ -70,9 +70,63 @@ struct __attribute_packed__ JsonNode
   };
 };
 
+/* String buffer */
+typedef struct {
+    char *cur;
+    char *end;
+    char *start;
+} SB;
+
 /*** Encoding, decoding, and validation ***/
+typedef int(*_json_parse_fn)(void *, char);
+
+typedef struct _json_parse_machine_ {
+    struct _json_parse_machine_ *p;
+    uint32_t complete;
+    _json_parse_fn process_byte;
+    SB buffer;
+    property_t key;
+    JsonNode *root;
+    arrow_linked_list_head_node;
+} json_parse_machine_t;
+
+int json_parse_machine_init(json_parse_machine_t *jpm);
+int json_parse_machine_process(json_parse_machine_t *jpm, char byte);
+int json_parse_machine_fin(json_parse_machine_t *jpm);
+
+int json_decode_init(json_parse_machine_t *sm);
+int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size);
+JsonNode *json_decode_finish(json_parse_machine_t *sm);
 
 JsonNode   *json_decode         (const char *json);
+
+size_t json_size(JsonNode *obj);
+
+enum json_encode_states {
+    jem_encode_state_init,
+    jem_encode_state_key,
+    jem_encode_state_delim,
+    jem_encode_state_value
+};
+
+typedef struct _json_encode_machine_ {
+    uint16_t state;
+    uint16_t start;
+    uint16_t complete;
+    size_t len;
+    SB buffer;
+    JsonNode *ptr;
+    arrow_linked_list_head_node;
+} json_encode_machine_t;
+
+int json_encode_machine_init(json_encode_machine_t *jem);
+int json_encode_machine_process(json_encode_machine_t *jem, char* s, int len);
+int json_encode_machine_fin(json_encode_machine_t *jem);
+
+int         json_encode_init    (json_encode_machine_t *jem, JsonNode *node);
+int         json_encode_part    (json_encode_machine_t *jem, char *s, int len);
+int         json_encode_fin     (json_encode_machine_t *jem);
+
 char       *json_encode         (const JsonNode *node);
 char       *json_encode_string  (const char *str);
 property_t  json_encode_property(const JsonNode *node);
@@ -93,10 +147,17 @@ JsonNode   *json_find_member    (JsonNode *object, property_t key);
 
 JsonNode   *json_first_child    (const JsonNode *node);
 
+#define json_next(i) ( (i)->next )
+
 #define json_foreach(i, object_or_array)            \
 	for ((i) = json_first_child(object_or_array);   \
 		 (i) != NULL;                               \
 		 (i) = (i)->next)
+
+#define json_foreach_start(i, object_or_array, start_child)            \
+    for ((i) = (start_child);   \
+         (i) != NULL;                               \
+         (i) = (i)->next)
 
 /*** Construction and manipulation ***/
 

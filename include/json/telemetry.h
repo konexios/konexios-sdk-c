@@ -15,6 +15,7 @@ extern "C" {
 
 #include <arrow/device.h>
     
+JsonNode *telemetry_serialize_json(arrow_device_t *device, void *data);
 property_t telemetry_serialize(arrow_device_t *device, void *data);
 
 #if defined(__cplusplus)
