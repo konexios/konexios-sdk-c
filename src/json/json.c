@@ -35,127 +35,27 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_alloc.h>
-#include <data/static_buf.h>
 static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
-CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
 #endif
 
 #define out_of_memory() { DBG("JSON: Out of memory"); }
 
 /* Sadly, strdup is not portable. */
-char *json_strdup(const char *str) {
-#if defined(STATIC_JSON)
-    char *ret = (char*) static_buf_alloc(jsonbuf, strlen(str) + 1);
-#else
-	char *ret = (char*) malloc(strlen(str) + 1);
-#endif
-    if (ret == NULL) {
-		out_of_memory();
-    } else {
-        strcpy(ret, str);
+char *json_strdup(const char *s) {
+    SB out;
+    sb_init(&out);
+    int ret = sb_puts(&out, s);
+    if (ret < 0) {
+        return NULL;
     }
-	return ret;
+    sb_putc(&out, '\0');
+    return out.start;
 }
 
 property_t  json_strdup_property(const char *str) {
     char *tmp = json_strdup(str);
     if ( !tmp ) return p_null();
     return p_json(tmp);
-}
-
-static int sb_size(SB *sb) {
-    return sb->end - sb->start;
-}
-
-static int sb_space(SB *sb) __attribute_used__;
-static int sb_space(SB *sb) {
-    return sb->end - sb->cur;
-}
-
-static int sb_init(SB *sb)
-{
-#if defined(STATIC_JSON)
-    sb->start = (char*) static_buf_alloc(jsonbuf, 17);
-#else
-	sb->start = (char*) malloc(17);
-#endif
-    if (sb->start == NULL) {
-		out_of_memory();
-        return -1;
-    }
-	sb->cur = sb->start;
-	sb->end = sb->start + 16;
-    return 0;
-}
-
-static int sb_grow(SB *sb, int need)
-{
-	size_t length = (size_t)(sb->cur - sb->start);
-	size_t alloc = (size_t)(sb->end - sb->start);
-	
-	do {
-		alloc *= 2;
-	} while (alloc < length + (size_t)need);
-#if defined(STATIC_JSON)
-    sb->start = (char*) static_buf_realloc(jsonbuf, sb->start, alloc + 1);
-#else
-	sb->start = (char*) realloc(sb->start, alloc + 1);
-#endif
-    if (sb->start == NULL) {
-		out_of_memory();
-        return -1;
-    }
-	sb->cur = sb->start + length;
-	sb->end = sb->start + alloc;
-    return 0;
-}
-
-/* sb and need may be evaluated multiple times. */
-static int sb_need(SB *sb, int need) {
-    if ((sb)->end - (sb)->cur < need)
-        return sb_grow(sb, need);
-    return 0;
-}
-
-static void sb_put(SB *sb, const char *bytes, int count)
-{
-	sb_need(sb, count);
-	memcpy(sb->cur, bytes, (size_t)count);
-	sb->cur += count;
-}
-
-#define sb_putc(sb, c) do {         \
-		if ((sb)->cur >= (sb)->end) \
-			sb_grow(sb, 1);         \
-		*(sb)->cur++ = (c);         \
-	} while (0)
-
-static void sb_puts(SB *sb, const char *str)
-{
-	sb_put(sb, str, (int)strlen(str));
-}
-
-static char *sb_finish(SB *sb)
-{
-	*sb->cur = 0;
-	assert(sb->start <= sb->cur && strlen(sb->start) == (size_t)(sb->cur - sb->start));
-	return sb->start;
-}
-
-static void sb_clear(SB *sb) {
-    memset(sb, 0x0, sizeof(SB));
-}
-
-static void sb_free(SB *sb)
-{
-    if ( sb && sb->start ) {
-#if defined(STATIC_JSON)
-        static_buf_free(jsonbuf, sb->start);
-#else
-        free(sb->start);
-#endif
-        sb_clear(sb);
-    }
 }
 
 /*
@@ -369,9 +269,6 @@ static void to_surrogate_pair(uchar_t unicode, uint16_t *uc, uint16_t *lc)
 	*lc = (uint16_t) ((n & 0x3FF) | 0xDC00);
 }
 
-#define is_space(c) ((c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == ' ')
-#define is_digit(c) ((c) >= '0' && (c) <= '9')
-
 static bool parse_value     (const char **sp, JsonNode        **out);
 static bool parse_string    (const char **sp, char            **out);
 static bool parse_number    (const char **sp, double           *out);
@@ -385,7 +282,7 @@ static void skip_space      (const char **sp);
 static void emit_value              (SB *out, const JsonNode *node);
 static void emit_value_indented     (SB *out, const JsonNode *node, const char *space, int indent_level);
 static void emit_string             (SB *out, const char *str);
-static void emit_number             (SB *out, double num);
+void emit_number             (SB *out, double num);
 static void emit_array              (SB *out, const JsonNode *array);
 static void emit_array_indented     (SB *out, const JsonNode *array, const char *space, int indent_level);
 static void emit_object             (SB *out, const JsonNode *object);
@@ -401,298 +298,6 @@ static void append_member(JsonNode *object, property_t key, JsonNode *value);
 /* Assertion-friendly validity checks */
 static bool tag_is_valid(unsigned int tag);
 static bool number_is_valid(const char *num);
-
-static int jpm_key_init(json_parse_machine_t *jpm, char byte);
-static int jpm_key_body(json_parse_machine_t *jpm, char byte);
-static int jpm_value_init(json_parse_machine_t *jpm, char byte);
-static int jpm_value_end(json_parse_machine_t *jpm, char byte);
-static int jpm_string_body(json_parse_machine_t *jpm, char byte);
-
-#define jpm_bool_state_char(b, c, sym, n) \
-static int jpm_bool_##b##_##c(json_parse_machine_t *jpm, char byte) { \
-    if ( byte == sym ) { \
-        jpm->process_byte = (_json_parse_fn) jpm_bool_##b##_##n; \
-        return 0; \
-    } \
-    return -1; \
-}
-
-static int jpm_bool_false_e(json_parse_machine_t *jpm, char byte) {
-    if ( byte == 'e' ) {
-        jpm->root = json_mkbool(false);
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        return 0;
-    }
-    return -1;
-}
-
-jpm_bool_state_char(false, s, 's', e)
-jpm_bool_state_char(false, l, 'l', s)
-jpm_bool_state_char(false, a, 'a', l)
-
-static int jpm_bool_true_e(json_parse_machine_t *jpm, char byte) {
-    if ( byte == 'e' ) {
-        jpm->root = json_mkbool(true);
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        return 0;
-    }
-    return -1;
-}
-
-jpm_bool_state_char(true, u, 'u', e)
-jpm_bool_state_char(true, r, 'r', u)
-
-static int jpm_string_escape(json_parse_machine_t *jpm, char byte) {
-    switch ( byte ) {
-    case 'n': {
-        sb_putc(&jpm->buffer, '\n');
-    } break;
-    case 't': {
-        sb_putc(&jpm->buffer, '\t');
-    } break;
-    default:
-        sb_putc(&jpm->buffer, byte);
-    }
-    jpm->process_byte = (_json_parse_fn) jpm_string_body;
-    return 0;
-}
-
-static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
-    switch ( byte ) {
-    case '\\': {
-        jpm->process_byte = (_json_parse_fn) jpm_string_escape;
-    } break;
-    case '"': {
-        char *str = sb_finish(&jpm->buffer);
-        jpm->root = json_mkstring(str);
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        sb_free(&jpm->buffer);
-    } break;
-    default:
-        sb_putc(&jpm->buffer, byte);
-        break;
-    }
-    return 0;
-}
-
-static int jpm_number_body(json_parse_machine_t *jpm, char byte) {
-    if ( is_digit(byte) || byte == '.' ) {
-        sb_putc(&jpm->buffer, byte);
-    } else {
-        char *str = sb_finish(&jpm->buffer);
-        double d = strtod(str, NULL);
-        jpm->root = json_mknumber(d);
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        sb_free(&jpm->buffer);
-        return jpm->process_byte(jpm, byte);
-    }
-    return 0;
-}
-
-static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
-    if ( is_space(byte) ) return 0;
-    switch( byte ) {
-    case '{' : {
-        json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
-        json_parse_machine_init(nvalue);
-        arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
-        nvalue->process_byte = (_json_parse_fn) jpm_key_init;
-        jpm->root = json_mkobject();
-        nvalue->p = jpm;
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-    } break;
-    case '"': {
-        if ( sb_init(&jpm->buffer) < 0 )
-            return -1;
-        jpm->process_byte = (_json_parse_fn) jpm_string_body;
-    } break;
-    case 'f': {
-        jpm->process_byte = (_json_parse_fn) jpm_bool_false_a;
-    } break;
-    case 't': {
-        jpm->process_byte = (_json_parse_fn) jpm_bool_true_r;
-    } break;
-    case '[': {
-        json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
-        json_parse_machine_init(nvalue);
-        arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
-        nvalue->process_byte = (_json_parse_fn) jpm_value_init;
-        jpm->root = json_mkarray();
-        nvalue->p = jpm;
-        jpm->process_byte = (_json_parse_fn) jpm_value_end;
-    } break;
-    default:
-        if ( sb_init(&jpm->buffer) < 0 )
-            return -1;
-        jpm->process_byte = (_json_parse_fn) jpm_number_body;
-        return jpm->process_byte(jpm, byte);
-    break;
-    }
-    return 0;
-}
-
-#define is_array_context(mach) ((mach)->p->root->tag == JSON_ARRAY)
-
-static int jpm_append_to_parent(json_parse_machine_t *jpm) {
-    if ( jpm->p ) {
-        if ( is_array_context(jpm) ) {
-            json_append_element(jpm->p->root, jpm->root);
-        } else {
-            json_append_member(jpm->p->root, jpm->key, jpm->root);
-        }
-        return 0;
-    }
-    return -1;
-}
-
-static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
-    if ( is_space(byte) ) return 0;
-    switch ( byte ) {
-    case '}': {
-        jpm->complete = 1;
-        jpm_append_to_parent(jpm);
-        jpm->key = p_null();
-        sb_clear(&jpm->buffer);
-        jpm->root = NULL;
-    } break;
-    case ']': {
-        jpm->complete = 1;
-        if ( jpm_append_to_parent(jpm) == 0 )
-            jpm->root = NULL;
-        jpm->key = p_null();
-        sb_clear(&jpm->buffer);
-        jpm->process_byte = NULL;
-    } break;
-    case ',': {
-        jpm_append_to_parent(jpm);
-        jpm->key = p_null();
-        json_parse_machine_t *prev = jpm->p;
-        json_parse_machine_init(jpm);
-        sb_clear(&jpm->buffer);
-        jpm->p = prev;
-        if ( is_array_context(jpm) )
-            jpm->process_byte = (_json_parse_fn) jpm_value_init;
-        else
-            jpm->process_byte = (_json_parse_fn) jpm_key_init;
-
-    } break;
-    default:
-        return -1;
-    }
-    return 0;
-}
-
-static int jpm_key_init(json_parse_machine_t *jpm, char byte) {
-    if ( is_space(byte) ) return 0;
-    switch ( byte ) {
-    case '"': {
-        if ( sb_init(&jpm->buffer) < 0 )
-            return -1;
-        jpm->process_byte = (_json_parse_fn) jpm_key_body;
-    } break;
-    default:
-        return -1;
-    }
-    return 0;
-}
-
-static int jpm_key_end(json_parse_machine_t *jpm, char byte) {
-    if ( is_space(byte) ) return 0;
-    switch ( byte ) {
-    case ':': {
-        jpm->process_byte = (_json_parse_fn) jpm_value_init;
-    } break;
-    default:
-        return -1;
-    }
-    return 0;
-}
-
-static int jpm_key_body(json_parse_machine_t *jpm, char byte) {
-    switch ( byte ) {
-    case '"': {
-        char *str = sb_finish(&jpm->buffer);
-        property_t key = p_json(str);
-        property_move(&jpm->key, &key);
-        property_free(&key);
-        sb_clear(&jpm->buffer);
-        jpm->process_byte = (_json_parse_fn) jpm_key_end;
-    } break;
-    default:
-        sb_putc(&jpm->buffer, byte);
-        break;
-    }
-    return 0;
-}
-
-
-int json_parse_machine_init(json_parse_machine_t *jpm) {
-    jpm->complete = 0;
-    jpm->process_byte = (_json_parse_fn) jpm_value_init;
-    property_init(&jpm->key);
-    jpm->p = NULL;
-    jpm->root = NULL;
-    memset(&jpm->node, 0x0, sizeof(arrow_linked_list_t));
-    sb_clear(&jpm->buffer);
-    return 0;
-}
-
-int json_parse_machine_process(json_parse_machine_t *jpm, char byte) {
-    json_parse_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, jpm, json_parse_machine_t);
-    if ( next ) {
-        // pass into last machine
-        if ( next->complete ) {
-            arrow_linked_list_del_node(jpm, json_parse_machine_t, next);
-            json_parse_machine_fin(next);
-            free(next);
-            return json_parse_machine_process(jpm, byte);
-        } else {
-            return json_parse_machine_process(next, byte);
-        }
-    } else {
-        if ( jpm->process_byte )
-            return jpm->process_byte(jpm, byte);
-    }
-    return -1;
-}
-
-int json_parse_machine_fin(json_parse_machine_t *jpm) {
-    if ( sb_size(&jpm->buffer) ) sb_free(&jpm->buffer);
-    if ( !IS_EMPTY(jpm->key) )property_free(&jpm->key);
-    jpm->process_byte = NULL;
-    jpm->p = NULL;
-    jpm->root = NULL;
-    return 0;
-}
-
-int json_decode_init(json_parse_machine_t *sm) {
-    return json_parse_machine_init(sm);
-}
-
-int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) {
-    const char *s = json;
-    size_t i = 0;
-    for ( i = 0; i < size; i++ ) {
-        if ( json_parse_machine_process(sm, s[i]) < 0 ) return -1;
-    }
-    return size;
-}
-
-JsonNode *json_decode_finish(json_parse_machine_t *sm) {
-    JsonNode *root = sm->root;
-    json_parse_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, sm, json_parse_machine_t);
-    if ( next ) {
-        json_parse_machine_t *tmp = NULL;
-        arrow_linked_list_for_each_safe(tmp, next, json_parse_machine_t) {
-            json_parse_machine_fin(tmp);
-            free(tmp);
-        }
-    }
-    json_parse_machine_fin(sm);
-    return root;
-}
 
 JsonNode *json_decode(const char *json)
 {
@@ -710,369 +315,6 @@ JsonNode *json_decode(const char *json)
 	}
 	
 	return ret;
-}
-
-
-int json_encode_machine_init(json_encode_machine_t *jem) {
-    jem->state = jem_encode_state_init;
-    jem->start = 0;
-    jem->complete = 0;
-    jem->ptr = NULL;
-    sb_clear(&jem->buffer);
-    memset(&jem->node, 0x0, sizeof(arrow_linked_list_t));
-    return 0;
-}
-
-#define json_encode_inc(buf, len, ret) { \
-    (ret) ++; \
-    (len) --; \
-    (buf) ++; \
-    }
-
-#define json_encode_add(size, buf, len, ret) { \
-    (ret) += (size); \
-    (len) -= (size); \
-    (buf) += (size); \
-    }
-
-size_t json_size(JsonNode *o) {
-    JsonNode *tmp = o;
-    size_t ret = 0;
-    if ( !IS_EMPTY(o->key) ) {
-        ret += property_size(&o->key) + 3;
-    }
-    switch(tmp->tag) {
-    case JSON_NULL:
-        // FIXME add handler
-        break;
-    case JSON_STRING:
-        ret += strlen(tmp->string_) + 2;
-        break;
-    case JSON_NUMBER: {
-        SB t;
-        sb_init(&t);
-        emit_number(&t, tmp->number_);
-        ret += t.cur - t.start;
-        sb_free(&t);
-    } break;
-    case JSON_BOOL:
-        ret += tmp->bool_ ? 4 : 5;
-        break;
-    case JSON_ARRAY:
-    case JSON_OBJECT:
-        json_foreach(tmp, o) {
-            ret += json_size(tmp);
-            if ( json_next(tmp) ) ret++;
-        }
-        ret += 2;
-        break;
-    }
-    return ret;
-}
-
-int jem_encode_string(char start_,
-                      char end_,
-                      const char *s,
-                      int offset,
-                      char *buf,
-                      int len);
-
-int jem_encode_obj(json_encode_machine_t *jem, char *s, int len);
-int jem_encode_number(json_encode_machine_t *jem, char *s, int len);
-
-int jem_encode_value_string(json_encode_machine_t *jem, char *s, int len) {
-    int value_size = strlen(jem->ptr->string_) + 2;
-
-    int r = jem_encode_string('\"', '\"',
-                              jem->ptr->string_,
-                              jem->start, s, len);
-    if ( r < 0 ) return -1;
-    jem->start += r;
-    if ( jem->start == value_size ) jem->complete = 1;
-
-    return r;
-}
-
-int jem_encode_bool(json_encode_machine_t *jem, char *s, int len) {
-    char s_true[]  = "true";
-    char s_false[] = "false";
-    char *buf_bool = jem->ptr->bool_ ? s_true : s_false;
-    int buf_size = (jem->ptr->bool_ ? 4 : 5) - jem->start;
-    if ( buf_size < len ) {
-        memcpy(s, buf_bool + jem->start, buf_size);
-        jem->complete = 1;
-        return buf_size;
-    } else {
-        memcpy(s, buf_bool + jem->start, len);
-        jem->start += len;
-    }
-    return len;
-}
-
-int jem_encode_number(json_encode_machine_t *jem, char *s, int len) {
-    if ( !sb_size(&jem->buffer) ) {
-        sb_init(&jem->buffer);
-        emit_number(&jem->buffer, jem->ptr->number_);
-    }
-    int buf_size = (jem->buffer.cur - jem->buffer.start) - jem->start;
-    if ( buf_size < len ) {
-        memcpy(s, jem->buffer.start + jem->start, buf_size);
-        jem->complete = 1;
-        return buf_size;
-    } else {
-        memcpy(s, jem->buffer.start + jem->start, len);
-        jem->start += len;
-    }
-    return len;
-}
-
-int jem_encode_string(char start_,
-                      char end_,
-                      const char *s,
-                      int offset,
-                      char *buf,
-                      int len) {
-    int key_size = strlen(s);
-    int buf_start = 0;
-    if ( !offset && len ) {
-        offset++;
-        buf[buf_start++] = start_;
-        len--;
-    }
-    if ( offset >= 1 && offset < 1 + key_size && len ) {
-        int key_copy_len = key_size - offset + 1;
-        if ( key_copy_len >= len ) key_copy_len = len;
-        memcpy(buf + buf_start, s + offset-1, key_copy_len);
-        offset += key_copy_len;
-        buf_start += key_copy_len;
-        len -= key_copy_len;
-    }
-    if ( offset >= 1 + key_size && len ) {
-        buf[buf_start++] = end_;
-        len--;
-    }
-    return buf_start;
-}
-
-int jem_encode_key(json_encode_machine_t *jem, char *s, int len) {
-    int key_size = property_size(&jem->ptr->key) + 2;
-
-    int r = jem_encode_string('\"', '\"',
-                              P_VALUE(jem->ptr->key),
-                              jem->start, s, len);
-    if ( r < 0 ) return -1;
-    if ( jem->start + r == key_size ) jem->complete = 1;
-
-    return r;
-}
-
-static void jem_change_state(json_encode_machine_t *jem, int newstate) {
-    jem->state = newstate;
-    jem->complete = 0;
-    jem->start = 0;
-}
-
-int jem_encode_value(json_encode_machine_t *jem, char *s, int len) {
-    int total = 0;
-    switch(jem->state) {
-    case jem_encode_state_init: {
-        if ( !IS_EMPTY(jem->ptr->key) ) {
-            int r = jem_encode_key(jem, s, len);
-            if ( r < 0 )  return -1;
-            json_encode_add(r, s, len, total);
-            if ( jem->complete ) {
-                jem_change_state(jem, jem_encode_state_key);
-            }
-            else {
-                jem->start += r;
-                return total;
-            }
-            if ( !len ) return total;
-        } else {
-            jem_change_state(jem, jem_encode_state_delim);
-        }
-    }
-    case jem_encode_state_key: {
-        if ( jem->state == jem_encode_state_key ) {
-            s[0] = ':';
-            json_encode_inc(s, len, total);
-            jem_change_state(jem, jem_encode_state_delim);
-            if ( !len ) return total;
-        } else {
-            jem_change_state(jem, jem_encode_state_delim);
-        }
-    }
-    case jem_encode_state_delim: {
-        switch(jem->ptr->tag) {
-        case JSON_STRING: {
-            int r = jem_encode_value_string(jem, s, len);
-            if ( r < 0 ) return -1;
-            json_encode_add(r, s, len, total)
-            if ( !jem->complete ) {
-                return total;
-            }
-        } break;
-        case JSON_BOOL: {
-            int r = jem_encode_bool(jem, s, len);
-            if ( r < 0 ) return -1;
-            json_encode_add(r, s, len, total)
-            if ( !jem->complete ) {
-                return total;
-            }
-        } break;
-        case JSON_NUMBER: {
-            int r = jem_encode_number(jem, s, len);
-            if ( r < 0 ) return -1;
-            json_encode_add(r, s, len, total)
-            if ( !jem->complete ) {
-                return total;
-            }
-        } break;
-        case JSON_ARRAY: {
-            switch(jem->start) {
-            case 0: {
-                s[0] = '[';
-                json_encode_inc(s, len, total);
-                jem->start++;
-                if ( !len ) return total;
-            }
-            case 1: {
-                int r = jem_encode_obj(jem, s, len);
-                if ( r < 0 ) return -1;
-                json_encode_add(r, s, len, total);
-                if ( jem->complete ) {
-                    jem->start++;
-                    jem->complete = 0;
-                } else {
-                    return total;
-                }
-                if ( !len ) return total;
-            }
-            case 2:{
-                s[0] = ']';
-                json_encode_inc(s, len, total);
-                jem->start++;
-                if ( !len ) return total;
-            }
-            case 3: {
-                jem->complete = 1;
-            }
-            }
-        } break;
-        case JSON_OBJECT: {
-            switch(jem->start) {
-            case 0: {
-                s[0] = '{';
-                json_encode_inc(s, len, total);
-                jem->start++;
-                if ( !len ) return total;
-            }
-            case 1: {
-                int r = jem_encode_obj(jem, s, len);
-                if ( r < 0 ) return -1;
-                json_encode_add(r, s, len, total);
-                if ( jem->complete ) {
-                    jem->start++;
-                    jem->complete = 0;
-                } else {
-                    return total;
-                }
-                if ( !len ) return total;
-            }
-            case 2:{
-                s[0] = '}';
-                json_encode_inc(s, len, total);
-                jem->start++;
-                if ( !len ) return total;
-            }
-            case 3: {
-                jem->complete = 1;
-            }
-            }
-        } break;
-        default:
-            return -1;
-        }
-        jem->state = jem_encode_state_value;
-    }
-    case jem_encode_state_value: {
-        return total;
-    }
-    default:
-        return -1;
-    }
-    return total;
-}
-
-int jem_encode_obj(json_encode_machine_t *jem, char *s, int len) {
-    if ( !len ) return 0;
-    int ret = 0;
-    json_encode_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, jem, json_encode_machine_t);
-    if ( !next ) {
-        next = alloc_type(json_encode_machine_t);
-        next->ptr = NULL;
-        arrow_linked_list_add_node_last(jem, json_encode_machine_t, next);
-    }
-    if ( !next->ptr && !next->complete ) {
-        json_encode_machine_init(next);
-        next->ptr = json_first_child(jem->ptr);
-    }
-    while( next->ptr ) {
-
-        if ( next->complete ) {
-            if ( len ) {
-                s[0] = ',';
-                json_encode_inc(s, len, ret);
-                next->complete = 0;
-            } else {
-                return ret;
-            }
-        }
-        if ( !len ) return ret;
-
-        int r = jem_encode_value(next, s, len);
-        if ( ret < 0 ) return -1;
-        json_encode_add(r, s, len, ret);
-        if ( next->complete ) {
-            JsonNode *p = json_next(next->ptr);
-            json_encode_machine_fin(next);
-            json_encode_machine_init(next);
-            next->ptr = p;
-            next->complete = 1;
-        }
-    }
-    if ( next && next->complete ) {
-        arrow_linked_list_del_node_last(jem, json_encode_machine_t);
-        json_encode_machine_fin(next);
-        free(next);
-        jem->complete = 1;
-    }
-    return ret;
-}
-
-int json_encode_machine_process(json_encode_machine_t *jem, char* s, int len) {
-    return jem_encode_value(jem, s, len);
-}
-
-int json_encode_machine_fin(json_encode_machine_t *jem) {
-      if ( sb_size(&jem->buffer) ) sb_free(&jem->buffer);
-      jem->ptr = NULL;
-    return 0;
-}
-
-int json_encode_init(json_encode_machine_t *jem, JsonNode *node) {
-    json_encode_machine_init(jem);
-    jem->ptr = node;
-    return 0;
-}
-
-int json_encode_part(json_encode_machine_t *jem, char *s, int len) {
-    return json_encode_machine_process(jem, s, len);
-}
-
-int json_encode_fin(json_encode_machine_t *jem) {
-    return json_encode_machine_fin(jem);
 }
 
 property_t json_encode_property(const JsonNode *node) {
@@ -1116,13 +358,9 @@ void json_delete(JsonNode *node)
 		json_remove_from_parent(node);
 		
 		switch (node->tag) {
-			case JSON_STRING:
-#if defined(STATIC_JSON)
-                static_buf_free(jsonbuf, node->string_);
-#else
-				free(node->string_);
-#endif
-				break;
+        case JSON_STRING: {
+            json_delete_string(node->string_);
+        } break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
 			{
@@ -1144,11 +382,9 @@ void json_delete(JsonNode *node)
 }
 
 void json_delete_string(char *json_str) {
-#if defined(STATIC_JSON)
-    static_buf_free(jsonbuf, json_str);
-#else
-    free(json_str);
-#endif
+    SB out;
+    out.start = json_str;
+    sb_free(&out);
 }
 
 int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
@@ -1517,11 +753,7 @@ success:
 
 failure_free_key:
     if (out) {
-#if defined(STATIC_JSON)
-        static_buf_free(jsonbuf, key);
-#else
-		free(key);
-#endif
+        json_delete_string(key);
     }
 failure:
 	json_delete(ret);
@@ -1960,7 +1192,7 @@ void emit_string(SB *out, const char *str)
 	out->cur = b;
 }
 
-static void emit_number(SB *out, double num)
+void emit_number(SB *out, double num)
 {
 	/*
 	 * This isn't exactly how JavaScript renders numbers,

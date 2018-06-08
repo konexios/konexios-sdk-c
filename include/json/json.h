@@ -27,6 +27,9 @@
 #include <sys/mem.h>
 #include <data/property.h>
 
+#define is_space(c) ((c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == ' ')
+#define is_digit(c) ((c) >= '0' && (c) <= '9')
+
 # define json_key(x)  P_VALUE((x)->key)
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
@@ -76,6 +79,22 @@ typedef struct {
     char *end;
     char *start;
 } SB;
+int sb_init(SB *sb);
+int sb_grow(SB *sb, int need);
+int sb_need(SB *sb, int need);
+int sb_put(SB *sb, const char *bytes, int count);
+
+#define sb_putc(sb, c) do {         \
+        if ((sb)->cur >= (sb)->end) \
+            sb_grow(sb, 1);         \
+        *(sb)->cur++ = (c);         \
+    } while (0)
+
+int sb_puts(SB *sb, const char *str);
+char *sb_finish(SB *sb);
+void sb_clear(SB *sb);
+void sb_free(SB *sb);
+int sb_size(SB *sb);
 
 /*** Encoding, decoding, and validation ***/
 typedef int(*_json_parse_fn)(void *, char);

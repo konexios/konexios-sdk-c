@@ -565,6 +565,8 @@ int process_event_init() {
 }
 
 int process_event(const char *str, int len) {
+    ((char*)str)[len] = 0;
+    printf("str[%s]\r\n", str);
     int r = json_decode_part(&sm, str, len);
     if ( r != len ) return -1;
     return 0;
@@ -621,7 +623,10 @@ int process_event_finish() {
       DBG("signature vertsion: %s", sign_version->string_);
 #endif
     JsonNode *sign = json_find_member(_main, p_const("signature"));
-    if ( !sign ) goto error;
+    if ( !sign ) {
+        DBG("There is no signature... fail");
+        goto error;
+    }
     char *can = form_canonical_prm(_parameters);
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
     DBG("[%s]", can);
