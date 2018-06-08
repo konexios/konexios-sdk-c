@@ -14,7 +14,7 @@ typedef struct _gate_dev {
 static void _device_register_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
   http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
-  arrow_prepare_device(gd->gateway, gd->device);
+  //arrow_prepare_device(gd->gateway, gd->device);
   http_request_set_payload(request, arrow_device_serialize(gd->device));
 }
 
