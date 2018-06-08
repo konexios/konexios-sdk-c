@@ -5,7 +5,7 @@
  * http://apache.org/licenses/LICENSE-2.0
  * Contributors: Arrow Electronics, Inc.
  */
-
+#if defined(__AZURE__)
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>
 #include <debug.h>
@@ -21,7 +21,6 @@
 #define SHA256_DIGEST_SIZE 32
 #endif
 
-#if defined(__AZURE__)
 static int sas_token_gen(char *sas, char *devname, char *key, char *time_exp) {
   char *dev = MQTT_ADDR "/devices/";
   char common[256];
