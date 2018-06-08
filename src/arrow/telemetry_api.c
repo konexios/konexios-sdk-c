@@ -52,7 +52,9 @@ typedef struct _device_telemetry {
 
 static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
-  http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT,dt->device->hid.value);
+  http_request_init(request, POST, uri);
   request->is_chunked = 1;
   http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
 }
