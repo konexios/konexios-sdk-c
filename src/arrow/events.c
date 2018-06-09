@@ -566,7 +566,6 @@ int process_event_init() {
 
 int process_event(const char *str, int len) {
     ((char*)str)[len] = 0;
-    printf("str[%s]\r\n", str);
     int r = json_decode_part(&sm, str, len);
     if ( r != len ) return -1;
     return 0;

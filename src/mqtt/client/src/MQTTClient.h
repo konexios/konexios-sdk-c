@@ -136,7 +136,6 @@ typedef struct MQTTClient
 
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 
-
 /**
  * Create an MQTT client object
  * @param client
