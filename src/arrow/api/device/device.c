@@ -14,7 +14,8 @@ typedef struct _gate_dev {
 static void _device_register_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
   http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
-  arrow_prepare_device(gd->gateway, gd->device);
+  if ( IS_EMPTY(gd->device->gateway_hid) )
+      arrow_prepare_device(gd->gateway, gd->device);
   http_request_set_payload(request, arrow_device_serialize(gd->device));
 }
 
@@ -29,6 +30,7 @@ static int _device_register_proc(http_response_t *response, void *arg) {
   return 0;
 }
 
+// device should be already initialized or filled
 int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     gate_dev_t gd = {gateway, device};
     STD_ROUTINE(_device_register_init, &gd,
