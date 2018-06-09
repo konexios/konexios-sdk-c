@@ -104,6 +104,8 @@ int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *confi
 static void _gateway_register_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
   http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
+  if ( IS_EMPTY(gateway->uid) )
+      arrow_prepare_gateway(gateway);
   http_request_set_payload(request, arrow_gateway_serialize(gateway));
 }
 
