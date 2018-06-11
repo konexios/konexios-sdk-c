@@ -16,6 +16,7 @@
 void *__static_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, int size);
 void  __static_free(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, void *ptr);
 void *__static_realloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, void *ptr, int size);
+int   __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size);
 
 #define CREATE_BUFFER(name, size) \
 static uint32_t __##name##_size = size; \
@@ -23,6 +24,7 @@ static uint8_t name[ALLOC_BUF_CHUNK * size] = {0}; \
 static uint8_t __alloc_space_##name[size>>3] = {0}; \
 static uint8_t __alloc_head_##name[size>>3] = {0};
 
+#define static_max_piece(name) __find_max_alloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size)
 #define static_buf_alloc(name, size) __static_alloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, size)
 #define static_buf_realloc(name, ptr, size) __static_realloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, ptr, size)
 #define static_buf_free(name, ptr)   __static_free(__alloc_head_##name, __alloc_space_##name, name, ptr)

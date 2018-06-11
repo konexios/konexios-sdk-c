@@ -38,6 +38,22 @@ void *__static_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buf
   return buffer + 0x20 * (sector+1-r);
 }
 
+int __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size) {
+    SSP_PARAMETER_NOT_USED(__alloc_head);
+  int i = 0;
+  int t = 0;
+  int sector = -1;
+  for (i=0; i < (int)_buf_size; i++) {
+    if ( !__is_in_use(__alloc_space, i) ) ++t;
+    else {
+      if ( sector < t ) sector = t;
+      t = 0;
+    }
+  }
+  return sector*ALLOC_BUF_CHUNK;
+}
+
+
 void __static_free(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, void *ptr) {
   int shift = (uint8_t *)ptr - buffer;
   if ( shift < 0 ) return;
