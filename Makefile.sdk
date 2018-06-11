@@ -1,3 +1,22 @@
+# Makefile of project "ArrowConnect C SDK"
+#==========================================================
+
+#==========================================================
+# The C SDK requires the following variables defined
+#
+# LIBDIR - Path where the objects are stored
+# SDK_PATH - Absolute path to the SDK from the building project
+# SDK_IMPL - Location of the platform specific source files
+# GCC_BIN  - Location of gcc binary
+# GCC_PREFIX - Prefix for the gcc binary
+# PLATFORM - Platform we are building for -D__$(PLATFORM)__
+# CC_SYMBOLS - Arguments and build params to gcc
+#
+# WOLFSSL = yes - Include WolfSSL
+# CJSON = yes - Include the embedded JSON library
+#
+#==========================================================
+
 -include $(SDK_PATH)/Makefile.static
 -include $(SDK_PATH)/Makefile.wolf
 
