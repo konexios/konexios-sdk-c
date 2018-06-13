@@ -25,6 +25,12 @@ void property_types_init() {
   property_type_add(property_type_get_stack());
 }
 
+void property_types_deinit() {
+  while( prop_disp ) {
+      arrow_linked_list_del_node_last(prop_disp, property_dispetcher_t);
+  }
+}
+
 void property_init(property_t *dst) {
     dst->flags = 0x00;
     dst->size = 0;
@@ -121,7 +127,7 @@ void property_free(property_t *dst) {
 
 int property_cmp(property_t *src, property_t *dst) {
     if ( src->flags & is_raw ) {
-        if ( src->size == src->size &&
+        if ( src->size == dst->size &&
              strncmp(src->value, dst->value, src->size) == 0 ) return 0;
         return -1;
     }

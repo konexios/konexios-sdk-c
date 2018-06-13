@@ -20,7 +20,7 @@ static void *static_strndup(char *ptr, int size) {
         return NULL;
     }
     memcpy(p, ptr, size);
-    ((char *)p)[size + 1] = 0x0;
+    ((char *)p)[size] = 0x0;
     return p;
 }
 
@@ -71,11 +71,13 @@ void dynmc_weak(property_t *dst, property_t *src) {
 }
 
 void dynmc_move(property_t *dst, property_t *src) {
-    if ( ! ( src->flags & is_owner ) ) return;
     dst->value = src->value;
     dst->size = src->size;
-    dst->flags = is_owner | PROPERTY_DYNAMIC_TAG;
-    src->flags &= ~is_owner; // make weak
+    dst->flags = PROPERTY_DYNAMIC_TAG;
+    if ( src->flags & is_owner ) {
+        dst->flags |= is_owner;
+        src->flags &= ~is_owner; // make weak
+    }
 }
 
 void dynmc_destroy(property_t *dst) {
