@@ -29,9 +29,7 @@ int default_add_payload_handler( void *r,
     if ( IS_EMPTY(res->payload) ) {
         property_move(&res->payload, &payload);
     } else {
-        property_t tmp = property_concat(&res->payload, &payload);
-        property_free(&res->payload);
-        property_move(&res->payload, &tmp);
+        property_concat(&res->payload, &payload);
     }
     return 0;
 }

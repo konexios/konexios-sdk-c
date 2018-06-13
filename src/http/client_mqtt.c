@@ -11,6 +11,7 @@
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>
 #include <arrow/events.h>
+#include <debug.h>
 
 static int headbyname( property_map_t *h, const char *name ) {
     if ( strcmp(P_VALUE(h->key), name) == 0 ) return 0;
@@ -65,9 +66,14 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                            json_mkstring(P_VALUE(tmp->value)));
     }
     if ( !IS_EMPTY(req->payload) ) {
+
+    char *body = json_encode_string(P_VALUE(req->payload));
+   int bodylen = strlen(body);
+    body[bodylen-1] = 0x0;
         json_append_member(_parameters,
                            p_const("body"),
-                           json_mkstring(P_VALUE(req->payload)));
+                           json_mkstring(body + 1));
+        json_delete_string(body);
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-signature");
     if ( tmp ) {
@@ -111,13 +117,31 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                        json_mkstring("1"));
 
     ret = mqtt_api_publish(_node);
-    ret = mqtt_yield(cli->timeout);
-    json_delete(_node);
 
-    if ( arrow_mqtt_api_has_events() <= 0 ) return -1;
-    if ( arrow_mqtt_api_event_proc(res) < 0 ) return -1;
-    ret = 0;
+    DBG("publish %d", ret);
+    if ( ret < 0 ) {
+        ret = -1;
+        goto http_mqtt_error;
+    }
 
+    TimerInterval timer;
+    TimerInit(&timer);
+    TimerCountdownMS(&timer, (unsigned int)cli->timeout);
+    while ( !arrow_mqtt_api_has_events() && !TimerIsExpired(&timer) ) {
+        ret = mqtt_yield(TimerLeftMS(&timer));
+        DBG("yield %d", ret);
+    }
+
+    if ( arrow_mqtt_api_has_events() <= 0 ) {
+        ret = -1;
+        goto http_mqtt_error;
+    }
+
+    while ( (ret = arrow_mqtt_api_event_proc(res)) > 0)
+        ;
+http_mqtt_error:
+    if ( _node ) json_delete(_node);
+DBG("%s %d", __PRETTY_FUNCTION__, ret);
     return ret;
 }
 

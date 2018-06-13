@@ -103,9 +103,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 
     int shift = 0;
 
-    msg.offset = 0;
-
-    arrow_mqtt_client_delivery_message_init(c, &topicName, &msg);
+    int msg_err = arrow_mqtt_client_delivery_message_init(c, &topicName, &msg);
 
     while( total_len ) {
         int chunk = total_len < rest_buffer ? total_len : rest_buffer;
@@ -118,13 +116,12 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
         } else {
             total_len -= len;
             shift += len;
-            msg.offset = 1;
             msg.payloadlen = len;
-            arrow_mqtt_client_delivery_message_process(c, &topicName, &msg);
+            if ( msg_err == 0 ) arrow_mqtt_client_delivery_message_process(c, &topicName, &msg);
         }
     }
-    msg.offset = 2;
-    arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
+
+    if ( !msg_err ) arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
 
     if (msg.qos != QOS0)
     {
@@ -240,7 +237,10 @@ int MQTTPublish_part(MQTTClient* c,
     if (message->qos == QOS1 || message->qos == QOS2)
         message->id = getNextPacketId(c);
 
-    int rem_len = MQTTSerialize_publishLength(message->qos, topic, message->payloadlen);
+    int payloadlen = drive->init();
+    if ( payloadlen <= 0 )
+        goto exit;
+    int rem_len = MQTTSerialize_publishLength(message->qos, topic, payloadlen);
 
     unsigned char *ptr = c->buf;
 
@@ -266,13 +266,11 @@ int MQTTPublish_part(MQTTClient* c,
 
     ptr = c->buf;
     // send packet body
-    int total = message->payloadlen;
+    int total = payloadlen;
     len = c->buf_size;
-    drive->init();
     while( total ) {
         int chunk = total < len ? total : len;
         chunk = drive->part((char*)ptr, chunk);
-
         if ( chunk < 0 ) {
             rc = FAILURE;
             goto exit;

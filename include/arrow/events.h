@@ -14,7 +14,6 @@ typedef struct {
   property_t device_hid;
   property_t name;
   int encrypted;
-  char *cmd;
   JsonNode *parameters;
   arrow_linked_list_head_node;
 } mqtt_event_t;
@@ -29,11 +28,11 @@ typedef struct {
 
 void arrow_mqtt_events_init(void);
 void arrow_mqtt_events_done(void);
-int process_event_init();
+int process_event_init(int size);
 int process_event(const char *str, int len);
 int process_event_finish();
 
-int process_http_init();
+int process_http_init(int size);
 int process_http(const char *str, int len);
 int process_http_finish();
 

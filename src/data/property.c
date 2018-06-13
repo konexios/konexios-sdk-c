@@ -94,26 +94,20 @@ property_t property_as_null_terminated(property_t *src) {
     return tmp;
 }
 
-property_t property_concat(property_t *src1, property_t *src2) {
-    property_t tmp;
-    property_init(&tmp);
-    if ( IS_EMPTY(*src1) ) {
-        property_weak_copy(&tmp, *src2);
-        return tmp;
-    }
+// FIXME valid only for dynamic
+int property_concat(property_t *src1, property_t *src2) {
+    extern void dynmc_concat(property_t *dst, property_t *src);
     if ( IS_EMPTY(*src2) ) {
-        property_weak_copy(&tmp, *src1);
-        return tmp;
+        return -1;
     }
-    uint8_t raw = src1->flags & src2->flags & is_raw;
-    int len = src1->size + src2->size + (raw ? 1 : 0);
-    tmp.size = len;
-    tmp.value = (char *)malloc(len);
-    memcpy(tmp.value, src1->value, src1->size);
-    memcpy(tmp.value + src1->size, src2->value, src2->size);
-    if ( raw ) tmp.value[len] = 0x0;
-    tmp.flags = is_owner | PROPERTY_DYNAMIC_TAG;
-    return tmp;
+    if ( IS_EMPTY(*src1) ) {
+        property_copy(src1, *src2);
+        return 0;
+    }
+
+    dynmc_concat(src1, src2);
+
+    return 0;
 }
 
 void property_free(property_t *dst) {
@@ -127,7 +121,7 @@ void property_free(property_t *dst) {
 
 int property_cmp(property_t *src, property_t *dst) {
     if ( src->flags & is_raw ) {
-        if ( src->size == src->size &&
+        if ( src->size == dst->size &&
              strncmp(src->value, dst->value, src->size) == 0 ) return 0;
         return -1;
     }

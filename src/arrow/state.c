@@ -239,7 +239,9 @@ static void _state_get_init(http_request_t *request, void *arg) {
 static int _state_get_proc(http_response_t *response, void *arg) {
     arrow_device_t *dev = (arrow_device_t *)arg;
     if ( response->m_httpResponseCode != 200 ) return -1;
-    DBG("[%s]", P_VALUE(response->payload));
+    if ( !IS_EMPTY(response->payload) ) {
+        DBG("[%s]", P_VALUE(response->payload));
+    }
     JsonNode *_main = json_decode(P_VALUE(response->payload));
     if ( !_main ) return -1;
     JsonNode *dev_hid = json_find_member(_main, p_const("deviceHid"));

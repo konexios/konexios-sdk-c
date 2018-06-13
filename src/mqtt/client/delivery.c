@@ -35,7 +35,7 @@ int arrow_mqtt_client_delivery_message_reg(arrow_mqtt_delivery_callback_t *dc) {
 int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
     arrow_mqtt_delivery_callback_t *tmp;
     linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
-    if ( tmp && tmp->init ) return tmp->init();
+    if ( tmp && tmp->init ) return tmp->init(message->payloadlen);
     return -1;
 }
 

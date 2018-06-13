@@ -17,7 +17,7 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_buf.h>
-CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
+CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE, 0x10)
 #define SB_ALLOC(x)          static_buf_alloc(jsonbuf, (x))
 #define SB_REALLOC(ptr, len) static_buf_realloc(jsonbuf, (ptr), (len));
 #define SB_FREE(x)           static_buf_free(jsonbuf, (x));
@@ -26,6 +26,10 @@ CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
 #define SB_REALLOC realloc
 #define SB_FREE    free
 #endif
+
+int json_static_memory_max_sector(void) {
+    return static_max_piece(jsonbuf);
+}
 
 int sb_size(SB *sb) {
     return sb->end - sb->start;
@@ -83,7 +87,7 @@ int sb_puts(SB *sb, const char *str) {
 }
 
 char *sb_finish(SB *sb) {
-    *sb->cur = 0;
+    if ( sb->cur ) *sb->cur = 0;
     assert(sb->start <= sb->cur && strlen(sb->start) == (size_t)(sb->cur - sb->start));
     return sb->start;
 }

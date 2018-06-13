@@ -49,7 +49,6 @@ static void mqtt_event_init(mqtt_event_t *mq) {
     property_init(&mq->gateway_hid);
     property_init(&mq->device_hid);
     property_init(&mq->name);
-    mq->cmd = NULL;
     mq->parameters = NULL;
 }
 
@@ -57,7 +56,6 @@ static void mqtt_event_free(mqtt_event_t *mq) {
   property_free(&mq->gateway_hid);
   property_free(&mq->device_hid);
   property_free(&mq->name);
-  if ( mq->cmd ) free(mq->cmd);
   if ( mq->parameters ) json_delete(mq->parameters);
 }
 
@@ -154,7 +152,7 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_t *ev,
 
 #if defined(STATIC_MQTT_ENV)
 // FIXME buffer len?
-static char static_canonical_prm[2000];
+static char static_canonical_prm[3000];
 static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
 static_object_pool_type(mqtt_api_event_t, ARROW_MAX_MQTT_COMMANDS)
 #else
@@ -207,7 +205,7 @@ void swap(str_t *s1, str_t *s2) {
     s2->start = s1->start + s1->len;
 }
 
-int booble(str_t *s, int len) {
+int bubble(str_t *s, int len) {
     int do_sort = 1;
     while(do_sort) {
         do_sort = 0;
@@ -265,7 +263,7 @@ static char *form_canonical_prm(JsonNode *param) {
       count++;
   }
   can_list[count-1].start[can_list[count-1].len] = '\0';
-  booble(can_list, count);
+  bubble(can_list, count);
   can_list[count-1].start[can_list[count-1].len-1] = '\0';
   return canParam;
 }
@@ -387,7 +385,7 @@ int arrow_mqtt_event_proc(void) {
       DBG("No event processor for %s", tmp->name);
       goto mqtt_event_proc_error;
     }
-    if ( __event_queue ) ret = 1;
+    if ( __event_queue && !ret ) ret = 1;
 mqtt_event_proc_error:
     mqtt_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
@@ -448,21 +446,41 @@ mqtt_api_error:
 
 static json_parse_machine_t sm_http;
 
-int process_http_init() {
+int process_http_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     if (arrow_mqtt_api_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
+#endif
+    DBG("Static http mempory size %d", json_static_memory_max_sector());
+    DBG("need %d", size);
+#if defined(STATIC_ACN)
+    if ( size*(1) > json_static_memory_max_sector() - 512 ) {
+        DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        return -1;
+    }
 #endif
     return json_decode_init(&sm_http);
 }
 
 int process_http(const char *str, int len) {
     int r = json_decode_part(&sm_http, str, len);
-    if ( r != len ) return -1;
+    if ( r != len ) {
+        DBG("http decode fail %d/%d", r, len);
+        JsonNode *root = json_decode_finish(&sm_http);
+        if ( root ) json_delete(root);
+        return -1;
+    }
     return 0;
 }
 
 int process_http_finish() {
+    int ret = -1;
+    JsonNode *_main = json_decode_finish(&sm_http);
+    if ( !_main ) {
+        DBG("http payload decode failed");
+        goto no_api_error;
+    }
+
 #if defined(STATIC_MQTT_ENV)
     mqtt_api_event_t *api_e = static_allocator(mqtt_api_event_t);
 #else
@@ -470,16 +488,11 @@ int process_http_finish() {
 #endif
   if ( !api_e ) {
       DBG("PROCESS API EVENT: not enough memory");
-      return -2;
+      goto no_api_error;
   }
   mqtt_api_event_init(api_e);
 
-  int ret = -1;
-  JsonNode *_main = json_decode_finish(&sm_http);
-  if ( !_main ) {
-      DBG("http payload decode failed");
-      return -1;
-  }
+
 
     if ( fill_string_from_json(_main,
                                p_const("requestId"),
@@ -541,7 +554,7 @@ int process_http_finish() {
     arrow_linked_list_add_node_last(__api_event_queue, mqtt_api_event_t, api_e);
 
     ret = 0;
-  error:
+error:
     if ( ret < 0 ) {
         mqtt_api_event_free(api_e);
   #if defined(STATIC_MQTT_ENV)
@@ -550,16 +563,25 @@ int process_http_finish() {
         free(api_e);
   #endif
     }
+no_api_error:
     if ( _main ) json_delete(_main);
     return ret;
 }
 
 static json_parse_machine_t sm;
 
-int process_event_init() {
+int process_event_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
+#endif
+    DBG("Static mempory size %d", json_static_memory_max_sector());
+    DBG("need %d", size);
+#if defined(STATIC_ACN)
+    if ( size*(2) > json_static_memory_max_sector() - 1024 ) {
+        DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        return -1;
+    }
 #endif
     return json_decode_init(&sm);
 }
@@ -567,11 +589,23 @@ int process_event_init() {
 int process_event(const char *str, int len) {
     ((char*)str)[len] = 0;
     int r = json_decode_part(&sm, str, len);
-    if ( r != len ) return -1;
+    if ( r != len ) {
+        DBG("JSON decode fail %d/%d", r, len);
+        JsonNode *root = json_decode_finish(&sm);
+        if ( root ) json_delete(root);
+        return -1;
+    }
     return 0;
 }
 
+
 int process_event_finish() {
+    int ret = -1;
+    JsonNode *_main = json_decode_finish(&sm);
+    if ( !_main ) {
+        DBG("event payload decode failed");
+        goto no_event_error;
+    }
 #if defined(STATIC_MQTT_ENV)
     mqtt_event_t *mqtt_e = static_allocator(mqtt_event_t);
 #else
@@ -579,15 +613,9 @@ int process_event_finish() {
 #endif
   if ( !mqtt_e ) {
       DBG("PROCESS EVENT: not enough memory");
-      return -2;
+      goto no_event_error;
   }
   mqtt_event_init(mqtt_e);
-  int ret = -1;
-  JsonNode *_main = json_decode_finish(&sm);
-  if ( !_main ) {
-      DBG("event payload decode failed");
-      return -1;
-  }
 
   if ( fill_string_from_json(_main, p_const("hid"), &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
@@ -607,6 +635,7 @@ int process_event_finish() {
 
   if ( IS_EMPTY(mqtt_e->gateway_hid) || IS_EMPTY(mqtt_e->name) ) {
       DBG("EMPTY parameters {%s, %s}", P_VALUE(mqtt_e->gateway_hid), P_VALUE(mqtt_e->name));
+      goto error;
   }
 
   JsonNode *_encrypted = json_find_member(_main, p_const("encrypted"));
@@ -656,6 +685,7 @@ error:
       free(mqtt_e);
 #endif
   }
+no_event_error:
   if ( _main ) json_delete(_main);
   return ret;
 }

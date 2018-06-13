@@ -10,6 +10,14 @@
 #define _ARROW_INCLUDE_CRYPT_SHA256_H_
 
 void sha256(char *shasum, char *buf, int size);
+void sha256_init();
+void sha256_chunk(const char *buf, int size);
+void sha256_fin(char *shasum);
+
 void hmac256(char *hmacdig, const char *key, int key_size, const char *buf, int buf_size);
+
+void hmac256_init(const char *key, int key_size);
+void hmac256_chunk(const char *buf, int buf_size);
+void hmac256_fin(char *hmacdig);
 
 #endif // _ARROW_INCLUDE_CRYPT_SHA256_H_

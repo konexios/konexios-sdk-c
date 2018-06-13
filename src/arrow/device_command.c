@@ -81,7 +81,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
     http_request_init(request, PUT, uri);
     FREE_CHUNK(uri);
     if ( !IS_EMPTY(data->payload) ) {
-        http_request_set_payload(request, data->payload);
+      http_request_set_payload(request, data->payload);
 	}
 }
 

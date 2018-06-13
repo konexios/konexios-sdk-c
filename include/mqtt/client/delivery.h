@@ -13,7 +13,7 @@
 #include <data/property.h>
 #include <data/linkedlist.h>
 
-typedef int(*arrow_mqtt_delivery_init)(void);
+typedef int(*arrow_mqtt_delivery_init)(int);
 typedef int(*arrow_mqtt_delivery_process)(const char *,int);
 typedef int(*arrow_mqtt_delivery_close)(void);
 

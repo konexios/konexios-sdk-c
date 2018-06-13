@@ -73,6 +73,7 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
         jpm->process_byte = (_json_parse_fn) jpm_string_escape;
     } break;
     case '"': {
+        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
         char *str = sb_finish(&jpm->buffer);
         jpm->root = json_mkstring(str);
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
@@ -89,6 +90,7 @@ static int jpm_number_body(json_parse_machine_t *jpm, char byte) {
     if ( is_digit(byte) || byte == '.' ) {
         sb_putc(&jpm->buffer, byte);
     } else {
+        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
         char *str = sb_finish(&jpm->buffer);
         double d = strtod(str, NULL);
         jpm->root = json_mknumber(d);
@@ -219,6 +221,7 @@ static int jpm_key_end(json_parse_machine_t *jpm, char byte) {
 static int jpm_key_body(json_parse_machine_t *jpm, char byte) {
     switch ( byte ) {
     case '"': {
+        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
         char *str = sb_finish(&jpm->buffer);
         property_t key = p_json(str);
         property_move(&jpm->key, &key);

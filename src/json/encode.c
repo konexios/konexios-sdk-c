@@ -159,7 +159,9 @@ int jem_encode_key(json_encode_machine_t *jem, char *s, int len) {
                               P_VALUE(jem->ptr->key),
                               jem->start, s, len);
     if ( r < 0 ) return -1;
-    if ( jem->start + r == key_size ) jem->complete = 1;
+    if ( jem->start + r == key_size ) {
+        jem->complete = 1;
+    }
 
     return r;
 }
@@ -356,6 +358,12 @@ int json_encode_machine_process(json_encode_machine_t *jem, char* s, int len) {
 int json_encode_machine_fin(json_encode_machine_t *jem) {
       if ( sb_size(&jem->buffer) ) sb_free(&jem->buffer);
       jem->ptr = NULL;
+      json_encode_machine_t *next = NULL;
+      arrow_linked_list_next_node(next, jem, json_encode_machine_t);
+      if ( next ) {
+          json_encode_machine_fin(next);
+          free(next);
+      }
     return 0;
 }
 

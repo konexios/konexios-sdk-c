@@ -371,9 +371,14 @@ static json_encode_machine_t em;
 
 
 int p_init() {
-    int r = json_encode_init(&em, mqtt_pub_pay);
-    return r;
+    int len = json_size(mqtt_pub_pay);
+    if ( json_encode_init(&em, mqtt_pub_pay) < 0 ) {
+        return -1;
+    }
+    return len;
 }
+
+char ttt[290];
 
 int p_part(char *ptr, int len) {
     int r = json_encode_part(&em, ptr, len);
@@ -381,7 +386,8 @@ int p_part(char *ptr, int len) {
 }
 
 int p_fin() {
-    return json_encode_fin(&em);
+    int r = json_encode_fin(&em);
+    return r;
 }
 
 mqtt_payload_drive_t mqtt_json_drive = {
@@ -396,15 +402,10 @@ int mqtt_publish(arrow_device_t *device, void *d) {
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
         mqtt_pub_pay = telemetry_serialize_json(device, d);
-//        property_t payload = telemetry_serialize(device, d);
-//        if ( IS_EMPTY(payload) ) return -1;
-//        msg.payload = P_VALUE(payload);
-        msg.payloadlen = json_size(mqtt_pub_pay);
         ret = MQTTPublish_part(&tmp->client,
                                P_VALUE(tmp->p_topic),
                                &msg,
                                &mqtt_json_drive);
-//        property_free(&payload);
         json_delete(mqtt_pub_pay);
     }
     return ret;
@@ -423,11 +424,11 @@ int mqtt_api_publish(JsonNode *data) {
     msg.payload = (void *)data;
     msg.payloadlen = json_size(data);
     MQTT_DBG("[%d][%s]", msg.payloadlen, msg.payload);
+    DBG("publish all [%d]", msg.payloadlen);
     ret = MQTTPublish_part(&tmp->client,
                       P_VALUE(tmp->p_api_topic),
                       &msg,
                            &mqtt_json_drive);
-//    property_free(&data);
   }
   return ret;
 }

@@ -5,11 +5,6 @@
 #include <debug.h>
 #include <arrow/utf8.h>
 
-#if defined(STATIC_ACN)
-#define USE_STATIC
-#else
-#define USE_HEAP
-#endif
 #include <data/chunk.h>
 
 int gateway_payload_sign(char *signature,
@@ -20,51 +15,35 @@ int gateway_payload_sign(char *signature,
                          const char *signatureVersion) {
   int ret = -1;
   // step 1
-  int total_size = strlen(hid);
-  total_size += strlen(name);
-  total_size += strlen(canParString);
-  total_size += strlen(signatureVersion);
-  total_size += 50;
-#if defined(STATIC_ACN)
-  // canParString should be less than MQTT_RECVBUF_LEN
-  if ( total_size > MQTT_RECVBUF_LEN ) return -1;
-  CREATE_CHUNK(canonicalRequest, MQTT_RECVBUF_LEN);
-#else
-  CREATE_CHUNK(canonicalRequest, total_size);
-#endif
-  CHECK_CHUNK(canonicalRequest, return ret);
-  strcpy(canonicalRequest, hid);
-  strcat(canonicalRequest, "\n");
-  strcat(canonicalRequest, name);
-  strcat(canonicalRequest, "\n");
-  if ( encrypted ) strcat(canonicalRequest, "true\n");
-  else strcat(canonicalRequest, "false\n");
-  strcat(canonicalRequest, canParString);
-  strcat(canonicalRequest, "\n");
-  CREATE_CHUNK(hex_tmp, 66);
-  CHECK_CHUNK(hex_tmp, goto hex_tmp_error);
+  sha256_init();
+  sha256_chunk(hid, strlen(hid));
+  sha256_chunk("\n", 1);
+  sha256_chunk(name, strlen(name));
+  sha256_chunk("\n", 1);
+  if ( encrypted ) {
+      sha256_chunk("true\n", 5);
+  } else {
+      sha256_chunk("false\n", 6);
+  }
+  sha256_chunk(canParString, strlen(canParString));
+  sha256_chunk("\n", 1);
+
+  CREATE_CHUNK(hex_canreq, 66);
+  CHECK_CHUNK(hex_canreq, goto hex_tmp_error);
 
   CREATE_CHUNK(tmp, 34);
   CHECK_CHUNK(tmp, goto tmp_error);
 
-  sha256(tmp, canonicalRequest, (int)strlen(canonicalRequest));
-  hex_encode(hex_tmp, tmp, 32);
-  hex_tmp[64] = '\0';
+  sha256_fin(tmp);
+  hex_encode(hex_canreq, tmp, 32);
+  hex_canreq[64] = '\0';
 #if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
-  DBG("can: %s", hex_hash_canonical_req);
+  DBG("can: %s", hex_canreq);
 #endif
 
-  // step 2
-  char *stringtoSign = canonicalRequest;
-  strcpy(stringtoSign, hex_tmp);
-  strcat(stringtoSign, "\n");
-  strcat(stringtoSign, get_api_key());
-  strcat(stringtoSign, "\n");
-  strcat(stringtoSign, signatureVersion);
+  CREATE_CHUNK(hex_tmp, 66);
+  CHECK_CHUNK(hex_tmp, goto hex_tmp_error);
 
-#if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
-  DBG("strToSign:\r\n[%s]", stringtoSign);
-#endif
   // step 3
 
 #if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
@@ -84,7 +63,14 @@ int gateway_payload_sign(char *signature,
 #if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
   DBG("hex2: [%d]%s", strlen(hex_tmp), hex_tmp);
 #endif
-  hmac256(tmp, hex_tmp, strlen(hex_tmp), stringtoSign, strlen(stringtoSign));
+  hmac256_init(hex_tmp, strlen(hex_tmp));
+  hmac256_chunk(hex_canreq, strlen(hex_canreq));
+  hmac256_chunk("\n", 1);
+  hmac256_chunk(get_api_key(), strlen(get_api_key()));
+  hmac256_chunk("\n", 1);
+  hmac256_chunk(signatureVersion, strlen(signatureVersion));
+  hmac256_fin(tmp);
+
   hex_encode(signature, tmp, 32);
   signature[64] = 0x0;
 #if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
@@ -96,5 +82,6 @@ tmp_error:
   FREE_CHUNK(hex_tmp);
 hex_tmp_error:
   FREE_CHUNK(canonicalRequest);
+  FREE_CHUNK(hex_canreq);
   return ret;
 }
