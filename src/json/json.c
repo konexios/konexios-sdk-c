@@ -457,8 +457,9 @@ static JsonNode *mknode(JsonTag tag)
 #endif
     if (ret == NULL) {
         out_of_memory();
-    } else
+    } else {
         ret->tag = tag;
+    }
     return ret;
 }
 
@@ -470,14 +471,14 @@ JsonNode *json_mknull(void)
 JsonNode *json_mkbool(bool b)
 {
 	JsonNode *ret = mknode(JSON_BOOL);
-	ret->bool_ = b;
+    if ( ret ) ret->bool_ = b;
 	return ret;
 }
 
 static JsonNode *mkstring(char *s)
 {
 	JsonNode *ret = mknode(JSON_STRING);
-	ret->string_ = s;
+    if ( ret ) ret->string_ = s;
 	return ret;
 }
 
@@ -489,7 +490,7 @@ JsonNode *json_mkstring(const char *s)
 JsonNode *json_mknumber(double n)
 {
 	JsonNode *node = mknode(JSON_NUMBER);
-	node->number_ = n;
+    if ( node ) node->number_ = n;
 	return node;
 }
 

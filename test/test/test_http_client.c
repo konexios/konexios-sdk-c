@@ -4,6 +4,8 @@
 #include <config.h>
 #include <http/client.h>
 #include <sys/mem.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <arrow/utf8.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
@@ -15,6 +17,9 @@
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
 #include <bsd/socket.h>
 #include <http/request.h>
 #include <http/response.h>

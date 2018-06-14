@@ -90,6 +90,7 @@ int sb_put(SB *sb, const char *bytes, int count);
         *(sb)->cur++ = (c);         \
     } while (0)
 
+int sb_is_valid(SB *sb);
 int sb_puts(SB *sb, const char *str);
 char *sb_finish(SB *sb);
 void sb_clear(SB *sb);

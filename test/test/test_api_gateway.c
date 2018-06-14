@@ -15,6 +15,8 @@
 #include <arrow/api/log.h>
 #include <arrow/utf8.h>
 #include <sys/mem.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <arrow/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
@@ -28,6 +30,11 @@
 #include <data/propmap.h>
 #include <data/find_by.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
+#include <arrow_mqtt_client.h>
+#include <mqtt/client/delivery.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>

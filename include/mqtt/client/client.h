@@ -11,6 +11,12 @@
 
 #include <mqtt/client/delivery.h>
 
+#if !defined(MQTT_CLIENT_MAX_PAYLOAD_LEN)
+#define MQTT_CLIENT_MAX_PAYLOAD_LEN 3000
+#endif
+
+#define MQTT_CLIENT_MAX_MSG_LEN ( MQTT_BUF_LEN + MQTT_CLIENT_MAX_PAYLOAD_LEN )
+
 int arrow_mqtt_client_subscribe(MQTTClient *c,
                                 enum QoS qos,
                                 arrow_mqtt_delivery_callback_t *cb);

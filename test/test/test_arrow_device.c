@@ -5,6 +5,8 @@
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 #include <sys/mem.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
 #include <data/property_base.h>
@@ -13,6 +15,9 @@
 #include <data/property_stack.h>
 #include <json/property_json.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
 
 #include "mock_mac.h"
 

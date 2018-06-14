@@ -66,14 +66,9 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                            json_mkstring(P_VALUE(tmp->value)));
     }
     if ( !IS_EMPTY(req->payload) ) {
-
-    char *body = json_encode_string(P_VALUE(req->payload));
-   int bodylen = strlen(body);
-    body[bodylen-1] = 0x0;
         json_append_member(_parameters,
                            p_const("body"),
-                           json_mkstring(body + 1));
-        json_delete_string(body);
+                           json_mkstring(P_VALUE(req->payload)));
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-signature");
     if ( tmp ) {

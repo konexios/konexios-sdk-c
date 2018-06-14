@@ -7,7 +7,7 @@
  */
 
 #include <MQTTClient.h>
-#include <mqtt/client/delivery.h>
+#include <mqtt/client/client.h>
 
 typedef struct mqtthead {
     MQTTHeader head;
@@ -47,7 +47,7 @@ int waitfor_r(MQTTClient *c, int packet_type, TimerInterval *timer) {
 
 static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     int rc = MQTT_SUCCESS;
-
+    int rest_buffer = c->readbuf_size;
     MQTTMessage msg = {0};
     msg.payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
     msg.dup = m->head.bits.dup;
@@ -64,22 +64,30 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
         return FAILURE;
     }
     total_len -= len;
-    MQTTString topicName = {0};
 
+    MQTTString topicName = {0};
     unsigned char* curdata = c->readbuf;
 
     topicName.lenstring.len = readInt(&curdata);
+
+    if ( topicName.lenstring.len >= total_len ) {
+        // too short buffer or broken packet
+        return FAILURE;
+    }
 
     len = c->ipstack->mqttread(c->ipstack,
                                    c->readbuf,
                                    topicName.lenstring.len,
                                    TimerLeftMS(timer));
-    if ( len <= 0 ) {
+    if ( len != topicName.lenstring.len ) {
         return FAILURE;
     }
     total_len -= len;
+    rest_buffer -= len;
 
     topicName.lenstring.data = (char*)c->readbuf;
+
+    if ( rest_buffer <= 0 ) return FAILURE;
 
     if (msg.qos > 0) {
         uint8_t tmp[2];
@@ -87,19 +95,17 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
                                            tmp,
                                            2,
                                            TimerLeftMS(timer));
-        if ( len <= 0 ) {
+        if ( len != 2 ) {
             return FAILURE;
-        } else {
-            total_len -= len;
-            curdata = tmp;
-            msg.id = readInt(&curdata);
         }
+
+        total_len -= len;
+        curdata = tmp;
+        msg.id = readInt(&curdata);
     }
 
     msg.payloadlen = total_len;
-    msg.payload = c->readbuf + topicName.lenstring.len + 5;
-
-    int rest_buffer = c->readbuf_size - topicName.lenstring.len - 10;
+    msg.payload = c->readbuf + topicName.lenstring.len;
 
     int shift = 0;
 
@@ -188,7 +194,7 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     pack_type = (uint32_t)header.head.bits.type;
 
     len = decodePacket(c, &rem_len, TimerLeftMS(timer));
-    if ( len <= 0 ) goto exit;
+    if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN  ) goto exit;
 
     if ( pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) goto exit;
     if ( !__cycle_collection[pack_type] ) {

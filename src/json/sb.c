@@ -39,6 +39,11 @@ int sb_space(SB *sb) {
     return sb->end - sb->cur;
 }
 
+int sb_is_valid(SB *sb) {
+    if ( sb->start ) return 1;
+    return 0;
+}
+
 int sb_init(SB *sb) {
     sb->start = (char*) SB_ALLOC(17);
     if (sb->start == NULL) {

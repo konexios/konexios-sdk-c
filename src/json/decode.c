@@ -29,6 +29,7 @@ static int jpm_bool_##b##_##c(json_parse_machine_t *jpm, char byte) { \
 static int jpm_bool_false_e(json_parse_machine_t *jpm, char byte) {
     if ( byte == 'e' ) {
         jpm->root = json_mkbool(false);
+        if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
         return 0;
     }
@@ -42,6 +43,7 @@ jpm_bool_state_char(false, a, 'a', l)
 static int jpm_bool_true_e(json_parse_machine_t *jpm, char byte) {
     if ( byte == 'e' ) {
         jpm->root = json_mkbool(true);
+        if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
         return 0;
     }
@@ -63,6 +65,7 @@ static int jpm_string_escape(json_parse_machine_t *jpm, char byte) {
     default:
         sb_putc(&jpm->buffer, byte);
     }
+    if ( !sb_is_valid(&jpm->buffer) ) return -1;
     jpm->process_byte = (_json_parse_fn) jpm_string_body;
     return 0;
 }
@@ -76,11 +79,13 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
         if ( sb_size(&jpm->buffer) <= 0 ) return -1;
         char *str = sb_finish(&jpm->buffer);
         jpm->root = json_mkstring(str);
+        if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
         sb_free(&jpm->buffer);
     } break;
     default:
         sb_putc(&jpm->buffer, byte);
+        if ( !sb_is_valid(&jpm->buffer) ) return -1;
         break;
     }
     return 0;
@@ -89,11 +94,13 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
 static int jpm_number_body(json_parse_machine_t *jpm, char byte) {
     if ( is_digit(byte) || byte == '.' ) {
         sb_putc(&jpm->buffer, byte);
+        if ( !sb_is_valid(&jpm->buffer) ) return -1;
     } else {
         if ( sb_size(&jpm->buffer) <= 0 ) return -1;
         char *str = sb_finish(&jpm->buffer);
         double d = strtod(str, NULL);
         jpm->root = json_mknumber(d);
+        if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
         sb_free(&jpm->buffer);
         return jpm->process_byte(jpm, byte);
@@ -110,6 +117,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_key_init;
         jpm->root = json_mkobject();
+        if ( !jpm->root ) return -1;
         nvalue->p = jpm;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
     } break;
@@ -130,6 +138,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_value_init;
         jpm->root = json_mkarray();
+        if ( !jpm->root ) return -1;
         nvalue->p = jpm;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
     } break;
@@ -160,21 +169,23 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
     switch ( byte ) {
     case '}': {
         jpm->complete = 1;
-        jpm_append_to_parent(jpm);
+        if ( jpm_append_to_parent(jpm) < 0 ) return -1;
         jpm->key = p_null();
         sb_clear(&jpm->buffer);
         jpm->root = NULL;
     } break;
     case ']': {
         jpm->complete = 1;
-        if ( jpm_append_to_parent(jpm) == 0 )
+        if ( jpm_append_to_parent(jpm) < 0 )
+            return -1;
+        else
             jpm->root = NULL;
         jpm->key = p_null();
         sb_clear(&jpm->buffer);
         jpm->process_byte = NULL;
     } break;
     case ',': {
-        jpm_append_to_parent(jpm);
+        if ( jpm_append_to_parent(jpm) < 0 ) return -1;
         jpm->key = p_null();
         json_parse_machine_t *prev = jpm->p;
         json_parse_machine_init(jpm);
@@ -231,6 +242,7 @@ static int jpm_key_body(json_parse_machine_t *jpm, char byte) {
     } break;
     default:
         sb_putc(&jpm->buffer, byte);
+        if ( !sb_is_valid(&jpm->buffer) ) return -1;
         break;
     }
     return 0;

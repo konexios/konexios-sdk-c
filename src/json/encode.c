@@ -9,6 +9,9 @@
 #include "json/json.h"
 
 extern void emit_number(SB *out, double num);
+int encoded_strlen(const char *str);
+
+#define is_escape(c) ( (c) == '\"' )
 
 size_t json_size(JsonNode *o) {
     JsonNode *tmp = o;
@@ -21,7 +24,7 @@ size_t json_size(JsonNode *o) {
         // FIXME add handler
         break;
     case JSON_STRING:
-        ret += strlen(tmp->string_) + 2;
+        ret += encoded_strlen(tmp->string_);
         break;
     case JSON_NUMBER: {
         SB t;
@@ -78,8 +81,19 @@ int json_encode_machine_init(json_encode_machine_t *jem) {
     (buf) += (size); \
     }
 
+int encoded_strlen(const char *str) {
+    int len = strlen(str);
+    int total = 2;
+    int i = 0;
+    for ( i = 0; i < len; i++ ) {
+        if ( is_escape(str[i]) ) total++;
+        total++;
+    }
+    return total;
+}
+
 int jem_encode_value_string(json_encode_machine_t *jem, char *s, int len) {
-    int value_size = strlen(jem->ptr->string_) + 2;
+    int value_size = encoded_strlen(jem->ptr->string_);
 
     int r = jem_encode_string('\"', '\"',
                               jem->ptr->string_,
@@ -130,22 +144,41 @@ int jem_encode_string(char start_,
                       int offset,
                       char *buf,
                       int len) {
-    int key_size = strlen(s);
     int buf_start = 0;
     if ( !offset && len ) {
         offset++;
         buf[buf_start++] = start_;
         len--;
     }
-    if ( offset >= 1 && offset < 1 + key_size && len ) {
-        int key_copy_len = key_size - offset + 1;
-        if ( key_copy_len >= len ) key_copy_len = len;
-        memcpy(buf + buf_start, s + offset-1, key_copy_len);
-        offset += key_copy_len;
-        buf_start += key_copy_len;
-        len -= key_copy_len;
+    if ( offset >= 1 && offset < encoded_strlen(s) - 1 && len ) {
+        int skip = 0;
+        int index = 0;
+        int threash = offset - 1;
+        while ( len && offset < encoded_strlen(s) - 1 ) {
+            if ( skip < threash ) {
+                if ( is_escape(s[index++]) ) {
+                    skip++;
+                    if ( skip == threash ) {
+                        buf[buf_start++] = s[index-1];
+                        offset++;
+                        if ( ! --len ) break;
+                    }
+                }
+                skip++;
+                continue;
+            }
+            char sym = s[index++];
+            if ( is_escape(sym) ) {
+                buf[buf_start++] = '\\';
+                offset++;
+                if ( ! --len ) break;
+            }
+            buf[buf_start++] = sym;
+            offset++;
+            len--;
+        }
     }
-    if ( offset >= 1 + key_size && len ) {
+    if ( offset >= encoded_strlen(s) - 1 && len ) {
         buf[buf_start++] = end_;
         len--;
     }
@@ -153,7 +186,7 @@ int jem_encode_string(char start_,
 }
 
 int jem_encode_key(json_encode_machine_t *jem, char *s, int len) {
-    int key_size = property_size(&jem->ptr->key) + 2;
+    int key_size = encoded_strlen(P_VALUE(jem->ptr->key));
 
     int r = jem_encode_string('\"', '\"',
                               P_VALUE(jem->ptr->key),

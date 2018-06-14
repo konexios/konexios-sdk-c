@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
 #include <data/property_base.h>
@@ -10,6 +12,9 @@
 #include <data/property_stack.h>
 #include <json/property_json.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
 
 void setUp(void) {
     property_types_init();
@@ -40,6 +45,7 @@ void test_parse_json_number(void) {
 
     TEST_ASSERT_EQUAL_INT( JSON_NUMBER, _key->tag );
     TEST_ASSERT_EQUAL_INT( 100, _key->number_ );
+    json_delete(_main);
 }
 
 void test_parse_json_bool_true(void) {
@@ -49,6 +55,7 @@ void test_parse_json_bool_true(void) {
 
     TEST_ASSERT_EQUAL_INT( JSON_BOOL, _key->tag );
     TEST_ASSERT( _key->bool_ );
+    json_delete(_main);
 }
 
 void test_parse_json_bool_false(void) {
@@ -58,6 +65,7 @@ void test_parse_json_bool_false(void) {
 
     TEST_ASSERT_EQUAL_INT( JSON_BOOL, _key->tag );
     TEST_ASSERT( !_key->bool_ );
+    json_delete(_main);
 }
 
 void test_parse_json_string(void) {
@@ -67,6 +75,7 @@ void test_parse_json_string(void) {
 
     TEST_ASSERT_EQUAL_INT( JSON_STRING, _key->tag );
     TEST_ASSERT_EQUAL_INT( 0, strcmp(_key->string_, "hello") );
+    json_delete(_main);
 }
 
 #define JSON_OBJ_EX "{\"key\":{\"child\":\"yes\"}}"
@@ -78,6 +87,7 @@ void test_parse_json_obj(void) {
 
     JsonNode *_child = json_find_member(_key, p_const("child"));
     TEST_ASSERT_EQUAL_INT( 0, strcmp(_child->string_, "yes") );
+    json_delete(_main);
 }
 
 #define JSON_ARRAY_EX "{\"key\":[{\"child\":1}, {\"child\":2}, {\"child\":3}]}"
@@ -96,6 +106,7 @@ void test_parse_json_array(void) {
         num++;
     }
     TEST_ASSERT_EQUAL_INT( 4, num );
+    json_delete(_main);
 }
 
 char complex_json_text[] =
@@ -117,6 +128,7 @@ void test_parse_json_complex(void) {
     JsonNode *_secret = json_find_member(_key, p_const("secretKey"));
     TEST_ASSERT(_secret);
     TEST_ASSERT_EQUAL_STRING("B41+VQRV/VcC4lnaxaFcd3rHffVZ6WdbqdxSPFP2qr8=", _secret->string_);
+    json_delete(_main);
 }
 
 char complex2_json_text[] =
@@ -231,6 +243,7 @@ void test_parse_json_complex2(void) {
         TEST_ASSERT_EQUAL_FLOAT(st->time, _time->number_);
     }
     TEST_ASSERT_EQUAL_INT( 7, count );
+    json_delete(_main);
 }
 
 void show_json_obj(JsonNode *o) {
@@ -657,63 +670,78 @@ void test_parse_json_command_dev_part(void) {
 
 void test_encode_json_number(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mknumber(100);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     char *s = json_encode(_main);
 
     TEST_ASSERT_EQUAL_STRING("{\"key\":100}", s);
-    free(s);
+    json_delete_string(s);
+    json_delete(_main);
 }
 
 void test_encode_json_string(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkstring("value");
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_STRING("{\"key\":\"value\"}", s);
-    free(s);
+    json_delete_string(s);
+    json_delete(_main);
 }
 
 void test_encode_json_bool_true(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkbool(true);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_STRING("{\"key\":true}", s);
-    free(s);
+    json_delete_string(s);
 }
 
 void test_encode_json_bool_false(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkbool(false);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_STRING("{\"key\":false}", s);
-    free(s);
+    json_delete_string(s);
 }
 
 void test_encode_json_array(void) {
     JsonNode *_main = json_mkarray();
+    TEST_ASSERT(_main);
     JsonNode *_key1 = json_mkobject();
+    TEST_ASSERT(_key1);
     json_append_member(_key1, p_const("k1"), json_mknumber(100));
     JsonNode *_key2 = json_mkobject();
+    TEST_ASSERT(_key2);
     json_append_member(_key2, p_const("k2"), json_mknumber(200));
     json_append_element(_main, _key1);
     json_append_element(_main, _key2);
 
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_STRING("[{\"k1\":100},{\"k2\":200}]", s);
-    free(s);
+    json_delete_string(s);
 }
 
 void test_encode_json_number_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mknumber(100);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     int r = json_encode_init(&em, _main);
@@ -738,9 +766,12 @@ void test_encode_json_number_part(void) {
 void test_encode_json_number2_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_k1 = json_mknumber(100);
+    TEST_ASSERT(_k1);
     json_append_member(_main, p_const("k1"), _k1);
     JsonNode *_k2 = json_mknumber(200);
+    TEST_ASSERT(_k2);
     json_append_member(_main, p_const("k2"), _k2);
 
     int r = json_encode_init(&em, _main);
@@ -764,15 +795,21 @@ void test_encode_json_number2_part(void) {
 void test_encode_json_number5_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_k1 = json_mknumber(100);
+    TEST_ASSERT(_k1);
     json_append_member(_main, p_const("k1"), _k1);
     JsonNode *_k2 = json_mknumber(200);
+    TEST_ASSERT(_k2);
     json_append_member(_main, p_const("k2"), _k2);
     JsonNode *_k3 = json_mknumber(3.1);
+    TEST_ASSERT(_k3);
     json_append_member(_main, p_const("k3"), _k3);
     JsonNode *_k4 = json_mknumber(400.5);
+    TEST_ASSERT(_k4);
     json_append_member(_main, p_const("k4"), _k4);
     JsonNode *_k5 = json_mknumber(5000);
+    TEST_ASSERT(_k5);
     json_append_member(_main, p_const("k5"), _k5);
 
     int r = json_encode_init(&em, _main);
@@ -796,7 +833,9 @@ void test_encode_json_number5_part(void) {
 void test_encode_json_bool_true_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkbool(true);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     int r = json_encode_init(&em, _main);
@@ -820,7 +859,9 @@ void test_encode_json_bool_true_part(void) {
 void test_encode_json_bool_false_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkbool(false);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     int r = json_encode_init(&em, _main);
@@ -844,9 +885,12 @@ void test_encode_json_bool_false_part(void) {
 void test_encode_json_bool_bool2_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_k1 = json_mkbool(true);
+    TEST_ASSERT(_k1);
     json_append_member(_main, p_const("k1"), _k1);
     JsonNode *_k2 = json_mkbool(false);
+    TEST_ASSERT(_k2);
     json_append_member(_main, p_const("k2"), _k2);
 
     int r = json_encode_init(&em, _main);
@@ -870,7 +914,9 @@ void test_encode_json_bool_bool2_part(void) {
 void test_encode_json_string_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mkstring("value");
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     int r = json_encode_init(&em, _main);
@@ -895,9 +941,13 @@ void test_encode_json_string_part(void) {
 void test_encode_json_string3_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_k1 = json_mkstring("value1");
+    TEST_ASSERT(_k1);
     JsonNode *_k2 = json_mkstring("value2");
+    TEST_ASSERT(_k2);
     JsonNode *_k3 = json_mkstring("value3");
+    TEST_ASSERT(_k3);
     json_append_member(_main, p_const("k1"), _k1);
     json_append_member(_main, p_const("k2"), _k2);
     json_append_member(_main, p_const("k3"), _k3);
@@ -923,9 +973,13 @@ void test_encode_json_string3_part(void) {
 void test_encode_json_array_part(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkarray();
+    TEST_ASSERT(_main);
     JsonNode *_el1 = json_mkobject();
+    TEST_ASSERT(_el1);
     JsonNode *_el2 = json_mkobject();
+    TEST_ASSERT(_el2);
     JsonNode *_el3 = json_mkobject();
+    TEST_ASSERT(_el3);
     json_append_member(_el1, p_const("k1"), json_mkstring("val1"));
     json_append_member(_el2, p_const("k2"), json_mkstring("val1"));
     json_append_member(_el3, p_const("k3"), json_mkstring("val1"));
@@ -950,26 +1004,29 @@ void test_encode_json_array_part(void) {
 
     char *pattern = json_encode(_main);
     TEST_ASSERT_EQUAL_STRING(pattern, test);
-    free(pattern);
+    json_delete_string(pattern);
     json_delete(_main);
 }
 
 void test_size_json_number(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     JsonNode *_key = json_mknumber(100);
+    TEST_ASSERT(_key);
     json_append_member(_main, p_const("key"), _key);
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
 
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_number2(void) {
     json_encode_machine_t em;
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("k1"), json_mknumber(100));
     json_append_member(_main, p_const("k2"), json_mknumber(200.1));
 
@@ -977,70 +1034,76 @@ void test_size_json_number2(void) {
     char *s = json_encode(_main);
 
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 
 void test_size_json_bool_true(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("key"), json_mkbool(true));
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_bool_false(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("key"), json_mkbool(false));
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_bool2(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("k1"), json_mkbool(true));
     json_append_member(_main, p_const("k2"), json_mkbool(false));
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_string(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("key"), json_mkstring("value1"));
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_string2(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("key"), json_mkstring("value1"));
     json_append_member(_main, p_const("k2"), json_mkstring("value2"));
 
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_string_obj(void) {
     JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
     json_append_member(_main, p_const("key"), json_mkstring("value1"));
     JsonNode *t = json_mkobject();
     json_append_member(t, p_const("additional"), json_mknumber(100));
@@ -1049,15 +1112,19 @@ void test_size_json_string_obj(void) {
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
 }
 
 void test_size_json_array(void) {
     JsonNode *_main = json_mkarray();
+    TEST_ASSERT(_main);
     JsonNode *_el1 = json_mkobject();
+    TEST_ASSERT(_el1);
     JsonNode *_el2 = json_mkobject();
+    TEST_ASSERT(_el2);
     JsonNode *_el3 = json_mkobject();
+    TEST_ASSERT(_el3);
     json_append_member(_el1, p_const("k1"), json_mkstring("val1"));
     json_append_member(_el2, p_const("k2"), json_mkstring("val1"));
     json_append_member(_el3, p_const("k3"), json_mkstring("val1"));
@@ -1068,6 +1135,42 @@ void test_size_json_array(void) {
     size_t size = json_size(_main);
     char *s = json_encode(_main);
     TEST_ASSERT_EQUAL_INT(strlen(s), size);
-    free(s);
+    json_delete_string(s);
     json_delete(_main);
+}
+
+void test_quote_json_string(void) {
+    json_encode_machine_t em;
+    JsonNode *_body = json_mkobject();
+    TEST_ASSERT(_body);
+    json_append_member(_body, p_const("cmd"), json_mkstring("test"));
+    char *_body_str = json_encode(_body);
+    printf("body [%s]\r\n", _body_str);
+
+    JsonNode *_main = json_mkobject();
+    TEST_ASSERT(_main);
+    json_append_member(_main, p_const("key"), json_mkstring(_body_str));
+
+    char *s = json_encode(_main);
+    printf("main [%s]\r\n", s);
+    int r = json_encode_init(&em, _main);
+    TEST_ASSERT_EQUAL_INT(0, r);
+    int total = 0;
+    char encode_test[64];
+    memset(test, 0x0, 64);
+    do {
+        r = json_encode_part(&em, encode_test, 3);
+        if ( r <= 0 ) break;
+        memcpy(test + total, encode_test, r);
+        total += r;
+    } while(r > 0);
+    test[total] = 0x0;
+    TEST_ASSERT_EQUAL_INT(0, r);
+    r = json_encode_fin(&em);
+
+    TEST_ASSERT_EQUAL_STRING(s, test);
+    json_delete_string(s);
+    json_delete_string(_body_str);
+    json_delete(_main);
+    json_delete(_body);
 }
