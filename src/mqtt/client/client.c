@@ -149,8 +149,8 @@ static int cycle_subscribe(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) 
     int total_len = m->rem_len;
 
     unsigned char *ptr = c->readbuf;
-
-    writeInt(&ptr, total_len);
+    printf("== %s ==\r\n", __PRETTY_FUNCTION__);
+//    writeInt(&ptr, total_len);
 
     int len = c->ipstack->mqttread(c->ipstack,
                                    ptr,
@@ -194,7 +194,7 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     pack_type = (uint32_t)header.head.bits.type;
 
     len = decodePacket(c, &rem_len, TimerLeftMS(timer));
-    if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN  ) goto exit;
+    if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN ) goto exit;
 
     if ( pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) goto exit;
     if ( !__cycle_collection[pack_type] ) {

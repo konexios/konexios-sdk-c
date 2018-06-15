@@ -68,10 +68,13 @@ int property_map_assign(property_map_t *root, property_t key, property_t value) 
 
 int property_map_clear(property_map_t **root) {
     property_map_t *tmp = NULL;
-    arrow_linked_list_for_each_safe( tmp, *root, property_map_t) {
-        property_free(&tmp->key);
-        property_free(&tmp->value);
-        FREE(tmp);
+    if ( root && *root ) {
+        arrow_linked_list_for_each_safe( tmp, *root, property_map_t) {
+            property_free(&tmp->key);
+            property_free(&tmp->value);
+            FREE(tmp);
+        }
+        memset(*root, 0x0, sizeof(property_map_t));
     }
     return 0;
 }
