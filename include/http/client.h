@@ -37,6 +37,7 @@ typedef struct {
   uint32_t protocol;
 } http_client_t;
 
+int http_session_is_open(http_client_t *cli);
 void http_session_close_set(http_client_t *cli, bool mode);
 void http_session_set_protocol(http_client_t *cli, int prot);
 

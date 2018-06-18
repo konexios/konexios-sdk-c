@@ -65,6 +65,8 @@ arrow_linked_list_t *arrow_linked_list_del_last(arrow_linked_list_t *root);
 
 #define arrow_linked_list_head_node arrow_linked_list_t node
 
+#define arrow_linked_list_init(ptr) memset((void *)&(ptr)->node, 0x0, sizeof(arrow_linked_list_t))
+
 #define arrow_linked_list_add_node_last(root, type, el) { \
   arrow_linked_list_t *base_p = arrow_linked_list_add((root)?&(root)->node:NULL, &(el)->node); \
   root = container_of(base_p, type, node); \

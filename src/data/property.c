@@ -32,9 +32,7 @@ void property_types_deinit() {
 }
 
 void property_init(property_t *dst) {
-    dst->flags = 0x00;
-    dst->size = 0;
-    dst->value = NULL;
+    memset(dst, 0x0, sizeof(property_t));
 }
 
 static int proptypeeq( property_dispetcher_t *d, uint8_t flag ) {

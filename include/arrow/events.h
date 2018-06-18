@@ -40,6 +40,7 @@ int process_http_finish();
 int arrow_mqtt_has_events(void);
 int arrow_mqtt_event_proc(void);
 
+int arrow_mqtt_api_wait(int num);
 int arrow_mqtt_api_has_events(void);
 int arrow_mqtt_api_event_proc(http_response_t *res);
 int process_http_payload(const char *s);

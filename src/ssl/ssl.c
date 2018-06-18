@@ -64,6 +64,7 @@ static int send_ssl(WOLFSSL *wsl, char* buf, int sz, void* vp) {
 int __attribute__((weak)) ssl_connect(int sock) {
     if ( !__sock ) wolfSSL_Init();
     socket_ssl_t *s = alloc_type(socket_ssl_t);
+    arrow_linked_list_init(s);
 	s->socket = sock;
     s->method = wolfTLSv1_2_client_method();
 	s->ctx = wolfSSL_CTX_new(s->method);

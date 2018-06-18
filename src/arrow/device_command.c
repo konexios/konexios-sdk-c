@@ -44,6 +44,7 @@ int arrow_command_handler_add(const char *name, __cmd_cb callback) {
     if ( !h ) return -1;
     property_copy(&h->name, p_const(name));
     h->callback = callback;
+    arrow_linked_list_init(h);
     arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
     return 0;
 }

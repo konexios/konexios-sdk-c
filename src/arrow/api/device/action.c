@@ -67,7 +67,7 @@ static void _device_action_list_init(http_request_t *request, void *arg) {
 
 static int _device_action_list_process(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("dev list", response->m_httpResponseCode);
+  DBG("dev list %hu", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
   DBG("[%s]", P_VALUE(response->payload));
@@ -91,7 +91,7 @@ static void _action_type_list_init(http_request_t *request, void *arg) {
 
 static int _action_type_list_process(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  DBG("act list", response->m_httpResponseCode);
+  DBG("act list %hu", response->m_httpResponseCode);
   if ( response->m_httpResponseCode != 200 )
     return -1;
   DBG("[%s]", P_VALUE(response->payload));

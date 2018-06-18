@@ -111,6 +111,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                        p_const("signatureVersion"),
                        json_mkstring("1"));
 
+    arrow_mqtt_api_wait(1);
     ret = mqtt_api_publish(_node);
 
     DBG("publish %d", ret);
@@ -121,7 +122,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
 
     TimerInterval timer;
     TimerInit(&timer);
-    TimerCountdownMS(&timer, (unsigned int)cli->timeout);
+    TimerCountdownMS(&timer, (unsigned int) 2*cli->timeout);
     while ( !arrow_mqtt_api_has_events() && !TimerIsExpired(&timer) ) {
         ret = mqtt_yield(TimerLeftMS(&timer));
         DBG("yield %d", ret);
@@ -136,6 +137,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
         ;
 http_mqtt_error:
     if ( _node ) json_delete(_node);
+    arrow_mqtt_api_wait(0);
 DBG("%s %d", __PRETTY_FUNCTION__, ret);
     return ret;
 }

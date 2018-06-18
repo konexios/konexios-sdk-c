@@ -25,6 +25,11 @@
 uint8_t tmpbuffer[CHUNK_SIZE];
 #define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)
 
+int http_session_is_open(http_client_t *cli) {
+    if ( cli->sock < 0 ) return 0;
+    return 1;
+}
+
 void http_session_close_set(http_client_t *cli, bool mode) {
 #if defined(HTTP_SOCK_KEEP_OPEN)
     mode = false;
@@ -205,6 +210,7 @@ int __attribute_weak__ http_client_close(http_client_t *cli) {
 }
 
 int default_http_client_close(http_client_t *cli) {
+    cli->request = NULL;
     if ( cli->protocol != api_via_http ) return  -1;
     if ( cli->sock < 0 ) return -1;
     if ( !cli->flags._close ) return 1;
@@ -451,11 +457,11 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             chunk_len = get_chunked_payload_size(cli, res);
         } else {
             chunk_len = res->recvContentLength;
-            DBG("Con-Len %d", res->recvContentLength);
+            DBG("Con-Len %lu", res->recvContentLength);
         }
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {
-            uint32_t need_to_read = (chunk_len < CHUNK_SIZE-10) ? chunk_len : CHUNK_SIZE-10;
+            uint32_t need_to_read = ARROW_MIN(chunk_len, CHUNK_SIZE);
             HTTP_DBG("need to read %d", need_to_read);
             while ( (int)ringbuf_size(cli->queue) < (int)need_to_read ) {
                 HTTP_DBG("get chunk add %d", need_to_read-ringbuf_size(cli->queue));

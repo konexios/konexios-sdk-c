@@ -128,6 +128,7 @@ void arrow_device_state_list_init(arrow_state_list_t *st) {
     property_init(&st->name);
     st->value._property = p_null();
     memset(&st->ts, 0x0, sizeof(timestamp_t));
+    arrow_linked_list_init(st);
 }
 
 void arrow_device_state_list_free(arrow_state_list_t *st) {

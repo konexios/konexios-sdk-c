@@ -8,6 +8,7 @@
 
 #include <MQTTClient.h>
 #include <mqtt/client/client.h>
+#include <debug.h>
 
 typedef struct mqtthead {
     MQTTHeader head;
@@ -149,7 +150,6 @@ static int cycle_subscribe(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) 
     int total_len = m->rem_len;
 
     unsigned char *ptr = c->readbuf;
-    printf("== %s ==\r\n", __PRETTY_FUNCTION__);
 //    writeInt(&ptr, total_len);
 
     int len = c->ipstack->mqttread(c->ipstack,
@@ -184,19 +184,25 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     mqtt_head_t header = {{0}, 0};
     int len = 0;
     int rem_len = 0;
-    int rc = MQTT_SUCCESS;
+    int rc = FAILURE;
     uint32_t pack_type = 0;
     uint8_t tmp[4];
     rc = c->ipstack->mqttread(c->ipstack, tmp, 1, TimerLeftMS(timer));
-    if (rc != 1)
+    if (rc != 1) {
+        rc = FAILURE;
         goto exit;
+    }
     header.head.byte = tmp[0];
     pack_type = (uint32_t)header.head.bits.type;
+    DBG("mqtt recv type %d", (int)pack_type);
+    if ( pack_type < 1 || pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) {
+        rc = FAILURE;
+        goto exit;
+    }
 
     len = decodePacket(c, &rem_len, TimerLeftMS(timer));
     if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN ) goto exit;
 
-    if ( pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) goto exit;
     if ( !__cycle_collection[pack_type] ) {
         while ( rem_len ) {
             int chunk = rem_len < (int)sizeof(tmp) ? rem_len : (int)sizeof(tmp);

@@ -31,14 +31,16 @@ static arrow_mqtt_delivery_callback_t base_event_callbacks = {
     {0},
     process_event_init,
     process_event,
-    process_event_finish
+    process_event_finish,
+    {NULL}
 };
 
 static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     {0},
     process_http_init,
     process_http,
-    process_http_finish
+    process_http_finish,
+    {NULL}
 };
 
 #if defined(STATIC_MQTT_ENV)
@@ -93,6 +95,7 @@ static int _mqtt_init_common(mqtt_env_t *env) {
   env->timeout = DEFAULT_MQTT_TIMEOUT;
   env->port = MQTT_PORT;
   env->init = 0;
+  arrow_linked_list_init(env);
   return 0;
 }
 

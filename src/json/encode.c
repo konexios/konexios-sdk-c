@@ -65,7 +65,7 @@ int json_encode_machine_init(json_encode_machine_t *jem) {
     jem->complete = 0;
     jem->ptr = NULL;
     sb_clear(&jem->buffer);
-    memset(&jem->node, 0x0, sizeof(arrow_linked_list_t));
+    arrow_linked_list_init(jem);
     return 0;
 }
 

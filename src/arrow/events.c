@@ -50,6 +50,7 @@ static void mqtt_event_init(mqtt_event_t *mq) {
     property_init(&mq->device_hid);
     property_init(&mq->name);
     mq->parameters = NULL;
+    arrow_linked_list_init(mq);
 }
 
 static void mqtt_event_free(mqtt_event_t *mq) {
@@ -64,6 +65,7 @@ static void mqtt_api_event_init(mqtt_api_event_t *mq) {
     property_init(&mq->name);
     mq->encrypted = 0;
     mq->parameters = NULL;
+    arrow_linked_list_init(mq);
 }
 
 static void mqtt_api_event_free(mqtt_api_event_t *mq) {
@@ -382,7 +384,7 @@ int arrow_mqtt_event_proc(void) {
     if ( current_processor ) {
       ret = current_processor(tmp, tmp->parameters);
     } else {
-      DBG("No event processor for %s", tmp->name);
+      DBG("No event processor for %s", P_VALUE(tmp->name));
       goto mqtt_event_proc_error;
     }
     if ( __event_queue && !ret ) ret = 1;
@@ -424,7 +426,13 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
     JsonNode *_parameters = tmp->parameters;
     JsonNode *status = json_find_member(_parameters, p_const("status"));
     if ( !status ) goto mqtt_api_error;
-    if ( strcmp(status->string_, "OK") != 0 ) goto mqtt_api_error;
+    if ( strcmp(status->string_, "OK") != 0 ) {
+        JsonNode *body = json_find_member(_parameters, p_const("payload"));
+        if ( body ) {
+            DBG("[%s]", body->string_);
+        }
+        goto mqtt_api_error;
+    }
     res->m_httpResponseCode = 200;
 
     JsonNode *payload = json_find_member(_parameters, p_const("payload"));
@@ -445,10 +453,22 @@ mqtt_api_error:
 }
 
 static json_parse_machine_t sm_http;
+static int api_mqtt_max_capacity = 0;
+
+
+int arrow_mqtt_api_wait(int num) {
+    api_mqtt_max_capacity = num;
+    while ( arrow_mqtt_api_has_events() > api_mqtt_max_capacity ) {
+        http_response_t dummy;
+        arrow_mqtt_api_event_proc(&dummy);
+    }
+    return 0;
+}
+
 
 int process_http_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
-    if (arrow_mqtt_api_has_events() >= ARROW_MAX_MQTT_COMMANDS)
+    if (arrow_mqtt_api_has_events() >= api_mqtt_max_capacity)
         return -1;
 #endif
     DBG("Static http mempory size %d", json_static_memory_max_sector());
@@ -475,6 +495,7 @@ int process_http(const char *str, int len) {
 
 int process_http_finish() {
     int ret = -1;
+    DBG("start http msg processing");
     JsonNode *_main = json_decode_finish(&sm_http);
     if ( !_main ) {
         DBG("http payload decode failed");
@@ -552,7 +573,7 @@ int process_http_finish() {
     api_e->parameters = _parameters;
 
     arrow_linked_list_add_node_last(__api_event_queue, mqtt_api_event_t, api_e);
-
+    DBG("http queue size %d", arrow_mqtt_api_has_events());
     ret = 0;
 error:
     if ( ret < 0 ) {

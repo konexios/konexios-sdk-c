@@ -255,8 +255,8 @@ int json_parse_machine_init(json_parse_machine_t *jpm) {
     property_init(&jpm->key);
     jpm->p = NULL;
     jpm->root = NULL;
-    memset(&jpm->node, 0x0, sizeof(arrow_linked_list_t));
     sb_clear(&jpm->buffer);
+    arrow_linked_list_init(jpm);
     return 0;
 }
 

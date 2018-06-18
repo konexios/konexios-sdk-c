@@ -47,7 +47,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   http_request_t request;
   http_response_t response;
   if ( _cli.protocol > client_protocol_size ) {
-      DBG("Unknown client protocol %d", _cli.protocol);
+      DBG("Unknown client protocol %lu", _cli.protocol);
       return -2;
   }
   req_init(&request, arg_init);
@@ -70,7 +70,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   }
 http_error:
   http_response_free(&response);
-  if ( ret < 0 ) {
+  if ( http_session_is_open(&_cli) && ret < 0 ) {
       http_session_close_set(&_cli, true);
       ph->client_close(&_cli);
   }
