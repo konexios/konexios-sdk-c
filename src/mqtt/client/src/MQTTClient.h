@@ -50,7 +50,7 @@
 #define MAX_PACKET_ID 65535 /* according to the MQTT specification - do not change! */
 
 #if !defined(MAX_MESSAGE_HANDLERS)
-#define MAX_MESSAGE_HANDLERS 5 /* redefinable - how many subscriptions do you want? */
+#define MAX_MESSAGE_HANDLERS 1 /* redefinable - how many subscriptions do you want? */
 #endif
 
 enum QoS { QOS0, QOS1, QOS2, SUBFAIL=0x80 };
@@ -135,7 +135,6 @@ typedef struct MQTTClient
 
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
 
-
 /**
  * Create an MQTT client object
  * @param client
@@ -167,6 +166,20 @@ DLLExport int MQTTConnect(MQTTClient* client, MQTTPacket_connectData* options);
  *  @param message - the message to send
  *  @return success code
  */
+
+typedef int(*payload_border)(void);
+typedef int(*payload_part)(char *, int);
+typedef struct mqtt_payload_drive {
+    payload_border init;
+    payload_part   part;
+    payload_border fin;
+} mqtt_payload_drive_t;
+
+int MQTTPublish_part(MQTTClient* c,
+                     const char* topicName,
+                     MQTTMessage* message,
+                     mqtt_payload_drive_t *drive);
+
 DLLExport int MQTTPublish(MQTTClient* client, const char*, MQTTMessage*);
 
 /** MQTT SetMessageHandler - set or remove a per topic message handler

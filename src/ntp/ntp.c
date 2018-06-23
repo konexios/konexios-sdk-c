@@ -14,7 +14,7 @@
 
 
 int ntp_set_time_cycle(void) {
-    return ntp_set_time_common(NTP_DEFAULT_SERVER, NTP_DEFAULT_PORT, NTP_DEFAULT_TIMEOUT, -1);
+    return ntp_set_time_common(NTP_DEFAULT_SERVER, NTP_DEFAULT_PORT, NTP_DEFAULT_TIMEOUT, ARROW_MAX_RETRY);
 }
 
 int ntp_set_time_common(

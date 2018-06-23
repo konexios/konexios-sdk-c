@@ -28,11 +28,22 @@ void *type##_object_allocator() { \
     } \
     return NULL; \
 } \
+int type##_object_alloc_size() { \
+    int i = 0; \
+    int size = 0; \
+    for ( i = 0; i < count; i++ ) { \
+        if ( !static_##type##_object[i].in_use ) { \
+            size ++; \
+        } \
+    } \
+    return size; \
+} \
 void type##object_free(void *ptr) { \
-    type##object_t *obj = (type##object_t *) ( (char*)ptr - 4 ); \
+    type##object_t *obj = container_of(ptr, type##object_t, object); \
     obj->in_use = 0; \
 }
 
+#define static_alloc_size(type) type##_object_alloc_size()
 #define static_allocator(type) (type *)type##_object_allocator()
 #define static_free(type, ptr)         type##object_free(ptr)
 

@@ -14,6 +14,7 @@ void device_event_init(device_event_t *de) {
     property_init(&de->criteria);
     property_init(&de->deviceActionTypeName);
     property_init(&de->status);
+    arrow_linked_list_init(de);
 }
 
 void device_event_free(device_event_t *de) {

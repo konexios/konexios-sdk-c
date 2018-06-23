@@ -175,7 +175,11 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   char *trans_hid = tmp->string_;
   wdt_feed();
+
   http_session_close_set(current_client(), false);
+#if defined(HTTP_VIA_MQTT)
+  http_session_set_protocol(current_client(), 1);
+#endif
   int retry = 0;
   while( arrow_software_releases_trans_received(trans_hid) < 0) {
     RETRY_UP(retry, {return -2;});
@@ -204,7 +208,11 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       ret = __download_init(_checksum);
       if ( ret < 0 ) goto software_release_done;
   }
+  http_session_set_protocol(current_client(), api_via_http);
   ret = arrow_software_release_download(_token, trans_hid, _checksum);
+//#if defined(HTTP_VIA_MQTT)
+//  http_session_set_protocol(current_client(), 1);
+//#endif
   wdt_feed();
   SSP_PARAMETER_NOT_USED(_to);
 software_release_done:
@@ -227,6 +235,7 @@ software_release_done:
       }
       reboot();
   }
+  http_session_set_protocol(current_client(), api_via_http);
   return ret;
 }
 
@@ -339,7 +348,8 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
 }
 
 int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
-    struct object_hid_list *objhid = (struct object_hid_list *)calloc(1, sizeof(struct object_hid_list));
+    struct object_hid_list *objhid = alloc_type(struct object_hid_list);
+    arrow_linked_list_init(objhid);
     property_weak_copy(&objhid->hid, hid);
     arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
     return 0;
@@ -353,6 +363,7 @@ int arrow_schedule_model_free(arrow_schedule_t *sch) {
         property_free(&tmp->hid);
         free(tmp);
     }
+    sch->_hids = NULL;
     return 0;
 }
 

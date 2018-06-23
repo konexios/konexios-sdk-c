@@ -7,22 +7,34 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
-#include <arrow/api/device/event.h>
 #include <arrow/device.h>
+#include <arrow/api/device/event.h>
 #include <arrow/api/device/info.h>
 #include <arrow/api/json/parse.h>
 #include <arrow/gateway.h>
 #include <arrow/api/log.h>
 #include <arrow/utf8.h>
 #include <sys/mem.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <arrow/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <data/find_by.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
+#include <arrow_mqtt_client.h>
+#include <mqtt/client/delivery.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>
@@ -38,11 +50,11 @@
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
 
+#include <time/time.h>
 #include "acnsdkc_time.h"
 #include <network.h>
 
 #include "timer.h"
-#include "acnsdkc_time.h"
 #include "acnsdkc_ssl.h"
 #include <MQTTClient.h>
 #include <MQTTPacket.h>
@@ -71,6 +83,7 @@
 #include "fakedns.h"
 #include "fakesock.h"
 
+
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"
 #define DEVICE_UID GATEWAY_UID "-" DEVICE_UID_SUFFIX
@@ -80,7 +93,7 @@ static arrow_gateway_config_t _test_gateway_config;
 static arrow_device_t _test_device;
 
 void setUp(void) {
-    __http_init();
+    arrow_init();
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
@@ -91,6 +104,7 @@ void setUp(void) {
 
 void tearDown(void)
 {
+    arrow_deinit();
 }
 
 #define TEST_DEVICE_HID "d000000ca3a1a317222772437dc586cb59d680fe"

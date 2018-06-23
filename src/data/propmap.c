@@ -26,6 +26,7 @@ static int propkeyeq( property_map_t *s, property_t key ) {
 int property_map_init(property_map_t *root) {
     property_init(&root->key);
     property_init(&root->value);
+    arrow_linked_list_init(root);
     return 0;
 }
 
@@ -67,11 +68,13 @@ int property_map_assign(property_map_t *root, property_t key, property_t value) 
 }
 
 int property_map_clear(property_map_t **root) {
+    if ( !root || !(*root) ) return -1;
     property_map_t *tmp = NULL;
     arrow_linked_list_for_each_safe( tmp, *root, property_map_t) {
         property_free(&tmp->key);
         property_free(&tmp->value);
         FREE(tmp);
     }
+    *root = NULL;
     return 0;
 }

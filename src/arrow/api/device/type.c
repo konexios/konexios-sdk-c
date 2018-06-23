@@ -24,11 +24,12 @@ void device_type_init(device_type_t *dev, int enable, const char *name, const ch
 
 device_type_telemetry_t *device_type_add_telemetry(device_type_t *dev, const char *name, const char *type, const char *desc) {
   device_type_telemetry_t *telemetry;
-  telemetry = (device_type_telemetry_t *)calloc(1, sizeof(device_type_telemetry_t));
+  telemetry = alloc_type(device_type_telemetry_t);
   telemetry->description = strdup(desc);
   telemetry->name = strdup(name);
   telemetry->type = strdup(type);
   telemetry->variables = NULL;
+  arrow_linked_list_init(telemetry);
   arrow_linked_list_add_node_last ( dev->telemetries, device_type_telemetry_t, telemetry );
   return telemetry;
 }
@@ -96,7 +97,7 @@ static property_t device_type_serialize(device_type_t *dev) {
   }
   json_append_member(_main, p_const("telemetries"), tls);
   property_t payload = json_encode_property(_main);
-  DBG("type pay: [%s]", payload);
+  DBG("type pay: [%s]", P_VALUE(payload));
   json_delete(_main);
   return payload;
 }

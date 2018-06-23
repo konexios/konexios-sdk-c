@@ -27,6 +27,9 @@
 #include <sys/mem.h>
 #include <data/property.h>
 
+#define is_space(c) ((c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == ' ')
+#define is_digit(c) ((c) >= '0' && (c) <= '9')
+
 # define json_key(x)  P_VALUE((x)->key)
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
@@ -70,9 +73,80 @@ struct __attribute_packed__ JsonNode
   };
 };
 
+/* String buffer */
+typedef struct {
+    char *cur;
+    char *end;
+    char *start;
+} SB;
+int sb_init(SB *sb);
+int sb_grow(SB *sb, int need);
+int sb_need(SB *sb, int need);
+int sb_put(SB *sb, const char *bytes, int count);
+
+#define sb_putc(sb, c) do {         \
+        if ((sb)->cur >= (sb)->end) \
+            sb_grow(sb, 1);         \
+        *(sb)->cur++ = (c);         \
+    } while (0)
+
+int sb_is_valid(SB *sb);
+int sb_puts(SB *sb, const char *str);
+char *sb_finish(SB *sb);
+void sb_clear(SB *sb);
+void sb_free(SB *sb);
+int sb_size(SB *sb);
+
 /*** Encoding, decoding, and validation ***/
+typedef int(*_json_parse_fn)(void *, char);
+
+typedef struct _json_parse_machine_ {
+    struct _json_parse_machine_ *p;
+    uint32_t complete;
+    _json_parse_fn process_byte;
+    SB buffer;
+    property_t key;
+    JsonNode *root;
+    arrow_linked_list_head_node;
+} json_parse_machine_t;
+
+int json_parse_machine_init(json_parse_machine_t *jpm);
+int json_parse_machine_process(json_parse_machine_t *jpm, char byte);
+int json_parse_machine_fin(json_parse_machine_t *jpm);
+
+int json_decode_init(json_parse_machine_t *sm);
+int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size);
+JsonNode *json_decode_finish(json_parse_machine_t *sm);
 
 JsonNode   *json_decode         (const char *json);
+
+size_t json_size(JsonNode *obj);
+
+enum json_encode_states {
+    jem_encode_state_init,
+    jem_encode_state_key,
+    jem_encode_state_delim,
+    jem_encode_state_value
+};
+
+typedef struct _json_encode_machine_ {
+    uint16_t state;
+    uint16_t start;
+    uint16_t complete;
+    size_t len;
+    SB buffer;
+    JsonNode *ptr;
+    arrow_linked_list_head_node;
+} json_encode_machine_t;
+
+int json_encode_machine_init(json_encode_machine_t *jem);
+int json_encode_machine_process(json_encode_machine_t *jem, char* s, int len);
+int json_encode_machine_fin(json_encode_machine_t *jem);
+
+int         json_encode_init    (json_encode_machine_t *jem, JsonNode *node);
+int         json_encode_part    (json_encode_machine_t *jem, char *s, int len);
+int         json_encode_fin     (json_encode_machine_t *jem);
+
 char       *json_encode         (const JsonNode *node);
 char       *json_encode_string  (const char *str);
 property_t  json_encode_property(const JsonNode *node);
@@ -93,10 +167,17 @@ JsonNode   *json_find_member    (JsonNode *object, property_t key);
 
 JsonNode   *json_first_child    (const JsonNode *node);
 
+#define json_next(i) ( (i)->next )
+
 #define json_foreach(i, object_or_array)            \
 	for ((i) = json_first_child(object_or_array);   \
 		 (i) != NULL;                               \
 		 (i) = (i)->next)
+
+#define json_foreach_start(i, object_or_array, start_child)            \
+    for ((i) = (start_child);   \
+         (i) != NULL;                               \
+         (i) = (i)->next)
 
 /*** Construction and manipulation ***/
 
@@ -113,6 +194,8 @@ void json_append_member(JsonNode *object, const property_t key, JsonNode *value)
 void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value);
 
 void json_remove_from_parent(JsonNode *node);
+
+int json_static_memory_max_sector(void);
 
 /*** Debugging ***/
 

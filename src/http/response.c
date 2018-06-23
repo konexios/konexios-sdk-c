@@ -29,9 +29,7 @@ int default_add_payload_handler( void *r,
     if ( IS_EMPTY(res->payload) ) {
         property_move(&res->payload, &payload);
     } else {
-        property_t tmp = property_concat(&res->payload, &payload);
-        property_free(&res->payload);
-        property_move(&res->payload, &tmp);
+        property_concat(&res->payload, &payload);
     }
     return 0;
 }
@@ -43,10 +41,12 @@ void http_response_init(http_response_t *res, _payload_meth_t *handler) {
 }
 
 void http_response_free(http_response_t *res) {
+    if ( !res ) return;
     property_free(&res->payload);
     property_map_clear(&res->header);
     property_free(&res->content_type.value);
     property_free(&res->content_type.key);
+    memset(res, 0x0, sizeof(http_response_t));
 }
 
 void http_response_add_header(http_response_t *req, property_t key, property_t value) {

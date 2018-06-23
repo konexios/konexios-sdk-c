@@ -15,14 +15,26 @@
 #include <arrow/api/log.h>
 #include <arrow/utf8.h>
 #include <sys/mem.h>
+#include <data/static_buf.h>
+#include <data/static_alloc.h>
 #include <arrow/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
+#include <data/property_base.h>
+#include <data/property_const.h>
+#include <data/property_dynamic.h>
+#include <data/property_stack.h>
+#include <json/property_json.h>
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <data/find_by.h>
 #include <json/json.h>
+#include <sb.h>
+#include <encode.h>
+#include <decode.h>
+#include <arrow_mqtt_client.h>
+#include <mqtt/client/delivery.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>
@@ -38,11 +50,11 @@
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
 
+#include <time/time.h>
 #include "acnsdkc_time.h"
 #include <network.h>
 
 #include "timer.h"
-#include "acnsdkc_time.h"
 #include "acnsdkc_ssl.h"
 #include <MQTTClient.h>
 #include <MQTTPacket.h>
@@ -72,11 +84,11 @@
 #include "fakesock.h"
 
 void setUp(void) {
-    __http_init();
+    arrow_init();
 }
 
-void tearDown(void)
-{
+void tearDown(void) {
+    arrow_deinit();
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"

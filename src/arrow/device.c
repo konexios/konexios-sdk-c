@@ -88,7 +88,7 @@ static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   arrow_device_init(device);
-  property_weak_copy(&device->gateway_hid, (gateway->hid) );
+  property_weak_copy(&device->gateway_hid, gateway->hid );
   property_copy(&device->name, p_const(DEVICE_NAME));
   property_copy(&device->type, p_const(DEVICE_TYPE));
   property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
