@@ -35,8 +35,9 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
 #endif
             bytes = -1;
             break;
-        } else
+        } else {
             bytes += rc;
+        }
     }
     return bytes;
 }

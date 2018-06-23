@@ -110,7 +110,10 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   http_session_set_protocol(current_client(), 1);
 #endif
   while( arrow_send_event_ans(ev->gateway_hid, received, p_null()) < 0 ) {
-      RETRY_UP(retry, {return -2;});
+      RETRY_UP(retry, {
+                   DBG("Max retry %d", retry);
+                   return -2;
+               });
       msleep(ARROW_RETRY_DELAY);
   }
   DBG("start device command processing");

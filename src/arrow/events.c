@@ -364,14 +364,10 @@ int arrow_mqtt_has_events(void) {
 
 int arrow_mqtt_event_proc(void) {
     mqtt_event_t *tmp = NULL;
-    MQTT_EVENTS_QUEUE_LOCK;
     tmp = __event_queue;
     if ( !tmp ) {
-        MQTT_EVENTS_QUEUE_UNLOCK;
         return -1;
     }
-    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
-    MQTT_EVENTS_QUEUE_UNLOCK;
 
     submodule current_processor = NULL;
     int i = 0;
@@ -387,14 +383,17 @@ int arrow_mqtt_event_proc(void) {
       DBG("No event processor for %s", P_VALUE(tmp->name));
       goto mqtt_event_proc_error;
     }
-    if ( __event_queue && !ret ) ret = 1;
 mqtt_event_proc_error:
+    MQTT_EVENTS_QUEUE_LOCK;
+    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
+    MQTT_EVENTS_QUEUE_UNLOCK;
     mqtt_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
     static_free(mqtt_event_t, tmp);
 #else
     free(tmp);
 #endif
+    if ( __event_queue && !ret ) ret = 1;
     return ret;
 }
 
@@ -414,23 +413,23 @@ int arrow_mqtt_api_has_events(void) {
 int arrow_mqtt_api_event_proc(http_response_t *res) {
     mqtt_api_event_t *tmp = NULL;
     int ret = -1;
-    MQTT_EVENTS_QUEUE_LOCK;
     tmp = __api_event_queue;
     if ( !tmp ) {
-        MQTT_EVENTS_QUEUE_UNLOCK;
         return -1;
     }
-    arrow_linked_list_del_node_first(__api_event_queue, mqtt_api_event_t);
-    MQTT_EVENTS_QUEUE_UNLOCK;
 
     JsonNode *_parameters = tmp->parameters;
     JsonNode *status = json_find_member(_parameters, p_const("status"));
-    if ( !status ) goto mqtt_api_error;
+    if ( !status ) {
+        DBG("No HTTP status!");
+        goto mqtt_api_error;
+    }
     if ( strcmp(status->string_, "OK") != 0 ) {
         JsonNode *body = json_find_member(_parameters, p_const("payload"));
         if ( body ) {
             DBG("[%s]", body->string_);
         }
+        DBG("Not OK");
         goto mqtt_api_error;
     }
     res->m_httpResponseCode = 200;
@@ -441,14 +440,17 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
     }
     ret = 0;
 
-    if ( __api_event_queue ) ret = 1;
 mqtt_api_error:
+    MQTT_EVENTS_QUEUE_LOCK;
+    arrow_linked_list_del_node_first(__api_event_queue, mqtt_api_event_t);
+    MQTT_EVENTS_QUEUE_UNLOCK;
     mqtt_api_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
     static_free(mqtt_api_event_t, tmp);
 #else
     free(tmp);
 #endif
+    if ( __api_event_queue ) ret = 1;
     return ret;
 }
 
@@ -471,7 +473,7 @@ int process_http_init(int size) {
     if (arrow_mqtt_api_has_events() >= api_mqtt_max_capacity)
         return -1;
 #endif
-    DBG("Static http mempory size %d", json_static_memory_max_sector());
+    DBG("Static http memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
     if ( size*(1) > json_static_memory_max_sector() - 512 ) {
@@ -596,7 +598,7 @@ int process_event_init(int size) {
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
 #endif
-    DBG("Static mempory size %d", json_static_memory_max_sector());
+    DBG("Static memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
     if ( size*(2) > json_static_memory_max_sector() - 1024 ) {
@@ -608,7 +610,6 @@ int process_event_init(int size) {
 }
 
 int process_event(const char *str, int len) {
-    ((char*)str)[len] = 0;
     int r = json_decode_part(&sm, str, len);
     if ( r != len ) {
         DBG("JSON decode fail %d/%d", r, len);

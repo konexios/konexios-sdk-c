@@ -182,56 +182,6 @@ static int _mqtt_env_free(mqtt_env_t *env) {
   return 0;
 }
 
-#if !defined(NO_EVENTS)
-/*static void messageArrived(MessageData* md) {
-//    static int is_message_refuse = 0;
-    MQTTMessage* message = md->message;
-//    *(((uint8_t*)message->payload) + message->payloadlen) = 0x0;
-    DBG("message arrived %d/%d", message->payloadlen, message->offset);
-    //
-    // FIXME refuse message
-    switch ( message->offset ) {
-    case 0: {
-        process_event_init();
-    } break;
-    case 1: {
-        if ( process_event(message->payload, message->payloadlen) < 0 ) {
-            DBG("MQTT message process fail");
-        }
-    } break;
-    case 2: {
-        process_event_finish();
-    } break;
-    }
-}*/
-
-#if defined(HTTP_VIA_MQTT)
-/*static void arrived_api_mqtt(MessageData *md) {
-  MQTTMessage *message = md->message;
-  DBG("message arrived %d/%d", message->payloadlen, message->offset);
-//  *(((uint8_t *)message->payload) + message->payloadlen) = 0x0;
-//  DBG("api message arrived %d", message->payloadlen);
-//  if ( message->payloadlen < MQTT_RECVBUF_LEN )
-//    if ( process_http_payload(message->payload) < 0 ) {
-//      DBG("MQTT message process fail");
-//    }
-  switch ( message->offset ) {
-  case 0: {
-      process_http_init();
-  } break;
-  case 1: {
-      if ( process_http(message->payload, message->payloadlen) < 0 ) {
-          DBG("MQTT message process fail");
-      }
-  } break;
-  case 2: {
-      process_http_finish();
-  } break;
-  }
-}*/
-#endif
-#endif
-
 static int mqttchannelseq( mqtt_env_t *ch, uint32_t num ) {
   if ( ch->mask == num ) {
     return 0;
@@ -381,8 +331,6 @@ int p_init() {
     return len;
 }
 
-char ttt[290];
-
 int p_part(char *ptr, int len) {
     int r = json_encode_part(&em, ptr, len);
     return r;
@@ -427,7 +375,6 @@ int mqtt_api_publish(JsonNode *data) {
     msg.payload = (void *)data;
     msg.payloadlen = json_size(data);
     MQTT_DBG("[%d][%s]", msg.payloadlen, msg.payload);
-    DBG("publish all [%d]", msg.payloadlen);
     ret = MQTTPublish_part(&tmp->client,
                       P_VALUE(tmp->p_api_topic),
                       &msg,

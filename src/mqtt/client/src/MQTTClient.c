@@ -41,8 +41,9 @@ int sendPacket(MQTTClient *c, int length, TimerInterval *timer) {
 
   while (sent < length && !TimerIsExpired(timer)) {
     rc = c->ipstack->mqttwrite(c->ipstack, &c->buf[sent], length, TimerLeftMS(timer));
-    if (rc < 0) { // there was an error writing the data
-      break;
+    if (rc <= 0) { // there was an error writing the data
+        rc = FAILURE;
+        break;
     }
     sent += rc;
   }

@@ -280,10 +280,10 @@ int MQTTPublish_part(MQTTClient* c,
     // send packet body
     int total = payloadlen;
     len = c->buf_size;
-    while( total ) {
+    while( total && !TimerIsExpired(&timer) ) {
         int chunk = total < len ? total : len;
         chunk = drive->part((char*)ptr, chunk);
-        if ( chunk < 0 ) {
+        if ( chunk <= 0 ) {
             rc = FAILURE;
             goto exit;
         }
@@ -291,7 +291,13 @@ int MQTTPublish_part(MQTTClient* c,
             goto exit;
         total -= chunk;
     }
-    drive->fin();
+    if ( !total ) {
+        drive->fin();
+        rc = MQTT_SUCCESS;
+    } else {
+        rc = FAILURE;
+        goto exit;
+    }
 
     if (message->qos == QOS1)
     {
@@ -318,9 +324,8 @@ int MQTTPublish_part(MQTTClient* c,
             rc = FAILURE;
     }
 
-    return 0;
 exit:
-    return -1;
+    return rc;
 }
 
 int arrow_mqtt_client_subscribe(MQTTClient *c,

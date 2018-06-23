@@ -11,7 +11,22 @@
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>
 #include <arrow/events.h>
+#include <arrow/routine.h>
 #include <debug.h>
+
+static int mqtt_connection_error() {
+    arrow_mqtt_disconnect_routine();
+    arrow_routine_error_t connect_error = ROUTINE_ERROR;
+    int retry = 0;
+    while ( connect_error != ROUTINE_SUCCESS &&
+            connect_error != ROUTINE_RECEIVE_EVENT ) {
+        RETRY_UP(retry, {
+                     return -1;
+                 });
+        connect_error = arrow_mqtt_connect_routine();
+    }
+    return 0;
+}
 
 static int headbyname( property_map_t *h, const char *name ) {
     if ( strcmp(P_VALUE(h->key), name) == 0 ) return 0;
@@ -138,6 +153,10 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
 http_mqtt_error:
     if ( _node ) json_delete(_node);
     arrow_mqtt_api_wait(0);
+    if ( ret < 0 ) {
+        // try to fix connection
+        mqtt_connection_error();
+    }
 DBG("%s %d", __PRETTY_FUNCTION__, ret);
     return ret;
 }
