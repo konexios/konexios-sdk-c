@@ -19,6 +19,7 @@ void device_info_init(device_info_t *gd) {
     gd->enabled = 0;
     gd->info = NULL;
     gd->properties = NULL;
+    arrow_linked_list_init(gd);
 }
 
 void device_info_free(device_info_t *gd) {

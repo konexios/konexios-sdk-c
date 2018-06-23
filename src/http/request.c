@@ -112,6 +112,7 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
 }
 
 void http_request_close(http_request_t *req) {
+  if ( !req ) return;
   property_free(&req->meth);
   property_free(&req->scheme);
   property_free(&req->host);
@@ -121,6 +122,7 @@ void http_request_close(http_request_t *req) {
   property_map_clear(&req->query);
   property_free(&req->content_type.value);
   property_free(&req->content_type.key);
+  memset(req, 0x0, sizeof(http_request_t));
 }
 
 void http_request_add_header(http_request_t *req, property_t key, property_t value) {

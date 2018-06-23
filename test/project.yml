@@ -38,6 +38,7 @@
     - +:acn-sdk-c/src/http/**
     - +:acn-sdk-c/src/json/**
     - +:acn-sdk-c/src/ssl/**
+    - +:acn-sdk-c/src/time/**
     - +:acn-sdk-c/src/mqtt/**
     - +:acn-sdk-c/src/mqtt/client/**
     - +:acn-sdk-c/src/mqtt/packet/**

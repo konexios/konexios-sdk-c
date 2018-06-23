@@ -134,29 +134,30 @@ int MQTTSerialize_connect(unsigned char* buf, int buflen, MQTTPacket_connectData
 int MQTTDeserialize_connack(unsigned char* sessionPresent, unsigned char* connack_rc, unsigned char* buf, int buflen)
 {
     SSP_PARAMETER_NOT_USED(buflen);
-	MQTTHeader header = {0};
+//	MQTTHeader header = {0};
 	unsigned char* curdata = buf;
-	unsigned char* enddata = NULL;
+//	unsigned char* enddata = NULL;
 	int rc = 0;
-	int mylen;
+//	int mylen;
 	MQTTConnackFlags flags = {0};
 
 	FUNC_ENTRY;
-	header.byte = readChar(&curdata);
-	if (header.bits.type != CONNACK)
-		goto exit;
 
-	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
-	enddata = curdata + mylen;
-	if (enddata - curdata < 2)
-		goto exit;
+//	header.byte = readChar(&curdata);
+//	if (header.bits.type != CONNACK)
+//		goto exit;
+
+//	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
+//    enddata = curdata + mylen;
+//	if (enddata - curdata < 2)
+//		goto exit;
 
 	flags.all = readChar(&curdata);
 	*sessionPresent = flags.bits.sessionpresent;
 	*connack_rc = readChar(&curdata);
 
 	rc = 1;
-exit:
+//exit:
 	FUNC_EXIT_RC(rc);
 	return rc;
 }

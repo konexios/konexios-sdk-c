@@ -128,6 +128,7 @@ void arrow_device_state_list_init(arrow_state_list_t *st) {
     property_init(&st->name);
     st->value._property = p_null();
     memset(&st->ts, 0x0, sizeof(timestamp_t));
+    arrow_linked_list_init(st);
 }
 
 void arrow_device_state_list_free(arrow_state_list_t *st) {
@@ -239,7 +240,9 @@ static void _state_get_init(http_request_t *request, void *arg) {
 static int _state_get_proc(http_response_t *response, void *arg) {
     arrow_device_t *dev = (arrow_device_t *)arg;
     if ( response->m_httpResponseCode != 200 ) return -1;
-    DBG("[%s]", P_VALUE(response->payload));
+    if ( !IS_EMPTY(response->payload) ) {
+        DBG("[%s]", P_VALUE(response->payload));
+    }
     JsonNode *_main = json_decode(P_VALUE(response->payload));
     if ( !_main ) return -1;
     JsonNode *dev_hid = json_find_member(_main, p_const("deviceHid"));

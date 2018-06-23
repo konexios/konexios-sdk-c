@@ -46,6 +46,10 @@ typedef struct _mqtt_env_ {
     property_t username;
     property_t s_topic;
     property_t p_topic;
+#if defined(HTTP_VIA_MQTT)
+    property_t s_api_topic;
+    property_t p_api_topic;
+#endif
     property_t addr;
     short port;
     short init;
@@ -61,6 +65,10 @@ typedef struct _i_args {
 } i_args;
 
 typedef struct _mqtt_driver {
+#if defined(HTTP_VIA_MQTT)
+    int (*api_publish_init)(mqtt_env_t *env, i_args *arg);
+    int (*api_subscribe_init)(mqtt_env_t *env, i_args *arg);
+#endif
     int (*telemetry_init)(mqtt_env_t *env, i_args *arg);
     int (*commands_init)(mqtt_env_t *env, i_args *arg);
     int (*common_init)(mqtt_env_t *env, i_args *arg);
@@ -82,6 +90,7 @@ int mqtt_telemetry_terminate(void);
 // Send the telemetry data to the cloud
 // there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly
 int mqtt_publish(arrow_device_t *device, void *data);
+int mqtt_api_publish(JsonNode *data);
 
 #if !defined(NO_EVENTS)
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,
@@ -101,6 +110,7 @@ int mqtt_subscribe(void);
 // Wait some event from the cloud
 // The user's command or software update command
 int mqtt_yield(int timeout_ms);
+int mqtt_receive(int timeout_ms);
 // Terminate all connections
 void mqtt_disconnect(void);
 void mqtt_terminate(void);

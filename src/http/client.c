@@ -25,6 +25,11 @@
 uint8_t tmpbuffer[CHUNK_SIZE];
 #define MAX_TMP_BUF_SIZE (sizeof(tmpbuffer)-1)
 
+int http_session_is_open(http_client_t *cli) {
+    if ( cli->sock < 0 ) return 0;
+    return 1;
+}
+
 void http_session_close_set(http_client_t *cli, bool mode) {
 #if defined(HTTP_SOCK_KEEP_OPEN)
     mode = false;
@@ -32,9 +37,8 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
-void http_session_close_now(http_client_t *cli) {
-  cli->flags._close = true;
-  http_client_close(cli);
+void http_session_set_protocol(http_client_t *cli, int prot) {
+    cli->protocol = prot;
 }
 
 #define CHECK_CONN_ERR(ret) \
@@ -116,6 +120,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
     cli->flags._close = true;
     cli->flags._cipher = 0;
     cli->timeout = DEFAULT_API_TIMEOUT;
+    cli->protocol = api_via_http;
     return 0;
 }
 
@@ -125,7 +130,8 @@ int __attribute_weak__ http_client_free(http_client_t *cli) {
     free(cli->queue);
 #endif
     cli->queue = NULL;
-    return -1;
+    cli->protocol = api_via_http;
+    return 0;
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req);
@@ -134,13 +140,14 @@ int __attribute_weak__ http_client_open(http_client_t *cli, http_request_t *req)
 }
 
 int default_http_client_open(http_client_t *cli, http_request_t *req) {
+    cli->response_code = 0;
+    cli->request = req;
+    if ( cli->protocol != api_via_http ) return -1;
     if ( !cli->queue ) {
         DBG("HTTP: There is no queue");
         return -1;
     }
     ringbuf_clear(cli->queue);
-    cli->response_code = 0;
-    cli->request = req;
     if ( cli->sock < 0 ) {
         DBG("new TCP connection");
         int ret = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -162,8 +169,8 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         memset(&serv, 0, sizeof(serv));
         serv.sin_family = PF_INET;
         bcopy((char *)serv_resolve->h_addr,
-                (char *)&serv.sin_addr.s_addr,
-                (uint32_t)serv_resolve->h_length);
+              (char *)&serv.sin_addr.s_addr,
+              (uint32_t)serv_resolve->h_length);
         serv.sin_port = htons(req->port);
 
         // set timeout
@@ -203,6 +210,8 @@ int __attribute_weak__ http_client_close(http_client_t *cli) {
 }
 
 int default_http_client_close(http_client_t *cli) {
+    cli->request = NULL;
+    if ( cli->protocol != api_via_http ) return  -1;
     if ( cli->sock < 0 ) return -1;
     if ( !cli->flags._close ) return 1;
     if ( cli->flags._cipher ) {
@@ -448,11 +457,11 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             chunk_len = get_chunked_payload_size(cli, res);
         } else {
             chunk_len = res->recvContentLength;
-            DBG("Con-Len %d", res->recvContentLength);
+            DBG("Con-Len %lu", res->recvContentLength);
         }
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {
-            uint32_t need_to_read = (chunk_len < CHUNK_SIZE-10) ? chunk_len : CHUNK_SIZE-10;
+            uint32_t need_to_read = ARROW_MIN(chunk_len, CHUNK_SIZE);
             HTTP_DBG("need to read %d", need_to_read);
             while ( (int)ringbuf_size(cli->queue) < (int)need_to_read ) {
                 HTTP_DBG("get chunk add %d", need_to_read-ringbuf_size(cli->queue));

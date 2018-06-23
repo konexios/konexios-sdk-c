@@ -34,6 +34,7 @@ int add_telemetry_data_info(telemetry_response_data_list_t *data,
                             time_t timestamp,
                             int flval) {
     telemetry_data_info_t *info = alloc_type(telemetry_data_info_t);
+    arrow_linked_list_init(info);
     info->deviceHid = strdup(deviceHid);
     info->name = strdup(name);
     info->type = strdup(type);

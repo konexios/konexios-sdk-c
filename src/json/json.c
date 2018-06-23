@@ -35,121 +35,27 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_alloc.h>
-#include <data/static_buf.h>
 static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
-CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE>>5)
 #endif
 
 #define out_of_memory() { DBG("JSON: Out of memory"); }
 
 /* Sadly, strdup is not portable. */
-char *json_strdup(const char *str) {
-#if defined(STATIC_JSON)
-    char *ret = (char*) static_buf_alloc(jsonbuf, strlen(str) + 1);
-#else
-	char *ret = (char*) malloc(strlen(str) + 1);
-#endif
-    if (ret == NULL) {
-		out_of_memory();
-    } else
-        strcpy(ret, str);
-	return ret;
+char *json_strdup(const char *s) {
+    SB out;
+    sb_init(&out);
+    int ret = sb_puts(&out, s);
+    if (ret < 0) {
+        return NULL;
+    }
+    sb_putc(&out, '\0');
+    return out.start;
 }
 
 property_t  json_strdup_property(const char *str) {
     char *tmp = json_strdup(str);
     if ( !tmp ) return p_null();
     return p_json(tmp);
-}
-
-/* String buffer */
-
-typedef struct
-{
-	char *cur;
-	char *end;
-	char *start;
-} SB;
-
-static int sb_init(SB *sb)
-{
-#if defined(STATIC_JSON)
-    sb->start = (char*) static_buf_alloc(jsonbuf, 17);
-#else
-	sb->start = (char*) malloc(17);
-#endif
-    if (sb->start == NULL) {
-		out_of_memory();
-        return -1;
-    }
-	sb->cur = sb->start;
-	sb->end = sb->start + 16;
-    return 0;
-}
-
-static int sb_grow(SB *sb, int need)
-{
-	size_t length = (size_t)(sb->cur - sb->start);
-	size_t alloc = (size_t)(sb->end - sb->start);
-	
-	do {
-		alloc *= 2;
-	} while (alloc < length + (size_t)need);
-#if defined(STATIC_JSON)
-    sb->start = (char*) static_buf_realloc(jsonbuf, sb->start, alloc + 1);
-#else
-	sb->start = (char*) realloc(sb->start, alloc + 1);
-#endif
-    if (sb->start == NULL) {
-		out_of_memory();
-        return -1;
-    }
-	sb->cur = sb->start + length;
-	sb->end = sb->start + alloc;
-    return 0;
-}
-
-/* sb and need may be evaluated multiple times. */
-static int sb_need(SB *sb, int need) {
-    if ((sb)->end - (sb)->cur < need)
-        return sb_grow(sb, need);
-    return 0;
-}
-
-static void sb_put(SB *sb, const char *bytes, int count)
-{
-	sb_need(sb, count);
-	memcpy(sb->cur, bytes, (size_t)count);
-	sb->cur += count;
-}
-
-#define sb_putc(sb, c) do {         \
-		if ((sb)->cur >= (sb)->end) \
-			sb_grow(sb, 1);         \
-		*(sb)->cur++ = (c);         \
-	} while (0)
-
-static void sb_puts(SB *sb, const char *str)
-{
-	sb_put(sb, str, (int)strlen(str));
-}
-
-static char *sb_finish(SB *sb)
-{
-	*sb->cur = 0;
-	assert(sb->start <= sb->cur && strlen(sb->start) == (size_t)(sb->cur - sb->start));
-	return sb->start;
-}
-
-static void sb_free(SB *sb)
-{
-    if ( sb && sb->start ) {
-#if defined(STATIC_JSON)
-        static_buf_free(jsonbuf, sb->start);
-#else
-        free(sb->start);
-#endif
-    }
 }
 
 /*
@@ -363,9 +269,6 @@ static void to_surrogate_pair(uchar_t unicode, uint16_t *uc, uint16_t *lc)
 	*lc = (uint16_t) ((n & 0x3FF) | 0xDC00);
 }
 
-#define is_space(c) ((c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == ' ')
-#define is_digit(c) ((c) >= '0' && (c) <= '9')
-
 static bool parse_value     (const char **sp, JsonNode        **out);
 static bool parse_string    (const char **sp, char            **out);
 static bool parse_number    (const char **sp, double           *out);
@@ -379,7 +282,7 @@ static void skip_space      (const char **sp);
 static void emit_value              (SB *out, const JsonNode *node);
 static void emit_value_indented     (SB *out, const JsonNode *node, const char *space, int indent_level);
 static void emit_string             (SB *out, const char *str);
-static void emit_number             (SB *out, double num);
+void emit_number             (SB *out, double num);
 static void emit_array              (SB *out, const JsonNode *array);
 static void emit_array_indented     (SB *out, const JsonNode *array, const char *space, int indent_level);
 static void emit_object             (SB *out, const JsonNode *object);
@@ -455,13 +358,9 @@ void json_delete(JsonNode *node)
 		json_remove_from_parent(node);
 		
 		switch (node->tag) {
-			case JSON_STRING:
-#if defined(STATIC_JSON)
-                static_buf_free(jsonbuf, node->string_);
-#else
-				free(node->string_);
-#endif
-				break;
+        case JSON_STRING: {
+            json_delete_string(node->string_);
+        } break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
 			{
@@ -483,11 +382,9 @@ void json_delete(JsonNode *node)
 }
 
 void json_delete_string(char *json_str) {
-#if defined(STATIC_JSON)
-    static_buf_free(jsonbuf, json_str);
-#else
-    free(json_str);
-#endif
+    SB out;
+    out.start = json_str;
+    sb_free(&out);
 }
 
 int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
@@ -560,8 +457,9 @@ static JsonNode *mknode(JsonTag tag)
 #endif
     if (ret == NULL) {
         out_of_memory();
-    } else
+    } else {
         ret->tag = tag;
+    }
     return ret;
 }
 
@@ -573,14 +471,14 @@ JsonNode *json_mknull(void)
 JsonNode *json_mkbool(bool b)
 {
 	JsonNode *ret = mknode(JSON_BOOL);
-	ret->bool_ = b;
+    if ( ret ) ret->bool_ = b;
 	return ret;
 }
 
 static JsonNode *mkstring(char *s)
 {
 	JsonNode *ret = mknode(JSON_STRING);
-	ret->string_ = s;
+    if ( ret ) ret->string_ = s;
 	return ret;
 }
 
@@ -592,7 +490,7 @@ JsonNode *json_mkstring(const char *s)
 JsonNode *json_mknumber(double n)
 {
 	JsonNode *node = mknode(JSON_NUMBER);
-	node->number_ = n;
+    if ( node ) node->number_ = n;
 	return node;
 }
 
@@ -695,7 +593,7 @@ void json_remove_from_parent(JsonNode *node)
 static bool parse_value(const char **sp, JsonNode **out)
 {
 	const char *s = *sp;
-	
+
 	switch (*s) {
 		case 'n':
 			if (expect_literal(&s, "null")) {
@@ -856,11 +754,7 @@ success:
 
 failure_free_key:
     if (out) {
-#if defined(STATIC_JSON)
-        static_buf_free(jsonbuf, key);
-#else
-		free(key);
-#endif
+        json_delete_string(key);
     }
 failure:
 	json_delete(ret);
@@ -1299,7 +1193,7 @@ void emit_string(SB *out, const char *str)
 	out->cur = b;
 }
 
-static void emit_number(SB *out, double num)
+void emit_number(SB *out, double num)
 {
 	/*
 	 * This isn't exactly how JavaScript renders numbers,

@@ -1,0 +1,1 @@
+../acn-sdk-c/include/mqtt/client/client.h

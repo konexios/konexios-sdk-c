@@ -19,6 +19,7 @@ extern "C" {
 #include <data/property_stack.h>
 
 void property_types_init();
+void property_types_deinit();
 void property_type_add(property_dispetcher_t *disp);
 
 void property_init(property_t *dst);
@@ -29,7 +30,7 @@ void property_free(property_t *dst);
 int property_cmp(property_t *src, property_t *dst);
 
 property_t property_as_null_terminated(property_t *src);
-property_t property_concat(property_t *src1, property_t *src2);
+int property_concat(property_t *src1, property_t *src2);
 
 size_t property_size(property_t *src);
 

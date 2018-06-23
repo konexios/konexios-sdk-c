@@ -222,6 +222,7 @@ int readMQTTLenString(MQTTString* mqttstring, unsigned char** pptr, unsigned cha
 	if (enddata - (*pptr) > 1) /* enough length to read the integer? */
 	{
 		mqttstring->lenstring.len = readInt(pptr); /* increments pptr to point past length */
+
 		if (&(*pptr)[mqttstring->lenstring.len] <= enddata)
 		{
 			mqttstring->lenstring.data = (char*)*pptr;

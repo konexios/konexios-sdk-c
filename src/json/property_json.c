@@ -25,8 +25,11 @@ void json_weak(property_t *dst, property_t *src) {
 void json_move(property_t *dst, property_t *src) {
     dst->value = src->value;
     dst->size = src->size;
-    dst->flags = is_owner | PROPERTY_JSON_TAG;
-    src->flags &= ~is_owner;
+    dst->flags = PROPERTY_JSON_TAG;
+    if ( src->flags & is_owner ) {
+        dst->flags |= is_owner;
+        src->flags &= ~is_owner;
+    }
 }
 
 void json_destroy(property_t *dst) {

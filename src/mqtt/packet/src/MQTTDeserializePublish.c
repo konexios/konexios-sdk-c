@@ -85,26 +85,26 @@ exit:
 int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
 {
     SSP_PARAMETER_NOT_USED(buflen);
-	MQTTHeader header = {0};
-	unsigned char* curdata = buf;
-	unsigned char* enddata = NULL;
+//	MQTTHeader header = {0};
+//	unsigned char* curdata = buf;
+//	unsigned char* enddata = NULL;
 	int rc = 0;
-	int mylen;
+//	int mylen;
 
 	FUNC_ENTRY;
-	header.byte = readChar(&curdata);
-	*dup = header.bits.dup;
-	*packettype = header.bits.type;
+//	header.byte = readChar(&curdata);
+//	*dup = header.bits.dup;
+//	*packettype = header.bits.type;
 
-	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
-	enddata = curdata + mylen;
+//	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
+//	enddata = curdata + mylen;
 
-	if (enddata - curdata < 2)
-		goto exit;
-	*packetid = readInt(&curdata);
+//	if (enddata - curdata < 2)
+//		goto exit;
+//	*packetid = readInt(&curdata);
 
 	rc = 1;
-exit:
+//exit:
 	FUNC_EXIT_RC(rc);
 	return rc;
 }

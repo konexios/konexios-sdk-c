@@ -14,6 +14,7 @@ void log_init(log_t *gi) {
     property_init(&gi->productName);
     property_init(&gi->type);
     gi->parameters = NULL;
+    arrow_linked_list_init(gi);
 }
 
 void log_free(log_t *gi) {

@@ -44,6 +44,7 @@ int arrow_command_handler_add(const char *name, __cmd_cb callback) {
     if ( !h ) return -1;
     property_copy(&h->name, p_const(name));
     h->callback = callback;
+    arrow_linked_list_init(h);
     arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
     return 0;
 }
@@ -81,7 +82,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
     http_request_init(request, PUT, uri);
     FREE_CHUNK(uri);
     if ( !IS_EMPTY(data->payload) ) {
-        http_request_set_payload(request, data->payload);
+      http_request_set_payload(request, data->payload);
 	}
 }
 
@@ -105,8 +106,14 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   int retry = 0;
   http_session_close_set(current_client(), false);
+#if defined(HTTP_VIA_MQTT)
+  http_session_set_protocol(current_client(), 1);
+#endif
   while( arrow_send_event_ans(ev->gateway_hid, received, p_null()) < 0 ) {
-      RETRY_UP(retry, {return -2;});
+      RETRY_UP(retry, {
+                   DBG("Max retry %d", retry);
+                   return -2;
+               });
       msleep(ARROW_RETRY_DELAY);
   }
   DBG("start device command processing");
@@ -175,6 +182,7 @@ device_command_done:
         msleep(ARROW_RETRY_DELAY);
     }
   }
+  http_session_set_protocol(current_client(), api_via_http);
   return 0;
 }
 #else

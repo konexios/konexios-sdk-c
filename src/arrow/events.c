@@ -51,15 +51,29 @@ static void mqtt_event_init(mqtt_event_t *mq) {
     property_init(&mq->gateway_hid);
     property_init(&mq->device_hid);
     property_init(&mq->name);
-    mq->cmd = NULL;
     mq->parameters = NULL;
+    arrow_linked_list_init(mq);
 }
 
 static void mqtt_event_free(mqtt_event_t *mq) {
   property_free(&mq->gateway_hid);
   property_free(&mq->device_hid);
   property_free(&mq->name);
-  if ( mq->cmd ) free(mq->cmd);
+  if ( mq->parameters ) json_delete(mq->parameters);
+}
+
+static void mqtt_api_event_init(mqtt_api_event_t *mq) {
+    property_init(&mq->id);
+    property_init(&mq->name);
+    mq->encrypted = 0;
+    mq->parameters = NULL;
+    arrow_linked_list_init(mq);
+}
+
+static void mqtt_api_event_free(mqtt_api_event_t *mq) {
+    property_free(&mq->id);
+    property_free(&mq->name);
+    mq->encrypted = 0;
   if ( mq->parameters ) json_delete(mq->parameters);
 }
 
@@ -93,18 +107,26 @@ sub_t sub_list[] = {
 
 // checker
 
-typedef int(*sign_checker)(const char *, mqtt_event_t *, const char *);
+typedef int(*sign_checker)(const char *,
+                           property_t hid,
+                           property_t name,
+                           int encrypted,
+                           const char *);
 struct check_signature_t {
   const char *version;
   sign_checker check;
 };
 
-static int check_sign_1(const char *sign, mqtt_event_t *ev, const char *can) {
+static int check_sign_1(const char *sign,
+                        property_t hid,
+                        property_t name,
+                        int encrypted,
+                        const char *can) {
   char signature[65] = {0};
   int err = gateway_payload_sign(signature,
-                                 P_VALUE(ev->gateway_hid),
-                                 P_VALUE(ev->name),
-                                 ev->encrypted,
+                                 P_VALUE(hid),
+                                 P_VALUE(name),
+                                 encrypted,
                                  can,
                                  "1");
   if ( err ) return -1;
@@ -121,13 +143,23 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_t *ev,
   for ( i = 0; i< sizeof(checker_collection) / sizeof(struct check_signature_t); i++ ) {
     if ( strcmp(vers, checker_collection[i].version ) == 0 ) {
       DBG("check version %s", checker_collection[i].version);
-      return checker_collection[i].check(sing, ev, canParamStr);
+      return checker_collection[i].check(
+                  sing,
+                  ev->gateway_hid,
+                  ev->name,
+                  ev->encrypted,
+                  canParamStr);
     }
   }
   return -1;
 }
 
-#if !defined(STATIC_MQTT_ENV)
+#if defined(STATIC_MQTT_ENV)
+// FIXME buffer len?
+static char static_canonical_prm[3000];
+static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
+static_object_pool_type(mqtt_api_event_t, ARROW_MAX_MQTT_COMMANDS)
+#else
 static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
@@ -236,10 +268,9 @@ static char *form_canonical_prm(JsonNode *param) {
       total += can_list[count].len;
       count++;
   }
-  can_list[count-1].start[can_list[count-1].len-1] = '\0';
-  can_list[count-1].len--;
-  total--;
+  can_list[count-1].start[can_list[count-1].len] = '\0';
   bubble(can_list, count);
+  can_list[count-1].start[can_list[count-1].len-1] = '\0';
   return canParam;
 }
 
@@ -299,6 +330,7 @@ can_list_error:
 #endif
 
 static mqtt_event_t *__event_queue = NULL;
+static mqtt_api_event_t *__api_event_queue = NULL;
 #if defined(ARROW_THREAD)
 static arrow_mutex *_event_mutex = NULL;
 #endif
@@ -328,14 +360,10 @@ int arrow_mqtt_has_events(void) {
 
 int arrow_mqtt_event_proc(void) {
     mqtt_event_t *tmp = NULL;
-    MQTT_EVENTS_QUEUE_LOCK;
     tmp = __event_queue;
     if ( !tmp ) {
-        MQTT_EVENTS_QUEUE_UNLOCK;
         return -1;
     }
-    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
-    MQTT_EVENTS_QUEUE_UNLOCK;
 
     submodule current_processor = NULL;
     int i = 0;
@@ -348,26 +376,254 @@ int arrow_mqtt_event_proc(void) {
     if ( current_processor ) {
       ret = current_processor(tmp, tmp->parameters);
     } else {
-      DBG("No event processor for %s", tmp->name);
+      DBG("No event processor for %s", P_VALUE(tmp->name));
       goto mqtt_event_proc_error;
     }
-    if ( __event_queue ) ret = 1;
 mqtt_event_proc_error:
+    MQTT_EVENTS_QUEUE_LOCK;
+    arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
+    MQTT_EVENTS_QUEUE_UNLOCK;
     mqtt_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
     static_free(mqtt_event_t, tmp);
 #else
     free(tmp);
 #endif
+    if ( __event_queue && !ret ) ret = 1;
     return ret;
 }
 
-int process_event(const char *str) {
+int arrow_mqtt_api_has_events(void) {
+    int ret = -1;
+    MQTT_EVENTS_QUEUE_LOCK;
+    if ( !__api_event_queue ) return 0;
+    ret = 0;
+    mqtt_api_event_t *tmp = NULL;
+    arrow_linked_list_for_each(tmp, __api_event_queue, mqtt_api_event_t) {
+        ret++;
+    }
+    MQTT_EVENTS_QUEUE_UNLOCK;
+    return ret;
+}
+
+int arrow_mqtt_api_event_proc(http_response_t *res) {
+    mqtt_api_event_t *tmp = NULL;
+    int ret = -1;
+    tmp = __api_event_queue;
+    if ( !tmp ) {
+        return -1;
+    }
+
+    JsonNode *_parameters = tmp->parameters;
+    JsonNode *status = json_find_member(_parameters, p_const("status"));
+    if ( !status ) {
+        DBG("No HTTP status!");
+        goto mqtt_api_error;
+    }
+    if ( strcmp(status->string_, "OK") != 0 ) {
+        JsonNode *body = json_find_member(_parameters, p_const("payload"));
+        if ( body ) {
+            DBG("[%s]", body->string_);
+        }
+        DBG("Not OK");
+        goto mqtt_api_error;
+    }
+    res->m_httpResponseCode = 200;
+
+    JsonNode *payload = json_find_member(_parameters, p_const("payload"));
+    if ( payload ) {
+        http_response_add_payload(res, p_stack(payload));
+    }
+    ret = 0;
+
+mqtt_api_error:
+    MQTT_EVENTS_QUEUE_LOCK;
+    arrow_linked_list_del_node_first(__api_event_queue, mqtt_api_event_t);
+    MQTT_EVENTS_QUEUE_UNLOCK;
+    mqtt_api_event_free(tmp);
+#if defined(STATIC_MQTT_ENV)
+    static_free(mqtt_api_event_t, tmp);
+#else
+    free(tmp);
+#endif
+    if ( __api_event_queue ) ret = 1;
+    return ret;
+}
+
+static json_parse_machine_t sm_http;
+static int api_mqtt_max_capacity = 0;
+
+
+int arrow_mqtt_api_wait(int num) {
+    api_mqtt_max_capacity = num;
+    while ( arrow_mqtt_api_has_events() > api_mqtt_max_capacity ) {
+        http_response_t dummy;
+        arrow_mqtt_api_event_proc(&dummy);
+    }
+    return 0;
+}
+
+
+int process_http_init(int size) {
+#if defined(ARROW_MAX_MQTT_COMMANDS)
+    if (arrow_mqtt_api_has_events() >= api_mqtt_max_capacity)
+        return -1;
+#endif
+    DBG("Static http memory size %d", json_static_memory_max_sector());
+    DBG("need %d", size);
+#if defined(STATIC_ACN)
+    if ( size*(1) > json_static_memory_max_sector() - 512 ) {
+        DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        return -1;
+    }
+#endif
+    return json_decode_init(&sm_http);
+}
+
+int process_http(const char *str, int len) {
+    int r = json_decode_part(&sm_http, str, len);
+    if ( r != len ) {
+        DBG("http decode fail %d/%d", r, len);
+        JsonNode *root = json_decode_finish(&sm_http);
+        if ( root ) json_delete(root);
+        return -1;
+    }
+    return 0;
+}
+
+int process_http_finish() {
+    int ret = -1;
+    DBG("start http msg processing");
+    JsonNode *_main = json_decode_finish(&sm_http);
+    if ( !_main ) {
+        DBG("http payload decode failed");
+        goto no_api_error;
+    }
+
+#if defined(STATIC_MQTT_ENV)
+    mqtt_api_event_t *api_e = static_allocator(mqtt_api_event_t);
+#else
+  mqtt_api_event_t *api_e = (mqtt_event_t *)calloc(1, sizeof(mqtt_api_event_t));
+#endif
+  if ( !api_e ) {
+      DBG("PROCESS API EVENT: not enough memory");
+      goto no_api_error;
+  }
+  mqtt_api_event_init(api_e);
+
+
+
+    if ( fill_string_from_json(_main,
+                               p_const("requestId"),
+                               &api_e->id) < 0 ) {
+      DBG("cannot find requestId");
+      goto error;
+    }
+
+    if ( fill_string_from_json(_main,
+                               p_const("eventName"),
+                               &api_e->name) < 0 ) {
+      DBG("cannot find name");
+      goto error;
+    }
+
+    JsonNode *_encrypted = json_find_member(_main, p_const("encrypted"));
+    if ( !_encrypted ) goto error;
+    api_e->encrypted = _encrypted->bool_;
+
+    JsonNode *_parameters = json_find_member(_main, p_const("parameters"));
+    if ( !_parameters ) goto error;
+    JsonNode *sign_version = json_find_member(_main, p_const("signatureVersion"));
+    if ( sign_version ) {
+  #if defined(DEBUG_MQTT_PROCESS_EVENT)
+        DBG("signature vertsion: %s", sign_version->string_);
+  #endif
+      JsonNode *sign = json_find_member(_main, p_const("signature"));
+      if ( !sign ) goto error;
+      char *can = form_canonical_prm(_parameters);
+  #if defined(DEBUG_MQTT_PROCESS_EVENT)
+      DBG("[%s]", can);
+  #endif
+      if ( !can ) goto error;
+      // FIXME sign sig
+      mqtt_event_t h;
+      property_weak_copy(&h.gateway_hid, api_e->id);
+      property_weak_copy(&h.name, api_e->name);
+      h.encrypted = api_e->encrypted;
+
+      if ( check_signature(
+               sign_version->string_,
+               sign->string_,
+               &h,
+               can) < 0 ) {
+        DBG("Alarm! signature is failed...");
+  #if !defined(STATIC_MQTT_ENV)
+        free(can);
+  #endif
+        goto error;
+      }
+  #if !defined(STATIC_MQTT_ENV)
+      free(can);
+  #endif
+    }
+
+    json_remove_from_parent(_parameters);
+    api_e->parameters = _parameters;
+
+    arrow_linked_list_add_node_last(__api_event_queue, mqtt_api_event_t, api_e);
+    DBG("http queue size %d", arrow_mqtt_api_has_events());
+    ret = 0;
+error:
+    if ( ret < 0 ) {
+        mqtt_api_event_free(api_e);
+  #if defined(STATIC_MQTT_ENV)
+        static_free(mqtt_api_event_t, api_e);
+  #else
+        free(api_e);
+  #endif
+    }
+no_api_error:
+    if ( _main ) json_delete(_main);
+    return ret;
+}
+
+static json_parse_machine_t sm;
+
+int process_event_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
 #endif
+    DBG("Static memory size %d", json_static_memory_max_sector());
+    DBG("need %d", size);
+#if defined(STATIC_ACN)
+    if ( size*(2) > json_static_memory_max_sector() - 1024 ) {
+        DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        return -1;
+    }
+#endif
+    return json_decode_init(&sm);
+}
 
+int process_event(const char *str, int len) {
+    int r = json_decode_part(&sm, str, len);
+    if ( r != len ) {
+        DBG("JSON decode fail %d/%d", r, len);
+        JsonNode *root = json_decode_finish(&sm);
+        if ( root ) json_delete(root);
+        return -1;
+    }
+    return 0;
+}
+
+
+int process_event_finish() {
+    int ret = -1;
+    JsonNode *_main = json_decode_finish(&sm);
+    if ( !_main ) {
+        DBG("event payload decode failed");
+        goto no_event_error;
+    }
 #if defined(STATIC_MQTT_ENV)
     mqtt_event_t *mqtt_e = static_allocator(mqtt_event_t);
 #else
@@ -375,15 +631,9 @@ int process_event(const char *str) {
 #endif
   if ( !mqtt_e ) {
       DBG("PROCESS EVENT: not enough memory");
-      return -2;
+      goto no_event_error;
   }
   mqtt_event_init(mqtt_e);
-  int ret = -1;
-  JsonNode *_main = json_decode(str);
-  if ( !_main ) {
-      DBG("event payload decode failed %d", strlen(str));
-      return -1;
-  }
 
   if ( fill_string_from_json(_main, p_const("hid"), &mqtt_e->gateway_hid) < 0 ) {
     DBG("cannot find HID");
@@ -403,6 +653,7 @@ int process_event(const char *str) {
 
   if ( IS_EMPTY(mqtt_e->gateway_hid) || IS_EMPTY(mqtt_e->name) ) {
       DBG("EMPTY parameters {%s, %s}", P_VALUE(mqtt_e->gateway_hid), P_VALUE(mqtt_e->name));
+      goto error;
   }
 
   JsonNode *_encrypted = json_find_member(_main, p_const("encrypted"));
@@ -411,13 +662,17 @@ int process_event(const char *str) {
 
   JsonNode *_parameters = json_find_member(_main, p_const("parameters"));
   if ( !_parameters ) goto error;
+
   JsonNode *sign_version = json_find_member(_main, p_const("signatureVersion"));
   if ( sign_version ) {
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
       DBG("signature vertsion: %s", sign_version->string_);
 #endif
     JsonNode *sign = json_find_member(_main, p_const("signature"));
-    if ( !sign ) goto error;
+    if ( !sign ) {
+        DBG("There is no signature... fail");
+        goto error;
+    }
     char *can = form_canonical_prm(_parameters);
 #if defined(DEBUG_MQTT_PROCESS_EVENT)
     DBG("[%s]", can);
@@ -448,8 +703,31 @@ error:
       free(mqtt_e);
 #endif
   }
+no_event_error:
   if ( _main ) json_delete(_main);
   return ret;
+}
+
+int as_event_sign(char *signature,
+                  property_t ghid,
+                  const char *name,
+                  int encrypted,
+                  JsonNode *_parameters) {
+    char *can = form_canonical_prm(_parameters);
+    if ( !can ) goto sign_error;
+    int err = gateway_payload_sign(signature,
+                                   P_VALUE(ghid),
+                                   name,
+                                   encrypted,
+                                   can,
+                                   "1");
+    if ( err < 0 ) goto sign_error;
+#if !defined(STATIC_MQTT_ENV)
+    free(can);
+#endif
+    return 0;
+sign_error:
+  return -1;
 }
 
 void arrow_mqtt_events_done() {

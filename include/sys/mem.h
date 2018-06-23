@@ -33,6 +33,10 @@ extern "C" {
 # include "sys/arch/mem.h"
 #endif
 
+#if !defined(ARROW_MIN)
+#define ARROW_MIN(a,b) ((a) < (b)) ? (a) : (b)
+#endif
+
 #if defined(__xtensa__) || defined(__XCC__)
 # define __attribute_packed__
 #else

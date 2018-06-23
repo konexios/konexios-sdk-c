@@ -100,7 +100,7 @@
 #define ARROW_MAX_RETRY -1
 #endif
 #define RETRY_UP(r, overact) \
-    if ( r >= 0 && r++ > ARROW_MAX_RETRY ) { overact; }
+    if ( r >= 0 && ++r > ARROW_MAX_RETRY ) { overact; }
 #define RETRY_CR(r) \
     r = 0;
 #define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
