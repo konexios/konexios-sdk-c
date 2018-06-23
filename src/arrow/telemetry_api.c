@@ -53,7 +53,10 @@ typedef struct _device_telemetry {
 
 static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
-  http_request_init(request, POST, ARROW_API_TELEMETRY_ENDPOINT);
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
+  http_request_init(request, POST, uri);
+  FREE_CHUNK(uri);
   request->is_chunked = 1;
   http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
 }
@@ -68,7 +71,7 @@ int arrow_send_telemetry(arrow_device_t *device, void *d) {
 static void _telemetry_batch_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/batch", ARROW_API_TELEMETRY_ENDPOINT);
+  snprintf(uri, URI_LEN, "%s/devices/%s/batch", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
   http_request_init(request, POST, uri);
   FREE_CHUNK(uri);
   request->is_chunked = 1;

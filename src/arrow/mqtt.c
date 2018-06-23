@@ -87,10 +87,10 @@ static int _mqtt_init_common(mqtt_env_t *env) {
   property_init(&env->addr);
   data_prep(&env->data);
 #if !defined(STATIC_MQTT_ENV)
-  env->buf.size = MQTT_BUF_LEN;
-  env->buf.buf = (unsigned char *)malloc(env->buf.size + 1);
-  env->readbuf.size = MQTT_BUF_LEN;
-  env->readbuf.buf = (unsigned char *)malloc(env->readbuf.size + 1);
+    env->buf.size = MQTT_BUF_LEN;
+    env->buf.buf = (unsigned char*)malloc(env->buf.size+1);
+    env->readbuf.size = MQTT_RECVBUF_LEN;
+    env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size+1);
 #endif
   env->timeout = DEFAULT_MQTT_TIMEOUT;
   env->port = MQTT_PORT;

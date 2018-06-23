@@ -6,10 +6,11 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
+#if defined(__IBM__)
+
 #include <arrow/mqtt.h>
 #include <debug.h>
 
-#if defined(__IBM__)
 
 int mqtt_common_init_ibm(mqtt_env_t *env, i_args *args) {
     char username[256];

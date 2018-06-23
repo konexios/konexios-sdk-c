@@ -34,6 +34,8 @@
 
 #if defined(STATIC_MQTT_ENV)
 #include <data/static_alloc.h>
+static char static_canonical_prm[MQTT_RECVBUF_LEN];
+static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
 #endif
 
 #if defined(ARROW_THREAD)
@@ -163,12 +165,14 @@ static int cmpstringp(const void *p1, const void *p2) {
 }
 #endif
 
+#if defined(STATIC_MQTT_ENV)
+
 typedef struct _str_t {
   char *start;
   int len;
 } str_t;
 
-int less(str_t *s1, str_t *s2) {
+static int less(str_t *s1, str_t *s2) {
     int _min = (s1->len < s2->len ? s1->len : s2->len);
     int i = 0;
     for ( i = 0; i<_min; i++) {
@@ -180,7 +184,7 @@ int less(str_t *s1, str_t *s2) {
     return 0;
 }
 
-void swap(str_t *s1, str_t *s2) {
+static void swap(str_t *s1, str_t *s2) {
     char saved;
     int start_pos = s1->len-1;
     int current_pos = start_pos;
@@ -207,7 +211,7 @@ void swap(str_t *s1, str_t *s2) {
     s2->start = s1->start + s1->len;
 }
 
-int bubble(str_t *s, int len) {
+static int bubble(str_t *s, int len) {
     int do_sort = 1;
     while(do_sort) {
         do_sort = 0;
@@ -270,8 +274,8 @@ static char *form_canonical_prm(JsonNode *param) {
   return canParam;
 }
 
-#if 0
-static __attribute_used__ char *form_canonical_prm2(JsonNode *param) {
+#else
+static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
@@ -302,14 +306,8 @@ static __attribute_used__ char *form_canonical_prm2(JsonNode *param) {
     }
     count++;
   }
-#if defined(STATIC_MQTT_ENV)
-  if ( (size_t)total_len > sizeof(static_canonical_prm) ) goto can_list_error;
-  canParam = static_canonical_prm;
-  DBG("GATEWAY SIGN: static mem %d", total_len);
-#else
   canParam = (char*)malloc(total_len);
   DBG("GATEWAY SIGN: alloc memory %d", total_len);
-#endif
   if ( !canParam ) {
       DBG("GATEWAY SIGN: not enough memory %d", total_len);
       goto can_list_error;
@@ -330,8 +328,6 @@ can_list_error:
   return NULL;
 }
 #endif
-
-
 
 static mqtt_event_t *__event_queue = NULL;
 static mqtt_api_event_t *__api_event_queue = NULL;
