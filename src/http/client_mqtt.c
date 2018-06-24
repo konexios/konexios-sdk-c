@@ -13,6 +13,7 @@
 #include <arrow/events.h>
 #include <arrow/routine.h>
 #include <debug.h>
+#include <arrow/gateway_payload_sign.h>
 
 static int mqtt_connection_error() {
     arrow_mqtt_disconnect_routine();
@@ -108,13 +109,8 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     char sig[65] = {0};
     // FIXME bad function externing
     arrow_device_t *current_device(void);
-    extern int as_event_sign(char *signature,
-                             property_t ghid,
-                             const char *name,
-                             int encrypted,
-                             JsonNode *_parameters);
     json_append_member(_node, p_const("parameters"), _parameters);
-    as_event_sign(sig,
+    arrow_event_sign(sig,
                   p_stack(reqhid),
                   "GatewayToServer_ApiRequest",
                   0,

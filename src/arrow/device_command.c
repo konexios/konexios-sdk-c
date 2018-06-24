@@ -109,7 +109,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
 #endif
-  while( arrow_send_event_ans(ev->gateway_hid, received, p_null()) < 0 ) {
+  while( arrow_send_event_ans(ev->base.id, received, p_null()) < 0 ) {
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
                    return -2;
@@ -170,14 +170,14 @@ device_command_done:
   if ( _error ) {
     property_t _error_prop = json_encode_property(_error);
     DBG("error string: %s", P_VALUE(_error_prop));
-    while ( arrow_send_event_ans(ev->gateway_hid, failed, _error_prop) < 0 ) {
+    while ( arrow_send_event_ans(ev->base.id, failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
     property_free(&_error_prop);
     json_delete(_error);
   } else {
-    while ( arrow_send_event_ans(ev->gateway_hid, succeeded, p_null()) < 0 ) {
+    while ( arrow_send_event_ans(ev->base.id, succeeded, p_null()) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }

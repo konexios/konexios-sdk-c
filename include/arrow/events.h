@@ -10,19 +10,20 @@ extern "C" {
 #include <http/response.h>
 
 typedef struct {
-  property_t gateway_hid;
+    property_t id;
+    property_t name;
+    int encrypted;
+    JsonNode *parameters;
+} mqtt_event_base_t;
+
+typedef struct {
   property_t device_hid;
-  property_t name;
-  int encrypted;
-  JsonNode *parameters;
+  mqtt_event_base_t base;
   arrow_linked_list_head_node;
 } mqtt_event_t;
 
 typedef struct {
-  property_t id;
-  property_t name;
-  int encrypted;
-  JsonNode *parameters;
+  mqtt_event_base_t base;
   arrow_linked_list_head_node;
 } mqtt_api_event_t;
 
@@ -44,8 +45,6 @@ int arrow_mqtt_api_wait(int num);
 int arrow_mqtt_api_has_events(void);
 int arrow_mqtt_api_event_proc(http_response_t *res);
 int process_http_payload(const char *s);
-
-#define MAX_PARAM_LINE 20
 
 #if defined(__cplusplus)
 }
