@@ -245,10 +245,11 @@ int process_event_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     int queue_size = arrow_mqtt_has_events();
     if ( queue_size >= ARROW_MAX_MQTT_COMMANDS) {
-        DBG("Queue is full: force HTTP request only");
+        DBG("Queue is full: force HTTP request");
         http_session_force_http(1);
         return -1;
-    } else if ( queue_size ) {
+    } else if ( !queue_size ) {
+        DBG("Queue is empty: force MQTT request");
         http_session_force_http(0);
     }
 #endif
@@ -257,6 +258,7 @@ int process_event_init(int size) {
 #if defined(STATIC_ACN)
     if ( size * (2) > json_static_memory_max_sector() - 1024 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        http_session_force_http(1);
         return -1;
     }
 #endif
@@ -398,8 +400,9 @@ int process_http_init(int size) {
     DBG("Static http memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
-    if ( size*(1) > json_static_memory_max_sector() - 512 ) {
+    if ( size * (2) > json_static_memory_max_sector() - 512 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
+        http_session_force_http(1);
         return -1;
     }
 #endif

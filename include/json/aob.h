@@ -24,4 +24,14 @@ int alloc_only_puts(alloc_only_t *p, char *s, int len);
 void *alloc_only_finish(alloc_only_t *p);
 
 
+
+#include <data/property_base.h>
+
+#define PROPERTY_AOB_TAG 5
+
+#define p_aob(x)  property((x), PROPERTY_AOB_TAG | is_owner, strlen((char *)(x)))
+#define p_aob_raw(x, len)  property((x), PROPERTY_AOB_TAG | is_owner | is_raw, (len))
+
+property_dispetcher_t *property_type_get_aob();
+
 #endif

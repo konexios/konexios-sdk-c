@@ -44,3 +44,40 @@ void *alloc_only_finish(alloc_only_t *p) {
     p->len = 0;
     return (void*)ptr;
 }
+
+#include <json/json.h>
+#include <debug.h>
+
+void aob_copy(property_t *dst, property_t *src) {
+    // shouldn't be a copy in the same piece memory
+    property_copy_as(PROPERTY_DYNAMIC_TAG, dst, *src);
+}
+
+void aob_weak(property_t *dst, property_t *src) {
+    dst->value = src->value;
+    dst->size = src->size;
+    dst->flags = PROPERTY_AOB_TAG;
+}
+
+void aob_move(property_t *dst, property_t *src) {
+    dst->value = src->value;
+    dst->size = src->size;
+    dst->flags = PROPERTY_AOB_TAG;
+    if ( src->flags & is_owner ) {
+        dst->flags |= is_owner;
+        src->flags &= ~is_owner;
+    }
+}
+
+void aob_destroy(property_t *dst) {
+    memset(dst, 0x0, sizeof(property_t));
+}
+
+static property_dispetcher_t aob_property_type = {
+    PROPERTY_AOB_TAG,   { aob_copy, aob_weak, aob_move, aob_destroy }, {NULL}
+};
+
+property_dispetcher_t *property_type_get_aob() {
+    return &aob_property_type;
+}
+

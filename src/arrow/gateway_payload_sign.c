@@ -274,7 +274,9 @@ int arrow_event_sign(char *signature,
     if ( sb_init(&can_par_sb) < 0 ) {
         return -1;
     }
-    sb_grow(&can_par_sb, can_par_len);
+    if ( sb_grow(&can_par_sb, can_par_len) < 0 ) {
+        return -1;
+    }
     if ( sb_size(&can_par_sb) < can_par_len ) {
         return -1;
     }
