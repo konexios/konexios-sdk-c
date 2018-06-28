@@ -111,6 +111,7 @@ int mqtt_subscribe(void);
 // The user's command or software update command
 int mqtt_yield(int timeout_ms);
 int mqtt_receive(int timeout_ms);
+void mqtt_pause(int pause);
 // Terminate all connections
 void mqtt_disconnect(void);
 void mqtt_terminate(void);

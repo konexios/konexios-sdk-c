@@ -13,7 +13,7 @@
 
 #if defined(STATIC_MQTT_ENV)
 // FIXME buffer len?
-static char static_canonical_prm[3000];
+//static char static_canonical_prm[3000];
 #else
 static int cmpstringp(const void *p1, const void *p2) {
   return strcmp(* (char * const *) p1, * (char * const *) p2);
@@ -80,14 +80,13 @@ static int bubble(str_t *s, int len) {
     return 0;
 }
 
-static char *form_canonical_prm(JsonNode *param) {
+static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffer_len) {
   JsonNode *child;
-  char *canParam = static_canonical_prm;
   str_t can_list[MAX_PARAM_LINE];
   int total = 0;
   int count = 0;
   json_foreach(child, param) {
-      can_list[count].start = canParam + total;
+      can_list[count].start = can_buffer + total;
       int i;
       int key_len = strlen(json_key(child));
       for ( i=0; i < key_len; i++ )
@@ -99,13 +98,13 @@ static char *form_canonical_prm(JsonNode *param) {
       switch(child->tag) {
       case JSON_STRING:
           r = snprintf(can_list[count].start+can_list[count].len,
-                       sizeof(static_canonical_prm) - total,
+                       can_buffer_len - total,
                        "%s",
                        child->string_);
           break;
       case JSON_BOOL:
           r = snprintf(can_list[count].start+can_list[count].len,
-                       sizeof(static_canonical_prm) - total,
+                       can_buffer_len - total,
                        "%s",
                        (child->bool_?"true":"false"));
           break;
@@ -125,7 +124,7 @@ static char *form_canonical_prm(JsonNode *param) {
   can_list[count-1].start[can_list[count-1].len] = '\0';
   bubble(can_list, count);
   can_list[count-1].start[can_list[count-1].len-1] = '\0';
-  return canParam;
+  return can_buffer;
 }
 #else
 static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
@@ -266,7 +265,22 @@ int arrow_event_sign(char *signature,
                      const char *name,
                      int encrypted,
                      JsonNode *_parameters) {
-    char *can = form_canonical_prm(_parameters);
+    int can_par_len = json_size(_parameters);
+    DBG("want %d bytes for sign", can_par_len);
+    if ( can_par_len > json_static_memory_max_sector() ) {
+        return -1;
+    }
+    SB can_par_sb;
+    if ( sb_init(&can_par_sb) < 0 ) {
+        return -1;
+    }
+    sb_grow(&can_par_sb, can_par_len);
+    if ( sb_size(&can_par_sb) < can_par_len ) {
+        return -1;
+    }
+    char *can = form_canonical_prm(_parameters,
+                                   can_par_sb.start,
+                                   sb_size(&can_par_sb));
     if ( !can ) goto sign_error;
     int err = gateway_payload_sign(signature,
                                    P_VALUE(ghid),
@@ -274,6 +288,7 @@ int arrow_event_sign(char *signature,
                                    encrypted,
                                    can,
                                    "1");
+    sb_free(&can_par_sb);
     if ( err < 0 ) goto sign_error;
 #if !defined(STATIC_MQTT_ENV)
     free(can);

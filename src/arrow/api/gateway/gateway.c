@@ -31,9 +31,9 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
     int ret = -1;
 	arrow_gateway_config_t *config = (arrow_gateway_config_t *)arg;
     arrow_gateway_config_init(config);
-	if ( response->m_httpResponseCode != 200 ) {
+    if ( response->m_httpResponseCode != 200 ) {
 		return -1;
-	}
+    }
     DBG("pay: {%s}", P_VALUE(response->payload));
 
     JsonNode *_main = json_decode(P_VALUE(response->payload));
@@ -53,11 +53,11 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 	if ( _main_key ) {
         JsonNode *tmp = NULL;
         tmp = json_find_member(_main_key, p_const("apiKey"));
-		if (tmp) {
+        if (tmp) {
 			set_api_key(tmp->string_);
 		}
         tmp = json_find_member(_main_key, p_const("secretKey"));
-		if (tmp) {
+        if (tmp) {
 			set_secret_key(tmp->string_);
 		}
 	} else {

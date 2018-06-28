@@ -52,6 +52,7 @@ int __http_routine(response_init_f req_init, void *arg_init,
   }
   req_init(&request, arg_init);
   sign_request(&request);
+  http_response_init(&response, &request._response_payload_meth);
 
   protocol_handler_t *ph = &client_protocols[_cli.protocol];
   if ( (ret = ph->client_open(&_cli, &request)) >= 0 ) {

@@ -110,3 +110,23 @@ static property_dispetcher_t dynamic_property_type = {
 property_dispetcher_t *property_type_get_dynamic() {
     return &dynamic_property_type;
 }
+
+void property_dynamic_destroy() {
+    static_buf_clear_all(dynamicbuf);
+}
+
+property_t string_to_dynamic_property(const char *name) {
+    property_t dst;
+    dst.value = (char *)STRDUP((char*)name);
+    dst.size = strlen(name);
+    dst.flags = PROPERTY_DYNAMIC_TAG | is_owner;
+    return dst;
+}
+
+property_t raw_to_dynamic_property(const char *name, int len) {
+    property_t dst;
+    dst.value = (char *)STRNDUP((char*)name, len);
+    dst.size = len;
+    dst.flags = PROPERTY_DYNAMIC_TAG | is_owner | is_raw;
+    return dst;
+}

@@ -45,7 +45,6 @@ int waitfor_r(MQTTClient *c, int packet_type, TimerInterval *timer) {
   return rc;
 }
 
-
 static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     int rc = MQTT_SUCCESS;
     int rest_buffer = c->readbuf_size;
@@ -56,6 +55,20 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     msg.retained = m->head.bits.retain;
 
     int total_len = m->rem_len;
+
+    if ( c->reject ) {
+        unsigned char dummy[16];
+        while ( total_len ) {
+            int chunk = ARROW_MIN(total_len, (int)sizeof(dummy));
+            int r = c->ipstack->mqttread(c->ipstack,
+                                         dummy,
+                                         chunk,
+                                         TimerLeftMS(timer));
+            if ( r > 0 ) total_len -= r;
+            else break;
+        }
+        return -1;
+    }
 
     int len = c->ipstack->mqttread(c->ipstack,
                                    c->readbuf,
@@ -124,18 +137,24 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
             total_len -= len;
             shift += len;
             msg.payloadlen = len;
-            if ( msg_err == 0 ) arrow_mqtt_client_delivery_message_process(c, &topicName, &msg);
+            if ( !msg_err ) {
+                msg_err = arrow_mqtt_client_delivery_message_process(c, &topicName, &msg);
+            }
         }
     }
 
-    if ( !msg_err ) arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
+    if ( !msg_err ) {
+        msg_err = arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
+    }
 
-    if (msg.qos != QOS0)
+    // don't send ack if error
+    if ( !msg_err && msg.qos != QOS0)
     {
-        if (msg.qos == QOS1)
+        if (msg.qos == QOS1) {
             len = MQTTSerialize_ack(c->buf, c->buf_size, PUBACK, 0, msg.id);
-        else if (msg.qos == QOS2)
+        } else if (msg.qos == QOS2) {
             len = MQTTSerialize_ack(c->buf, c->buf_size, PUBREC, 0, msg.id);
+        }
         if (len <= 0)
             rc = FAILURE;
         else
@@ -162,6 +181,11 @@ static int cycle_subscribe(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) 
     return rc;
 }
 
+static int cycle_ping(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
+    c->ping_outstanding = 0;
+    return MQTT_SUCCESS;
+}
+
 _cycle_callback __cycle_collection[] = {
     NULL,
     NULL,
@@ -176,7 +200,7 @@ _cycle_callback __cycle_collection[] = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    cycle_ping,
     NULL
 };
 
@@ -215,6 +239,9 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     }
     header.rem_len = rem_len;
     rc = __cycle_collection[pack_type](c, &header, timer);
+    if ( rc == MQTT_SUCCESS ) {
+        TimerCountdown(&c->last_received, c->keepAliveInterval);
+    }
 
     if (keepalive(c) != MQTT_SUCCESS) {
         //check only keepalive FAILURE status so that previous FAILURE status can be considered as FAULT
@@ -299,20 +326,16 @@ int MQTTPublish_part(MQTTClient* c,
         goto exit;
     }
 
-    if (message->qos == QOS1)
-    {
-        if (waitfor(c, PUBACK, &timer) == PUBACK)
-        {
+    if (message->qos == QOS1) {
+        if (waitfor(c, PUBACK, &timer) == PUBACK) {
             unsigned short mypacketid;
             unsigned char dup, type;
             if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
                 rc = FAILURE;
-        }
-        else
+        } else {
             rc = FAILURE;
-    }
-    else if (message->qos == QOS2)
-    {
+        }
+    } else if (message->qos == QOS2) {
         if (waitfor(c, PUBCOMP, &timer) == PUBCOMP)
         {
             unsigned short mypacketid;

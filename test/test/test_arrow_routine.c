@@ -49,6 +49,7 @@
 #include <arrow/software_release.h>
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
+#include <http/client_mqtt.h>
 
 #include <time/time.h>
 #include "acnsdkc_time.h"

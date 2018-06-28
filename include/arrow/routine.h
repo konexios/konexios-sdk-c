@@ -73,6 +73,7 @@ arrow_routine_error_t arrow_device_states_update();
 arrow_routine_error_t arrow_mqtt_connect_routine(void);
 arrow_routine_error_t arrow_mqtt_disconnect_routine(void);
 arrow_routine_error_t arrow_mqtt_terminate_routine(void);
+arrow_routine_error_t arrow_mqtt_pause_routine(int pause);
 
 // telemetry specific
 arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void);

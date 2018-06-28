@@ -49,6 +49,7 @@
 #include <arrow/software_release.h>
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
+#include <http/client_mqtt.h>
 
 #include <time/time.h>
 #include "acnsdkc_time.h"
@@ -83,12 +84,18 @@
 #include "fakedns.h"
 #include "fakesock.h"
 
+static int test_count = 0;
+
 void setUp(void) {
-    arrow_init();
+    if ( ! test_count++ ) {
+        arrow_init();
+    }
 }
 
 void tearDown(void) {
-    arrow_deinit();
+    if ( test_count == 2  ) {
+        arrow_deinit();
+    }
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"

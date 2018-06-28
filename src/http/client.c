@@ -37,8 +37,18 @@ void http_session_close_set(http_client_t *cli, bool mode) {
   cli->flags._close = mode;
 }
 
+static int ignore_protocol_change = 0;
+
 void http_session_set_protocol(http_client_t *cli, int prot) {
-    cli->protocol = prot;
+    if ( ignore_protocol_change ) {
+        cli->protocol = 0;
+    } else {
+        cli->protocol = prot;
+    }
+}
+
+void http_session_force_http(int prot) {
+    ignore_protocol_change = prot;
 }
 
 #define CHECK_CONN_ERR(ret) \
@@ -505,6 +515,7 @@ int default_http_client_do(http_client_t *cli, http_response_t *res) {
     int ret;
     http_request_t *req = cli->request;
     if ( !req ) return -1;
+    // FIXME delete
     http_response_init(res, &req->_response_payload_meth);
 
     if ( send_start(cli, req, cli->queue) < 0 ) {

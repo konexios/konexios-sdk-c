@@ -107,8 +107,6 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                            json_mkstring(P_VALUE(tmp->value)));
     }
     char sig[65] = {0};
-    // FIXME bad function externing
-    arrow_device_t *current_device(void);
     json_append_member(_node, p_const("parameters"), _parameters);
     arrow_event_sign(sig,
                   p_stack(reqhid),

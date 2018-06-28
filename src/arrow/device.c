@@ -13,15 +13,15 @@
 void arrow_device_init(arrow_device_t *dev) {
     dev->info = NULL;
     dev->prop = NULL;
-    P_CLEAR(dev->name);
-    P_CLEAR(dev->type);
-    P_CLEAR(dev->uid);
-    P_CLEAR(dev->gateway_hid);
-    P_CLEAR(dev->hid);
+    property_init(&dev->name);
+    property_init(&dev->type);
+    property_init(&dev->uid);
+    property_init(&dev->gateway_hid);
+    property_init(&dev->hid);
     property_init(&dev->softwareName);
     property_init(&dev->softwareVersion);
 #if defined(__IBM__)
-    P_CLEAR(dev->eid);
+    property_init(&dev->eid);
 #endif
 }
 

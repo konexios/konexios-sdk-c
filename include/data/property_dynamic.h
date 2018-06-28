@@ -21,6 +21,9 @@ extern "C" {
 #define p_heap_raw(x, len)  property(x, PROPERTY_DYNAMIC_TAG | is_owner | is_raw, (len))
 
 property_dispetcher_t *property_type_get_dynamic();
+void property_dynamic_destroy();
+property_t string_to_dynamic_property(const char *name);
+property_t raw_to_dynamic_property(const char *name, int len);
 
 #if defined(__cplusplus)
 }

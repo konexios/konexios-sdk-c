@@ -72,13 +72,12 @@ void test_property_copy_dynamic( void ) {
     TEST_ASSERT( !test.name.value );
 }
 
-void test_property_copy_malloc( void ) {
+void test_property_move_dynamic( void ) {
     test_p_t test;
-    P_CLEAR(test.name);
-    char *name = strdup(NAME);
-    property_t p = p_heap(name);
+    property_init(&test.name);
+    property_t p = string_to_dynamic_property(NAME);
     property_move(&test.name, &p);
-    TEST_ASSERT( test.name.value == name );
+    TEST_ASSERT_EQUAL_STRING ( NAME, test.name.value );
     TEST_ASSERT_EQUAL_INT(PROPERTY_DYNAMIC_TAG, PROPERTY_BASE_MASK & test.name.flags);
     TEST_ASSERT_EQUAL_STRING(NAME, P_VALUE(test.name));
     property_free(&test.name);

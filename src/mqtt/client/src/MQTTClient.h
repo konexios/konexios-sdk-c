@@ -116,6 +116,7 @@ typedef struct MQTTClient
     char ping_outstanding;
     int isconnected;
     int cleansession;
+    int reject;
 
     struct MessageHandlers
     {

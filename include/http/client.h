@@ -40,6 +40,8 @@ typedef struct {
 int http_session_is_open(http_client_t *cli);
 void http_session_close_set(http_client_t *cli, bool mode);
 void http_session_set_protocol(http_client_t *cli, int prot);
+// FIXME
+void http_session_force_http(int prot);
 
 int http_client_init(http_client_t *cli);
 int http_client_free(http_client_t *cli);
