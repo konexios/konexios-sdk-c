@@ -74,7 +74,7 @@ void test_parse_json_string(void) {
     JsonNode *_key = json_find_member(_main, p_const("key"));
 
     TEST_ASSERT_EQUAL_INT( JSON_STRING, _key->tag );
-    TEST_ASSERT_EQUAL_INT( 0, strcmp(_key->string_, "hello") );
+    TEST_ASSERT_EQUAL_STRING( "hello", P_VALUE(_key->string) );
     json_delete(_main);
 }
 
@@ -86,7 +86,7 @@ void test_parse_json_obj(void) {
     TEST_ASSERT_EQUAL_INT( JSON_OBJECT, _key->tag );
 
     JsonNode *_child = json_find_member(_key, p_const("child"));
-    TEST_ASSERT_EQUAL_INT( 0, strcmp(_child->string_, "yes") );
+    TEST_ASSERT_EQUAL_STRING( "yes", P_VALUE(_child->string) );
     json_delete(_main);
 }
 
@@ -119,15 +119,15 @@ void test_parse_json_complex(void) {
     TEST_ASSERT(_main);
     JsonNode *_cloud = json_find_member(_main, p_const("cloudPlatform"));
     TEST_ASSERT(_cloud);
-    TEST_ASSERT_EQUAL_STRING("IotConnect", _cloud->string_);
+    TEST_ASSERT_EQUAL_STRING("IotConnect", P_VALUE(_cloud->string_));
     JsonNode *_key = json_find_member(_main, p_const("key"));
     TEST_ASSERT(_key);
     JsonNode *_api = json_find_member(_key, p_const("apiKey"));
     TEST_ASSERT(_api);
-    TEST_ASSERT_EQUAL_STRING("dcbd9aa24b1d86524fc54d9f721f186f70f8a3158899f2243393658bff1d4a60", _api->string_);
+    TEST_ASSERT_EQUAL_STRING("dcbd9aa24b1d86524fc54d9f721f186f70f8a3158899f2243393658bff1d4a60", P_VALUE(_api->string_) );
     JsonNode *_secret = json_find_member(_key, p_const("secretKey"));
     TEST_ASSERT(_secret);
-    TEST_ASSERT_EQUAL_STRING("B41+VQRV/VcC4lnaxaFcd3rHffVZ6WdbqdxSPFP2qr8=", _secret->string_);
+    TEST_ASSERT_EQUAL_STRING("B41+VQRV/VcC4lnaxaFcd3rHffVZ6WdbqdxSPFP2qr8=", P_VALUE(_secret->string_));
     json_delete(_main);
 }
 
@@ -236,8 +236,8 @@ void test_parse_json_complex2(void) {
         test_st_t *st = &test_complex_array[count++];
         TEST_ASSERT(st->active == _active->bool_);
         TEST_ASSERT(st->automatic == _automatic->bool_);
-        TEST_ASSERT_EQUAL_STRING(st->feeding_id, _feeding_id->string_);
-        TEST_ASSERT_EQUAL_STRING(st->name, _name->string_);
+        TEST_ASSERT_EQUAL_STRING(st->feeding_id, P_VALUE(_feeding_id->string_));
+        TEST_ASSERT_EQUAL_STRING(st->name, P_VALUE(_name->string_));
         TEST_ASSERT_EQUAL_FLOAT(st->portion, _portion->number_);
         TEST_ASSERT(st->reminder == _reminder->bool_);
         TEST_ASSERT_EQUAL_FLOAT(st->time, _time->number_);
@@ -251,7 +251,7 @@ void show_json_obj(JsonNode *o) {
     printf("tag:[%d], key:[%s], ", tmp->tag, P_VALUE(tmp->key));
     switch(tmp->tag) {
     case JSON_STRING:
-        printf("v:[%s]\r\n", tmp->string_);
+        printf("v:[%s]\r\n", P_VALUE(tmp->string_));
         break;
     case JSON_NUMBER:
         printf("v:[%d]\r\n", (int)tmp->number_);
@@ -277,7 +277,7 @@ void show_json_obj(JsonNode *o) {
 void test_parse_json_number_part(void) {
     snprintf(test, sizeof(test), JSON_INT_EX, "key", 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -293,7 +293,7 @@ void test_parse_json_number_part(void) {
 void test_parse_json_number_fail_part(void) {
     snprintf(test, sizeof(test), "{\"key\":12o}");
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -307,7 +307,7 @@ void test_parse_json_number_fail_part(void) {
 void test_parse_json_double_part(void) {
     snprintf(test, sizeof(test), "{ \"%s\":%4.2f }", "key", 3.14);
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -323,7 +323,7 @@ void test_parse_json_double_part(void) {
 void test_parse_json_number2_part(void) {
     snprintf(test, sizeof(test), "{\"k1\":%d, \"k2\":%d}", 200, 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_k1 = json_find_member(_main, p_const("k1"));
@@ -342,7 +342,7 @@ void test_parse_json_number2_part(void) {
 void test_parse_json_number_array_part(void) {
     snprintf(test, sizeof(test), "[ { \"k\":%d }, { \"k\":%d } ]", 200, 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -362,7 +362,7 @@ void test_parse_json_number_array_part(void) {
 void test_parse_json_string_bool_array_part(void) {
     snprintf(test, sizeof(test), "[ { \"k\":\"first\",\"active\":true }, { \"k\":\"second\",\"active\":false } ]");
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -378,7 +378,7 @@ void test_parse_json_string_bool_array_part(void) {
         TEST_ASSERT(_act);
         TEST_ASSERT_EQUAL_INT( JSON_STRING, _k->tag );
         TEST_ASSERT_EQUAL_INT( JSON_BOOL, _act->tag );
-        TEST_ASSERT_EQUAL_STRING( test_str_arr[count], _k->string_ );
+        TEST_ASSERT_EQUAL_STRING( test_str_arr[count], P_VALUE(_k->string_) );
         TEST_ASSERT( test_bool_arr[count] == _act->bool_ );
         count++;
     }
@@ -388,7 +388,7 @@ void test_parse_json_string_bool_array_part(void) {
 void test_parse_json_bool_true_part(void) {
     snprintf(test, sizeof(test), JSON_BOOL_EX, "key", bool2str(true));
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
 
@@ -404,7 +404,7 @@ void test_parse_json_bool_true_part(void) {
 void test_parse_json_bool_true_part_fail(void) {
     snprintf(test, sizeof(test), "{\"%s\":ture}", "key");
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -420,7 +420,7 @@ void test_parse_json_bool_true_part_fail(void) {
 void test_parse_json_bool_false_part(void) {
     snprintf(test, sizeof(test), JSON_BOOL_EX, "key", bool2str(false));
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -435,7 +435,7 @@ void test_parse_json_bool_false_part(void) {
 void test_parse_json_string_part(void) {
     snprintf(test, sizeof(test), JSON_STR_EX, "key", "hello");
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     JsonNode *_key = json_find_member(_main, p_const("key"));
@@ -444,7 +444,7 @@ void test_parse_json_string_part(void) {
     TEST_ASSERT(_key);
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     TEST_ASSERT_EQUAL_INT( JSON_STRING, _key->tag );
-    TEST_ASSERT_EQUAL_INT( 0, strcmp(_key->string_, "hello") );
+    TEST_ASSERT_EQUAL_STRING( "hello", P_VALUE(_key->string_) );
 }
 
 void test_parse_json_complex_part(void) {
@@ -453,7 +453,7 @@ void test_parse_json_complex_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, total_len);
 
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
@@ -473,15 +473,15 @@ void test_parse_json_complex_part(void) {
     TEST_ASSERT(_main);
     JsonNode *_cloud = json_find_member(_main, p_const("cloudPlatform"));
     TEST_ASSERT(_cloud);
-    TEST_ASSERT_EQUAL_STRING("IotConnect", _cloud->string_);
+    TEST_ASSERT_EQUAL_STRING("IotConnect", P_VALUE(_cloud->string_));
     JsonNode *_key = json_find_member(_main, p_const("key"));
     TEST_ASSERT(_key);
     JsonNode *_api = json_find_member(_key, p_const("apiKey"));
     TEST_ASSERT(_api);
-    TEST_ASSERT_EQUAL_STRING("dcbd9aa24b1d86524fc54d9f721f186f70f8a3158899f2243393658bff1d4a60", _api->string_);
+    TEST_ASSERT_EQUAL_STRING("dcbd9aa24b1d86524fc54d9f721f186f70f8a3158899f2243393658bff1d4a60", P_VALUE(_api->string_));
     JsonNode *_secret = json_find_member(_key, p_const("secretKey"));
     TEST_ASSERT(_secret);
-    TEST_ASSERT_EQUAL_STRING("B41+VQRV/VcC4lnaxaFcd3rHffVZ6WdbqdxSPFP2qr8=", _secret->string_);
+    TEST_ASSERT_EQUAL_STRING("B41+VQRV/VcC4lnaxaFcd3rHffVZ6WdbqdxSPFP2qr8=", P_VALUE(_secret->string_));
 }
 
 void test_parse_json_complex2_part(void) {
@@ -490,7 +490,7 @@ void test_parse_json_complex2_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, total_len);
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);
@@ -533,8 +533,8 @@ void test_parse_json_complex2_part(void) {
         test_st_t *st = &test_complex_array[count++];
         TEST_ASSERT(st->active == _active->bool_);
         TEST_ASSERT(st->automatic == _automatic->bool_);
-        TEST_ASSERT_EQUAL_STRING(st->feeding_id, _feeding_id->string_);
-        TEST_ASSERT_EQUAL_STRING(st->name, _name->string_);
+        TEST_ASSERT_EQUAL_STRING(st->feeding_id, P_VALUE(_feeding_id->string_) );
+        TEST_ASSERT_EQUAL_STRING(st->name, P_VALUE(_name->string_) );
         TEST_ASSERT_EQUAL_FLOAT(st->portion, _portion->number_);
         TEST_ASSERT(st->reminder == _reminder->bool_);
         TEST_ASSERT_EQUAL_FLOAT(st->time, _time->number_);
@@ -562,7 +562,7 @@ void test_parse_json_state_req_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, total_len);
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);
@@ -578,11 +578,11 @@ void test_parse_json_state_req_part(void) {
 
     JsonNode *_hid = json_find_member(_main, p_const("hid"));
     TEST_ASSERT(_hid);
-    TEST_ASSERT_EQUAL_STRING("96c1d8101c9b925db75bceecf9ed24e08581d361", _hid->string_);
+    TEST_ASSERT_EQUAL_STRING("96c1d8101c9b925db75bceecf9ed24e08581d361", P_VALUE(_hid->string_));
 
     JsonNode *_name = json_find_member(_main, p_const("name"));
     TEST_ASSERT(_name);
-    TEST_ASSERT_EQUAL_STRING("ServerToGateway_DeviceStateRequest", _name->string_);
+    TEST_ASSERT_EQUAL_STRING("ServerToGateway_DeviceStateRequest", P_VALUE(_name->string_));
 
     JsonNode *_enc = json_find_member(_main, p_const("encrypted"));
     TEST_ASSERT(_enc);
@@ -593,16 +593,16 @@ void test_parse_json_state_req_part(void) {
 
     JsonNode *_device_hid = json_find_member(_par, p_const("deviceHid"));
     TEST_ASSERT(_device_hid);
-    TEST_ASSERT_EQUAL_STRING("86241a5e939baa7da58faff3527eb021d06d5e9a", _device_hid->string_);
+    TEST_ASSERT_EQUAL_STRING("86241a5e939baa7da58faff3527eb021d06d5e9a", P_VALUE(_device_hid->string_) );
 
     JsonNode *_trans_hid = json_find_member(_par, p_const("transHid"));
     TEST_ASSERT(_trans_hid);
-    TEST_ASSERT_EQUAL_STRING("7115fc4c22117e6d99ac7b0a343b59db959c7b76", _trans_hid->string_);
+    TEST_ASSERT_EQUAL_STRING("7115fc4c22117e6d99ac7b0a343b59db959c7b76", P_VALUE(_trans_hid->string_) );
 
     JsonNode *_pay = json_find_member(_par, p_const("payload"));
     char payload_str[] = "{\"delay\":{\"value\":\"1000\",\"timestamp\":\"2018-06-03T19:35:52.931Z\"},\"led\":{\"value\":\"false\",\"timestamp\":\"2018-06-03T19:35:52.931Z\"}}";
     TEST_ASSERT(_pay);
-    TEST_ASSERT_EQUAL_STRING(payload_str, _pay->string_);
+    TEST_ASSERT_EQUAL_STRING(payload_str, P_VALUE(_pay->string_));
 
     json_delete(_main);
 }
@@ -623,7 +623,7 @@ void test_parse_json_command_dev_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm);
+    json_decode_init(&sm, total_len);
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);
@@ -639,11 +639,11 @@ void test_parse_json_command_dev_part(void) {
 
     JsonNode *_hid = json_find_member(_main, p_const("hid"));
     TEST_ASSERT(_hid);
-    TEST_ASSERT_EQUAL_STRING("3a7f0d3099d1bbc78aa7d16f6530f67f56c5c282", _hid->string_);
+    TEST_ASSERT_EQUAL_STRING("3a7f0d3099d1bbc78aa7d16f6530f67f56c5c282", P_VALUE(_hid->string_) );
 
     JsonNode *_name = json_find_member(_main, p_const("name"));
     TEST_ASSERT(_name);
-    TEST_ASSERT_EQUAL_STRING("ServerToGateway_DeviceCommand", _name->string_);
+    TEST_ASSERT_EQUAL_STRING("ServerToGateway_DeviceCommand", P_VALUE(_name->string_) );
 
     JsonNode *_enc = json_find_member(_main, p_const("encrypted"));
     TEST_ASSERT(_enc);
@@ -654,16 +654,16 @@ void test_parse_json_command_dev_part(void) {
 
     JsonNode *_device_hid = json_find_member(_par, p_const("deviceHid"));
     TEST_ASSERT(_device_hid);
-    TEST_ASSERT_EQUAL_STRING("86241a5e939baa7da58faff3527eb021d06d5e9a", _device_hid->string_);
+    TEST_ASSERT_EQUAL_STRING("86241a5e939baa7da58faff3527eb021d06d5e9a", P_VALUE(_device_hid->string_) );
 
     JsonNode *_command = json_find_member(_par, p_const("command"));
     TEST_ASSERT(_command);
-    TEST_ASSERT_EQUAL_STRING("test", _command->string_);
+    TEST_ASSERT_EQUAL_STRING("test", P_VALUE(_command->string_) );
 
     JsonNode *_pay = json_find_member(_par, p_const("payload"));
     char payload_str[] = "{\n\t}";
     TEST_ASSERT(_pay);
-    TEST_ASSERT_EQUAL_STRING(payload_str, _pay->string_);
+    TEST_ASSERT_EQUAL_STRING(payload_str, P_VALUE(_pay->string_) );
 
     json_delete(_main);
 }

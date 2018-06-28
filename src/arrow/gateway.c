@@ -49,7 +49,7 @@ int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   if ( hid->tag != JSON_STRING ) return -1;
-  property_copy( &gate->hid, p_stack(hid->string_));
+  property_copy_as( PROPERTY_DYNAMIC_TAG, &gate->hid, hid->string_);
   json_delete(_main);
   return 0;
 }

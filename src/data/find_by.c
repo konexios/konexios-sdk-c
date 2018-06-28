@@ -25,11 +25,11 @@ static const char *find_by_name[] = {
   "osNames"
 };
 
-const char *get_find_by_name(int num) {
+property_t get_find_by_name(int num) {
   if ( num < FindBy_count ) {
-    return find_by_name[num];
+    return p_const(find_by_name[num]);
   }
-  return NULL;
+  return p_null();
 }
 
 int find_by_validate_key(find_by_t *fb) {

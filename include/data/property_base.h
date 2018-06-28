@@ -27,20 +27,20 @@ typedef struct __attribute_packed__ _property {
   char *value;
   uint8_t flags;
   uint16_t size;
-#if defined(__cplusplus)
-  _property() : value(NULL), flags(0x00), size(0) {}
-  _property(const char *val, uint8_t f) :
-      value(const_cast<char*>(val)),
-      flags(f), size(strlen(val)) {}
-  _property(const char *val, uint8_t f, uint16_t len) :
-      value(const_cast<char*>(val)),
-      flags(f), size(len) {}
-#endif
+//#if defined(__cplusplus)
+//  _property() : value(NULL), flags(0x00), size(0) {}
+//  _property(const char *val, uint8_t f) :
+//      value(const_cast<char*>(val)),
+//      flags(f), size(strlen(val)) {}
+//  _property(const char *val, uint8_t f, uint16_t len) :
+//      value(const_cast<char*>(val)),
+//      flags(f), size(len) {}
+//#endif
 } property_t;
 
 #if defined(__cplusplus)
-# define property_nt(x, y) _property(x, y)
-# define property(x, y, z) _property(x, y, z)
+property_t property(char *v, uint8_t f, uint16_t s);
+//# define property_nt(x, y) _property(x, y)
 #else
 # define property_nt(x, y) (property_t){ .value=(char*)x, .flags=y, .size=strlen((char*)x) }
 # define property(x, y, z) (property_t){ .value=(char*)x, .flags=(y), .size=(z) }

@@ -24,13 +24,19 @@
 #ifndef CCAN_JSON_H
 #define CCAN_JSON_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <sys/mem.h>
+#include <json/sb.h>
 #include <data/property.h>
 
 #define is_space(c) ((c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == ' ')
 #define is_digit(c) ((c) >= '0' && (c) <= '9')
 
 # define json_key(x)  P_VALUE((x)->key)
+# define json_string(x)  P_VALUE((x)->string_)
 # define json_number(x) (x)->number_
 # define json_remove_from(obj, x) json_remove_from_parent(x)
 
@@ -54,13 +60,13 @@ struct __attribute_packed__ JsonNode
 	/* only if parent is an object (NULL otherwise) */
     property_t key; /* Must be valid UTF-8. */
 	
-	JsonTag tag;
+    uint8_t tag;
   union {
 		/* JSON_BOOL */
 		bool bool_;
 		
 		/* JSON_STRING */
-		char *string_; /* Must be valid UTF-8. */
+        property_t string_; /* Must be valid UTF-8. */
 		
 		/* JSON_NUMBER */
 		double number_;
@@ -73,53 +79,8 @@ struct __attribute_packed__ JsonNode
   };
 };
 
-/* String buffer */
-typedef struct {
-    char *cur;
-    char *end;
-    char *start;
-} SB;
-int sb_init(SB *sb);
-int sb_grow(SB *sb, int need);
-int sb_need(SB *sb, int need);
-int sb_put(SB *sb, const char *bytes, int count);
-
-#define sb_putc(sb, c) do {         \
-        if ((sb)->cur >= (sb)->end) \
-            sb_grow(sb, 1);         \
-        *(sb)->cur++ = (c);         \
-    } while (0)
-
-int sb_is_valid(SB *sb);
-int sb_puts(SB *sb, const char *str);
-char *sb_finish(SB *sb);
-void sb_clear(SB *sb);
-void sb_free(SB *sb);
-int sb_size(SB *sb);
-
 /*** Encoding, decoding, and validation ***/
-typedef int(*_json_parse_fn)(void *, char);
-
-typedef struct _json_parse_machine_ {
-    struct _json_parse_machine_ *p;
-    uint32_t complete;
-    _json_parse_fn process_byte;
-    SB buffer;
-    property_t key;
-    JsonNode *root;
-    arrow_linked_list_head_node;
-} json_parse_machine_t;
-
-int json_parse_machine_init(json_parse_machine_t *jpm);
-int json_parse_machine_process(json_parse_machine_t *jpm, char byte);
-int json_parse_machine_fin(json_parse_machine_t *jpm);
-
-int json_decode_init(json_parse_machine_t *sm);
-int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size);
-JsonNode *json_decode_finish(json_parse_machine_t *sm);
-
 JsonNode   *json_decode         (const char *json);
-
 size_t json_size(JsonNode *obj);
 
 enum json_encode_states {
@@ -184,6 +145,7 @@ JsonNode   *json_first_child    (const JsonNode *node);
 JsonNode *json_mknull(void);
 JsonNode *json_mkbool(bool b);
 JsonNode *json_mkstring(const char *s);
+JsonNode *json_mkproperty(property_t *s);
 JsonNode *json_mknumber(double n);
 JsonNode *json_mkarray(void);
 JsonNode *json_mkobject(void);
@@ -206,5 +168,9 @@ int json_static_memory_max_sector(void);
  * to errmsg (unless errmsg is NULL).
  */
 bool json_check(const JsonNode *node, char errmsg[256]);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

@@ -96,7 +96,7 @@ int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
 }
 
 static int cmdeq( cmd_handler *s, property_t name ) {
-    if ( property_cmp(&s->name, &name) == 0 ) return 0;
+    if ( property_cmp(&s->name, name) == 0 ) return 0;
     return -1;
 }
 
@@ -135,7 +135,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                          json_mkstring("There is no command"));
       goto device_command_done;
   }
-  DBG("ev cmd: %s", cmd->string_);
+  DBG("ev cmd: %s", P_VALUE(cmd->string_));
 
   // FIXME workaround actually
   JsonNode *pay = json_find_member(_parameters, p_const("payload"));
@@ -149,9 +149,9 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 //  DBG("ev msg: %s", pay->string_);
 
   cmd_handler *cmd_h = NULL;
-  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, p_stack(cmd->string_) );
+  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
   if ( cmd_h ) {
-    ret = cmd_h->callback(pay->string_);
+    ret = cmd_h->callback(P_VALUE(pay->string_));
     if ( ret < 0 ) {
       _error = json_mkobject();
       json_append_member(_error, p_const("error"),

@@ -26,8 +26,8 @@ static int _test_gateway_proc(http_response_t *response, void *arg) {
     json_delete(_main);
     return -1;
   }
-  DBG("test result hid %s", test_res->string_);
-  property_copy(res_hid, p_stack(test_res->string_));
+  DBG("test result hid %s", json_string(test_res));
+  property_copy(res_hid, test_res->string_);
   return 0;
 }
 
@@ -105,8 +105,8 @@ static int _test_device_proc(http_response_t *response, void *arg) {
     json_delete(_main);
     return -1;
   }
-  DBG("test result hid %s", test_res->string_);
-  property_copy(res_his, p_stack(test_res->string_));
+  DBG("test result hid %s", json_string(test_res));
+  property_copy(res_his, test_res->string_);
   return 0;
 }
 

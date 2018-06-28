@@ -57,7 +57,7 @@ static int _gateway_software_releases_trans_proc(http_response_t *response, void
   JsonNode *_main = json_decode(P_VALUE(response->payload));
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
-  property_copy(&rs->trans_hid, p_stack(hid->string_));
+  property_copy(&rs->trans_hid, hid->string_);
   return 0;
 }
 
@@ -88,7 +88,7 @@ static int _device_software_releases_trans_proc(http_response_t *response, void 
   JsonNode *_main = json_decode(P_VALUE(response->payload));
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
-  property_copy(&rs->trans_hid, p_stack(hid->string_));
+  property_copy(&rs->trans_hid, hid->string_);
   return 0;
 }
 
@@ -173,7 +173,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *tmp = json_find_member(_parameters, p_const("softwareReleaseTransHid"));
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
-  char *trans_hid = tmp->string_;
+  char *trans_hid = json_string(tmp);
   wdt_feed();
 
   http_session_close_set(current_client(), false);
@@ -188,18 +188,18 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   wdt_feed();
   tmp = json_find_member(_parameters, p_const("tempToken"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_token = tmp->string_;
+  char *_token = json_string(tmp);
   DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
   tmp = json_find_member(_parameters, p_const("fromSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_from = tmp->string_;
+  char *_from = json_string(tmp);
   tmp = json_find_member(_parameters, p_const("toSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_to = tmp->string_;
+  char *_to = json_string(tmp);
   tmp = json_find_member(_parameters, p_const("md5checksum"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_checksum = tmp->string_;
+  char *_checksum = json_string(tmp);
   wdt_feed();
   if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);

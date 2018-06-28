@@ -6,10 +6,28 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <json/json.h>
+#include <json/decode.h>
 #include <json/property_json.h>
 
 #define is_array_context(mach) ((mach)->p->root->tag == JSON_ARRAY)
+
+buffer_drive_t bufdrv = {
+    0,
+    (buffer_init)sb_init,
+    (buffer_size)sb_size,
+    (buffer_putc)sb_putc,
+    (buffer_puts)sb_puts,
+    (buffer_clear)sb_clear,
+    (buffer_fin)sb_finish,
+    (buffer_free)sb_free
+};
+
+#define BUFFER_INIT(jpm) (jpm)->drv->init((void *)&(jpm)->buffer)
+#define BUFFER_FIN(jpm) (jpm)->drv->fin((void *)&(jpm)->buffer)
+#define BUFFER_PUTC(jpm, c) (jpm)->drv->putbyte((void *)&(jpm)->buffer, (c))
+#define BUFFER_CLEAR(jpm)   (jpm)->drv->clear((void *)&(jpm)->buffer)
+#define BUFFER_FREE(jpm)   (jpm)->drv->free((void *)&(jpm)->buffer)
+#define BUFFER_SIZE(jpm)   (jpm)->drv->size((void *)&(jpm)->buffer)
 
 static int jpm_key_init(json_parse_machine_t *jpm, char byte);
 static int jpm_key_body(json_parse_machine_t *jpm, char byte);
@@ -55,17 +73,18 @@ jpm_bool_state_char(true, r, 'r', u)
 
 
 static int jpm_string_escape(json_parse_machine_t *jpm, char byte) {
+    int r = 0;
     switch ( byte ) {
     case 'n': {
-        sb_putc(&jpm->buffer, '\n');
+        r = BUFFER_PUTC(jpm, '\n');
     } break;
     case 't': {
-        sb_putc(&jpm->buffer, '\t');
+        r = BUFFER_PUTC(jpm, '\t');
     } break;
     default:
-        sb_putc(&jpm->buffer, byte);
+        r = BUFFER_PUTC(jpm, byte);
     }
-    if ( !sb_is_valid(&jpm->buffer) ) return -1;
+    if ( r < 0 ) return r;
     jpm->process_byte = (_json_parse_fn) jpm_string_body;
     return 0;
 }
@@ -76,16 +95,16 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
         jpm->process_byte = (_json_parse_fn) jpm_string_escape;
     } break;
     case '"': {
-        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
-        char *str = sb_finish(&jpm->buffer);
+        if ( BUFFER_SIZE(jpm) <= 0 ) return -1;
+        char *str = BUFFER_FIN(jpm);
+        if ( !str ) return -1;
         jpm->root = json_mkstring(str);
         if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        sb_free(&jpm->buffer);
+        BUFFER_FREE(jpm);
     } break;
     default:
-        sb_putc(&jpm->buffer, byte);
-        if ( !sb_is_valid(&jpm->buffer) ) return -1;
+        if ( BUFFER_PUTC(jpm, byte) < 0 ) return -1;
         break;
     }
     return 0;
@@ -93,16 +112,16 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
 
 static int jpm_number_body(json_parse_machine_t *jpm, char byte) {
     if ( is_digit(byte) || byte == '.' ) {
-        sb_putc(&jpm->buffer, byte);
-        if ( !sb_is_valid(&jpm->buffer) ) return -1;
+        if ( BUFFER_PUTC(jpm, byte) < 0 ) return -1;
     } else {
-        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
-        char *str = sb_finish(&jpm->buffer);
+        if ( BUFFER_SIZE(jpm) <= 0 ) return -1;
+        char *str = BUFFER_FIN(jpm);
+        if ( !str ) return -1;
         double d = strtod(str, NULL);
         jpm->root = json_mknumber(d);
         if ( !jpm->root ) return -1;
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
-        sb_free(&jpm->buffer);
+        BUFFER_FREE(jpm);
         return jpm->process_byte(jpm, byte);
     }
     return 0;
@@ -113,7 +132,8 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
     switch( byte ) {
     case '{' : {
         json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
-        json_parse_machine_init(nvalue);
+        if ( !nvalue ) return -1;
+        json_parse_machine_init(nvalue, jpm->ttl);
         arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_key_init;
         jpm->root = json_mkobject();
@@ -122,7 +142,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
     } break;
     case '"': {
-        if ( sb_init(&jpm->buffer) < 0 )
+        if ( BUFFER_INIT(jpm) < 0 )
             return -1;
         jpm->process_byte = (_json_parse_fn) jpm_string_body;
     } break;
@@ -134,7 +154,8 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
     } break;
     case '[': {
         json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
-        json_parse_machine_init(nvalue);
+        if ( !nvalue ) return -1;
+        json_parse_machine_init(nvalue, jpm->ttl);
         arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_value_init;
         jpm->root = json_mkarray();
@@ -143,7 +164,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
     } break;
     default:
-        if ( sb_init(&jpm->buffer) < 0 )
+        if ( BUFFER_INIT(jpm) < 0 )
             return -1;
         jpm->process_byte = (_json_parse_fn) jpm_number_body;
         return jpm->process_byte(jpm, byte);
@@ -171,7 +192,7 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
         jpm->complete = 1;
         if ( jpm_append_to_parent(jpm) < 0 ) return -1;
         jpm->key = p_null();
-        sb_clear(&jpm->buffer);
+        BUFFER_CLEAR(jpm);
         jpm->root = NULL;
     } break;
     case ']': {
@@ -181,15 +202,15 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
         else
             jpm->root = NULL;
         jpm->key = p_null();
-        sb_clear(&jpm->buffer);
+        BUFFER_CLEAR(jpm);
         jpm->process_byte = NULL;
     } break;
     case ',': {
         if ( jpm_append_to_parent(jpm) < 0 ) return -1;
         jpm->key = p_null();
         json_parse_machine_t *prev = jpm->p;
-        json_parse_machine_init(jpm);
-        sb_clear(&jpm->buffer);
+        json_parse_machine_init(jpm, jpm->ttl);
+        BUFFER_CLEAR(jpm);
         jpm->p = prev;
         if ( is_array_context(jpm) )
             jpm->process_byte = (_json_parse_fn) jpm_value_init;
@@ -207,7 +228,7 @@ static int jpm_key_init(json_parse_machine_t *jpm, char byte) {
     if ( is_space(byte) ) return 0;
     switch ( byte ) {
     case '"': {
-        if ( sb_init(&jpm->buffer) < 0 )
+        if ( BUFFER_INIT(jpm) < 0 )
             return -1;
         jpm->process_byte = (_json_parse_fn) jpm_key_body;
     } break;
@@ -232,30 +253,31 @@ static int jpm_key_end(json_parse_machine_t *jpm, char byte) {
 static int jpm_key_body(json_parse_machine_t *jpm, char byte) {
     switch ( byte ) {
     case '"': {
-        if ( sb_size(&jpm->buffer) <= 0 ) return -1;
-        char *str = sb_finish(&jpm->buffer);
+        if ( BUFFER_SIZE(jpm) <= 0 ) return -1;
+        char *str = BUFFER_FIN(jpm);
         property_t key = p_json(str);
         property_move(&jpm->key, &key);
         property_free(&key);
-        sb_clear(&jpm->buffer);
+        BUFFER_CLEAR(jpm);
         jpm->process_byte = (_json_parse_fn) jpm_key_end;
     } break;
     default:
-        sb_putc(&jpm->buffer, byte);
-        if ( !sb_is_valid(&jpm->buffer) ) return -1;
+        if ( BUFFER_PUTC(jpm, byte) < 0 ) return -1;
         break;
     }
     return 0;
 }
 
 
-int json_parse_machine_init(json_parse_machine_t *jpm) {
+int json_parse_machine_init(json_parse_machine_t *jpm, int len) {
     jpm->complete = 0;
     jpm->process_byte = (_json_parse_fn) jpm_value_init;
     property_init(&jpm->key);
     jpm->p = NULL;
     jpm->root = NULL;
-    sb_clear(&jpm->buffer);
+    jpm->drv = &bufdrv;
+    jpm->ttl = len;
+    BUFFER_CLEAR(jpm);
     arrow_linked_list_init(jpm);
     return 0;
 }
@@ -281,7 +303,7 @@ int json_parse_machine_process(json_parse_machine_t *jpm, char byte) {
 }
 
 int json_parse_machine_fin(json_parse_machine_t *jpm) {
-    if ( sb_size(&jpm->buffer) ) sb_free(&jpm->buffer);
+    if ( BUFFER_SIZE(jpm) ) BUFFER_FREE(jpm);
     if ( !IS_EMPTY(jpm->key) )property_free(&jpm->key);
     jpm->process_byte = NULL;
     jpm->p = NULL;
@@ -289,8 +311,9 @@ int json_parse_machine_fin(json_parse_machine_t *jpm) {
     return 0;
 }
 
-int json_decode_init(json_parse_machine_t *sm) {
-    return json_parse_machine_init(sm);
+int json_decode_init(json_parse_machine_t *sm, int len) {
+    int r = json_parse_machine_init(sm, len);
+    return r;
 }
 
 int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) {

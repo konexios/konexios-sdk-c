@@ -51,7 +51,7 @@ typedef struct _state_handle_ {
 } state_handle_t;
 
 static int stateeq( arrow_state_list_t *sl, property_t name ) {
-    if ( property_cmp(&sl->name, &name) == 0 ) return 0;
+    if ( property_cmp(&sl->name, name) == 0 ) return 0;
     return -1;
 }
 
@@ -247,7 +247,7 @@ static int _state_get_proc(http_response_t *response, void *arg) {
     if ( !_main ) return -1;
     JsonNode *dev_hid = json_find_member(_main, p_const("deviceHid"));
     if ( !dev_hid ) return -1;
-    if ( strcmp(dev_hid->string_, P_VALUE(dev->hid)) != 0 ) return -1;
+    if ( property_cmp(&dev_hid->string_, dev->hid) != 0 ) return -1;
     JsonNode *states = json_find_member(_main, p_const("states"));
     if ( !states ) return -1;
     arrow_device_state_handler(states);
@@ -356,11 +356,11 @@ int arrow_device_state_handler(JsonNode *_main) {
       if ( ! value ) continue;
       JsonNode *timestamp = json_find_member(tmp, p_const("timestamp"));
       timestamp_t ts = {0};
-      timestamp_parse(&ts, timestamp->string_);
+      timestamp_parse(&ts, P_VALUE(timestamp->string_));
       if ( timestamp_less(&dev_state->ts, &ts) ) {
           dev_state->ts = ts;
           if ( is_valid_tag(dev_state->tag) && state_adder[dev_state->tag].parse ) {
-              state_adder[dev_state->tag].parse(dev_state, value->string_);
+              state_adder[dev_state->tag].parse(dev_state, P_VALUE(value->string_));
           }
       }
   }
@@ -434,25 +434,35 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   }
   int retry = 0;
 
-  while ( arrow_device_state_answer(_device_hid, st_received, trans_hid->string_) < 0 ) {
+  while ( arrow_device_state_answer(_device_hid, st_received, P_VALUE(trans_hid->string_)) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
   }
 
-  JsonNode *_states = json_decode(payload->string_);
+  JsonNode *_states = json_decode(P_VALUE(payload->string_));
   int ret = arrow_device_state_handler(_states);
 
   if ( ret < 0 ) {
-    while ( arrow_device_state_answer(_device_hid, st_error, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_error, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
   } else {
-    while ( arrow_device_state_answer(_device_hid, st_complete, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_complete, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
   }
   return 0;
 }
+
 #endif
+
+// for c++
+#undef state_pr
+arrow_state_pair_t state_pr(property_t x, int y) {
+    arrow_state_pair_t tmp;
+    property_copy(&tmp.name, x);
+    tmp.typetag = y;
+    return tmp;
+}

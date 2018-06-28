@@ -28,6 +28,7 @@
 #include <debug.h>
 #include <http/client.h>
 #include <json/json.h>
+#include <json/decode.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>
 
@@ -226,8 +227,8 @@ static int mqtt_event_sign_checker(JsonNode *_main, mqtt_event_base_t *base) {
       if ( !sign ) return -1;
 
       if ( check_signature(
-               sign_version->string_,
-               sign->string_,
+               P_VALUE(sign_version->string_),
+               P_VALUE(sign->string_),
                base ) < 0 ) {
         DBG("Alarm! signature is failed...");
         return -1;
@@ -259,7 +260,7 @@ int process_event_init(int size) {
         return -1;
     }
 #endif
-    return json_decode_init(&sm);
+    return json_decode_init(&sm, size);
 }
 
 int process_event(const char *str, int len) {
@@ -402,7 +403,7 @@ int process_http_init(int size) {
         return -1;
     }
 #endif
-    return json_decode_init(&sm_http);
+    return json_decode_init(&sm_http, size);
 }
 
 int process_http(const char *str, int len) {
@@ -497,10 +498,10 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
         DBG("No HTTP status!");
         goto mqtt_api_error;
     }
-    if ( strcmp(status->string_, "OK") != 0 ) {
+    if ( property_cmp(&status->string_, p_const("OK")) != 0 ) {
         JsonNode *body = json_find_member(_parameters, p_const("payload"));
         if ( body ) {
-            DBG("[%s]", body->string_);
+            DBG("[%s]", P_VALUE(body->string_));
         }
         DBG("Not OK");
         goto mqtt_api_error;

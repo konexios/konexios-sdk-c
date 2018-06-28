@@ -80,6 +80,15 @@ int sb_need(SB *sb, int need) {
     return 0;
 }
 
+int sb_putc(SB *sb, char byte) {
+    if ((sb)->cur >= (sb)->end) {
+        int r = sb_grow(sb, 1);
+        if ( r < 0 ) return r;
+    }
+    *(sb)->cur++ = (byte);
+    return 0;
+}
+
 int sb_put(SB *sb, const char *bytes, int count) {
     if ( sb_need(sb, count) < 0 ) return -1;
     memcpy(sb->cur, bytes, (size_t)count);

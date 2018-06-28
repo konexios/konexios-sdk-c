@@ -72,7 +72,7 @@ int arrow_device_parse(arrow_device_t *dev, const char *str) {
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, p_const("hid"));
     if ( !hid || hid->tag != JSON_STRING ) return -1;
-    property_copy(&dev->hid, p_stack(hid->string_));
+    property_copy_as(PROPERTY_DYNAMIC_TAG, &dev->hid, hid->string_);
 #if defined(__IBM__)
     JsonNode *eid = json_find_member(_main, p_const("externalId"));
     if ( !eid || eid->tag != JSON_STRING ) return -1;

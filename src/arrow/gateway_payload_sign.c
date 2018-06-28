@@ -100,7 +100,7 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
           r = snprintf(can_list[count].start+can_list[count].len,
                        can_buffer_len - total,
                        "%s",
-                       child->string_);
+                       P_VALUE(child->string_));
           break;
       case JSON_BOOL:
           r = snprintf(can_list[count].start+can_list[count].len,

@@ -173,9 +173,9 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
     if ( !floatValue ) goto parse_error;
 
     add_telemetry_data_info(t,
-                            deviceHid->string_,
-                            name->string_,
-                            type->string_,
+                            P_VALUE(deviceHid->string_),
+                            P_VALUE(name->string_),
+                            P_VALUE(type->string_),
                             json_number(timestamp),
                             json_number(floatValue));
   }

@@ -17,9 +17,9 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
 //  mqtt_event_t *ev = (mqtt_event_t *)_ev;
   JsonNode *tmp = json_find_member(_parameters, p_const("url"));
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
-  DBG("update url: %s", tmp->string_);
+  DBG("update url: %s", P_VALUE(tmp->string_));
 
-  if ( arrow_gateway_software_update(tmp->string_) < 0 ) return -1;
+  if ( arrow_gateway_software_update(P_VALUE(tmp->string_)) < 0 ) return -1;
   DBG("Reboot...");
   reboot();
   return 0;

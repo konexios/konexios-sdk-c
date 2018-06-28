@@ -60,7 +60,7 @@ typedef struct _find_by {
 #define find_by_const(x, y) (find_by_t){ .key=x, .value=p_const(y), .node={NULL} }
 #define find_by_heap(x, y)  (find_by_t){ .key=x, .value=p_heap(y), .node={NULL} }
 
-const char *get_find_by_name(int num);
+property_t get_find_by_name(int num);
 int find_by_validate_key(find_by_t *fb);
 
 #define find_by_collect(params, n) \
@@ -76,7 +76,7 @@ int find_by_validate_key(find_by_t *fb);
     va_end(args); \
   } while(0)
 
-#define find_by_to_property(fb) p_const(get_find_by_name((fb)->key))
+#define find_by_to_property(fb) get_find_by_name((fb)->key)
 
 #define find_by_for_each(tmp, params) \
     arrow_linked_list_for_each(tmp, params, find_by_t) \

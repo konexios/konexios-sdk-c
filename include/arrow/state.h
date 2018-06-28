@@ -1,20 +1,26 @@
 #if !defined(ARROW_STATE_H_)
 #define ARROW_STATE_H_
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <arrow/device.h>
 
 typedef struct _state_pair_ {
     property_t name;
     int typetag;
-#if defined(__cplusplus)
-    _state_pair_(property_t n, int t) : name(n), typetag(t) {}
-#endif
+//#if defined(__cplusplus)
+//    _state_pair_(property_t n, int t) : typetag(t) {
+//        property_copy(&name, n);
+//    }
+//#endif
 } arrow_state_pair_t;
 
 #if defined(__cplusplus)
-#define state_pr(x, y) arrow_state_pair_t((x), (y))
+arrow_state_pair_t state_pr(property_t x, int y);
 #else
-#define state_pr(x, y) (arrow_state_pair_t) { .name=(x), .typetag=(y) }
+#define state_pr(x, y) (arrow_state_pair_t) { (x), (y) }
 #endif
 
 // set a new device state with default value
@@ -42,5 +48,9 @@ int arrow_state_mqtt_stop(void);
 int ev_DeviceStateRequest(void *, JsonNode *_parameters);
 
 int arrow_device_state_handler(JsonNode *states);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif // ARROW_STATE_H_

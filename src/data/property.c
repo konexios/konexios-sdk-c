@@ -57,6 +57,12 @@ void property_copy(property_t *dst, property_t src) {
     if ( handler && handler->copy ) handler->copy(dst, &src);
 }
 
+void property_copy_as(int tag, property_t *dst, property_t src) {
+    src.flags &= ~PROPERTY_BASE_MASK;
+    src.flags |= tag;
+    property_copy(dst, src);
+}
+
 void property_weak_copy(property_t *dst, property_t src) {
     if ( !dst ) return;
     property_init(dst);
@@ -118,12 +124,22 @@ void property_free(property_t *dst) {
     memset(dst, 0x0, sizeof(property_t));
 }
 
-int property_cmp(property_t *src, property_t *dst) {
+int property_cmp(property_t *src, property_t dst) {
     if ( src->flags & is_raw ) {
-        if ( src->size == dst->size &&
-             strncmp(src->value, dst->value, src->size) == 0 ) return 0;
+        if ( src->size == dst.size &&
+             strncmp(src->value, dst.value, src->size) == 0 ) return 0;
         return -1;
     }
-    if ( strcmp(src->value, dst->value) == 0 ) return 0;
+    if ( strcmp(src->value, dst.value) == 0 ) return 0;
     return -1;
+}
+
+// for c++
+#undef property
+property_t property(char *v, uint8_t f, uint16_t s) {
+    property_t tmp;
+    tmp.value = v;
+    tmp.flags = f;
+    tmp.size = s;
+    return tmp;
 }

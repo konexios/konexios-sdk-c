@@ -17,8 +17,8 @@ extern "C" {
 
 #define PROPERTY_CONST_TAG      1
 
-#define p_const(x)  property(x, PROPERTY_CONST_TAG | is_owner, strlen((char *)x))
-#define p_const_raw(x, len)  property(x, PROPERTY_CONST_TAG | is_owner | is_raw, (len))
+#define p_const(x)  property((char*)(x), PROPERTY_CONST_TAG | is_owner, strlen((char *)x))
+#define p_const_raw(x, len)  property((char*)(x), PROPERTY_CONST_TAG | is_owner | is_raw, (len))
 
 property_dispetcher_t *property_type_get_const();
 

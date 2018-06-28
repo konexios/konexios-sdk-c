@@ -23,6 +23,7 @@
 
 #include "json/json.h"
 
+#include <data/property.h>
 #include <json/property_json.h>
 #include <sys/mem.h>
 #if defined(__USE_STD__)
@@ -359,7 +360,7 @@ void json_delete(JsonNode *node)
 		
 		switch (node->tag) {
         case JSON_STRING: {
-            json_delete_string(node->string_);
+            property_free(&node->string_);
         } break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
@@ -390,8 +391,7 @@ void json_delete_string(char *json_str) {
 int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
     JsonNode *tmp = json_find_member(_node, name);
     if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-    property_t t = json_strdup_property(tmp->string_);
-    property_move(p, &t);
+    property_copy_as(PROPERTY_DYNAMIC_TAG, p, tmp->string_);
     return 0;
 }
 
@@ -435,7 +435,7 @@ JsonNode *json_find_member(JsonNode *object, property_t name)
 		return NULL;
 	
 	json_foreach(member, object)
-        if (property_cmp(&member->key, &name) == 0)
+        if (property_cmp(&member->key, name) == 0)
 			return member;
 	
 	return NULL;
@@ -475,16 +475,19 @@ JsonNode *json_mkbool(bool b)
 	return ret;
 }
 
-static JsonNode *mkstring(char *s)
-{
+static JsonNode *mkstring(property_t *s) {
 	JsonNode *ret = mknode(JSON_STRING);
-    if ( ret ) ret->string_ = s;
+    if ( ret ) property_move(&ret->string_, s);
 	return ret;
 }
 
-JsonNode *json_mkstring(const char *s)
-{
-	return mkstring(json_strdup(s));
+JsonNode *json_mkstring(const char *s) {
+    property_t p = json_strdup_property(s);
+    return mkstring(&p);
+}
+
+JsonNode *json_mkproperty(property_t *s) {
+    return mkstring(s);
 }
 
 JsonNode *json_mknumber(double n)
@@ -625,8 +628,10 @@ static bool parse_value(const char **sp, JsonNode **out)
 		case '"': {
 			char *str;
 			if (parse_string(&s, out ? &str : NULL)) {
-				if (out)
-					*out = mkstring(str);
+                if (out) {
+                    property_t p = json_strdup_property(str);
+                    *out = mkstring(&p);
+                }
 				*sp = s;
 				return true;
 			}
@@ -953,7 +958,7 @@ static void emit_value(SB *out, const JsonNode *node)
 			sb_puts(out, node->bool_ ? "true" : "false");
 			break;
 		case JSON_STRING:
-			emit_string(out, node->string_);
+            emit_string(out, P_VALUE(node->string_));
 			break;
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
@@ -980,7 +985,7 @@ void emit_value_indented(SB *out, const JsonNode *node, const char *space, int i
 			sb_puts(out, node->bool_ ? "true" : "false");
 			break;
 		case JSON_STRING:
-			emit_string(out, node->string_);
+            emit_string(out, P_VALUE(node->string_));
 			break;
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
@@ -1308,9 +1313,9 @@ bool json_check(const JsonNode *node, char errmsg[256])
 		if ((node->bool_ != false) && (node->bool_ != true))
 			problem("bool_ is neither false (%d) nor true (%d)", (int)false, (int)true);
 	} else if (node->tag == JSON_STRING) {
-		if (node->string_ == NULL)
+        if ( IS_EMPTY(node->string_) )
 			problem("string_ is NULL");
-		if (!utf8_validate(node->string_))
+        if (!utf8_validate(P_VALUE(node->string_)))
 			problem("string_ contains invalid UTF-8");
 	} else if (node->tag == JSON_ARRAY || node->tag == JSON_OBJECT) {
 		JsonNode *head = node->children.head;

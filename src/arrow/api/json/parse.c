@@ -54,10 +54,10 @@ int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *
     // FIXME property
     JsonNode *t = json_find_member(tmp, p_stack(date));
     if ( t && t->tag == JSON_STRING )
-        strptime(t->string_, "%Y-%m-%dT%H:%M:%S", &ww->date);
+        strptime(P_VALUE(t->string_), "%Y-%m-%dT%H:%M:%S", &ww->date);
     t = json_find_member(tmp, p_stack(person));
     if ( t && t->tag == JSON_STRING )
-        property_copy( &ww->by, p_stack(t->string_));
+        property_copy_as( PROPERTY_DYNAMIC_TAG, &ww->by, t->string_);
     return 0;
 }
 

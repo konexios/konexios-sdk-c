@@ -46,7 +46,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
         DBG("no Cloud Platform");
         goto gateway_config_error;
     }
-    if ( strcmp(_cloud->string_, "IotConnect") == 0 ) {
+    if ( property_cmp(&_cloud->string_, p_const("IotConnect")) == 0 ) {
         config->type = IoT;
     } // FIXME iot connect ibm, azure
     JsonNode *_main_key = json_find_member(_main, p_const("key"));
@@ -54,11 +54,11 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
         JsonNode *tmp = NULL;
         tmp = json_find_member(_main_key, p_const("apiKey"));
         if (tmp) {
-			set_api_key(tmp->string_);
+            set_api_key(P_VALUE(tmp->string_));
 		}
         tmp = json_find_member(_main_key, p_const("secretKey"));
         if (tmp) {
-			set_secret_key(tmp->string_);
+            set_secret_key(P_VALUE(tmp->string_));
 		}
 	} else {
         DBG("There are no keys!");
