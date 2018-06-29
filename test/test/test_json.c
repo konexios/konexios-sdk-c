@@ -12,13 +12,15 @@
 #include <data/property_stack.h>
 #include <json/property_json.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 
 void setUp(void) {
     property_types_init();
     property_type_add(property_type_get_json());
+    property_type_add(property_type_get_aob());
 }
 
 void tearDown(void) {
@@ -74,7 +76,7 @@ void test_parse_json_string(void) {
     JsonNode *_key = json_find_member(_main, p_const("key"));
 
     TEST_ASSERT_EQUAL_INT( JSON_STRING, _key->tag );
-    TEST_ASSERT_EQUAL_STRING( "hello", P_VALUE(_key->string) );
+    TEST_ASSERT_EQUAL_STRING( "hello", P_VALUE(_key->string_) );
     json_delete(_main);
 }
 
@@ -86,7 +88,7 @@ void test_parse_json_obj(void) {
     TEST_ASSERT_EQUAL_INT( JSON_OBJECT, _key->tag );
 
     JsonNode *_child = json_find_member(_key, p_const("child"));
-    TEST_ASSERT_EQUAL_STRING( "yes", P_VALUE(_child->string) );
+    TEST_ASSERT_EQUAL_STRING( "yes", P_VALUE(_child->string_) );
     json_delete(_main);
 }
 
@@ -280,6 +282,7 @@ void test_parse_json_number_part(void) {
     json_decode_init(&sm, strlen(test));
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
+    show_json_obj(_main);
     JsonNode *_key = json_find_member(_main, p_const("key"));
 
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );

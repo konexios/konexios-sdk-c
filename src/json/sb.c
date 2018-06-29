@@ -107,6 +107,14 @@ char *sb_finish(SB *sb) {
     return sb->start;
 }
 
+property_t sb_finish_property(SB *sb) {
+    property_t tmp;
+    tmp.size = sb->cur - sb->start;
+    tmp.value = sb_finish(sb);
+    tmp.flags = PROPERTY_JSON_TAG | is_owner;
+    return tmp;
+}
+
 void sb_clear(SB *sb) {
     memset(sb, 0x0, sizeof(SB));
 }

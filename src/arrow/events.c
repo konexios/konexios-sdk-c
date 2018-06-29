@@ -57,18 +57,16 @@ static void mqtt_event_base_init(mqtt_event_base_t *mq) {
 static void mqtt_event_base_free(mqtt_event_base_t *mq) {
     property_free(&mq->id);
     property_free(&mq->name);
-    if ( mq->parameters ) json_delete(mq->parameters);
+    if ( mq->node ) json_delete(mq->node);
 }
 
 static void mqtt_event_init(mqtt_event_t *mq) {
     mqtt_event_base_init(&mq->base);
-    property_init(&mq->device_hid);
     arrow_linked_list_init(mq);
 }
 
 static void mqtt_event_free(mqtt_event_t *mq) {
   mqtt_event_base_free(&mq->base);
-  property_free(&mq->device_hid);
 }
 
 static void mqtt_api_event_init(mqtt_api_event_t *mq) {
@@ -190,14 +188,14 @@ static int get_event_base(mqtt_event_base_t *base,
                           JsonNode *_main,
                           property_t id,
                           property_t name) {
-    if ( fill_string_from_json(_main,
+    if ( weak_value_from_json(_main,
                                id,
                                &base->id) < 0 ) {
       DBG("cannot find requestId");
       return -1;
     }
 
-    if ( fill_string_from_json(_main,
+    if ( weak_value_from_json(_main,
                                name,
                                &base->name) < 0 ) {
       DBG("cannot find name");
@@ -212,18 +210,18 @@ static int get_event_base(mqtt_event_base_t *base,
     JsonNode *_parameters = json_find_member(_main,
                                              p_const("parameters"));
     if ( !_parameters ) return -1;
-    json_remove_from_parent(_parameters);
     base->parameters = _parameters;
+    base->node = _main;
     return 0;
 }
 
-static int mqtt_event_sign_checker(JsonNode *_main, mqtt_event_base_t *base) {
-    JsonNode *sign_version = json_find_member(_main, p_const("signatureVersion"));
+static int mqtt_event_sign_checker(mqtt_event_base_t *base) {
+    JsonNode *sign_version = json_find_member(base->node, p_const("signatureVersion"));
     if ( sign_version ) {
   #if defined(DEBUG_MQTT_PROCESS_EVENT)
         DBG("signature vertsion: %s", sign_version->string_);
   #endif
-      JsonNode *sign = json_find_member(_main, p_const("signature"));
+      JsonNode *sign = json_find_member(base->node, p_const("signature"));
       if ( !sign ) return -1;
 
       if ( check_signature(
@@ -245,18 +243,24 @@ int process_event_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
     int queue_size = arrow_mqtt_has_events();
     if ( queue_size >= ARROW_MAX_MQTT_COMMANDS) {
+#if defined(HTTP_VIA_MQTT)
         DBG("Queue is full: force HTTP request");
         http_session_force_http(1);
+#endif
         return -1;
     } else if ( !queue_size ) {
+#if defined(HTTP_VIA_MQTT)
         DBG("Queue is empty: force MQTT request");
         http_session_force_http(0);
+#endif
     }
 #endif
     DBG("Static memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
-    if ( size * (2) > json_static_memory_max_sector() - 1024 ) {
+    // for signiture and for json  ojbect: size x 2
+    // 1024 bytes for http answer
+    if ( size * 2 > json_static_memory_max_sector() - 1024 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         http_session_force_http(1);
         return -1;
@@ -303,7 +307,7 @@ int process_event_finish() {
       goto error;
   }
 
-  if ( ( ret = mqtt_event_sign_checker(_main, &mqtt_e->base) ) < 0 ) {
+  if ( ( ret = mqtt_event_sign_checker(&mqtt_e->base) ) < 0 ) {
       goto error;
   }
 
@@ -317,9 +321,9 @@ error:
 #else
       free(mqtt_e);
 #endif
+      if ( _main ) json_delete(_main);
   }
 no_event_error:
-  if ( _main ) json_delete(_main);
   return ret;
 }
 
@@ -400,7 +404,7 @@ int process_http_init(int size) {
     DBG("Static http memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
-    if ( size * (2) > json_static_memory_max_sector() - 512 ) {
+    if ( size * (2) > json_static_memory_max_sector() - 32 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         http_session_force_http(1);
         return -1;
@@ -453,7 +457,7 @@ int process_http_finish() {
       goto error;
   }
 
-    if ( ( ret = mqtt_event_sign_checker(_main, &api_e->base) ) < 0 ) {
+    if ( ( ret = mqtt_event_sign_checker(&api_e->base) ) < 0 ) {
         goto error;
     }
 
@@ -467,9 +471,9 @@ error:
   #else
         free(api_e);
   #endif
+        if ( _main ) json_delete(_main);
     }
 no_api_error:
-    if ( _main ) json_delete(_main);
     return ret;
 }
 
@@ -499,6 +503,7 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
     JsonNode *status = json_find_member(_parameters, p_const("status"));
     if ( !status ) {
         DBG("No HTTP status!");
+        DBG("[%s]", P_VALUE(_parameters->string_));
         goto mqtt_api_error;
     }
     if ( property_cmp(&status->string_, p_const("OK")) != 0 ) {

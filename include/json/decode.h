@@ -10,6 +10,7 @@
 
 #include <data/linkedlist.h>
 #include <json/sb.h>
+#include <json/aob.h>
 #include <json/json.h>
 
 typedef int(*buffer_init)(void *);
@@ -37,16 +38,14 @@ typedef struct _json_parse_machine_ {
     struct _json_parse_machine_ *p;
     uint32_t complete;
     _json_parse_fn process_byte;
-    SB buffer;
-    buffer_drive_t *drv;
+    alloc_only_t *buffer;
     property_t key;
     JsonNode *root;
-    int ttl;
     arrow_linked_list_head_node;
 } json_parse_machine_t;
 
 
-int json_parse_machine_init(json_parse_machine_t *jpm, int len);
+int json_parse_machine_init(json_parse_machine_t *jpm, alloc_only_t *allocator);
 int json_parse_machine_process(json_parse_machine_t *jpm, char byte);
 int json_parse_machine_fin(json_parse_machine_t *jpm);
 

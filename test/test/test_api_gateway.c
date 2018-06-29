@@ -30,9 +30,10 @@
 #include <data/propmap.h>
 #include <data/find_by.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 #include <arrow_mqtt_client.h>
 #include <mqtt/client/delivery.h>
 #include <http/client.h>

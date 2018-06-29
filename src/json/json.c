@@ -271,7 +271,7 @@ static void to_surrogate_pair(uchar_t unicode, uint16_t *uc, uint16_t *lc)
 }
 
 static bool parse_value     (const char **sp, JsonNode        **out);
-static bool parse_string    (const char **sp, char            **out);
+static bool parse_string    (const char **sp, property_t       *out);
 static bool parse_number    (const char **sp, double           *out);
 static bool parse_array     (const char **sp, JsonNode        **out);
 static bool parse_object    (const char **sp, JsonNode        **out);
@@ -388,10 +388,10 @@ void json_delete_string(char *json_str) {
     sb_free(&out);
 }
 
-int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
+int weak_value_from_json(JsonNode *_node, property_t name, property_t *p) {
     JsonNode *tmp = json_find_member(_node, name);
     if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-    property_copy_as(PROPERTY_DYNAMIC_TAG, p, tmp->string_);
+    property_weak_copy(p, tmp->string_);
     return 0;
 }
 
@@ -626,11 +626,10 @@ static bool parse_value(const char **sp, JsonNode **out)
 			return false;
 		
 		case '"': {
-			char *str;
+            property_t str;
 			if (parse_string(&s, out ? &str : NULL)) {
                 if (out) {
-                    property_t p = json_strdup_property(str);
-                    *out = mkstring(&p);
+                    *out = mkstring(&str);
                 }
 				*sp = s;
 				return true;
@@ -713,7 +712,7 @@ static bool parse_object(const char **sp, JsonNode **out)
 {
 	const char *s = *sp;
 	JsonNode *ret = out ? json_mkobject() : NULL;
-	char *key;
+    property_t key;
 	JsonNode *value;
 	
 	if (*s++ != '{')
@@ -739,7 +738,7 @@ static bool parse_object(const char **sp, JsonNode **out)
 		skip_space(&s);
 		
 		if (out)
-            append_member(ret, p_json(key), value);
+            append_member(ret, key, value);
 		
 		if (*s == '}') {
 			s++;
@@ -759,14 +758,14 @@ success:
 
 failure_free_key:
     if (out) {
-        json_delete_string(key);
+        property_free(&key);
     }
 failure:
 	json_delete(ret);
 	return false;
 }
 
-bool parse_string(const char **sp, char **out)
+bool parse_string(const char **sp, property_t *out)
 {
 	const char *s = *sp;
     SB sb = {NULL, NULL, NULL};
@@ -871,7 +870,7 @@ bool parse_string(const char **sp, char **out)
 	s++;
 	
 	if (out)
-		*out = sb_finish(&sb);
+        *out = sb_finish_property(&sb);
 	*sp = s;
 	return true;
 

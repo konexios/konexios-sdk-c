@@ -89,7 +89,9 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
     event_data_t edata = {p_null(), ev, p_null()};
     property_weak_copy(&edata.hid, hid);
-    property_weak_copy(&edata.payload, payload);
+    if ( !IS_EMPTY(payload) ) {
+        property_weak_copy(&edata.payload, payload);
+    }
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
                 "Arrow Event answer failed...");

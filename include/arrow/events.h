@@ -13,11 +13,11 @@ typedef struct {
     property_t id;
     property_t name;
     int encrypted;
+    JsonNode *node;
     JsonNode *parameters;
 } mqtt_event_base_t;
 
 typedef struct {
-  property_t device_hid;
   mqtt_event_base_t base;
   arrow_linked_list_head_node;
 } mqtt_event_t;

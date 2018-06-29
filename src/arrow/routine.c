@@ -14,6 +14,7 @@
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
 #include <json/property_json.h>
+#include <json/aob.h>
 
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"
@@ -48,6 +49,7 @@ arrow_gateway_config_t *current_gateway_config(void) {
 arrow_routine_error_t arrow_init(void) {
   property_types_init();
   property_type_add(property_type_get_json());
+  property_type_add(property_type_get_aob());
   if ( __http_init() < 0 ) {
     return ROUTINE_ERROR;
   }

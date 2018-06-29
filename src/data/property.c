@@ -47,6 +47,7 @@ property_handler_t *get_property_type(property_t *src) {
     property_dispetcher_t *tmp = NULL;
     linked_list_find_node(tmp, prop_disp, property_dispetcher_t, proptypeeq, src->flags);
     if ( tmp ) return &tmp->handler;
+    DBG("Error: this property type (%d) not supported", src->flags & PROPERTY_BASE_MASK);
     return NULL;
 }
 

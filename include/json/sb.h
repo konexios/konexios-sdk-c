@@ -9,6 +9,8 @@
 #ifndef ARROW_ACN_SDK_C_JSON_SB_H_
 #define ARROW_ACN_SDK_C_JSON_SB_H_
 
+#include <json/property_json.h>
+
 /* String buffer */
 typedef struct {
     char *cur;
@@ -24,6 +26,7 @@ int sb_putc(SB *sb, char byte);
 int sb_is_valid(SB *sb);
 int sb_puts(SB *sb, const char *str);
 char *sb_finish(SB *sb);
+property_t sb_finish_property(SB *sb);
 void sb_clear(SB *sb);
 void sb_free(SB *sb);
 int sb_size(SB *sb);

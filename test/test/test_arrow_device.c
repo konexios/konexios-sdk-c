@@ -15,9 +15,10 @@
 #include <data/property_stack.h>
 #include <json/property_json.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 
 #include "mock_mac.h"
 

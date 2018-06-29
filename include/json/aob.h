@@ -10,18 +10,24 @@
 #define ARROW_ACN_SDK_C_JSON_AOB_H_
 
 #include <sys/mem.h>
+#include <json/sb.h>
+#include <data/property.h>
 
 typedef struct alloc_only {
     void *start;
     uint16_t size;
     uint16_t len;
+    uint16_t offset;
 } alloc_only_t;
 
 void alloc_only_memory_set(alloc_only_t *p, void *start, int len);
-void alloc_only_init(alloc_only_t *p);
+int alloc_only_init(alloc_only_t *p);
+int alloc_only_size(alloc_only_t *p);
 int alloc_only_put(alloc_only_t *p, char c);
 int alloc_only_puts(alloc_only_t *p, char *s, int len);
+void alloc_only_clear(alloc_only_t *p);
 void *alloc_only_finish(alloc_only_t *p);
+property_t alloc_only_finish_property(alloc_only_t *p);
 
 
 
