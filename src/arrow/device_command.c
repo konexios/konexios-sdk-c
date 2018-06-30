@@ -112,6 +112,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   http_session_set_protocol(current_client(), 1);
 #endif
   while( arrow_send_event_ans(ev->base.id, received, p_null()) < 0 ) {
+      http_session_set_protocol(current_client(), 1);
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
                    return -2;
@@ -174,6 +175,7 @@ device_command_done:
     DBG("error string: %s", P_VALUE(_error_prop));
     while ( arrow_send_event_ans(ev->base.id, failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
+        http_session_set_protocol(current_client(), 1);
         msleep(ARROW_RETRY_DELAY);
     }
     property_free(&_error_prop);
@@ -181,6 +183,7 @@ device_command_done:
   } else {
     while ( arrow_send_event_ans(ev->base.id, succeeded, p_null()) < 0 ) {
         RETRY_UP(retry, {return -2;});
+        http_session_set_protocol(current_client(), 1);
         msleep(ARROW_RETRY_DELAY);
     }
   }

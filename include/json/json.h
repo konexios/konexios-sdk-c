@@ -152,7 +152,7 @@ JsonNode *json_mkobject(void);
 
 void json_append_element(JsonNode *array, JsonNode *element);
 void json_prepend_element(JsonNode *array, JsonNode *element);
-void json_append_member(JsonNode *object, const property_t key, JsonNode *value);
+int json_append_member(JsonNode *object, const property_t key, JsonNode *value);
 void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value);
 
 void json_remove_from_parent(JsonNode *node);

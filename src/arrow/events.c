@@ -260,7 +260,7 @@ int process_event_init(int size) {
 #if defined(STATIC_ACN)
     // for signiture and for json  ojbect: size x 2
     // 1024 bytes for http answer
-    if ( size * 2 > json_static_memory_max_sector() - 1024 ) {
+    if ( size * 2 > json_static_memory_max_sector() - 1536 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         http_session_force_http(1);
         return -1;
@@ -273,6 +273,7 @@ int process_event(const char *str, int len) {
     int r = json_decode_part(&sm, str, len);
     if ( r != len ) {
         DBG("JSON decode fail %d/%d", r, len);
+        http_session_force_http(1);
         JsonNode *root = json_decode_finish(&sm);
         if ( root ) json_delete(root);
         return -1;
@@ -404,7 +405,7 @@ int process_http_init(int size) {
     DBG("Static http memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
 #if defined(STATIC_ACN)
-    if ( size * (2) > json_static_memory_max_sector() - 32 ) {
+    if ( size * (2) > json_static_memory_max_sector() - 512 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         http_session_force_http(1);
         return -1;
@@ -418,6 +419,7 @@ int process_http(const char *str, int len) {
     int r = json_decode_part(&sm_http, str, len);
     if ( r != len ) {
         DBG("http decode fail %d/%d", r, len);
+        http_session_force_http(1);
         JsonNode *root = json_decode_finish(&sm_http);
         if ( root ) json_delete(root);
         return -1;

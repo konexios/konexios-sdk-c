@@ -60,7 +60,7 @@ int sb_grow(SB *sb, int need) {
     size_t alloc = (size_t)(sb->end - sb->start);
 
     do {
-        alloc += 2;
+        alloc += 16;
     } while (alloc < length + (size_t)need);
 
     sb->start = (char*) SB_REALLOC(sb->start, alloc + 1);

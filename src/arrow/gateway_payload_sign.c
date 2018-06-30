@@ -265,6 +265,10 @@ int arrow_event_sign(char *signature,
                      const char *name,
                      int encrypted,
                      JsonNode *_parameters) {
+    if ( !_parameters ) {
+        DBG("SIGN: No json parameters");
+        return -1;
+    }
     int can_par_len = json_size(_parameters);
     DBG("want %d bytes for sign", can_par_len);
     if ( can_par_len > json_static_memory_max_sector() ) {

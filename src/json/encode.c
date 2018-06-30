@@ -24,7 +24,9 @@ size_t json_size(JsonNode *o) {
         // FIXME add handler
         break;
     case JSON_STRING:
-        ret += encoded_strlen(P_VALUE(tmp->string_));
+        if ( !IS_EMPTY(tmp->string_) ) {
+            ret += encoded_strlen(P_VALUE(tmp->string_));
+        }
         break;
     case JSON_NUMBER: {
         SB t;
