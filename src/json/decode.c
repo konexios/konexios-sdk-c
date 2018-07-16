@@ -9,6 +9,7 @@
 #include <json/decode.h>
 #include <json/property_json.h>
 #include <json/aob.h>
+#include <debug.h>
 
 #define is_array_context(mach) ((mach)->p->root->tag == JSON_ARRAY)
 
@@ -52,7 +53,10 @@ jpm_bool_state_char(false, a, 'a', l)
 static int jpm_bool_true_e(json_parse_machine_t *jpm, char byte) {
     if ( byte == 'e' ) {
         jpm->root = json_mkbool(true);
-        if ( !jpm->root ) return -1;
+        if ( !jpm->root ) {
+            DBG("OOM mkbool");
+            return -1;
+        }
         jpm->process_byte = (_json_parse_fn) jpm_value_end;
         return 0;
     }
@@ -160,7 +164,6 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
             return -1;
         jpm->process_byte = (_json_parse_fn) jpm_number_body;
         return jpm->process_byte(jpm, byte);
-    break;
     }
     return 0;
 }
@@ -297,15 +300,20 @@ int json_parse_machine_process(json_parse_machine_t *jpm, char byte) {
             return json_parse_machine_process(next, byte);
         }
     } else {
-        if ( jpm->process_byte )
-            return jpm->process_byte(jpm, byte);
+        if ( jpm->process_byte ) {
+            int r = jpm->process_byte(jpm, byte);
+            if (r < 0) {
+                if ( jpm->root ) json_delete(jpm->root);
+            }
+            return r;
+        }
     }
     return -1;
 }
 
 int json_parse_machine_fin(json_parse_machine_t *jpm) {
 //    if ( BUFFER_SIZE(jpm) ) BUFFER_FREE(jpm);
-    if ( !IS_EMPTY(jpm->key) )property_free(&jpm->key);
+    if ( !IS_EMPTY(jpm->key) ) property_free(&jpm->key);
     jpm->process_byte = NULL;
     jpm->p = NULL;
     jpm->root = NULL;
@@ -317,12 +325,15 @@ int json_decode_init(json_parse_machine_t *sm, int len) {
     int r = 0;
     alloc_only_t *ao = NULL;
     if ( len ) {
-        r = sb_init(&buf);
-        if ( r < 0 ) return r;
-        r = sb_grow(&buf, len);
-        if ( r < 0 ) return r;
+        r = sb_size_init(&buf, len);
+        if ( r < 0 ) {
+            return r;
+        }
         ao = alloc_type(alloc_only_t);
-        if ( !ao ) return -1;
+        if ( !ao ) {
+            sb_free(&buf);
+            return -1;
+        }
         alloc_only_memory_set(ao, buf.start, len);
     }
     r = json_parse_machine_init(sm, ao);
@@ -333,7 +344,9 @@ int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) {
     const char *s = json;
     size_t i = 0;
     for ( i = 0; i < size; i++ ) {
-        if ( json_parse_machine_process(sm, s[i]) < 0 ) return -1;
+        if ( json_parse_machine_process(sm, s[i]) < 0 ) {
+            return -1;
+        }
     }
     return size;
 }
@@ -350,7 +363,7 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
         }
     }
     if ( sm->buffer ) {
-        free(sm->buffer);
+//        free(sm->buffer);
     }
     json_parse_machine_fin(sm);
     return root;

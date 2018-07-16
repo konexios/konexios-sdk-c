@@ -20,7 +20,7 @@ void set_http_cb(char *buf, int size) {
 void add_http_cb(char *buf, int size) {
     int i = 0;
     for ( i =0; i< 10 ; i++ ) {
-        if ( !http_r[i].text ) {
+        if ( !http_r[i].text && !http_r[i].http_size  ) {
             http_r[i].text = buf;
             http_r[i].http_size = size;
             break;
@@ -56,7 +56,12 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
     (void)(buf);
     (void)(flags);
 //    int size = sizeof(http_resp_text) - resp_count;
-    if ( http_r[http_resp_cout].http_size <= 0 ) return -1;
+    if ( http_r[http_resp_cout].http_size <= 0 ) {
+        if (http_r[http_resp_cout].http_size < 0 && !http_r[http_resp_cout].text) {
+            http_resp_cout++;
+        }
+        return -1;
+    }
     int size = http_r[http_resp_cout].http_size - resp_index;
     if ( size > len ) {
         size = len;

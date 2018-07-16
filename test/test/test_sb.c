@@ -20,13 +20,14 @@
 static uint8_t buffer[100];
 
 void setUp(void) {
-//    property_types_init();
-//    property_type_add(property_type_get_json());
+    property_types_init();
+    property_type_add(property_type_get_json());
+    property_type_add(property_type_get_aob());
     memset(buffer, 0x0, sizeof(buffer));
 }
 
 void tearDown(void) {
-//    property_types_deinit();
+    property_types_deinit();
 }
 
 void test_alloc_only_init(void) {

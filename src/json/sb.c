@@ -55,6 +55,17 @@ int sb_init(SB *sb) {
     return 0;
 }
 
+int sb_size_init(SB *sb, int need) {
+    sb->start = (char*) SB_ALLOC(need);
+    if (sb->start == NULL) {
+        DBG("SB: Out of memory");
+        return -1;
+    }
+    sb->cur = sb->start;
+    sb->end = sb->start + need;
+    return 0;
+}
+
 int sb_grow(SB *sb, int need) {
     size_t length = (size_t)(sb->cur - sb->start);
     size_t alloc = (size_t)(sb->end - sb->start);

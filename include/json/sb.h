@@ -19,6 +19,7 @@ typedef struct {
 } SB;
 
 int sb_init(SB *sb);
+int sb_size_init(SB *sb, int need);
 int sb_grow(SB *sb, int need);
 int sb_need(SB *sb, int need);
 int sb_put(SB *sb, const char *bytes, int count);
