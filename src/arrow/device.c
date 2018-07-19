@@ -87,26 +87,32 @@ static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
 #endif
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
-  arrow_device_init(device);
-  property_weak_copy(&device->gateway_hid, gateway->hid );
-  property_copy(&device->name, p_const(DEVICE_NAME));
-  property_copy(&device->type, p_const(DEVICE_TYPE));
-  property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
-  property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
+  if ( IS_EMPTY(device->gateway_hid) )
+      property_weak_copy(&device->gateway_hid, gateway->hid );
+  if ( IS_EMPTY(device->name) )
+      property_copy(&device->name, p_const(DEVICE_NAME));
+  if ( IS_EMPTY(device->type) )
+      property_copy(&device->type, p_const(DEVICE_TYPE));
+  if ( IS_EMPTY(device->softwareName) )
+      property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
+  if ( IS_EMPTY(device->softwareVersion) )
+      property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
+  if ( IS_EMPTY(device->uid) ) {
 #if defined(STATIC_ACN)
-  char *uid = static_device_uid;
+      char *uid = static_device_uid;
 #else
-  char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
+      char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
 #endif
-  strcpy(uid, P_VALUE(gateway->uid) );
-  strcat(uid, "-");
-  strcat(uid, DEVICE_UID_SUFFIX);
+      strcpy(uid, P_VALUE(gateway->uid) );
+      strcat(uid, "-");
+      strcat(uid, DEVICE_UID_SUFFIX);
 #if defined(STATIC_ACN)
-  property_t tmp = p_const(uid);
+      property_t tmp = p_const(uid);
 #else
-  property_t tmp = p_heap(uid);
+      property_t tmp = p_heap(uid);
 #endif
-  property_move(&device->uid, &tmp);
+      property_move(&device->uid, &tmp);
+  }
   return 0;
 }

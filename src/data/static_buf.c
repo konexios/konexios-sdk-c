@@ -97,7 +97,7 @@ static int __static_enlarge_memory(
     if ( start < 0 ) return -1;
     start /= chunk;
     r--;
-    if ( start + r >= _buf_size ) return -1;
+    if ( start + r >= (int)_buf_size ) return -1;
     for ( i = start + 1; !__is_in_use(__alloc_head, i) && __is_in_use(__alloc_space, i); i++ )
         r-- ;
     start = i;

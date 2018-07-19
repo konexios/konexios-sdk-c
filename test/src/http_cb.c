@@ -1,5 +1,6 @@
 #include "http_cb.h"
 #include <string.h>
+#include <bsd/socktype.h>
 
 typedef struct __test_http_resp_t {
     char *text;
@@ -56,6 +57,7 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
     (void)(buf);
     (void)(flags);
 //    int size = sizeof(http_resp_text) - resp_count;
+//    printf("--- %d --- \r\n", http_resp_cout);
     if ( http_r[http_resp_cout].http_size <= 0 ) {
         if (http_r[http_resp_cout].http_size < 0 && !http_r[http_resp_cout].text) {
             http_resp_cout++;
@@ -70,7 +72,7 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
     } else {
         if ( size <= 0 ) return -1;
         memcpy(buf, http_r[http_resp_cout].text + resp_index, size);
-        // printf("r[%s]\r\n", buf);
+//         printf("r[%s] %d\r\n", buf, size);
         resp_index += size;
 //        printf("---- last %d %d\r\n", resp_index, http_r[http_resp_cout].http_size);
         if ( resp_index == http_r[http_resp_cout].http_size &&
@@ -81,4 +83,14 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
         }
     }
     return size;
+}
+
+ssize_t sendto_cb(int sockfd, const void *buf, size_t len, int flags,
+               const struct sockaddr *dest_addr, socklen_t addrlen, int count) {
+    return send_cb(sockfd, buf, len, flags, count);
+}
+
+ssize_t recvfrom_cb(int sock, void *buf, size_t size, int flags,
+                 struct sockaddr *src_addr, socklen_t *addrlen, int count) {
+    return recv_cb(sock, buf, size, flags, count);
 }

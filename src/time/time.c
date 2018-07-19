@@ -11,7 +11,7 @@
 
 time_t build_time(void) {
   static const char *built = __DATE__ " " __TIME__;
-  struct tm t;
+  struct tm t = {0};
   const char *ret = (const char *)strptime(built, "%b %d %Y %H:%M:%S", &t);
   if ( ret ) {
     t.tm_hour = 0;

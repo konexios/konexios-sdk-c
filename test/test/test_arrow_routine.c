@@ -1,6 +1,7 @@
 #include "unity.h"
 #include <config.h>
 
+#include <debug.h>
 #include "api_gateway_gateway.h"
 #include "api_gateway_info.h"
 #include "http_routine.h"

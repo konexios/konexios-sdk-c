@@ -50,6 +50,8 @@ arrow_routine_error_t arrow_init(void) {
   property_types_init();
   property_type_add(property_type_get_json());
   property_type_add(property_type_get_aob());
+  arrow_gateway_init(&_gateway);
+  arrow_device_init(&_device);
   if ( __http_init() < 0 ) {
     return ROUTINE_ERROR;
   }
@@ -71,23 +73,26 @@ arrow_routine_error_t arrow_deinit(void) {
 
 int arrow_connect_gateway(arrow_gateway_t *gateway) {
   arrow_prepare_gateway(gateway);
-  int ret = restore_gateway_info(gateway);
-  if ( ret < 0 ) {
-    // new registration
-    if ( arrow_register_gateway(gateway) < 0 ) {
-      return -1;
-    }
-    save_gateway_info(gateway);
-  } else {
-    // hid already set
-    DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
-    return arrow_gateway_checkin(gateway);
+  if ( IS_EMPTY(gateway->hid) ) {
+      int ret = restore_gateway_info(gateway);
+      if ( ret < 0 ) {
+          // new registration
+          if ( arrow_register_gateway(gateway) < 0 ) {
+              return -1;
+          }
+          save_gateway_info(gateway);
+          return 0;
+      }
   }
-  return 0;
+  // hid already set
+  DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
+  return arrow_gateway_checkin(gateway);
 }
 
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   arrow_prepare_device(gateway, device);
+  if ( !IS_EMPTY(device->hid) )
+      return ROUTINE_SUCCESS;
   if ( restore_device_info(device) < 0 ) {
     if ( arrow_register_device(gateway, device) < 0 ) {
       return -1;
@@ -453,7 +458,7 @@ arrow_routine_error_t arrow_mqtt_event_receive_routine() {
   int ret = mqtt_yield(TELEMETRY_DELAY);
 #endif
   wdt_feed();
-  if ( ret == MQTT_SUCCESS ) {
+  if ( ret > 0 ) {
     return ROUTINE_RECEIVE_EVENT;
   }
   return ROUTINE_SUCCESS;

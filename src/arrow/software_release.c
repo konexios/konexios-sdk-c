@@ -176,9 +176,10 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   char *trans_hid = json_string(tmp);
   wdt_feed();
 
-  http_session_close_set(current_client(), false);
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
+#else
+  http_session_close_set(current_client(), false);
 #endif
   int retry = 0;
   while( arrow_software_releases_trans_received(trans_hid) < 0) {
@@ -209,7 +210,12 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       if ( ret < 0 ) goto software_release_done;
   }
   http_session_set_protocol(current_client(), api_via_http);
-  ret = arrow_software_release_download(_token, trans_hid, _checksum);
+  RETRY_CR(retry);
+  while ( (ret = arrow_software_release_download(_token, trans_hid, _checksum)) < 0 ) {
+      RETRY_UP(retry, { goto software_release_done; });
+      msleep(ARROW_RETRY_DELAY);
+  }
+//  ret = arrow_software_release_download(_token, trans_hid, _checksum);
 //#if defined(HTTP_VIA_MQTT)
 //  http_session_set_protocol(current_client(), 1);
 //#endif

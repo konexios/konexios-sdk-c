@@ -1,0 +1,1 @@
+../acn-sdk-c/include/ntp/client.h

@@ -146,7 +146,7 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_base_t
   unsigned int i = 0;
   for ( i = 0; i< sizeof(checker_collection) / sizeof(struct check_signature_t); i++ ) {
     if ( strcmp(vers, checker_collection[i].version ) == 0 ) {
-      DBG("check version %s", checker_collection[i].version);
+//      DBG("check version %s", checker_collection[i].version);
       return checker_collection[i].check(
                   sing,
                   ev->id,
@@ -236,7 +236,6 @@ static int mqtt_event_sign_checker(mqtt_event_base_t *base) {
 }
 
 // mqtt_event_t
-
 static json_parse_machine_t sm;
 
 int process_event_init(int size) {
@@ -255,8 +254,9 @@ int process_event_init(int size) {
 #endif
     }
 #endif
-    DBG("Static memory size %d", json_static_memory_max_sector());
-    DBG("need %d", size);
+    DBG("Static memory size %d [%d]",
+        json_static_memory_max_sector(),
+        size);
 #if defined(STATIC_ACN)
     // for signiture and for json  ojbect: size x 2
     // 1024 bytes for http answer
@@ -402,8 +402,9 @@ int process_http_init(int size) {
         }
     }
 #endif
-    DBG("Static http memory size %d", json_static_memory_max_sector());
-    DBG("need %d", size);
+    DBG("Static http memory size %d [%d]",
+        json_static_memory_max_sector(),
+        size);
 #if defined(STATIC_ACN)
     if ( size * (2) > json_static_memory_max_sector() - 512 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());

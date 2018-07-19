@@ -22,7 +22,7 @@ typedef struct __attribute_packed__ {
   property_t softwareVersion;
   JsonNode *info;
   JsonNode *prop;
-    property_t hid;
+  property_t hid;
 #if defined(__IBM__)
     property_t eid;
 #endif

@@ -363,7 +363,7 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
         }
     }
     if ( sm->buffer ) {
-//        free(sm->buffer);
+        free(sm->buffer);
     }
     json_parse_machine_fin(sm);
     return root;

@@ -71,15 +71,15 @@ property_t alloc_only_finish_property(alloc_only_t *p) {
 #include <json/json.h>
 #include <debug.h>
 
-void aob_copy(property_t *dst, property_t *src) {
-    // shouldn't be a copy in the same piece memory
-    property_copy_as(PROPERTY_DYNAMIC_TAG, dst, *src);
-}
-
 void aob_weak(property_t *dst, property_t *src) {
     dst->value = src->value;
     dst->size = src->size;
     dst->flags = PROPERTY_AOB_TAG;
+}
+
+void aob_copy(property_t *dst, property_t *src) {
+    // shouldn't be only weak copy
+    aob_weak(dst, src);
 }
 
 void aob_move(property_t *dst, property_t *src) {

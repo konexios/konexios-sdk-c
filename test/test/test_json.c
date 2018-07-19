@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
+#include <debug.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
 #include <data/linkedlist.h>
@@ -18,6 +19,7 @@
 #include <json/decode.h>
 
 extern int JsonNode_object_alloc_size();
+extern int dyn_static_mem_size();
 
 void setUp(void) {
     property_types_init();
@@ -44,7 +46,8 @@ static char test[512] = {0};
 
 #define STATIC_MEMORY_CHECK \
     TEST_ASSERT_EQUAL_INT(ARROW_MAX_JSON_OBJECTS, JsonNode_object_alloc_size()); \
-    TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector());
+    TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector()); \
+    TEST_ASSERT_EQUAL_INT(ARROW_DYNAMIC_STATIC_BUFFER_SIZE, dyn_static_mem_size());
 
 void test_parse_json_number(void) {
     snprintf(test, sizeof(test), JSON_INT_EX, "key", 100);

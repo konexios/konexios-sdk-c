@@ -34,19 +34,27 @@ static int headbyname( property_map_t *h, const char *name ) {
     return -1;
 }
 
+static int mqtt_error = 0;
 int http_mqtt_client_open(http_client_t *cli, http_request_t *req) {
     cli->response_code = 0;
     cli->request = req;
+    if ( mqtt_error ) {
+        if ( mqtt_connection_error() < 0 ) {
+            cli->sock = -1;
+            return -1;
+        } else {
+            mqtt_error = 0;
+            cli->sock = 0;
+        }
+    }
     if ( cli->protocol != api_via_mqtt ) return -1;
     return 0;
 }
 
-static int mqtt_error = 0;
 int http_mqtt_client_close(http_client_t *cli) {
     SSP_PARAMETER_NOT_USED(cli);
-    if ( cli->flags._close && mqtt_error ) {
-        mqtt_connection_error();
-        mqtt_error = 0;
+    if ( cli->flags._close ) {
+        cli->sock = -1;
     }
     return 0;
 }

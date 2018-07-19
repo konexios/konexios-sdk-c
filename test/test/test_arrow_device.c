@@ -1,7 +1,6 @@
 #include "unity.h"
-#include <stdlib.h>
-#include <string.h>
 #include <config.h>
+#include <debug.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>
 #include <sys/mem.h>

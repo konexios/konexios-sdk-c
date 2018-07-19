@@ -13,6 +13,10 @@
 #include <data/static_buf.h>
 CREATE_BUFFER(dynamicbuf, ARROW_DYNAMIC_STATIC_BUFFER_SIZE, 0x20)
 
+int dyn_static_mem_size() {
+    return static_max_piece(dynamicbuf);
+}
+
 static void *static_strndup(char *ptr, int size) {
     void *p = static_buf_alloc(dynamicbuf, size + 1);
     if ( !p ) {

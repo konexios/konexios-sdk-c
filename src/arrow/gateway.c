@@ -89,33 +89,40 @@ static char static_gateway_uid[GATEWAY_UID_SIZE];
 #endif
 
 int arrow_prepare_gateway(arrow_gateway_t *gateway) {
-  arrow_gateway_init(gateway);
-  property_copy( &gateway->name, p_const(GATEWAY_NAME));
-  property_copy( &gateway->os, p_const(GATEWAY_OS));
-  property_copy( &gateway->software_name, p_const(GATEWAY_SOFTWARE_NAME));
-  property_copy( &gateway->software_version, p_const(GATEWAY_SOFTWARE_VERSION));
-  property_copy( &gateway->type, p_const(GATEWAY_TYPE));
-  property_copy( &gateway->sdkVersion, p_const(xstr(SDK_VERSION)));
+  if ( IS_EMPTY(gateway->name) )
+      property_copy( &gateway->name, p_const(GATEWAY_NAME));
+  if ( IS_EMPTY(gateway->os) )
+      property_copy( &gateway->os, p_const(GATEWAY_OS));
+  if ( IS_EMPTY(gateway->software_name) )
+      property_copy( &gateway->software_name, p_const(GATEWAY_SOFTWARE_NAME));
+  if ( IS_EMPTY(gateway->software_version) )
+      property_copy( &gateway->software_version, p_const(GATEWAY_SOFTWARE_VERSION));
+  if ( IS_EMPTY(gateway->type) )
+      property_copy( &gateway->type, p_const(GATEWAY_TYPE));
+  if ( IS_EMPTY(gateway->sdkVersion) )
+      property_copy( &gateway->sdkVersion, p_const(xstr(SDK_VERSION)));
+  if ( IS_EMPTY(gateway->uid) ) {
 #if defined(STATIC_ACN)
-  char *uid = static_gateway_uid;
+      char *uid = static_gateway_uid;
 #else
-  char *uid = (char*)malloc(GATEWAY_UID_SIZE); // 6*2 for mac + 2
+      char *uid = (char*)malloc(GATEWAY_UID_SIZE); // 6*2 for mac + 2
 #endif
-  strcpy(uid, GATEWAY_UID_PREFIX);
-  strcat(uid, "-");
-  uint32_t uidlen = sizeof(GATEWAY_UID_PREFIX);
-  char mac[7];
-  get_mac_address(mac);
-  int i = 0;
-  for(i=0; i<6; i++) sprintf(uid+uidlen+2*i, "%02x", (uint8_t)(mac[i]));
-  uidlen += 12;
-  uid[uidlen] = '\0';
-  DBG("uid: [%s]", uid);
+      strcpy(uid, GATEWAY_UID_PREFIX);
+      strcat(uid, "-");
+      uint32_t uidlen = sizeof(GATEWAY_UID_PREFIX);
+      char mac[7];
+      get_mac_address(mac);
+      int i = 0;
+      for(i=0; i<6; i++) sprintf(uid+uidlen+2*i, "%02x", (uint8_t)(mac[i]));
+      uidlen += 12;
+      uid[uidlen] = '\0';
+      DBG("uid: [%s]", uid);
 #if defined(STATIC_ACN)
-  property_t tmp = p_const(uid);
+      property_t tmp = p_const(uid);
 #else
-  property_t tmp = p_heap(uid);
+      property_t tmp = p_heap(uid);
 #endif
-  property_move( &gateway->uid, &tmp);
+      property_move( &gateway->uid, &tmp);
+  }
   return 0;
 }
