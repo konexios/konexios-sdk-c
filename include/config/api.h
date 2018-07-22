@@ -17,12 +17,17 @@
 # define HTTP_CIPHER
 #endif
 
+enum {
+    arrow_scheme_http,
+    arrow_scheme_https
+};
+
 /* cloud connectivity */
 #if defined(HTTP_CIPHER)
-# define ARROW_SCH "https"
+# define ARROW_SCH arrow_scheme_https
 # define ARROW_PORT 443
 #else
-# define ARROW_SCH "http"
+# define ARROW_SCH arrow_scheme_http
 # define ARROW_PORT 12001
 #endif
 #if defined(DEV_ENV)
@@ -32,16 +37,16 @@
 #endif
 
 #define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
-#define ARROW_API_GATEWAY_ENDPOINT          ARROW_API_BASE_URL "/api/v1/kronos/gateways"
-#define ARROW_API_DEVICE_ENDPOINT           ARROW_API_BASE_URL "/api/v1/kronos/devices"
-#define ARROW_API_TELEMETRY_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/telemetries"
-#define ARROW_API_EVENTS_ENDPOINT           ARROW_API_BASE_URL "/api/v1/core/events"
-#define ARROW_API_ACCOUNT_ENDPOINT          ARROW_API_BASE_URL "/api/v1/kronos/accounts"
-#define ARROW_API_NODE_ENDPOINT             ARROW_API_BASE_URL "/api/v1/kronos/nodes"
-#define ARROW_API_NODE_TYPE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/nodes/types"
-#define ARROW_API_TESTSUITE_ENDPOINT        ARROW_API_BASE_URL "/api/v1/kronos/testsuite"
-#define ARROW_API_SOFTWARE_RELEASE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/transactions"
-#define ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT ARROW_API_BASE_URL "/api/v1/kronos/software/releases/schedules"
+#define ARROW_API_GATEWAY_ENDPOINT          "/api/v1/kronos/gateways"
+#define ARROW_API_DEVICE_ENDPOINT           "/api/v1/kronos/devices"
+#define ARROW_API_TELEMETRY_ENDPOINT        "/api/v1/kronos/telemetries"
+#define ARROW_API_EVENTS_ENDPOINT           "/api/v1/core/events"
+#define ARROW_API_ACCOUNT_ENDPOINT          "/api/v1/kronos/accounts"
+#define ARROW_API_NODE_ENDPOINT             "/api/v1/kronos/nodes"
+#define ARROW_API_NODE_TYPE_ENDPOINT        "/api/v1/kronos/nodes/types"
+#define ARROW_API_TESTSUITE_ENDPOINT        "/api/v1/kronos/testsuite"
+#define ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/api/v1/kronos/software/releases/transactions"
+#define ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT "/api/v1/kronos/software/releases/schedules"
 
 /* default gateway and device configuration */
 /* default gateway configuration */

@@ -55,7 +55,7 @@ static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
   http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
@@ -72,7 +72,7 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s/batch", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
   int i = 0;
@@ -108,7 +108,7 @@ static void _telemetry_find_by_application_hid_init(http_request_t *request, voi
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/applications/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }
@@ -132,7 +132,7 @@ static void _telemetry_find_by_device_hid_init(http_request_t *request, void *ar
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }
@@ -204,7 +204,7 @@ static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg)
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/nodes/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }

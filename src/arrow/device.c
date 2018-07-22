@@ -52,12 +52,14 @@ void arrow_device_add_property(arrow_device_t *dev, property_t key, const char *
 
 property_t arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, p_const("name"), json_mkstring(P_VALUE(dev->name)));
-  json_append_member(_main, p_const("type"), json_mkstring(P_VALUE(dev->type)));
-  json_append_member(_main, p_const("uid"), json_mkstring(P_VALUE(dev->uid)));
-  json_append_member(_main, p_const("gatewayHid"), json_mkstring(P_VALUE(dev->gateway_hid)));
-  json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareName)));
-  json_append_member(_main, p_const("softwareVersion"), json_mkstring(P_VALUE(dev->softwareVersion)));
+  property_t weak;
+  json_append_member(_main, p_const("name"), json_mkproperty(&dev->name));
+  json_append_member(_main, p_const("type"), json_mkproperty(&dev->type));
+  property_weak_copy(&weak, dev->uid);
+  json_append_member(_main, p_const("uid"), json_mkproperty(&weak));
+  json_append_member(_main, p_const("gatewayHid"), json_mkproperty(&dev->gateway_hid));
+  json_append_member(_main, p_const("softwareName"), json_mkproperty(&dev->softwareName));
+  json_append_member(_main, p_const("softwareVersion"), json_mkproperty(&dev->softwareVersion));
   if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
   if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
   property_t dev_property = json_encode_property(_main);

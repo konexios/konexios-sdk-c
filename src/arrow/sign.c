@@ -61,8 +61,12 @@ char *get_secret_key(void) {
 }
 
 static void set_key(iot_key_t *iot, char *newkey) {
-  memcpy(iot->key, newkey, strlen(newkey));
-  iot->key[strlen(newkey)] = '\0';
+    if ( newkey ) {
+        memcpy(iot->key, newkey, strlen(newkey));
+        iot->key[strlen(newkey)] = '\0';
+    } else {
+        iot->key = NULL;
+    }
 }
 
 void set_api_key(char *newkey) {

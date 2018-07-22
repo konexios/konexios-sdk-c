@@ -23,7 +23,7 @@ static void _gateway_config_init(http_request_t *request, void *arg) {
                        ARROW_API_GATEWAY_ENDPOINT,
                        P_VALUE(gateway->hid) );
     if ( ret > 0 ) uri[ret] = 0x0;
-	http_request_init(request, GET, uri);
+    http_request_init(request, GET, &p_stack(uri));
 	FREE_CHUNK(uri);
 }
 
@@ -103,10 +103,12 @@ int arrow_gateway_config(arrow_gateway_t *gateway, arrow_gateway_config_t *confi
 
 static void _gateway_register_init(http_request_t *request, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  http_request_init(request, POST, ARROW_API_GATEWAY_ENDPOINT);
+  http_request_init(request, POST, &p_const(ARROW_API_GATEWAY_ENDPOINT));
   if ( IS_EMPTY(gateway->uid) )
       arrow_prepare_gateway(gateway);
-  http_request_set_payload(request, arrow_gateway_serialize(gateway));
+  property_t pay = arrow_gateway_serialize(gateway);
+  if ( IS_EMPTY(pay) ) return;
+  http_request_set_payload(request, pay);
 }
 
 static int _gateway_register_proc(http_response_t *response, void *arg) {
@@ -136,7 +138,7 @@ static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      P_VALUE(gateway->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -154,7 +156,7 @@ static void _gateway_checkin_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      P_VALUE(gateway->hid));
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -172,7 +174,7 @@ static void _gateway_find_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      hid);
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -200,7 +202,7 @@ int arrow_gateway_find(gateway_info_t *info, const char *hid) {
 
 static void _gateway_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
-  http_request_init(request, GET, ARROW_API_GATEWAY_ENDPOINT);
+  http_request_init(request, GET, &p_const(ARROW_API_GATEWAY_ENDPOINT));
   http_request_set_findby(request, params);
 }
 
@@ -232,7 +234,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      P_VALUE(dp->gate->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, dp->params);
 }
@@ -257,7 +259,7 @@ static void _gateway_devices_list_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/%s/devices", ARROW_API_GATEWAY_ENDPOINT, hid);
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -289,7 +291,7 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
            gdc->g_hid,
            gdc->d_hid);
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("command"), json_mkstring(gdc->cmd));
@@ -319,7 +321,7 @@ static void _gateway_errors_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      P_VALUE(de->gateway->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, p_const("error"), json_mkstring(de->error));
@@ -342,7 +344,7 @@ static void _gateway_update_init(http_request_t *request, void *arg) {
                      ARROW_API_GATEWAY_ENDPOINT,
                      P_VALUE(gate->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, arrow_gateway_serialize(gate));
 }

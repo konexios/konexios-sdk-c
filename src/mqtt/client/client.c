@@ -218,7 +218,7 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     }
     header.head.byte = tmp[0];
     pack_type = (uint32_t)header.head.bits.type;
-    DBG("mqtt recv type %d", (int)pack_type);
+//    DBG("mqtt recv type %d", (int)pack_type);
     if ( pack_type < 1 || pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) {
         rc = FAILURE;
         goto exit;

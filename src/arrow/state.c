@@ -227,7 +227,7 @@ static void _state_get_init(http_request_t *request, void *arg) {
   strcat(uri, "/");
   strcat(uri, P_VALUE(device->hid));
   strcat(uri, "/state");
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -287,8 +287,8 @@ static void _state_post_init(http_request_t *request, void *arg) {
       FREE_CHUNK(uri);
       return;
   }
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
-  http_request_init(request, POST, uri);
   JsonNode *_main = NULL;
   JsonNode *_states = NULL;
   _main = json_mkobject();
@@ -397,8 +397,8 @@ static void _state_put_init(http_request_t *request, void *arg) {
       FREE_CHUNK(uri);
       return;
   }
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
-  http_request_init(request, PUT, uri);
   if ( _error ) {
     http_request_set_payload(request, json_encode_property(_error));
     json_delete(_error);

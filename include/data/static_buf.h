@@ -16,14 +16,16 @@ void  __static_free(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buff
 void *__static_realloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, void *ptr, int size, size_t chunk);
 int   __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk);
 int   __static_buf_clean(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk);
+int __static_buf_free_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk);
 
 #define CREATE_BUFFER(name, size, chunk) \
-static const uint32_t __##name##_chunk = chunk; \
-static uint32_t __##name##_size = ((size) / chunk); \
-static uint8_t name[size] = {0}; \
-static uint8_t __alloc_space_##name[((size) / chunk)>>3] = {0}; \
-static uint8_t __alloc_head_##name[((size) / chunk)>>3] = {0};
+static const uint32_t __##name##_chunk = (chunk); \
+static uint32_t __##name##_size = ((size) / (chunk)); \
+static uint8_t name[(size)] = {0}; \
+static uint8_t __alloc_space_##name[1 + (((size) / (chunk))>>3)] = {0}; \
+static uint8_t __alloc_head_##name[1 + (((size) / (chunk))>>3)] = {0}; \
 
+#define static_buf_free_size(name) __static_buf_free_size(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, __##name##_chunk)
 #define static_max_piece(name) __find_max_alloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, __##name##_chunk)
 #define static_buf_clear_all(name) __static_buf_clean(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, __##name##_chunk)
 #define static_buf_alloc(name, size) __static_alloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, size, __##name##_chunk)

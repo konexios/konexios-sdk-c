@@ -158,6 +158,7 @@ void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value
 void json_remove_from_parent(JsonNode *node);
 
 int json_static_memory_max_sector(void);
+int json_static_free_size(void);
 
 /*** Debugging ***/
 

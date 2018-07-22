@@ -46,7 +46,7 @@ static void _gateway_software_releases_trans_init(http_request_t *request, void 
   CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/gateways/upgrade");
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
@@ -77,7 +77,7 @@ static void _device_software_releases_trans_init(http_request_t *request, void *
   CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/devices/upgrade");
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
@@ -129,7 +129,7 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   if ( n < 0 ) return;
   uri[n] = 0x0;
   DBG("uri %s", uri);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   if ( ans->state == fail && ans->error ) {
     JsonNode *_error = json_mkobject();
@@ -160,7 +160,7 @@ static void _software_releases_start_init(http_request_t *request, void *arg) {
   int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
   if ( n < 0 ) return;
   uri[n] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -308,7 +308,7 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   int n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/%s/file", th->hid, th->token);
   if (n < 0) return;
   uri[n] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
   wdt_feed();
@@ -379,7 +379,7 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     int n = snprintf(uri, URI_LEN, "%s/start", ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
     if (n < 0) return;
     uri[n] = 0x0;
-    http_request_init(request, POST, uri);
+    http_request_init(request, POST, &p_stack(uri));
     http_request_add_header(request,
                             p_const("x-arrow-apikey"),
                             p_const(DEFAULT_API_KEY));

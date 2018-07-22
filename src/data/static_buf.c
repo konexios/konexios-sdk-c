@@ -41,6 +41,22 @@ int __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buf
     SSP_PARAMETER_NOT_USED(__alloc_head);
   int i = 0;
   int sector = 0;
+  int max = 0;
+  for (i=0; i < (int)_buf_size; i++) {
+    if ( !__is_in_use(__alloc_space, i) ) ++sector;
+    else {
+        if ( max < sector ) max = sector;
+        sector = 0;
+    }
+  }
+  if ( max < sector ) max = sector;
+  return max * chunk;
+}
+
+int __static_buf_free_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
+    SSP_PARAMETER_NOT_USED(__alloc_head);
+  int i = 0;
+  int sector = 0;
   for (i=0; i < (int)_buf_size; i++) {
     if ( !__is_in_use(__alloc_space, i) ) ++sector;
   }

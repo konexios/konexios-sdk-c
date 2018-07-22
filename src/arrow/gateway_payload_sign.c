@@ -265,41 +265,38 @@ int arrow_event_sign(char *signature,
                      const char *name,
                      int encrypted,
                      JsonNode *_parameters) {
+    int ret = -1;
     if ( !_parameters ) {
         DBG("SIGN: No json parameters");
-        return -1;
+        goto sign_error;
     }
     int can_par_len = json_size(_parameters);
     DBG("want %d bytes for sign", can_par_len);
     if ( can_par_len > json_static_memory_max_sector() ) {
-        return -1;
+        DBG("SIGN: No memory");
+        goto sign_error;
     }
     SB can_par_sb;
-    if ( sb_init(&can_par_sb) < 0 ) {
-        return -1;
+    if ( sb_size_init(&can_par_sb, can_par_len) < 0 ) {
+        DBG("SIGN: memory alloc fail");
+        goto sign_error;
     }
-    if ( sb_grow(&can_par_sb, can_par_len) < 0 ) {
-        return -1;
-    }
-    if ( sb_size(&can_par_sb) < can_par_len ) {
-        return -1;
-    }
+
     char *can = form_canonical_prm(_parameters,
                                    can_par_sb.start,
-                                   sb_size(&can_par_sb));
-    if ( !can ) goto sign_error;
-    int err = gateway_payload_sign(signature,
+                                   can_par_len);
+    if ( !can ) goto sign_mem_error;
+    ret = gateway_payload_sign(signature,
                                    P_VALUE(ghid),
                                    name,
                                    encrypted,
                                    can,
                                    "1");
-    sb_free(&can_par_sb);
-    if ( err < 0 ) goto sign_error;
 #if !defined(STATIC_MQTT_ENV)
     free(can);
 #endif
-    return 0;
+sign_mem_error:
+    sb_free(&can_par_sb);
 sign_error:
-    return -1;
+    return ret;
 }

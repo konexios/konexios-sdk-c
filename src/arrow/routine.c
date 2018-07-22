@@ -50,6 +50,7 @@ arrow_routine_error_t arrow_init(void) {
   property_types_init();
   property_type_add(property_type_get_json());
   property_type_add(property_type_get_aob());
+  arrow_hosts_init();
   arrow_gateway_init(&_gateway);
   arrow_device_init(&_device);
   if ( __http_init() < 0 ) {
@@ -90,12 +91,13 @@ int arrow_connect_gateway(arrow_gateway_t *gateway) {
 }
 
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+  int ret = 0;
   arrow_prepare_device(gateway, device);
   if ( !IS_EMPTY(device->hid) )
       return ROUTINE_SUCCESS;
   if ( restore_device_info(device) < 0 ) {
-    if ( arrow_register_device(gateway, device) < 0 ) {
-      return -1;
+    if ( (ret = arrow_register_device(gateway, device)) < 0 ) {
+      goto dev_reg_error;
     }
     save_device_info(device);
   }
@@ -113,6 +115,9 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   }
 #endif
   return 0;
+dev_reg_error:
+  arrow_device_free(device);
+  return ret;
 }
 
 arrow_routine_error_t arrow_gateway_initialize_routine(void) {
@@ -142,8 +147,9 @@ arrow_routine_error_t arrow_initialize_routine(void) {
   wdt_feed();
   http_session_close_set(current_client(), false);
   int retry = 0;
+  int ret = 0;
   DBG("register gateway via API");
-  while ( arrow_connect_gateway(&_gateway) < 0 ) {
+  while ( (ret = arrow_connect_gateway(&_gateway)) < 0 ) {
     RETRY_UP(retry, {goto gateway_reg_error;});
     DBG(GATEWAY_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
@@ -152,7 +158,7 @@ arrow_routine_error_t arrow_initialize_routine(void) {
 
   wdt_feed();
   RETRY_CR(retry);
-  while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
+  while ( (ret = arrow_gateway_config(&_gateway, &_gateway_config)) < 0 ) {
     RETRY_UP(retry, {goto gateway_config_error;});
     DBG(GATEWAY_CONFIG, "fail");
     msleep(ARROW_RETRY_DELAY);
@@ -165,7 +171,7 @@ arrow_routine_error_t arrow_initialize_routine(void) {
   DBG("register device via API");
   // close session after next request
   http_session_close_set(current_client(), true);
-  while ( arrow_connect_device(&_gateway, &_device) < 0 ) {
+  while ( (ret = arrow_connect_device(&_gateway, &_device)) < 0 ) {
     RETRY_UP(retry, {goto device_reg_error;});
     DBG(DEVICE_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
@@ -179,7 +185,7 @@ gateway_config_error:
   arrow_gateway_config_free(&_gateway_config);
 gateway_reg_error:
   arrow_gateway_free(&_gateway);
-  return ROUTINE_ERROR;
+  return ret;
 }
 
 arrow_routine_error_t arrow_device_states_sync() {

@@ -79,7 +79,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
     CREATE_CHUNK(uri, sizeof(ARROW_API_EVENTS_ENDPOINT) + 100);
     event_data_t *data = (event_data_t *)arg;
     form_evetns_url(data->hid, data->ev, uri);
-    http_request_init(request, PUT, uri);
+    http_request_init(request, PUT, &p_stack(uri));
     FREE_CHUNK(uri);
     if ( !IS_EMPTY(data->payload) ) {
       http_request_set_payload(request, data->payload);

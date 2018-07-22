@@ -463,6 +463,7 @@ static JsonNode *mknode(JsonTag tag)
     if (ret == NULL) {
         out_of_memory();
     } else {
+        memset(ret, 0x0, sizeof(JsonNode));
         ret->tag = tag;
     }
     return ret;
@@ -488,6 +489,7 @@ static JsonNode *mkstring(property_t *s) {
 
 JsonNode *json_mkstring(const char *s) {
     property_t p = json_strdup_property(s);
+    if ( IS_EMPTY(p) ) return NULL;
     return mkstring(&p);
 }
 

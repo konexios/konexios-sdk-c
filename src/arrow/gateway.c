@@ -20,25 +20,50 @@ void arrow_gateway_init(arrow_gateway_t *gate) {
   memset(gate, 0, sizeof(arrow_gateway_t));
 }
 
+#include <arrow/storage.h>
+
 property_t arrow_gateway_serialize(arrow_gateway_t *gate) {
   JsonNode *_main = json_mkobject();
   if ( !IS_EMPTY( gate->name ) )
-    json_append_member(_main, p_const("name"), json_mkstring( P_VALUE(gate->name) ));
-  if ( !IS_EMPTY( gate->uid ) )
-    json_append_member(_main, p_const("uid"), json_mkstring( P_VALUE(gate->uid) ));
+    json_append_member(_main, p_const("name"), json_mkproperty(&gate->name));
+  if ( !IS_EMPTY( gate->uid ) ) {
+      property_t weak;
+      property_weak_copy(&weak, gate->uid);
+    json_append_member(_main, p_const("uid"), json_mkproperty(&weak));
+  }
   if ( !IS_EMPTY(gate->os) )
-    json_append_member(_main, p_const("osName"), json_mkstring( P_VALUE(gate->os) ));
+    json_append_member(_main, p_const("osName"), json_mkproperty(&gate->os));
   if ( !IS_EMPTY(gate->type) )
-    json_append_member(_main, p_const("type"), json_mkstring( P_VALUE(gate->type) ));
+    json_append_member(_main, p_const("type"), json_mkproperty(&gate->type));
   if ( !IS_EMPTY(gate->software_name) )
-    json_append_member(_main, p_const("softwareName"), json_mkstring( P_VALUE(gate->software_name) ));
+    json_append_member(_main, p_const("softwareName"), json_mkproperty(&gate->software_name));
   if ( !IS_EMPTY(gate->software_version) )
-    json_append_member(_main, p_const("softwareVersion"), json_mkstring( P_VALUE(gate->software_version) ));
+    json_append_member(_main, p_const("softwareVersion"), json_mkproperty(&gate->software_version));
   if ( !IS_EMPTY(gate->sdkVersion) )
-    json_append_member(_main, p_const("sdkVersion"), json_mkstring( P_VALUE(gate->sdkVersion) ));
+    json_append_member(_main, p_const("sdkVersion"), json_mkproperty(&gate->sdkVersion));
+
+
+  char tmphid[46] = {0};
+  if ( restore_apphid_address(tmphid) == 0 ) {
+      json_append_member(_main, p_const("applicationHid"), json_mkstring( tmphid ));
+  } else {
+      DBG("no application hid!");
+//      goto error;
+  }
+
+  if ( restore_userhid_address(tmphid) == 0 ) {
+      json_append_member(_main, p_const("userHid"), json_mkstring( tmphid ));
+  } else {
+      DBG("no user hid!");
+//      goto error;
+  }
+
   property_t tmp = json_encode_property(_main);
   json_delete(_main);
   return tmp;
+//error:
+//  json_delete(_main);
+//  return p_null();
 }
 
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
