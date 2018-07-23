@@ -58,7 +58,7 @@ typedef struct __attribute_packed__ {
     _payload_meth_t _response_payload_meth;
 } http_request_t;
 
-void http_request_init(http_request_t *req, int meth, property_t *uri);
+int  http_request_init(http_request_t *req, int meth, property_t *uri);
 void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, property_t key, property_t value);
 void http_request_set_header(http_request_t *req, property_t key, property_t value);

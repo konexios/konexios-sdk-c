@@ -154,7 +154,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   cmd_handler *cmd_h = NULL;
   linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
   if ( cmd_h ) {
-    ret = cmd_h->callback(P_VALUE(pay->string_));
+    ret = cmd_h->callback(pay->string_);
     if ( ret < 0 ) {
       _error = json_mkobject();
       json_append_member(_error, p_const("error"),

@@ -6,6 +6,7 @@
 #include "http_routine.h"
 #include "socket_weak.h"
 
+#include <arrow/credentials.h>
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
 #include <arrow/api/device/info.h>
@@ -77,17 +78,22 @@
 #include "mock_mac.h"
 #include "mock_watchdog.h"
 #include "mock_sockdecl.h"
-#include "mock_storage.h"
 #include "mock_telemetry.h"
 #include "mock_api_gateway_gateway.h"
 #include "mock_api_device_device.h"
 
+#include <arrow/storage.h>
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 void setUp(void) {
-    arrow_init();
+    if ( arrow_init() < 0 ) {
+        printf("arrow_init fail!\r\n");
+        return;
+    }
 }
 
 void tearDown(void) {
@@ -97,8 +103,8 @@ void tearDown(void) {
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"
 #define TEST_DEVICE_HID "86241a5e939baa7da58faff3527eb021d06d5e9a"
 
-static int test_cmd_proc(const char *s) {
-  printf("test: [%s]\t\n", s);
+static int test_cmd_proc(property_t p) {
+  printf("test: [%s]\t\n", P_VALUE(p));
 //  printf("static json buffer before %d\r\n", json_static_memory_max_sector());
 //  JsonNode *j = json_decode(str);
 //  if ( !j ) return -1;
@@ -146,7 +152,8 @@ void test_mqtt_connect(void) {
     struct sockaddr_in *serv = prepsock(fake_addr, MQTT_PORT);
 
     wdt_feed_IgnoreAndReturn(0);
-    restore_gateway_info_IgnoreAndReturn(0);
+    fake_set_gateway_hid(TEST_GATEWAY_HID);
+    fake_set_device_hid(TEST_DEVICE_HID);
     arrow_gateway_checkin_IgnoreAndReturn(0);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
@@ -166,9 +173,7 @@ void test_mqtt_connect(void) {
     add_http_cb(mqtt_puback_text, sizeof(mqtt_puback_text));
     add_http_cb(mqtt_api_pub_text, sizeof(mqtt_api_pub_text)-1);
 
-    save_gateway_info_Ignore();
     arrow_gateway_config_IgnoreAndReturn(0);
-    restore_device_info_IgnoreAndReturn(0);
 
     gethostbyname_ExpectAndReturn(MQTT_COMMAND_ADDR, fake_addr);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);

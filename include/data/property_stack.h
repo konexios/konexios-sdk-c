@@ -17,8 +17,8 @@ extern "C" {
 
 #define PROPERTY_STACK_TAG      3
 
-#define p_stack(x)           property(x, PROPERTY_STACK_TAG | is_owner, strlen((char *)x))
-#define p_stack_raw(x, len)  property(x, PROPERTY_STACK_TAG | is_owner | is_raw, (len))
+#define p_stack(x)           property((char*)x, PROPERTY_STACK_TAG | is_owner, strlen((char *)x))
+#define p_stack_raw(x, len)  property((char*)x, PROPERTY_STACK_TAG | is_owner | is_raw, (len))
 
 property_dispetcher_t *property_type_get_stack();
 

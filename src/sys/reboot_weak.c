@@ -9,5 +9,5 @@
 #include "sys/reboot.h"
 
 void __attribute__((weak)) reboot(void) {
-  // nop
+  while(1) ;
 }

@@ -368,3 +368,14 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
     json_parse_machine_fin(sm);
     return root;
 }
+
+JsonNode *json_decode_property(property_t *prop) {
+    int size = property_size(prop);
+    int ret = -1;
+    json_parse_machine_t sm;
+    ret = json_decode_init(&sm, size);
+    if ( ret < 0 ) return NULL;
+    ret = json_decode_part(&sm, P_VALUE(*prop), size);
+    if ( ret < 0 ) return NULL;
+    return json_decode_finish(&sm);
+}

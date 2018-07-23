@@ -3,6 +3,7 @@
 #include <string.h>
 #include <config.h>
 #include <debug.h>
+#include <arrow/credentials.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
 #include <arrow/utf8.h>
@@ -24,6 +25,10 @@
 #include <http/request.h>
 #include <http/response.h>
 #include <data/find_by.h>
+
+#include <arrow/storage.h>
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();

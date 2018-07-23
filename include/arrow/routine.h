@@ -40,12 +40,12 @@ arrow_gateway_config_t *current_gateway_config(void);
 // Initialize the gateway object and device object as well
 // This function implemented the algorithm to get complete information about a gateway and device.
 // The WDT function is used.
-arrow_routine_error_t arrow_init(void);
+arrow_routine_error_t arrow_init(void) __attribute_warn_unused_result__;
 arrow_routine_error_t arrow_deinit(void);
 
-arrow_routine_error_t arrow_initialize_routine(void);
+arrow_routine_error_t arrow_initialize_routine(void) __attribute_warn_unused_result__;
 
-arrow_routine_error_t arrow_gateway_initialize_routine(void);
+arrow_routine_error_t arrow_gateway_initialize_routine(void) __attribute_warn_unused_result__;
 
 // Routine function for terminating current connections with the cloud
 // and terminate all gateway/device information.

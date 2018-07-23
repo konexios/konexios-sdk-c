@@ -41,6 +41,10 @@ static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
 
 #define out_of_memory() { DBG("JSON: Out of memory"); }
 
+int JsonNode_object_alloc_size() {
+    return static_alloc_size(JsonNode) / sizeof(JsonNode);
+}
+
 /* Sadly, strdup is not portable. */
 char *json_strdup(const char *s) {
     SB out;

@@ -1,6 +1,5 @@
 #include "http_cb.h"
 #include <string.h>
-#include <bsd/socktype.h>
 
 typedef struct __test_http_resp_t {
     char *text;

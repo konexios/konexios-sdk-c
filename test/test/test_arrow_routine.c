@@ -8,6 +8,7 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
+#include <arrow/credentials.h>
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
 #include <arrow/api/device/info.h>
@@ -79,15 +80,19 @@
 #include "mock_mac.h"
 #include "mock_watchdog.h"
 #include "mock_sockdecl.h"
-#include "mock_storage.h"
 #include "mock_telemetry.h"
 
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 void setUp(void) {
-    arrow_init();
+    if ( arrow_init() < 0 ) {
+        printf("arrow_init init fail!\r\n");
+        return;
+    }
 }
 
 void tearDown(void) {
@@ -120,7 +125,6 @@ static arrow_gateway_config_t _test_gateway_config;
 
 void test_arrow_connect_gateway(void) {
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
-    restore_gateway_info_IgnoreAndReturn(-1);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
     set_http_cb(gateway_register_text, sizeof(gateway_register_text));
@@ -133,7 +137,6 @@ void test_arrow_connect_gateway(void) {
     send_StubWithCallback(send_cb);
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
-    save_gateway_info_Expect(&_test_gateway);
 
     int ret = arrow_connect_gateway(&_test_gateway);
     TEST_ASSERT_EQUAL_INT(0, ret);
@@ -174,7 +177,6 @@ void test_arrow_gateway_initialize_routine() {
     struct sockaddr_in *serv = prepsock(fake_addr, ARROW_PORT);
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     wdt_feed_IgnoreAndReturn(0);
-    restore_gateway_info_IgnoreAndReturn(-1);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
@@ -183,7 +185,6 @@ void test_arrow_gateway_initialize_routine() {
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);
     recv_StubWithCallback(recv_cb);
-    save_gateway_info_Expect(current_gateway());
     soc_close_Expect(0);
 
     int ret = arrow_gateway_initialize_routine();

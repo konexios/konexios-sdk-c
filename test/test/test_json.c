@@ -296,7 +296,8 @@ void show_json_obj(JsonNode *o) {
 void test_parse_json_number_part(void) {
     snprintf(test, sizeof(test), JSON_INT_EX, "key", 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     JsonNode *_main = json_decode_finish(&sm);
     show_json_obj(_main);
@@ -314,7 +315,8 @@ void test_parse_json_number_part(void) {
 void test_parse_json_number_fail_part(void) {
     snprintf(test, sizeof(test), "{\"key\":12o}");
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( -1, pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -328,7 +330,8 @@ void test_parse_json_number_fail_part(void) {
 void test_parse_json_double_part(void) {
     snprintf(test, sizeof(test), "{ \"%s\":%4.2f }", "key", 3.14);
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -344,7 +347,8 @@ void test_parse_json_double_part(void) {
 void test_parse_json_number2_part(void) {
     snprintf(test, sizeof(test), "{\"k1\":%d, \"k2\":%d}", 200, 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
 
@@ -365,7 +369,8 @@ void test_parse_json_number2_part(void) {
 void test_parse_json_number_array_part(void) {
     snprintf(test, sizeof(test), "[ { \"k\":%d }, { \"k\":%d } ]", 200, 100);
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -386,7 +391,8 @@ void test_parse_json_number_array_part(void) {
 void test_parse_json_string_bool_array_part(void) {
     snprintf(test, sizeof(test), "[ { \"k\":\"first\",\"active\":true }, { \"k\":\"second\",\"active\":false } ]");
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -413,7 +419,8 @@ void test_parse_json_string_bool_array_part(void) {
 void test_parse_json_bool_true_part(void) {
     snprintf(test, sizeof(test), JSON_BOOL_EX, "key", bool2str(true));
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -430,7 +437,8 @@ void test_parse_json_bool_true_part(void) {
 void test_parse_json_bool_true_part_fail(void) {
     snprintf(test, sizeof(test), "{\"%s\":ture}", "key");
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( -1, pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -447,7 +455,8 @@ void test_parse_json_bool_true_part_fail(void) {
 void test_parse_json_bool_false_part(void) {
     snprintf(test, sizeof(test), JSON_BOOL_EX, "key", bool2str(false));
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -464,7 +473,8 @@ void test_parse_json_bool_false_part(void) {
 void test_parse_json_string_part(void) {
     snprintf(test, sizeof(test), JSON_STR_EX, "key", "hello");
     json_parse_machine_t sm;
-    json_decode_init(&sm, strlen(test));
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     int pr = json_decode_part(&sm, test, strlen(test));
     TEST_ASSERT_EQUAL_INT( strlen(test), pr );
     JsonNode *_main = json_decode_finish(&sm);
@@ -483,7 +493,8 @@ void test_parse_json_complex_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm, total_len);
+    int ret = json_decode_init(&sm, total_len);
+    TEST_ASSERT_EQUAL_INT( 0, ret );
 
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
@@ -522,7 +533,8 @@ void test_parse_json_complex2_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm, total_len);
+    int ret = json_decode_init(&sm, total_len);
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);
@@ -596,7 +608,8 @@ void test_parse_json_state_req_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm, total_len);
+    int ret = json_decode_init(&sm, total_len);
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);
@@ -658,7 +671,8 @@ void test_parse_json_command_dev_part(void) {
     int processed = 0;
     int rest = 0;
     json_parse_machine_t sm;
-    json_decode_init(&sm, total_len);
+    int ret = json_decode_init(&sm, total_len);
+    TEST_ASSERT_EQUAL_INT( 0, ret );
     while (total_len) {
         int chunk = total_len < 64 - rest ? total_len : 64 - rest;
         if ( rest ) memmove(test_part, test_part + 64 - rest, rest);

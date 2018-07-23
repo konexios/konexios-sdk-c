@@ -1,6 +1,7 @@
 #ifndef TEST_HTTP_CB_H_
 #define TEST_HTTP_CB_H_
 #include <stdio.h>
+#include <bsd/socket.h>
 
 void set_http_cb(char *buf, int size);
 void add_http_cb(char *buf, int size);

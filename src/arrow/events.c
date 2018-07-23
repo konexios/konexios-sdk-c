@@ -237,13 +237,12 @@ static int mqtt_event_sign_checker(mqtt_event_base_t *base) {
     return 0;
 }
 
-int memory_check(int size) {
+int memory_check(int size, int reserved) {
     if ( size > json_static_memory_max_sector() ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         return -1;
     }
-    // 512 bytes is reserved
-    if ( size * 2 > json_static_free_size() - 512 ) {
+    if ( size * 2 > json_static_free_size() - reserved ) {
         DBG("No mem for processing %d/%d", 2*size, json_static_memory_max_sector());
         return -1;
     }
@@ -271,7 +270,7 @@ int process_event_init(int size) {
 #endif
     DBG("Static memory size %d [%d]", json_static_free_size(), size);
 #if defined(STATIC_ACN)
-    if ( memory_check(size) < 0 ) {
+    if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
     }
@@ -416,7 +415,7 @@ int process_http_init(int size) {
 #endif
     DBG("Static http memory size %d [%d]", json_static_free_size(), size);
 #if defined(STATIC_ACN)
-    if ( memory_check(size) < 0 ) {
+    if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
     }

@@ -47,7 +47,7 @@ extern int default_add_payload_handler(void *r,
 
 #include <arrow/credentials.h>
 
-void http_request_init(http_request_t *req,
+int http_request_init(http_request_t *req,
                        int meth,
                        property_t *uri) {
   req->is_corrupt = 0;
@@ -57,6 +57,18 @@ void http_request_init(http_request_t *req,
   property_init(&req->payload);
   property_copy(&req->meth, p_const(get_METH(meth)));
 
+  req->header = NULL;
+  req->query = NULL;
+  req->is_chunked = 0;
+  memset(&req->payload, 0x0, sizeof(http_payload_t));
+  property_map_init(&req->content_type);
+  req->_response_payload_meth._p_set_handler = default_set_payload_handler;
+  req->_response_payload_meth._p_add_handler = default_add_payload_handler;
+
+  if ( !arrow_api_host() ) {
+      req->is_corrupt = 1;
+      return -1;
+  }
   req->host = p_const(arrow_api_host()->host);
   req->port = arrow_api_host()->port;
   req->scheme = arrow_api_host()->scheme;
@@ -71,14 +83,7 @@ void http_request_init(http_request_t *req,
   DBG("port: %d", req->port);
 #endif
   DBG("uri: %s", P_VALUE(req->uri));
-
-  req->header = NULL;
-  req->query = NULL;
-  req->is_chunked = 0;
-  memset(&req->payload, 0x0, sizeof(http_payload_t));
-  property_map_init(&req->content_type);
-  req->_response_payload_meth._p_set_handler = default_set_payload_handler;
-  req->_response_payload_meth._p_add_handler = default_add_payload_handler;
+  return 0;
 }
 
 void http_request_close(http_request_t *req) {

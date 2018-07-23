@@ -1,8 +1,7 @@
 #include "unity.h"
-#include <stdlib.h>
-#include <string.h>
 #include <config.h>
 #include <debug.h>
+#include <arrow/credentials.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
 #include <arrow/utf8.h>
@@ -24,9 +23,13 @@
 #include <http/request.h>
 #include <http/response.h>
 #include <data/find_by.h>
+#include <arrow/storage.h>
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();
+    arrow_hosts_init();
 }
 
 void tearDown(void) {
@@ -36,14 +39,15 @@ void tearDown(void) {
 static http_request_t _test_request;
 
 void test_http_request_init(void) {
-    http_request_init(&_test_request, GET, "http://api.arrowconnect.io:80/api/v1/kronos/gateways");
+    int ret = http_request_init(&_test_request, GET, &p_const("/api/v1/kronos/gateways"));
+    TEST_ASSERT_EQUAL_INT(0, ret);
     TEST_ASSERT(_test_request._response_payload_meth._p_add_handler);
     TEST_ASSERT(_test_request._response_payload_meth._p_set_handler);
     TEST_ASSERT_EQUAL_INT(0, _test_request.is_corrupt);
-    TEST_ASSERT_EQUAL_STRING("api.arrowconnect.io", P_VALUE(_test_request.host));
-    TEST_ASSERT_EQUAL_INT(80, _test_request.port);
+    TEST_ASSERT_EQUAL_STRING(ARROW_ADDR, P_VALUE(_test_request.host));
+    TEST_ASSERT_EQUAL_INT(ARROW_PORT, _test_request.port);
     TEST_ASSERT_EQUAL_STRING("GET", P_VALUE(_test_request.meth));
-    TEST_ASSERT_EQUAL_STRING("http", P_VALUE(_test_request.scheme));
+    TEST_ASSERT_EQUAL_INT(arrow_scheme_http, _test_request.scheme);
     TEST_ASSERT( IS_EMPTY(_test_request.payload) );
     TEST_ASSERT( ! _test_request.header );
     TEST_ASSERT( IS_EMPTY(_test_request.content_type.value) );

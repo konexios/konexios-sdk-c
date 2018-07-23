@@ -8,6 +8,7 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
+#include <arrow/credentials.h>
 #include <arrow/device.h>
 #include <arrow/api/device/event.h>
 #include <arrow/api/device/info.h>
@@ -79,12 +80,14 @@
 #include "mock_mac.h"
 #include "mock_watchdog.h"
 #include "mock_sockdecl.h"
-#include "mock_storage.h"
 #include "mock_telemetry.h"
 
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include <arrow/storage.h>
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
@@ -96,7 +99,10 @@ static arrow_gateway_config_t _test_gateway_config;
 static arrow_device_t _test_device;
 
 void setUp(void) {
-    arrow_init();
+    if ( arrow_init() < 0 ) {
+        printf("arrow_init fail!\r\n");
+        return;
+    }
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);

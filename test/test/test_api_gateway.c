@@ -8,6 +8,7 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
+#include <arrow/credentials.h>
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
 #include <arrow/api/device/info.h>
@@ -79,12 +80,13 @@
 #include "mock_mac.h"
 #include "mock_watchdog.h"
 #include "mock_sockdecl.h"
-#include "mock_storage.h"
 #include "mock_telemetry.h"
 
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 static int test_count = 0;
 

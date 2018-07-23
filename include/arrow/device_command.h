@@ -21,7 +21,7 @@ typedef enum {
 } handler_result;
 
 
-typedef int (*__cmd_cb)(const char *);
+typedef int (*__cmd_cb)(property_t);
 
 typedef struct __cmd_handler {
   property_t name;

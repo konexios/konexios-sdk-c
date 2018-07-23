@@ -3,6 +3,7 @@
 #include <string.h>
 #include <config.h>
 #include <debug.h>
+#include <arrow/credentials.h>
 #include <arrow/gateway.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
@@ -20,6 +21,7 @@
 #include <encode.h>
 #include <json/decode.h>
 #include "mock_mac.h"
+#include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();

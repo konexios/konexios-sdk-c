@@ -135,7 +135,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
 }
 
 int __attribute_weak__ http_client_free(http_client_t *cli) {
-    ringbuf_free(cli->queue);
+    if (cli->queue) ringbuf_free(cli->queue);
 #if !defined(STATIC_HTTP_CLIENT)
     free(cli->queue);
 #endif

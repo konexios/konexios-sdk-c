@@ -6,7 +6,19 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
+#include <config.h>
 #include "arrow/storage.h"
+
+void save_key_setting(const char *api_key, const char *sec_key) {
+    SSP_PARAMETER_NOT_USED(api_key);
+    SSP_PARAMETER_NOT_USED(sec_key);
+}
+
+int restore_key_setting(char *api, char *sec) {
+    if (api) strcpy(api, DEFAULT_API_KEY);
+    if (sec) strcpy(api, DEFAULT_SECRET_KEY);
+    return 0;
+}
 
 void __attribute_weak__ save_api_address(arrow_host_t *host) {
     SSP_PARAMETER_NOT_USED(host);

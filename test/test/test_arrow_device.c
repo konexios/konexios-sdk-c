@@ -20,6 +20,8 @@
 #include <json/decode.h>
 
 #include "mock_mac.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"
