@@ -9,6 +9,7 @@
 #include "arrow/gateway.h"
 #include <debug.h>
 #include <sys/mac.h>
+#include <json/decode.h>
 
 #if defined(__IBM__)
 #elif defined(__AZURE__)
@@ -54,17 +55,19 @@ property_t arrow_gateway_serialize(arrow_gateway_t *gate) {
   return tmp;
 }
 
-int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
-  if (!str) return -1;
-  DBG("parse this: %s", str);
-  JsonNode *_main = json_decode(str);
-  if ( !_main ) return -1;
+int arrow_gateway_parse(arrow_gateway_t *gate, const char *s) {
+  if (!s) return -1;
+  DBG("parse this: %s", s);
+  int ret = -1;
+  JsonNode *_main = json_decode_property(p_stack(s));
+  if ( !_main ) goto parse_error;
   JsonNode *hid = json_find_member(_main, p_const("hid"));
-  if ( !hid ) return -1;
-  if ( hid->tag != JSON_STRING ) return -1;
+  if ( !hid || hid->tag != JSON_STRING ) goto parse_error;
   property_copy_as( PROPERTY_DYNAMIC_TAG, &gate->hid, hid->string_);
+  ret = 0;
+parse_error:
   json_delete(_main);
-  return 0;
+  return ret;
 }
 
 void arrow_gateway_free(arrow_gateway_t *gate) {

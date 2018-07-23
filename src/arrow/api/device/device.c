@@ -1,6 +1,7 @@
 #include "arrow/api/device/device.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <json/decode.h>
 #include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
@@ -72,7 +73,8 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
     device_info_t *info = (device_info_t *)arg;
     device_info_init(info);
-    JsonNode *t = json_decode(P_VALUE(response->payload));
+    JsonNode *t = json_decode_property(response->payload);
+    if ( !t ) return -1;
     int ret = _device_info_parse(info, t);
     json_delete(t);
     return ret;

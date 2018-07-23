@@ -291,7 +291,6 @@ int process_event(const char *str, int len) {
     return 0;
 }
 
-
 int process_event_finish() {
     int ret = -1;
     JsonNode *_main = json_decode_finish(&sm);

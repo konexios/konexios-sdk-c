@@ -11,6 +11,7 @@
 #include <arrow/sign.h>
 #include <debug.h>
 #include <data/chunk.h>
+#include <json/decode.h>
 
 #define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 100
 #define GATEWAY_MSG "Gateway %d"
@@ -36,7 +37,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
     }
     DBG("pay: {%s}", P_VALUE(response->payload));
 
-    JsonNode *_main = json_decode(P_VALUE(response->payload));
+    JsonNode *_main = json_decode_property(response->payload);
 	if ( !_main ) {
 		DBG("Parse error");
         goto gateway_config_error;

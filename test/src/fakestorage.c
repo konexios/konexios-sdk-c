@@ -1,19 +1,21 @@
 #include "fakestorage.h"
 #include <string.h>
 
-static const char *d_hid = NULL;
-static const char *g_hid = NULL;
+static char d_hid[64] = {0};
+static char g_hid[64] = {0};
 
 void fake_set_gateway_hid(const char *hid) {
-    g_hid = hid;
+    if ( !hid ) memset(g_hid, 0x0, sizeof(g_hid));
+    else strcpy(g_hid, hid);
 }
 
 void fake_set_device_hid(const char *hid) {
-    d_hid = hid;
+    if ( !hid ) memset(d_hid, 0x0, sizeof(d_hid));
+    else strcpy(d_hid, hid);
 }
 
 int restore_gateway_info(arrow_gateway_t *gateway) {
-    if ( g_hid ) {
+    if ( g_hid[0] ) {
         property_t t = p_stack(g_hid);
       property_copy(&gateway->hid, t);
       return 0;
@@ -23,11 +25,11 @@ int restore_gateway_info(arrow_gateway_t *gateway) {
 
 
 void save_gateway_info(const arrow_gateway_t *gateway) {
-    g_hid = gateway->hid.value;
+    strcpy(g_hid, gateway->hid.value);
 }
 
 int restore_device_info(arrow_device_t *device) {
-  if ( !d_hid ) return -1;
+  if ( !d_hid[0] ) return -1;
   property_copy(&device->hid, p_stack(d_hid));
 #if defined(__IBM__)
     property_copy(&device->eid, p_stack(dev_eid));
@@ -36,5 +38,5 @@ int restore_device_info(arrow_device_t *device) {
 }
 
 void save_device_info(arrow_device_t *dev) {
-    d_hid = dev->hid.value;
+    strcpy(d_hid, dev->hid.value);
 }

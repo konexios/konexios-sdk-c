@@ -60,7 +60,7 @@ void property_copy(property_t *dst, property_t src) {
 
 void property_copy_as(int tag, property_t *dst, property_t src) {
     src.flags &= ~PROPERTY_BASE_MASK;
-    src.flags |= tag;
+    src.flags |= tag | is_owner;
     property_copy(dst, src);
 }
 

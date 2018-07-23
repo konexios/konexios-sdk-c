@@ -9,6 +9,7 @@
 #include "arrow/device.h"
 #include <sys/mem.h>
 #include <config.h>
+#include <json/decode.h>
 
 void arrow_device_init(arrow_device_t *dev) {
     dev->info = NULL;
@@ -69,8 +70,8 @@ property_t arrow_device_serialize(arrow_device_t *dev) {
   return dev_property;
 }
 
-int arrow_device_parse(arrow_device_t *dev, const char *str) {
-    JsonNode *_main = json_decode(str);
+int arrow_device_parse(arrow_device_t *dev, const char *s) {
+    JsonNode *_main = json_decode_property(p_stack(s));
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, p_const("hid"));
     if ( !hid || hid->tag != JSON_STRING ) return -1;

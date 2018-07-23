@@ -185,8 +185,10 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
     switch ( byte ) {
     case '}': {
         jpm->complete = 1;
-        if ( jpm_append_to_parent(jpm) < 0 ) return -1;
-        jpm->key = p_null();
+        if ( !IS_EMPTY(jpm->key) ) {
+            if ( jpm_append_to_parent(jpm) < 0 ) return -1;
+            jpm->key = p_null();
+        }
         BUFFER_CLEAR(jpm);
         jpm->root = NULL;
     } break;
@@ -227,6 +229,11 @@ static int jpm_key_init(json_parse_machine_t *jpm, char byte) {
             return -1;
         jpm->process_byte = (_json_parse_fn) jpm_key_body;
     } break;
+    case '}':
+        // empty object
+        jpm->process_byte = (_json_parse_fn) jpm_value_end;
+        return jpm->process_byte(jpm, byte);
+        break;
     default:
         return -1;
     }
@@ -369,13 +376,16 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
     return root;
 }
 
-JsonNode *json_decode_property(property_t *prop) {
-    int size = property_size(prop);
+JsonNode *json_decode_property(property_t prop) {
+    int size = property_size(&prop);
     int ret = -1;
     json_parse_machine_t sm;
     ret = json_decode_init(&sm, size);
     if ( ret < 0 ) return NULL;
-    ret = json_decode_part(&sm, P_VALUE(*prop), size);
-    if ( ret < 0 ) return NULL;
-    return json_decode_finish(&sm);
+    ret = json_decode_part(&sm, P_VALUE(prop), size);
+    JsonNode *_main = json_decode_finish(&sm);
+    if ( ret < 0 ){
+        return NULL;
+    }
+    return _main;
 }

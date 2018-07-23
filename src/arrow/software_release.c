@@ -15,6 +15,7 @@
 #include <arrow/utf8.h>
 #include <time/time.h>
 #include <data/chunk.h>
+#include <json/decode.h>
 
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;
@@ -54,7 +55,8 @@ static void _gateway_software_releases_trans_init(http_request_t *request, void 
 static int _gateway_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
   if ( IS_EMPTY(response->payload) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   property_copy(&rs->trans_hid, hid->string_);
@@ -85,7 +87,8 @@ static void _device_software_releases_trans_init(http_request_t *request, void *
 static int _device_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
   if ( IS_EMPTY(response->payload) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
   property_copy(&rs->trans_hid, hid->string_);

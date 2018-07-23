@@ -1,6 +1,7 @@
 #include "arrow/telemetry_api.h"
 #include <data/find_by.h>
 #include <json/telemetry.h>
+#include <json/decode.h>
 #include <http/routine.h>
 #include <debug.h>
 #include <data/chunk.h>
@@ -141,7 +142,8 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
   telemetry_response_data_list_t* t = (telemetry_response_data_list_t*)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
   DBG("telem appl: %s", P_VALUE(response->payload));
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *size  = json_find_member(_main, p_const("size"));
   if ( !size ) return -1;
   JsonNode *page  = json_find_member(_main, p_const("page"));

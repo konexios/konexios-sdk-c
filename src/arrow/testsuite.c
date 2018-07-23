@@ -2,6 +2,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <data/chunk.h>
+#include <json/decode.h>
 
 #define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 256
 
@@ -20,7 +21,8 @@ static void _test_gateway_init(http_request_t *request, void *arg) {
 static int _test_gateway_proc(http_response_t *response, void *arg) {
   property_t *res_hid = (property_t *)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);
@@ -99,7 +101,8 @@ static int _test_device_proc(http_response_t *response, void *arg) {
       }
       return -1;
   }
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);

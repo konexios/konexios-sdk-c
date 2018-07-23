@@ -208,7 +208,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
 
     TimerInterval timer;
     TimerInit(&timer);
-    TimerCountdownMS(&timer, (unsigned int) 2*cli->timeout);
+    TimerCountdownMS(&timer, (unsigned int) cli->timeout);
     while ( !arrow_mqtt_api_has_events() && !TimerIsExpired(&timer) ) {
         ret = mqtt_yield(TimerLeftMS(&timer));
     }

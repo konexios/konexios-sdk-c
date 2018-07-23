@@ -14,7 +14,7 @@
 CREATE_BUFFER(dynamicbuf, ARROW_DYNAMIC_STATIC_BUFFER_SIZE, 0x20)
 
 int dyn_static_mem_size() {
-    return static_max_piece(dynamicbuf);
+    return static_buf_free_size(dynamicbuf);
 }
 
 static void *static_strndup(char *ptr, int size) {
@@ -103,6 +103,7 @@ void dynmc_concat(property_t *dst, property_t *src) {
         dynmc_destroy(dst);
         return;
     }
+    dst->size += size_src;
     memcpy(dst->value + size_dst, src->value, size_src);
     dst->value[size_dst + size_src +1] = '\0';
 }

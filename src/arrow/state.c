@@ -1,7 +1,7 @@
 #include "arrow/state.h"
 #include <time/time.h>
 #include <http/client.h>
-#include <json/json.h>
+#include <json/decode.h>
 #include <sys/mem.h>
 #include <http/routine.h>
 #include <arrow/events.h>
@@ -243,16 +243,27 @@ static int _state_get_proc(http_response_t *response, void *arg) {
     if ( !IS_EMPTY(response->payload) ) {
         DBG("[%s]", P_VALUE(response->payload));
     }
-    JsonNode *_main = json_decode(P_VALUE(response->payload));
-    if ( !_main ) return -1;
+    int ret = -1;
+    JsonNode *_main = json_decode_property(response->payload);
+    if ( !_main ) {
+        DBG("decode error");
+        goto decode_error;
+    }
     JsonNode *dev_hid = json_find_member(_main, p_const("deviceHid"));
-    if ( !dev_hid ) return -1;
-    if ( property_cmp(&dev_hid->string_, dev->hid) != 0 ) return -1;
+    if ( !dev_hid ||
+         property_cmp(&dev_hid->string_, dev->hid) != 0 ) {
+        DBG("No hid device");
+        goto decode_error;
+    }
     JsonNode *states = json_find_member(_main, p_const("states"));
-    if ( !states ) return -1;
-    arrow_device_state_handler(states);
+    if ( !states ) {
+        DBG("No states");
+        goto decode_error;
+    }
+    ret = arrow_device_state_handler(states);
+decode_error:
     json_delete(_main);
-    return 0;
+    return ret;
 }
 
 int arrow_state_receive(arrow_device_t *device) {
@@ -439,9 +450,11 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
       msleep(ARROW_RETRY_DELAY);
   }
 
-  JsonNode *_states = json_decode(P_VALUE(payload->string_));
-  int ret = arrow_device_state_handler(_states);
-
+  int ret = -1;
+  JsonNode *_states = json_decode_property(payload->string_);
+  if ( _states ) {
+      ret = arrow_device_state_handler(_states);
+  }
   if ( ret < 0 ) {
     while ( arrow_device_state_answer(_device_hid, st_error, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});

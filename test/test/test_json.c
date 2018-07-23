@@ -487,6 +487,32 @@ void test_parse_json_string_part(void) {
     STATIC_MEMORY_CHECK;
 }
 
+char device_hid[] = "{\"hid\":\"d000000ca3a1a317222772437dc586cb59d680fe\",\"links\": {}, \"message\": \"OK\"}";
+
+void test_parse_json_complex_dev(void) {
+    json_parse_machine_t sm;
+    int ret = json_decode_init(&sm, strlen(device_hid));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
+    int pr = json_decode_part(&sm, device_hid, strlen(device_hid));
+    TEST_ASSERT_EQUAL_INT( strlen(device_hid), pr );
+    JsonNode *_main = json_decode_finish(&sm);
+    TEST_ASSERT(_main);
+    JsonNode *_hid = json_find_member(_main, p_const("hid"));
+    TEST_ASSERT(_hid);
+    JsonNode *_mess = json_find_member(_main, p_const("message"));
+    TEST_ASSERT(_mess);
+    JsonNode *_link = json_find_member(_main, p_const("links"));
+    TEST_ASSERT(_link);
+
+    TEST_ASSERT_EQUAL_INT( JSON_STRING, _hid->tag );
+    TEST_ASSERT_EQUAL_STRING( "d000000ca3a1a317222772437dc586cb59d680fe", P_VALUE(_hid->string_) );
+    TEST_ASSERT_EQUAL_INT( JSON_STRING, _mess->tag );
+    TEST_ASSERT_EQUAL_STRING( "OK", P_VALUE(_mess->string_) );
+    TEST_ASSERT_EQUAL_INT( JSON_OBJECT, _link->tag );
+    json_delete(_main);
+    STATIC_MEMORY_CHECK;
+}
+
 void test_parse_json_complex_part(void) {
     char test_part[100] = {0};
     int total_len = strlen(complex_json_text);
