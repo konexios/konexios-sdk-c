@@ -17,7 +17,7 @@
  */
 
 //Debug is disabled by default
-#include "ntp/client.h"
+#include "ntp/ntp_client.h"
 #include <debug.h>
 #include <bsd/socket.h>
 #include <bsd/inet.h>

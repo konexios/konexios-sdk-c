@@ -10,7 +10,7 @@
 #include <debug.h>
 #include <time/time.h>
 #include <sys/watchdog.h>
-#include <ntp/client.h>
+#include <ntp/ntp_client.h>
 
 
 int ntp_set_time_cycle(void) {
