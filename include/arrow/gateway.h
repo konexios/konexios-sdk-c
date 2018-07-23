@@ -27,6 +27,10 @@ typedef struct __attribute_packed__ _arrow_gateway_ {
   property_t software_name;
   property_t software_version;
   property_t sdkVersion;
+#if defined(ARROW_HAS_USERHID)
+  property_t app;
+  property_t user;
+#endif
 #if defined(__cplusplus)
   _arrow_gateway_() {}
 #endif

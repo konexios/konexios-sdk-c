@@ -42,28 +42,16 @@ property_t arrow_gateway_serialize(arrow_gateway_t *gate) {
   if ( !IS_EMPTY(gate->sdkVersion) )
     json_append_member(_main, p_const("sdkVersion"), json_mkproperty(&gate->sdkVersion));
 
-
-  char tmphid[46] = {0};
-  if ( restore_apphid_address(tmphid) == 0 ) {
-      json_append_member(_main, p_const("applicationHid"), json_mkstring( tmphid ));
-  } else {
-      DBG("no application hid!");
-//      goto error;
-  }
-
-  if ( restore_userhid_address(tmphid) == 0 ) {
-      json_append_member(_main, p_const("userHid"), json_mkstring( tmphid ));
-  } else {
-      DBG("no user hid!");
-//      goto error;
-  }
+#if defined(ARROW_HAS_USERHID)
+  if ( !IS_EMPTY(gate->app) )
+      json_append_member(_main, p_const("applicationHid"), json_mkproperty(&gate->app));
+  if ( !IS_EMPTY(gate->user) )
+      json_append_member(_main, p_const("userHid"), json_mkproperty(&gate->user));
+#endif
 
   property_t tmp = json_encode_property(_main);
   json_delete(_main);
   return tmp;
-//error:
-//  json_delete(_main);
-//  return p_null();
 }
 
 int arrow_gateway_parse(arrow_gateway_t *gate, const char *str) {
@@ -126,6 +114,24 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
       property_copy( &gateway->type, p_const(GATEWAY_TYPE));
   if ( IS_EMPTY(gateway->sdkVersion) )
       property_copy( &gateway->sdkVersion, p_const(xstr(SDK_VERSION)));
+  #if defined(ARROW_HAS_USERHID)
+  if ( IS_EMPTY(gateway->app) ) {
+      char tmphid[46] = {0};
+      if ( restore_apphid_address(tmphid) == 0 ) {
+        property_copy( &gateway->app, p_stack(tmphid));
+      } else {
+          DBG("no application hid!");
+      }
+  }
+  if ( IS_EMPTY(gateway->user) ) {
+      char tmphid[46] = {0};
+      if ( restore_userhid_address(tmphid) == 0 ) {
+          property_copy( &gateway->user, p_const(tmphid));
+      } else {
+          DBG("no user hid!");
+      }
+  }
+#endif
   if ( IS_EMPTY(gateway->uid) ) {
 #if defined(STATIC_ACN)
       char *uid = static_gateway_uid;
