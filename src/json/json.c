@@ -23,7 +23,7 @@
 
 #include "json/json.h"
 
-#include <json/property_json.h>
+#include <data/property_json.h>
 #include <sys/mem.h>
 #if defined(__USE_STD__)
 #include <assert.h>

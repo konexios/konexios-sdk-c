@@ -9,7 +9,7 @@
 #include "arrow/mqtt.h"
 #include <config.h>
 #include <mqtt/client/client.h>
-#include <json/telemetry.h>
+#include <arrow/telemetry.h>
 #include <data/property.h>
 #include <arrow/events.h>
 #include <debug.h>

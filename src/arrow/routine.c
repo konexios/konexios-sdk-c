@@ -13,7 +13,7 @@
 #include <arrow/api/device/device.h>
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"

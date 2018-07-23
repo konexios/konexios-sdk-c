@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "json/property_json.h"
+#include "data/property_json.h"
 #include <json/json.h>
 #include <debug.h>
 

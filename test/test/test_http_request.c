@@ -13,7 +13,7 @@
 #include <data/property_const.h>
 #include <data/property_dynamic.h>
 #include <data/property_stack.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 #include <json/json.h>
 #include <sb.h>
 #include <encode.h>
