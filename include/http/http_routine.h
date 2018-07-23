@@ -13,8 +13,8 @@
 extern "C" {
 #endif
 
-#include <http/request.h>
-#include <http/client.h>
+#include <http/http_request.h>
+#include <http/http_client.h>
 
 typedef void(*response_init_f)(http_request_t *request, void *arg);
 typedef int (*response_proc_f)(http_response_t *response, void *arg);

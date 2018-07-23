@@ -13,14 +13,14 @@
 #include <data/property_const.h>
 #include <data/property_dynamic.h>
 #include <data/property_stack.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 #include <json/json.h>
 #include <sb.h>
 #include <encode.h>
 #include <decode.h>
 #include <bsd/socket.h>
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 #include <data/find_by.h>
 
 void setUp(void) {

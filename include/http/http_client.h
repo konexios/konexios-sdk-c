@@ -9,8 +9,8 @@
 #ifndef ACN_SDK_C_HTTP_CLIENT_H_
 #define ACN_SDK_C_HTTP_CLIENT_H_
 
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 #include <data/ringbuffer.h>
 
 #define LINE_CHUNK 40

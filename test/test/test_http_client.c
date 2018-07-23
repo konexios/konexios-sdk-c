@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
-#include <http/client.h>
+#include <http/http_client.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
@@ -13,7 +13,7 @@
 #include <data/property_const.h>
 #include <data/property_dynamic.h>
 #include <data/property_stack.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <json/json.h>
@@ -21,8 +21,8 @@
 #include <encode.h>
 #include <decode.h>
 #include <bsd/socket.h>
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 #include <data/find_by.h>
 
 #include "acnsdkc_ssl.h"

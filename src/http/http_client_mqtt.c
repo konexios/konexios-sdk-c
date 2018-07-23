@@ -6,7 +6,7 @@
 * Contributors: Arrow Electronics, Inc.
 */
 
-#include "http/client_mqtt.h"
+#include "http/http_client_mqtt.h"
 #if defined(HTTP_VIA_MQTT)
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>

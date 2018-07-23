@@ -7,7 +7,7 @@
  */
 
 #include <json/json.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 
 #define is_array_context(mach) ((mach)->p->root->tag == JSON_ARRAY)
 

@@ -1,9 +1,9 @@
 #include "arrow/state.h"
 #include <time/time.h>
-#include <http/client.h>
+#include <http/http_client.h>
 #include <json/json.h>
 #include <sys/mem.h>
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <arrow/events.h>
 #include <debug.h>
 #include <data/chunk.h>

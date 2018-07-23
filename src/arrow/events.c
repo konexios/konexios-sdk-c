@@ -26,7 +26,7 @@
 #endif
 
 #include <debug.h>
-#include <http/client.h>
+#include <http/http_client.h>
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/gateway_payload_sign.h>

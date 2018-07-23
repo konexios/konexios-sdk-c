@@ -3,7 +3,7 @@
 #include <debug.h>
 #include <time/time.h>
 #include <sys/watchdog.h>
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <arrow/mqtt.h>
 #include <arrow/events.h>
 #include <arrow/state.h>
@@ -13,7 +13,7 @@
 #include <arrow/api/device/device.h>
 #include <arrow/telemetry_api.h>
 #include <arrow/storage.h>
-#include <json/property_json.h>
+#include <data/property_json.h>
 
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"

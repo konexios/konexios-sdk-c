@@ -12,9 +12,9 @@
 #include <config.h>
 
 #if defined(HTTP_VIA_MQTT)
-#include <http/client.h>
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_client.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 
 #define api_via_mqtt 1
 

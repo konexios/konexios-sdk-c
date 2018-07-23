@@ -1,5 +1,5 @@
 #include "arrow/testsuite.h"
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <debug.h>
 #include <data/chunk.h>
 
