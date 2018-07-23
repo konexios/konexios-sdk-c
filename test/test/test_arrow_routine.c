@@ -35,9 +35,9 @@
 #include <decode.h>
 #include <arrow_mqtt_client.h>
 #include <mqtt/client/delivery.h>
-#include <http/client.h>
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_client.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 #include <ssl/crypt.h>
 #include <arrow/state.h>
 #include <arrow/routine.h>

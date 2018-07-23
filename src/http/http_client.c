@@ -8,7 +8,7 @@
 
 #define MODULE_NAME "HTTP_Client"
 
-#include "http/client.h"
+#include "http/http_client.h"
 
 #define USE_STATIC
 #include <data/chunk.h>

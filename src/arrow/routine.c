@@ -3,7 +3,7 @@
 #include <debug.h>
 #include <time/time.h>
 #include <sys/watchdog.h>
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <arrow/mqtt.h>
 #include <arrow/events.h>
 #include <arrow/state.h>

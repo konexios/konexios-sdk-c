@@ -11,7 +11,7 @@
 
 #include <data/propmap.h>
 #include <data/find_by.h>
-#include <http/request.h>
+#include <http/http_request.h>
 
 typedef struct {
     uint16_t m_httpResponseCode;

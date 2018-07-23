@@ -7,7 +7,7 @@
  */
 
 #include "arrow/api/device/type.h"
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <debug.h>
 #include <stdarg.h>
 #include <sys/mem.h>

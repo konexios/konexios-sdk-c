@@ -8,7 +8,7 @@
 
 #include "arrow/device_command.h"
 #if !defined(NO_EVENTS)
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/events.h>

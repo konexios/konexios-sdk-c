@@ -6,11 +6,11 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "http/routine.h"
-#include <http/client.h>
+#include "http/http_routine.h"
+#include <http/http_client.h>
 #include <arrow/sign.h>
 #include <debug.h>
-#include <http/client_mqtt.h>
+#include <http/http_client_mqtt.h>
 
 static http_client_t _cli;
 

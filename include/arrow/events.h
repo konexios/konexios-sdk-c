@@ -7,7 +7,7 @@ extern "C" {
 
 #include <json/json.h>
 #include <data/linkedlist.h>
-#include <http/response.h>
+#include <http/http_response.h>
 
 typedef struct {
     property_t id;

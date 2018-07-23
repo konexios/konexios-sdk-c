@@ -8,7 +8,7 @@
 
 #define MODULE_NAME "HTTP_Request"
 
-#include "http/request.h"
+#include "http/http_request.h"
 #include <debug.h>
 #include <config.h>
 #include <sys/mem.h>

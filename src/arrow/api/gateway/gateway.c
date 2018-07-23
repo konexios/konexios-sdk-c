@@ -7,7 +7,7 @@
  */
 
 #include "arrow/api/gateway/gateway.h"
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <arrow/sign.h>
 #include <debug.h>
 #include <data/chunk.h>

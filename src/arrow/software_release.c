@@ -7,7 +7,7 @@
  */
 
 #include "arrow/software_release.h"
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <debug.h>
 #include <sys/watchdog.h>
 #include <sys/reboot.h>

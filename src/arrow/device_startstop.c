@@ -9,7 +9,7 @@
 #include "arrow/device_command.h"
 
 #if defined(DEVICE_STARTSTOP)
-#include <http/routine.h>
+#include <http/http_routine.h>
 #include <json/json.h>
 #include <sys/mem.h>
 #include <arrow/events.h>

@@ -19,8 +19,8 @@
 #include <encode.h>
 #include <decode.h>
 #include <bsd/socket.h>
-#include <http/request.h>
-#include <http/response.h>
+#include <http/http_request.h>
+#include <http/http_response.h>
 #include <data/find_by.h>
 
 void setUp(void) {

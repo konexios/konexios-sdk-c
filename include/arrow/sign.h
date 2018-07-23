@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include <http/request.h>
+#include <http/http_request.h>
 
 #if !defined(SIGN_BUFFER_LEN)
 #define SIGN_BUFFER_LEN 512
