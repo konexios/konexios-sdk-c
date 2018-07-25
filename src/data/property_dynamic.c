@@ -93,7 +93,7 @@ void dynmc_concat(property_t *dst, property_t *src) {
     } else {
         size_src += strlen(src->value);
     }
-    dst->value = static_buf_realloc(dst, dst->value, size_src + size_dst + 1);
+    dst->value = static_buf_realloc(dynamicbuf, dst->value, size_src + size_dst + 1);
     if ( !dst->value ) {
         DBG("Out of Memory: static realloc");
         dynmc_destroy(dst);

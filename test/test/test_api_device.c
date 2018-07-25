@@ -1,12 +1,14 @@
 #include "unity.h"
 #include <config.h>
 
+#include <debug.h>
 #include "api_gateway_gateway.h"
 #include "api_gateway_info.h"
 #include "http_routine.h"
 #include "api_device_device.h"
 #include "socket_weak.h"
 
+#include <arrow/credentials.h>
 #include <arrow/device.h>
 #include <arrow/api/device/event.h>
 #include <arrow/api/device/info.h>
@@ -49,6 +51,7 @@
 #include <arrow/software_release.h>
 #include <arrow/software_update.h>
 #include <ssl/md5sum.h>
+#include <http/client_mqtt.h>
 
 #include <time/time.h>
 #include "acnsdkc_time.h"

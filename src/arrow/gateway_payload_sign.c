@@ -128,7 +128,7 @@ static char *form_canonical_prm(JsonNode *param) {
   return canParam;
 }
 #else
-static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
+static char *form_canonical_prm(JsonNode *param) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};

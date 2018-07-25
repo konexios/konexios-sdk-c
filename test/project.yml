@@ -31,6 +31,7 @@
     - -:test/support
   :source:
     - src/*.c
+    - +:acn-sdk-c/src/debug.c
     - +:acn-sdk-c/src/sys/**
     - +:acn-sdk-c/src/arrow/**
     - +:acn-sdk-c/src/bsd/**
@@ -39,6 +40,7 @@
     - +:acn-sdk-c/src/json/**
     - +:acn-sdk-c/src/ssl/**
     - +:acn-sdk-c/src/time/**
+    - +:acn-sdk-c/src/ntp/**
     - +:acn-sdk-c/src/mqtt/**
     - +:acn-sdk-c/src/mqtt/client/**
     - +:acn-sdk-c/src/mqtt/packet/**
@@ -62,7 +64,7 @@
   # in order to add common defines:
   #  1) remove the trailing [] from the :common: section
   #  2) add entries to the :common: section (e.g. :test: has TEST defined)
-  :commmon: &common_defines []
+  :commmon: &common_defines [DEBUG]
   :test:
     - *common_defines
     - TEST

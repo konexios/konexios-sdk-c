@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
+#include <debug.h>
+#include <arrow/credentials.h>
 #include <arrow/gateway.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
