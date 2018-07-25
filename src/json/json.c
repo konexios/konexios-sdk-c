@@ -806,7 +806,7 @@ bool parse_string(const char **sp, property_t *out)
     SB sb = {NULL, NULL, NULL};
 	char throwaway_buffer[4];
 		/* enough space for a UTF-8 character */
-	char *b;
+    char *b;
 	
 	if (*s++ != '"')
 		return false;
@@ -814,11 +814,11 @@ bool parse_string(const char **sp, property_t *out)
 	if (out) {
         if ( sb_init(&sb) < 0 ) return false;
         if ( sb_need(&sb, 4) < 0 ) goto failed;
-		b = sb.cur;
-	} else {
-		b = throwaway_buffer;
-	}
-	
+        b = sb.cur;
+    } else {
+        b = throwaway_buffer;
+    }
+
 	while (*s != '"') {
 		unsigned char c = (unsigned char) *s++;
 		
@@ -896,7 +896,7 @@ bool parse_string(const char **sp, property_t *out)
 		 */
 		if (out) {
 			sb.cur = b;
-            if ( sb_need(&sb, 4) ) goto failed;
+            if ( sb_need(&sb, 4) < 0 ) goto failed;
 			b = sb.cur;
 		} else {
 			b = throwaway_buffer;

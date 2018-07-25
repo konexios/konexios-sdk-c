@@ -312,6 +312,26 @@ void test_parse_json_number_part(void) {
     STATIC_MEMORY_CHECK;
 }
 
+void test_parse_json_neg_number_part(void) {
+    snprintf(test, sizeof(test), JSON_INT_EX, "key", -101);
+    json_parse_machine_t sm;
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
+    int pr = json_decode_part(&sm, test, strlen(test));
+    JsonNode *_main = json_decode_finish(&sm);
+    show_json_obj(_main);
+    JsonNode *_key = json_find_member(_main, p_const("key"));
+
+    TEST_ASSERT_EQUAL_INT( strlen(test), pr );
+    TEST_ASSERT(_main);
+    TEST_ASSERT(_key);
+    TEST_ASSERT_EQUAL_INT( JSON_NUMBER, _key->tag );
+    TEST_ASSERT_EQUAL_INT( -101, _key->number_ );
+    json_delete(_main);
+    STATIC_MEMORY_CHECK;
+}
+
+
 void test_parse_json_number_fail_part(void) {
     snprintf(test, sizeof(test), "{\"key\":12o}");
     json_parse_machine_t sm;

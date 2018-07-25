@@ -18,9 +18,10 @@ typedef struct alloc_only {
     uint16_t size;
     uint16_t len;
     uint16_t offset;
+    property_t source;
 } alloc_only_t;
 
-void alloc_only_memory_set(alloc_only_t *p, void *start, int len);
+int alloc_only_memory_set(alloc_only_t *p, property_t *b);
 int alloc_only_init(alloc_only_t *p);
 int alloc_only_size(alloc_only_t *p);
 int alloc_only_put(alloc_only_t *p, char c);

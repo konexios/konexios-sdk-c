@@ -33,7 +33,8 @@ void tearDown(void) {
 
 void test_alloc_only_init(void) {
     alloc_only_t mem;
-    alloc_only_memory_set(&mem, buffer, sizeof(buffer));
+    property_t tmp = { buffer, PROPERTY_CONST_TAG | is_owner, sizeof(buffer) };
+    alloc_only_memory_set(&mem, &tmp);
     TEST_ASSERT_EQUAL_PTR(buffer, mem.start);
     TEST_ASSERT_EQUAL_INT(0, mem.len);
     TEST_ASSERT_EQUAL_INT(sizeof(buffer), mem.size);
@@ -41,7 +42,8 @@ void test_alloc_only_init(void) {
 
 void test_alloc_only_put_char( void ) {
     alloc_only_t mem;
-    alloc_only_memory_set(&mem, buffer, sizeof(buffer));
+    property_t tmp = { buffer, PROPERTY_CONST_TAG | is_owner, sizeof(buffer) };
+    alloc_only_memory_set(&mem, &tmp);
     alloc_only_init(&mem);
     alloc_only_put(&mem, 'c');
     TEST_ASSERT_EQUAL_INT('c', (buffer[0]));
@@ -51,7 +53,8 @@ void test_alloc_only_put_char( void ) {
 
 void test_alloc_only_puts_char( void ) {
     alloc_only_t mem;
-    alloc_only_memory_set(&mem, buffer, sizeof(buffer));
+    property_t tmp = { buffer, PROPERTY_CONST_TAG | is_owner, sizeof(buffer) };
+    alloc_only_memory_set(&mem, &tmp);
     alloc_only_init(&mem);
     alloc_only_puts(&mem, "hello", 5);
     TEST_ASSERT_EQUAL_STRING("hello", mem.start);
@@ -65,7 +68,8 @@ void test_alloc_only_puts_char( void ) {
 #define second_test_word "second"
 void test_alloc_only_puts_2char( void ) {
     alloc_only_t mem;
-    alloc_only_memory_set(&mem, buffer, sizeof(buffer));
+    property_t tmp = { buffer, PROPERTY_CONST_TAG | is_owner, sizeof(buffer) };
+    alloc_only_memory_set(&mem, &tmp);
     alloc_only_init(&mem);
     alloc_only_puts(&mem, first_test_word, strlen(first_test_word));
     char *first = alloc_only_finish(&mem);

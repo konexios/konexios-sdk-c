@@ -106,7 +106,7 @@ static int jpm_string_body(json_parse_machine_t *jpm, char byte) {
 }
 
 static int jpm_number_body(json_parse_machine_t *jpm, char byte) {
-    if ( is_digit(byte) || byte == '.' ) {
+    if ( is_digit(byte) || byte == '.' || byte == '-' ) {
         if ( BUFFER_PUTC(jpm, byte) < 0 ) return -1;
     } else {
         if ( BUFFER_SIZE(jpm) <= 0 ) return -1;
@@ -327,23 +327,24 @@ int json_parse_machine_fin(json_parse_machine_t *jpm) {
     return 0;
 }
 
+int json_decode_init_at_property(json_parse_machine_t *sm, property_t *buffer) {
+    alloc_only_t *ao = NULL;
+    ao = alloc_type(alloc_only_t);
+    if ( !ao ||
+         alloc_only_memory_set(ao, buffer) < 0 ) return -1;
+    return json_parse_machine_init(sm, ao);
+}
+
 int json_decode_init(json_parse_machine_t *sm, int len) {
     SB buf;
-    int r = 0;
-    alloc_only_t *ao = NULL;
-    if ( len ) {
-        r = sb_size_init(&buf, len);
-        if ( r < 0 ) {
-            return r;
-        }
-        ao = alloc_type(alloc_only_t);
-        if ( !ao ) {
-            sb_free(&buf);
-            return -1;
-        }
-        alloc_only_memory_set(ao, buf.start, len);
+    int r = sb_size_init(&buf, len);
+    if ( r < 0 ) return r;
+    property_t tmp = { buf.start, PROPERTY_JSON_TAG | is_owner, len };
+    r = json_decode_init_at_property(sm, &tmp);
+    if ( r < 0 ) {
+        sb_free(&buf);
+        return -1;
     }
-    r = json_parse_machine_init(sm, ao);
     return r;
 }
 
@@ -381,6 +382,21 @@ JsonNode *json_decode_property(property_t prop) {
     int ret = -1;
     json_parse_machine_t sm;
     ret = json_decode_init(&sm, size);
+    if ( ret < 0 ) return NULL;
+    ret = json_decode_part(&sm, P_VALUE(prop), size);
+    JsonNode *_main = json_decode_finish(&sm);
+    if ( ret < 0 ){
+        return NULL;
+    }
+    return _main;
+}
+
+// FIXME code dublicate
+JsonNode *json_decode_property_at(property_t prop, property_t *buffer) {
+    int size = property_size(&prop);
+    int ret = -1;
+    json_parse_machine_t sm;
+    ret = json_decode_init_at_property(&sm, buffer);
     if ( ret < 0 ) return NULL;
     ret = json_decode_part(&sm, P_VALUE(prop), size);
     JsonNode *_main = json_decode_finish(&sm);
