@@ -23,6 +23,10 @@ enum {
 };
 
 /* cloud connectivity */
+//#if defined(HTTP_CIPHER) && defined(DEV_ENV)
+//# define ARROW_SCH arrow_scheme_https
+//# define ARROW_PORT 22001
+//#el
 #if defined(HTTP_CIPHER)
 # define ARROW_SCH arrow_scheme_https
 # define ARROW_PORT 443

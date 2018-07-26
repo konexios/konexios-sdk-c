@@ -208,9 +208,14 @@ int arrow_state_mqtt_is_running(void) {
 }
 
 int arrow_state_mqtt_stop(void) {
-  if (__state_list) arrow_device_state_free();
   property_free(&_device_hid);
   return 0;
+}
+
+int arrow_state_deinit(void) {
+    arrow_state_mqtt_stop();
+    if (__state_list) arrow_device_state_free();
+    return 0;
 }
 
 int arrow_state_mqtt_run(arrow_device_t *device) {

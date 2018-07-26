@@ -66,5 +66,5 @@ arrow_host_t *arrow_mqtt_host(void) {
 
 void arrow_hosts_init() {
     restore_api_address(&__api_host);
-    restore_api_address(&__mqtt_host);
+    restore_mqtt_address(&__mqtt_host);
 }

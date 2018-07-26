@@ -76,7 +76,7 @@ int http_request_init(http_request_t *req,
 
   property_move(&req->uri, uri);
 
-#if 0
+#if 1
   DBG("meth: %s", P_VALUE(req->meth) );
   DBG("scheme: %s", (req->scheme?"https":"http"));
   DBG("host: %s", P_VALUE(req->host));

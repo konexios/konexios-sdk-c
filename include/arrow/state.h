@@ -40,9 +40,10 @@ int arrow_post_state_request(arrow_device_t *device);
 int arrow_post_state_update(arrow_device_t *device);
 
 // allow to use
-int arrow_state_mqtt_run(arrow_device_t *device);
 int arrow_state_mqtt_is_running(void);
+int arrow_state_mqtt_run(arrow_device_t *device);
 int arrow_state_mqtt_stop(void);
+int arrow_state_deinit(void);
 
 // DeviceStateRequest event handler
 int ev_DeviceStateRequest(void *, JsonNode *_parameters);

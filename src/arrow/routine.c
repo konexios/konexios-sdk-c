@@ -66,7 +66,7 @@ arrow_routine_error_t arrow_deinit(void) {
 #if !defined(NO_EVENTS)
   arrow_mqtt_events_done();
 #endif
-  arrow_state_mqtt_stop();
+  arrow_state_deinit();
   __http_done();
   property_types_deinit();
   return ROUTINE_SUCCESS;
@@ -114,6 +114,7 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     }
   }
 #endif
+  arrow_state_mqtt_run(device);
   return 0;
 dev_reg_error:
   arrow_device_free(device);
@@ -307,7 +308,6 @@ arrow_routine_error_t arrow_mqtt_connect_routine(void) {
   if ( ret != ROUTINE_SUCCESS ) {
     return ret;
   }
-  arrow_state_mqtt_run(&_device);
 
 #if !defined(NO_EVENTS)
   ret = arrow_mqtt_connect_event_routine();
@@ -389,6 +389,8 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
 
 void arrow_close(void) {
   arrow_mqtt_terminate_routine();
+  if ( arrow_state_mqtt_is_running() )
+      arrow_state_mqtt_stop();
   if ( _init_done ) {
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
