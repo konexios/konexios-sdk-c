@@ -299,13 +299,16 @@ int process_http_init(int size) {
     if (arrow_mqtt_api_has_events() >= api_mqtt_max_capacity)
         return -1;
 #endif
+#if defined(STATIC_ACN)
     DBG("Static http memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
-#if defined(STATIC_ACN)
     if ( size*(1) > json_static_memory_max_sector() - 512 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         return -1;
     }
+#else
+    // don't care
+    SSP_PARAMETER_NOT_USED(size);
 #endif
     return json_decode_init(&sm_http);
 }
@@ -428,13 +431,15 @@ int process_event_init(int size) {
     if (arrow_mqtt_has_events() >= ARROW_MAX_MQTT_COMMANDS)
         return -1;
 #endif
+#if defined(STATIC_ACN)
     DBG("Static memory size %d", json_static_memory_max_sector());
     DBG("need %d", size);
-#if defined(STATIC_ACN)
     if ( size*(2) > json_static_memory_max_sector() - 1024 ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         return -1;
     }
+#else
+    SSP_PARAMETER_NOT_USED(size);
 #endif
     return json_decode_init(&sm);
 }

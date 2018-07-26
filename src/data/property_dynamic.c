@@ -35,10 +35,12 @@ void static_free(void *p) {
 
 #define STRNDUP static_strndup
 #define STRDUP  static_strdup
+#define REALLOC(ptr, size) static_buf_realloc(dynamicbuf, (ptr), (size))
 #define FREE    static_free
 #else
 #define STRNDUP strndup
 #define STRDUP  strdup
+#define REALLOC(ptr, size) realloc((ptr), (size))
 #define FREE    free
 #endif
 
@@ -93,7 +95,7 @@ void dynmc_concat(property_t *dst, property_t *src) {
     } else {
         size_src += strlen(src->value);
     }
-    dst->value = static_buf_realloc(dynamicbuf, dst->value, size_src + size_dst + 1);
+    dst->value = REALLOC(dst->value, size_src + size_dst + 1);
     if ( !dst->value ) {
         DBG("Out of Memory: static realloc");
         dynmc_destroy(dst);
