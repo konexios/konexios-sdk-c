@@ -12,7 +12,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SDK_VERSION 1.3.11
+#define SDK_VERSION 1.3.12
 
 #if !defined(_KEYS_)
 #include "private.h"
