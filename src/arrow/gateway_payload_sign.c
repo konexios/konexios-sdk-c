@@ -127,6 +127,7 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
   return can_buffer;
 }
 #else
+
 static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffer_len) {
   JsonNode *child;
   char *canParam = NULL;

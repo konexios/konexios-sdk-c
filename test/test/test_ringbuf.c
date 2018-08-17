@@ -1,7 +1,6 @@
 #include "unity.h"
-#include <stdlib.h>
-#include <string.h>
-#include <config.h>
+#include <sys/mem.h>
+#include <debug.h>
 #include <data/ringbuffer.h>
 
 void setUp(void)

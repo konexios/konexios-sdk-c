@@ -40,6 +40,7 @@ void static_free(void *p) {
 
 #define STRNDUP static_strndup
 #define STRDUP  static_strdup
+
 #define REALLOC(...) static_buf_realloc(dynamicbuf, __VA_ARGS__)
 #define FREE    static_free
 #else

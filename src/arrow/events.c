@@ -417,12 +417,16 @@ int process_http_init(int size) {
         }
     }
 #endif
+
 #if defined(STATIC_JSON)
     DBG("Static http memory size %d [%d]", json_static_free_size(), size);
     if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
     }
+#else
+    // don't care
+    SSP_PARAMETER_NOT_USED(size);
 #endif
     return json_decode_init(&sm_http, size);
 }
