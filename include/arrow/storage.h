@@ -26,23 +26,31 @@ extern "C" {
 
 // default structure for the device information
 typedef struct store_host {
-    char host[54];
+    char host[52];
     uint16_t scheme;
     uint16_t port;
 } store_host_t;
 
+typedef struct _api_keys_ {
+    char api[72];
+    char secret[56];
+} api_keys_t;
+
 typedef struct {
   int magic;
-  char ssid[64];
+  char ssid[32];
   char pass[64];
+  char vhost[32];
   int sec;
   int type;
   store_host_t api;
   store_host_t mqtt;
+  int padding;
   char gateway_hid[64];
   char device_hid[64];
   char app_hid[64];
   char user_hid[64];
+  api_keys_t keys;
 } flash_mem_t;
 
 // restore the gateway information (hid)
@@ -71,6 +79,9 @@ void save_api_address(arrow_host_t *host);
 int restore_api_address(arrow_host_t *host);
 void save_mqtt_address(arrow_host_t *host);
 int restore_mqtt_address(arrow_host_t *host);
+
+void save_vhost(property_t vh);
+int restore_vhost(property_t *vh);
 
 void save_apphid_address(char *hid);
 int restore_apphid_address(char *hid);

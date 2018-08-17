@@ -2,7 +2,7 @@
 #include <string.h>
 
 typedef struct __test_http_resp_t {
-    char *text;
+    const char *text;
     int http_size;
 } test_http_resp_t;
 
@@ -17,7 +17,7 @@ void set_http_cb(char *buf, int size) {
   http_resp_cout = 0;
 }
 
-void add_http_cb(char *buf, int size) {
+void add_http_cb(const char *buf, int size) {
     int i = 0;
     for ( i =0; i< 10 ; i++ ) {
         if ( !http_r[i].text && !http_r[i].http_size  ) {
@@ -55,8 +55,7 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
     (void)(sockfd);
     (void)(buf);
     (void)(flags);
-//    int size = sizeof(http_resp_text) - resp_count;
-//    printf("--- %d --- \r\n", http_resp_cout);
+//    printf("--- %d (req %d) --- \r\n", http_resp_cout, len);
     if ( http_r[http_resp_cout].http_size <= 0 ) {
         if (http_r[http_resp_cout].http_size < 0 && !http_r[http_resp_cout].text) {
             http_resp_cout++;
@@ -68,6 +67,7 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
         size = len;
         memcpy(buf, http_r[http_resp_cout].text + resp_index, size);
         resp_index += size;
+//        printf("r{%s} %d\r\n", buf, size);
     } else {
         if ( size <= 0 ) return -1;
         memcpy(buf, http_r[http_resp_cout].text + resp_index, size);

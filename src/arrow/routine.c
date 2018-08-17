@@ -87,7 +87,11 @@ int arrow_connect_gateway(arrow_gateway_t *gateway) {
   }
   // hid already set
   DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
-  return arrow_gateway_checkin(gateway);
+  int ret = arrow_gateway_checkin(gateway);
+  if ( !ret ) {
+      ret = arrow_gateway_update(gateway);
+  }
+  return ret;
 }
 
 int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
@@ -101,7 +105,14 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
     }
     save_device_info(device);
   }
-#if defined(CHECK_DEVICE_REG)
+#if !defined(NO_SOFTWARE_UPDATE) && !defined(NO_RELEASE_UPDATE)
+  else {
+      ret = arrow_device_update(gateway, device);
+      if ( ret < 0 )
+          goto dev_reg_error;
+  }
+#else
+# if defined(CHECK_DEVICE_REG)
   else {
     device_info_t list;
     if ( arrow_device_find_by_hid(&list, P_VALUE(device->hid)) < 0 ) {
@@ -113,9 +124,10 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
       device_info_free(&list);
     }
   }
+# endif
 #endif
   arrow_state_mqtt_run(device);
-  return 0;
+  return ret;
 dev_reg_error:
   arrow_device_free(device);
   return ret;

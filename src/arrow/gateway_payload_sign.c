@@ -127,14 +127,14 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
   return can_buffer;
 }
 #else
-static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
+static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffer_len) {
   JsonNode *child;
   char *canParam = NULL;
   char *can_list[MAX_PARAM_LINE] = {0};
   int total_len = 0;
   int count = 0;
   json_foreach(child, param) {
-    int alloc_len = child->tag==JSON_STRING?strlen(child->string_):50;
+    int alloc_len = child->tag==JSON_STRING?property_size(&child->string_):50;
     alloc_len += strlen(json_key(child));
     alloc_len += 10;
     can_list[count] = (char*)malloc( alloc_len );
@@ -147,7 +147,7 @@ static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
     for ( i=0; i<strlen(json_key(child)); i++ ) *(can_list[count]+i) = tolower((int)json_key(child)[i]);
     *(can_list[count]+i) = '=';
     switch(child->tag) {
-      case JSON_STRING: strcpy(can_list[count]+i+1, child->string_);
+      case JSON_STRING: strcpy(can_list[count]+i+1, json_string(child));
         break;
       case JSON_BOOL: strcpy(can_list[count]+i+1, (child->bool_?"true\0":"false\0"));
         break;
@@ -158,7 +158,8 @@ static __attribute_used__ char *form_canonical_prm(JsonNode *param) {
     }
     count++;
   }
-  canParam = (char*)malloc(total_len);
+  if ( total_len <= can_buffer_len )
+      canParam = can_buffer;
   DBG("GATEWAY SIGN: alloc memory %d", total_len);
   if ( !canParam ) {
       DBG("GATEWAY SIGN: not enough memory %d", total_len);
@@ -272,10 +273,12 @@ int arrow_event_sign(char *signature,
     }
     int can_par_len = json_size(_parameters);
     DBG("want %d bytes for sign", can_par_len);
+#if defined(STATIC_JSON)
     if ( can_par_len > json_static_memory_max_sector() ) {
         DBG("SIGN: No memory");
         goto sign_error;
     }
+#endif
     SB can_par_sb;
     if ( sb_size_init(&can_par_sb, can_par_len) < 0 ) {
         DBG("SIGN: memory alloc fail");

@@ -45,18 +45,17 @@ static iot_key_t secret = {NULL};
 
 char *get_api_key(void) {
   if (api.key) return api.key;
-  if ( default_api_key ) {
-    return (char*)default_api_key;
+  if ( restore_key_setting(api_key, NULL) < 0 ) {
+      return (char*)default_api_key;
   }
-  if ( restore_key_setting(api_key, NULL) < 0 ) return NULL;
   return api_key;
 }
 
 char *get_secret_key(void) {
   if (secret.key) return secret.key;
-  if ( default_secret_key )
-    return (char*)default_secret_key;
-  if ( restore_key_setting(NULL, secret_key) < 0 ) return NULL;
+  if ( restore_key_setting(NULL, secret_key) < 0 ) {
+      return (char*)default_secret_key;
+  }
   return secret_key;
 }
 

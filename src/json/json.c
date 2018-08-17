@@ -41,9 +41,11 @@ static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
 
 #define out_of_memory() { DBG("JSON: Out of memory"); }
 
+#if defined(STATIC_JSON)
 int JsonNode_object_alloc_size() {
     return static_alloc_size(JsonNode) / sizeof(JsonNode);
 }
+#endif
 
 /* Sadly, strdup is not portable. */
 char *json_strdup(const char *s) {
@@ -491,6 +493,12 @@ static JsonNode *mkstring(property_t *s) {
 	return ret;
 }
 
+static JsonNode *mk_weak_property(property_t s) {
+    JsonNode *ret = mknode(JSON_STRING);
+    if ( ret ) property_weak_copy(&ret->string_, s);
+    return ret;
+}
+
 JsonNode *json_mkstring(const char *s) {
     property_t p = json_strdup_property(s);
     if ( IS_EMPTY(p) ) return NULL;
@@ -499,6 +507,10 @@ JsonNode *json_mkstring(const char *s) {
 
 JsonNode *json_mkproperty(property_t *s) {
     return mkstring(s);
+}
+
+JsonNode *json_mk_weak_property(property_t s) {
+    return mk_weak_property(s);
 }
 
 JsonNode *json_mknumber(double n)

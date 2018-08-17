@@ -21,6 +21,10 @@ void arrow_device_init(arrow_device_t *dev) {
     property_init(&dev->hid);
     property_init(&dev->softwareName);
     property_init(&dev->softwareVersion);
+#if defined(ARROW_HAS_USERHID)
+    property_init(&dev->app);
+    property_init(&dev->user);
+#endif
 #if defined(__IBM__)
     property_init(&dev->eid);
 #endif
@@ -34,6 +38,10 @@ void arrow_device_free(arrow_device_t *dev) {
   property_free(&dev->hid);
   property_free(&dev->softwareName);
   property_free(&dev->softwareVersion);
+#if defined(ARROW_HAS_USERHID)
+  property_free(&dev->app);
+  property_free(&dev->user);
+#endif
   if ( dev->info ) json_delete(dev->info);
   if ( dev->prop ) json_delete(dev->prop);
 #if defined(__IBM__)
@@ -53,14 +61,26 @@ void arrow_device_add_property(arrow_device_t *dev, property_t key, const char *
 
 property_t arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
-  property_t weak;
-  json_append_member(_main, p_const("name"), json_mkproperty(&dev->name));
-  json_append_member(_main, p_const("type"), json_mkproperty(&dev->type));
-  property_weak_copy(&weak, dev->uid);
-  json_append_member(_main, p_const("uid"), json_mkproperty(&weak));
-  json_append_member(_main, p_const("gatewayHid"), json_mkproperty(&dev->gateway_hid));
-  json_append_member(_main, p_const("softwareName"), json_mkproperty(&dev->softwareName));
-  json_append_member(_main, p_const("softwareVersion"), json_mkproperty(&dev->softwareVersion));
+  if ( !IS_EMPTY(dev->name) )
+      json_append_member(_main, p_const("name"), json_mk_weak_property(dev->name));
+  if ( !IS_EMPTY(dev->type) )
+      json_append_member(_main, p_const("type"), json_mk_weak_property(dev->type));
+  if ( !IS_EMPTY(dev->uid) )
+      json_append_member(_main, p_const("uid"), json_mk_weak_property(dev->uid));
+  if ( !IS_EMPTY(dev->gateway_hid) )
+      json_append_member(_main, p_const("gatewayHid"), json_mk_weak_property(dev->gateway_hid));
+  if ( !IS_EMPTY(dev->softwareName) )
+      json_append_member(_main, p_const("softwareName"), json_mk_weak_property(dev->softwareName));
+  if ( !IS_EMPTY(dev->softwareVersion) )
+      json_append_member(_main, p_const("softwareVersion"), json_mk_weak_property(dev->softwareVersion));
+
+#if defined(ARROW_HAS_USERHID)
+  if ( !IS_EMPTY(dev->app) )
+      json_append_member(_main, p_const("applicationHid"), json_mk_weak_property(dev->app));
+  if ( !IS_EMPTY(dev->user) )
+      json_append_member(_main, p_const("userHid"), json_mk_weak_property(dev->user));
+#endif
+
   if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
   if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
   property_t dev_property = json_encode_property(_main);
@@ -101,6 +121,16 @@ int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   if ( IS_EMPTY(device->softwareVersion) )
       property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
+
+#if defined(ARROW_HAS_USERHID)
+  if ( IS_EMPTY(device->user) && !IS_EMPTY(gateway->user) ) {
+      property_weak_copy(&device->user, gateway->user);
+  }
+  if ( IS_EMPTY(device->app) && !IS_EMPTY(gateway->app) ) {
+      property_weak_copy(&device->app, gateway->app);
+  }
+#endif
+
   if ( IS_EMPTY(device->uid) ) {
 #if defined(STATIC_ACN)
       char *uid = static_device_uid;

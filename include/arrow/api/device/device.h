@@ -36,7 +36,7 @@ int arrow_device_find_by(device_info_t **list, int n, ...);
 // find device information by HID
 int arrow_device_find_by_hid(device_info_t *list, const char *hid);
 // update existing device
-int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device);
+int arrow_device_update(arrow_gateway_t *gateway, arrow_device_t *device);
 // list historical device events
 int arrow_list_device_events(device_event_t **list, arrow_device_t *device, int n, ...);
 // list device audit logs

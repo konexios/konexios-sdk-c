@@ -238,6 +238,7 @@ static int mqtt_event_sign_checker(mqtt_event_base_t *base) {
 }
 
 int memory_check(int size, int reserved) {
+#if defined(STATIC_JSON)
     if ( size > json_static_memory_max_sector() ) {
         DBG("Not enough mem %d/%d", size, json_static_memory_max_sector());
         return -1;
@@ -246,6 +247,7 @@ int memory_check(int size, int reserved) {
         DBG("No mem for processing %d/%d", 2*size, json_static_memory_max_sector());
         return -1;
     }
+#endif
     return 0;
 }
 
@@ -268,8 +270,9 @@ int process_event_init(int size) {
 #endif
     }
 #endif
+
+#if defined(STATIC_JSON)
     DBG("Static memory size %d [%d]", json_static_free_size(), size);
-#if defined(STATIC_ACN)
     if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
@@ -322,8 +325,10 @@ int process_event_finish() {
 
   arrow_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
   DBG("event queue size %d", arrow_mqtt_has_events());
+#if defined(ARROW_MAX_MQTT_COMMANDS)
   if ( arrow_mqtt_has_events() == ARROW_MAX_MQTT_COMMANDS )
       http_session_force_http(1);
+#endif
 error:
   if ( ret < 0 ) {
       mqtt_event_free(mqtt_e);
@@ -412,8 +417,8 @@ int process_http_init(int size) {
         }
     }
 #endif
+#if defined(STATIC_JSON)
     DBG("Static http memory size %d [%d]", json_static_free_size(), size);
-#if defined(STATIC_ACN)
     if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
@@ -531,7 +536,7 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
 
     JsonNode *payload = json_find_member(_parameters, p_const("payload"));
     if ( payload ) {
-        http_response_add_payload(res, p_stack(payload));
+        http_response_add_payload(res, payload->string_);
     }
     ret = 0;
 

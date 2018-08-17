@@ -54,5 +54,6 @@ int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) __
 JsonNode *json_decode_finish(json_parse_machine_t *sm) __attribute_warn_unused_result__;
 
 JsonNode *json_decode_property(property_t prop) __attribute_warn_unused_result__;
+JsonNode *json_decode_property_at(property_t prop, property_t *buffer) __attribute_warn_unused_result__;
 
 #endif

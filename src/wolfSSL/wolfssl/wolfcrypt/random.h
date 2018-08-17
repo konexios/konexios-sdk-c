@@ -112,7 +112,7 @@ typedef struct WC_RNG {
 /* NO_OLD_RNGNAME removes RNG struct name to prevent possible type conflicts,
  * can't be used with CTaoCrypt FIPS */
 #if !defined(NO_OLD_RNGNAME) && !defined(HAVE_FIPS)
-    #define RNG WC_RNG
+    #define __RNG WC_RNG
 #endif
 
 WOLFSSL_LOCAL

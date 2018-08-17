@@ -8,9 +8,10 @@
 
 #include "data/static_buf.h"
 
-inline int __is_in_use(uint8_t *buf, uint32_t index)     { return (buf[(index)>>3] & (1 << ((index) % 8))); }
-inline void __set_in_use(uint8_t *buf, uint32_t index)   { buf[(index)>>3] |= (1 << ((index) % 8)); }
-inline void __unset_in_use(uint8_t *buf, uint32_t index) { buf[(index)>>3] &= ~(1 << ((index) % 8)); }
+// FIXME inline
+static inline int __is_in_use(uint8_t *buf, uint32_t index)     { return (buf[(index)>>3] & (1 << ((index) % 8))); }
+static inline void __set_in_use(uint8_t *buf, uint32_t index)   { buf[(index)>>3] |= (1 << ((index) % 8)); }
+static inline void __unset_in_use(uint8_t *buf, uint32_t index) { buf[(index)>>3] &= ~(1 << ((index) % 8)); }
 
 void *__static_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, int size, size_t chunk) {
   if ( size <= 0 ) return NULL;

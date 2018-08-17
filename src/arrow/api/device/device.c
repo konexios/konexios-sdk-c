@@ -111,7 +111,7 @@ static int _device_update_proc(http_response_t *response, void *arg) {
   return 0;
 }
 
-int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+int arrow_device_update(arrow_gateway_t *gateway, arrow_device_t *device) {
   gate_dev_t gd = {gateway, device};
   STD_ROUTINE(_device_update_init, &gd,
               _device_update_proc, device,

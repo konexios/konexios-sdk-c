@@ -308,7 +308,7 @@ int arrow_software_release_payload_handler(void *r,
 static void _software_releases_download_init(http_request_t *request, void *arg) {
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/%s/file", th->hid, th->token);
+  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
   if (n < 0) return;
   uri[n] = 0x0;
   http_request_init(request, GET, &p_stack(uri));

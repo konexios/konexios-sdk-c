@@ -26,31 +26,29 @@ void arrow_gateway_init(arrow_gateway_t *gate) {
 property_t arrow_gateway_serialize(arrow_gateway_t *gate) {
   JsonNode *_main = json_mkobject();
   if ( !IS_EMPTY( gate->name ) )
-    json_append_member(_main, p_const("name"), json_mkproperty(&gate->name));
-  if ( !IS_EMPTY( gate->uid ) ) {
-      property_t weak;
-      property_weak_copy(&weak, gate->uid);
-    json_append_member(_main, p_const("uid"), json_mkproperty(&weak));
-  }
+    json_append_member(_main, p_const("name"), json_mk_weak_property(gate->name));
+  if ( !IS_EMPTY( gate->uid ) )
+    json_append_member(_main, p_const("uid"), json_mk_weak_property(gate->uid));
   if ( !IS_EMPTY(gate->os) )
-    json_append_member(_main, p_const("osName"), json_mkproperty(&gate->os));
+    json_append_member(_main, p_const("osName"), json_mk_weak_property(gate->os));
   if ( !IS_EMPTY(gate->type) )
-    json_append_member(_main, p_const("type"), json_mkproperty(&gate->type));
+    json_append_member(_main, p_const("type"), json_mk_weak_property(gate->type));
   if ( !IS_EMPTY(gate->software_name) )
-    json_append_member(_main, p_const("softwareName"), json_mkproperty(&gate->software_name));
+    json_append_member(_main, p_const("softwareName"), json_mk_weak_property(gate->software_name));
   if ( !IS_EMPTY(gate->software_version) )
-    json_append_member(_main, p_const("softwareVersion"), json_mkproperty(&gate->software_version));
+    json_append_member(_main, p_const("softwareVersion"), json_mk_weak_property(gate->software_version));
   if ( !IS_EMPTY(gate->sdkVersion) )
-    json_append_member(_main, p_const("sdkVersion"), json_mkproperty(&gate->sdkVersion));
+    json_append_member(_main, p_const("sdkVersion"), json_mk_weak_property(gate->sdkVersion));
 
 #if defined(ARROW_HAS_USERHID)
   if ( !IS_EMPTY(gate->app) )
-      json_append_member(_main, p_const("applicationHid"), json_mkproperty(&gate->app));
+      json_append_member(_main, p_const("applicationHid"), json_mk_weak_property(gate->app));
   if ( !IS_EMPTY(gate->user) )
-      json_append_member(_main, p_const("userHid"), json_mkproperty(&gate->user));
+      json_append_member(_main, p_const("userHid"), json_mk_weak_property(gate->user));
 #endif
 
   property_t tmp = json_encode_property(_main);
+
   json_delete(_main);
   return tmp;
 }
@@ -79,6 +77,10 @@ void arrow_gateway_free(arrow_gateway_t *gate) {
   property_free( &gate->software_name );
   property_free( &gate->software_version );
   property_free( &gate->sdkVersion );
+#if defined(ARROW_HAS_USERHID)
+  property_free( &gate->user );
+  property_free( &gate->app );
+#endif
 }
 
 
@@ -129,7 +131,7 @@ int arrow_prepare_gateway(arrow_gateway_t *gateway) {
   if ( IS_EMPTY(gateway->user) ) {
       char tmphid[46] = {0};
       if ( restore_userhid_address(tmphid) == 0 ) {
-          property_copy( &gateway->user, p_const(tmphid));
+          property_copy( &gateway->user, p_stack(tmphid));
       } else {
           DBG("no user hid!");
       }

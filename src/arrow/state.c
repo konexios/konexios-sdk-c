@@ -203,8 +203,7 @@ void arrow_device_state_free(void) {
 }
 
 int arrow_state_mqtt_is_running(void) {
-  if ( !__state_list ) return -1;
-  return 0;
+  return ( !IS_EMPTY(_device_hid) );
 }
 
 int arrow_state_mqtt_stop(void) {
@@ -429,6 +428,7 @@ static int arrow_device_state_answer(property_t device_hid, _st_put_api put_type
 int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   SSP_PARAMETER_NOT_USED(ev);
+  DBG("state request for [%s]", P_VALUE(_device_hid));
   if ( IS_EMPTY(_device_hid) ) return -1;
 
   JsonNode *device_hid = json_find_member(_parameters, p_const("deviceHid"));

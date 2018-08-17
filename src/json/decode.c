@@ -277,7 +277,7 @@ int json_parse_machine_init(json_parse_machine_t *jpm, alloc_only_t *allocator) 
     jpm->p = NULL;
     jpm->root = NULL;
     jpm->buffer = allocator;
-    BUFFER_CLEAR(jpm);
+    BUFFER_INIT(jpm);
     arrow_linked_list_init(jpm);
     return 0;
 }

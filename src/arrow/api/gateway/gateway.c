@@ -9,6 +9,7 @@
 #include "arrow/api/gateway/gateway.h"
 #include <http/routine.h>
 #include <arrow/sign.h>
+#include <arrow/storage.h>
 #include <debug.h>
 #include <data/chunk.h>
 #include <json/decode.h>
@@ -52,15 +53,17 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
     } // FIXME iot connect ibm, azure
     JsonNode *_main_key = json_find_member(_main, p_const("key"));
 	if ( _main_key ) {
-        JsonNode *tmp = NULL;
-        tmp = json_find_member(_main_key, p_const("apiKey"));
-        if (tmp) {
-            set_api_key(P_VALUE(tmp->string_));
+        JsonNode *api = json_find_member(_main_key, p_const("apiKey"));
+        if (api) {
+            set_api_key(P_VALUE(api->string_));
 		}
-        tmp = json_find_member(_main_key, p_const("secretKey"));
-        if (tmp) {
-            set_secret_key(P_VALUE(tmp->string_));
+        JsonNode *sec  = json_find_member(_main_key, p_const("secretKey"));
+        if (sec) {
+            set_secret_key(P_VALUE(sec->string_));
 		}
+        if ( api && sec ) {
+            save_key_setting(json_string(api), json_string(sec));
+        }
 	} else {
         DBG("There are no keys!");
         goto gateway_config_error;

@@ -16,7 +16,7 @@ void save_key_setting(const char *api_key, const char *sec_key) {
 
 int restore_key_setting(char *api, char *sec) {
     if (api) strcpy(api, DEFAULT_API_KEY);
-    if (sec) strcpy(api, DEFAULT_SECRET_KEY);
+    if (sec) strcpy(sec, DEFAULT_SECRET_KEY);
     return 0;
 }
 
@@ -39,6 +39,15 @@ int __attribute_weak__ restore_mqtt_address(arrow_host_t *host) {
     host->host = MQTT_TELEMETRY_ADDR;
     host->port = MQTT_PORT;
     host->scheme = MQTT_SCH;
+    return 0;
+}
+
+void __attribute_weak__ save_vhost(property_t vh) {
+    SSP_PARAMETER_NOT_USED(vh);
+}
+
+int __attribute_weak__ restore_vhost(property_t *vh) {
+    property_copy(vh, p_const(VHOST));
     return 0;
 }
 

@@ -76,9 +76,9 @@ enum {
 
 #if !defined(VHOST)
 # if defined(DEV_ENV)
-#  define VHOST "/themis.dev:"
+#  define VHOST "/themis.dev"
 # else
-#  define VHOST "/pegasus:"
+#  define VHOST "/pegasus"
 # endif
 #endif
 

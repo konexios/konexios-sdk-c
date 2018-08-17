@@ -146,6 +146,7 @@ JsonNode *json_mknull(void);
 JsonNode *json_mkbool(bool b);
 JsonNode *json_mkstring(const char *s);
 JsonNode *json_mkproperty(property_t *s);
+JsonNode *json_mk_weak_property(property_t s);
 JsonNode *json_mknumber(double n);
 JsonNode *json_mkarray(void);
 JsonNode *json_mkobject(void);

@@ -58,17 +58,6 @@ void arrow_command_handler_free(void) {
 }
 
 // events
-static void form_evetns_url(property_t hid, cmd_type ev, char *uri) {
-    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
-    strcat(uri, "/");
-    strcat(uri, P_VALUE(hid));
-    switch(ev) {
-        case failed:    strcat(uri, "/failed"); break;
-        case received:  strcat(uri, "/received"); break;
-        case succeeded: strcat(uri, "/succeeded"); break;
-    }
-}
-
 typedef struct _event_data {
     property_t hid;
 	cmd_type ev;
@@ -78,7 +67,14 @@ typedef struct _event_data {
 static void _event_ans_init(http_request_t *request, void *arg) {
     CREATE_CHUNK(uri, sizeof(ARROW_API_EVENTS_ENDPOINT) + 100);
     event_data_t *data = (event_data_t *)arg;
-    form_evetns_url(data->hid, data->ev, uri);
+    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
+    strcat(uri, "/");
+    strcat(uri, P_VALUE(data->hid));
+    switch(data->ev) {
+        case failed:    strcat(uri, "/failed"); break;
+        case received:  strcat(uri, "/received"); break;
+        case succeeded: strcat(uri, "/succeeded"); break;
+    }
     http_request_init(request, PUT, &p_stack(uri));
     FREE_CHUNK(uri);
     if ( !IS_EMPTY(data->payload) ) {

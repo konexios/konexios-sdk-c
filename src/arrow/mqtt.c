@@ -13,6 +13,7 @@
 #include <data/property.h>
 #include <arrow/events.h>
 #include <debug.h>
+#include <arrow/credentials.h>
 
 #define MQTT_DBG(...)
 
@@ -95,7 +96,7 @@ static int _mqtt_init_common(mqtt_env_t *env) {
     env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size+1);
 #endif
   env->timeout = DEFAULT_MQTT_TIMEOUT;
-  env->port = MQTT_PORT;
+  env->port = arrow_mqtt_host()->port;
   env->init = 0;
   arrow_linked_list_init(env);
   return 0;

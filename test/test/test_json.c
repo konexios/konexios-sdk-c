@@ -1322,6 +1322,7 @@ char *decode_string_test = "{ "
                            "\"key_long_long_long20\":\"value_long_long_long20\","
                            "\"active\":true }";
 
+#if defined(ARROW_JSON_STATIC_BUFFER_SIZE) && ARROW_JSON_STATIC_BUFFER_SIZE == 5120
 void test_size_json_decode_static_overflow(void) {
     char *test = decode_string_test;
     TEST_ASSERT_EQUAL_INT(5120, json_static_memory_max_sector());
@@ -1378,3 +1379,4 @@ void test_size_json_decode_static_overflow(void) {
     json_delete(_main4);
     STATIC_MEMORY_CHECK;
 }
+#endif

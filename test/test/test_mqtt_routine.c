@@ -146,6 +146,7 @@ char mqtt_api_pub_text[] = { "\x32\xb9\x02\x00\x34"
                              "}"
                          };
 
+#if defined(HTTP_VIA_MQTT)
 void test_mqtt_connect(void) {
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     struct hostent *fake_addr = dns_fake(0xc0a80001, MQTT_COMMAND_ADDR);
@@ -155,6 +156,7 @@ void test_mqtt_connect(void) {
     fake_set_gateway_hid(TEST_GATEWAY_HID);
     fake_set_device_hid(TEST_DEVICE_HID);
     arrow_gateway_checkin_IgnoreAndReturn(0);
+    arrow_gateway_update_IgnoreAndReturn(0);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
     arrow_register_gateway_IgnoreAndReturn(0);
@@ -201,6 +203,5 @@ void test_mqtt_connect(void) {
     arrow_mqtt_event_proc();
 
     TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector());
-
-//    TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
 }
+#endif
