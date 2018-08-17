@@ -31,8 +31,6 @@ CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE, 0x10)
 int json_static_memory_max_sector(void) {
     return static_max_piece(jsonbuf);
 }
-#endif
-
 
 int json_static_free_size(void) {
     return static_max_piece(jsonbuf);
