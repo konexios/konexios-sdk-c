@@ -1,6 +1,7 @@
 #include "arrow/telemetry_api.h"
 #include <data/find_by.h>
 #include <json/telemetry.h>
+#include <json/decode.h>
 #include <http/routine.h>
 #include <debug.h>
 #include <data/chunk.h>
@@ -55,7 +56,7 @@ static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
   http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
@@ -72,7 +73,7 @@ static void _telemetry_batch_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s/batch", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
   int i = 0;
@@ -108,7 +109,7 @@ static void _telemetry_find_by_application_hid_init(http_request_t *request, voi
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/applications/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }
@@ -132,7 +133,7 @@ static void _telemetry_find_by_device_hid_init(http_request_t *request, void *ar
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }
@@ -141,7 +142,8 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
   telemetry_response_data_list_t* t = (telemetry_response_data_list_t*)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
   DBG("telem appl: %s", P_VALUE(response->payload));
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *size  = json_find_member(_main, p_const("size"));
   if ( !size ) return -1;
   JsonNode *page  = json_find_member(_main, p_const("page"));
@@ -173,9 +175,9 @@ static int _telemetry_find_by_device_hid_proc(http_response_t *response, void *a
     if ( !floatValue ) goto parse_error;
 
     add_telemetry_data_info(t,
-                            deviceHid->string_,
-                            name->string_,
-                            type->string_,
+                            P_VALUE(deviceHid->string_),
+                            P_VALUE(name->string_),
+                            P_VALUE(type->string_),
                             json_number(timestamp),
                             json_number(floatValue));
   }
@@ -204,7 +206,7 @@ static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg)
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/nodes/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
 }

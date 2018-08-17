@@ -55,7 +55,7 @@ static void _device_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -106,7 +106,7 @@ static void _device_type_create_init(http_request_t *request, void *arg) {
   device_type_t *dev_type = (device_type_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, device_type_serialize(dev_type));
 }
@@ -126,7 +126,7 @@ static void _device_type_update_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/types/%s", ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(ddt->dev->hid));
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, device_type_serialize(ddt->type));
 }

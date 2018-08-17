@@ -8,9 +8,10 @@
 
 #include "data/static_buf.h"
 
-inline int __is_in_use(uint8_t *buf, uint32_t index)     { return (buf[(index)>>3] & (1 << ((index) % 8))); }
-inline void __set_in_use(uint8_t *buf, uint32_t index)   { buf[(index)>>3] |= (1 << ((index) % 8)); }
-inline void __unset_in_use(uint8_t *buf, uint32_t index) { buf[(index)>>3] &= ~(1 << ((index) % 8)); }
+// FIXME inline
+static inline int __is_in_use(uint8_t *buf, uint32_t index)     { return (buf[(index)>>3] & (1 << ((index) % 8))); }
+static inline void __set_in_use(uint8_t *buf, uint32_t index)   { buf[(index)>>3] |= (1 << ((index) % 8)); }
+static inline void __unset_in_use(uint8_t *buf, uint32_t index) { buf[(index)>>3] &= ~(1 << ((index) % 8)); }
 
 void *__static_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, int size, size_t chunk) {
   if ( size <= 0 ) return NULL;
@@ -41,10 +42,35 @@ int __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buf
     SSP_PARAMETER_NOT_USED(__alloc_head);
   int i = 0;
   int sector = 0;
+  int max = 0;
+  for (i=0; i < (int)_buf_size; i++) {
+    if ( !__is_in_use(__alloc_space, i) ) ++sector;
+    else {
+        if ( max < sector ) max = sector;
+        sector = 0;
+    }
+  }
+  if ( max < sector ) max = sector;
+  return max * chunk;
+}
+
+int __static_buf_free_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
+    SSP_PARAMETER_NOT_USED(__alloc_head);
+  int i = 0;
+  int sector = 0;
   for (i=0; i < (int)_buf_size; i++) {
     if ( !__is_in_use(__alloc_space, i) ) ++sector;
   }
   return sector * chunk;
+}
+
+int __static_buf_clean(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
+    SSP_PARAMETER_NOT_USED(__alloc_head);
+  int i = 0;
+  for (i=0; i < (int)_buf_size; i++) {
+    __unset_in_use(__alloc_space, i);
+  }
+  return 0;
 }
 
 
@@ -73,12 +99,73 @@ static uint16_t __static_buf_size(uint8_t *__alloc_head, uint8_t *__alloc_space,
     return size;
 }
 
+static int __static_enlarge_memory(
+        uint8_t *__alloc_head,
+        uint8_t *__alloc_space,
+        uint8_t *buffer,
+        uint32_t _buf_size,
+        size_t chunk,
+        void *ptr,
+        int size) {
+    int i= 0;
+    int r = (size / chunk) + (size % chunk ? 1 : 0);
+    int fin = 0;
+    int start = (uint8_t *)ptr - buffer;
+    if ( start < 0 ) return -1;
+    start /= chunk;
+    r--;
+    if ( start + r >= (int)_buf_size ) return -1;
+    for ( i = start + 1; !__is_in_use(__alloc_head, i) && __is_in_use(__alloc_space, i); i++ )
+        r-- ;
+    start = i;
+    fin = i + r;
+    for ( ; i < fin; i++ ) {
+      if ( __is_in_use(__alloc_space, i) ) {
+          return -1;
+      }
+    }
+    for(i = start; i < fin; i++) {
+      __set_in_use(__alloc_space, i);
+    }
+    return 0;
+}
+
+static int __static_decrise_memory(
+        uint8_t *__alloc_head,
+        uint8_t *__alloc_space,
+        uint8_t *buffer,
+        uint32_t _buf_size,
+        size_t chunk,
+        void *ptr,
+        int size) {
+    int i= 0;
+    int r = (size / chunk) + (size % chunk ? 1 : 0);
+    int start = (uint8_t *)ptr - buffer;
+    if ( start < 0 ) return -1;
+    start /= chunk;
+    start += r;
+    for ( i = start;
+          !__is_in_use(__alloc_head, i) && __is_in_use(__alloc_space, i);
+          i++ )
+        __unset_in_use(__alloc_space, i);
+    return 0;
+}
+
 void *__static_realloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, void *ptr, int size, size_t chunk) {
-    void *p = __static_alloc(__alloc_head, __alloc_space, buffer, _buf_size, size, chunk);
-    if ( !p ) return NULL;
-    uint32_t s = size < (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk) ?
-                size : (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk);
-    memcpy(p, ptr, s);
-    __static_free(__alloc_head, __alloc_space, buffer, ptr, chunk);
-    return p;
+    if ( size < (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk) ) {
+        if ( __static_decrise_memory(__alloc_head, __alloc_space, buffer, _buf_size, chunk, ptr, size) < 0 ) {
+            return NULL;
+        }
+    } else {
+        if ( __static_enlarge_memory(__alloc_head, __alloc_space, buffer, _buf_size, chunk, ptr, size ) < 0 ) {
+            void *p = __static_alloc(__alloc_head, __alloc_space, buffer, _buf_size, size, chunk);
+            if ( p ) {
+                uint32_t s = ARROW_MIN(size, (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk));
+                memcpy(p, ptr, s);
+            }
+            __static_free(__alloc_head, __alloc_space, buffer, ptr, chunk);
+            return p;
+        }
+    }
+    return ptr;
 }

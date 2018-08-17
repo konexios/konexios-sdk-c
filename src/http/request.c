@@ -15,7 +15,6 @@
 #include <arrow/utf8.h>
 
 static const char *METH_str[] = { "GET", "POST", "PUT", "DELETE", "HEAD"};
-static const char *Scheme_str[] = { "http", "https" };
 
 #define CMP_INIT(type) \
 static int __attribute__((used)) cmp_##type(const char *str) { \
@@ -40,67 +39,23 @@ static char * __attribute__((used)) get_##type(int i) { \
 }
 
 CMP_INIT(METH)
-CMP_INIT(Scheme)
 
 extern int default_set_payload_handler(void *r,
                                        property_t buf);
 extern int default_add_payload_handler(void *r,
                                        property_t buf);
 
-#if defined(STATIC_HTTP_CLIENT)
-// FIXME use static property
-static char static_host[256];
-static char static_uri[RINGBUFFER_SIZE/2];
-#endif
+#include <arrow/credentials.h>
 
-void http_request_init(http_request_t *req, int meth, const char *url) {
+int http_request_init(http_request_t *req,
+                       int meth,
+                       property_t *uri) {
   req->is_corrupt = 0;
   property_init(&req->meth);
-  property_init(&req->scheme);
   property_init(&req->host);
   property_init(&req->uri);
   property_init(&req->payload);
   property_copy(&req->meth, p_const(get_METH(meth)));
-  char *sch_end = strstr((char*)url, "://");
-  if ( !sch_end ) { req->is_corrupt = 1; return; }
-  int sch = cmp_n_Scheme(url, (int)(sch_end - url));
-  property_copy(&req->scheme, p_const(get_Scheme(sch)));
-  // FIXME overhead I suppose remove this parsing
-  req->is_cipher = sch;
-  char *host_start = sch_end + 3; //sch_end + strlen("://");
-  char *host_end = strstr(host_start, ":");
-  if ( !host_end ) { req->is_corrupt = 1; return; }
-#if defined(STATIC_HTTP_CLIENT)
-  memcpy(static_host, host_start, (host_end - host_start));
-  static_host[(host_end - host_start)] = 0x0;
-  req->host = p_const(static_host);
-#else
-  char *dynamic_host = (char *)malloc((host_end - host_start) + 1);
-  memcpy(dynamic_host, host_start, (host_end - host_start));
-  dynamic_host[(host_end - host_start)] = 0x0;
-  req->host = p_heap(dynamic_host);
-#endif
-  int port = 0;
-  char *uri_start = copy_till_to_int(host_end+1, "/", &port);
-  if ( !uri_start ) { req->is_corrupt = 1; return; }
-  req->port = (uint16_t)port;
-
-//   strstr(host_end+1, "/");
-  uri_start--;
-
-#if defined(STATIC_HTTP_CLIENT)
-  strcpy(static_uri, uri_start);
-  req->uri = p_const(static_uri);
-#else
-  property_copy(&req->uri, p_stack(uri_start));
-#endif
-
-
-  DBG("meth: %s", P_VALUE(req->meth) );
-  DBG("scheme: %s", P_VALUE(req->scheme));
-  DBG("host: %s", P_VALUE(req->host));
-  DBG("port: %d", req->port);
-  DBG("uri: %s", P_VALUE(req->uri));
 
   req->header = NULL;
   req->query = NULL;
@@ -109,12 +64,31 @@ void http_request_init(http_request_t *req, int meth, const char *url) {
   property_map_init(&req->content_type);
   req->_response_payload_meth._p_set_handler = default_set_payload_handler;
   req->_response_payload_meth._p_add_handler = default_add_payload_handler;
+
+  if ( !arrow_api_host() ) {
+      req->is_corrupt = 1;
+      return -1;
+  }
+  req->host = p_const(arrow_api_host()->host);
+  req->port = arrow_api_host()->port;
+  req->scheme = arrow_api_host()->scheme;
+  req->is_cipher = (req->scheme == arrow_scheme_https ? 1 : 0);
+
+  property_move(&req->uri, uri);
+
+#if 1
+  DBG("meth: %s", P_VALUE(req->meth) );
+  DBG("scheme: %s", (req->scheme?"https":"http"));
+  DBG("host: %s", P_VALUE(req->host));
+  DBG("port: %d", req->port);
+#endif
+  DBG("uri: %s", P_VALUE(req->uri));
+  return 0;
 }
 
 void http_request_close(http_request_t *req) {
   if ( !req ) return;
   property_free(&req->meth);
-  property_free(&req->scheme);
   property_free(&req->host);
   property_free(&req->uri);
   property_free(&req->payload);

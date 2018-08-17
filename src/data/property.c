@@ -20,15 +20,18 @@ void property_type_del(uint8_t index) {
 }
 
 void property_types_init() {
+  if ( prop_disp ) return;
   property_type_add(property_type_get_const());
   property_type_add(property_type_get_dynamic());
   property_type_add(property_type_get_stack());
 }
 
 void property_types_deinit() {
+  property_dynamic_destroy();
   while( prop_disp ) {
       arrow_linked_list_del_node_last(prop_disp, property_dispetcher_t);
   }
+  prop_disp = NULL;
 }
 
 void property_init(property_t *dst) {
@@ -44,6 +47,7 @@ property_handler_t *get_property_type(property_t *src) {
     property_dispetcher_t *tmp = NULL;
     linked_list_find_node(tmp, prop_disp, property_dispetcher_t, proptypeeq, src->flags);
     if ( tmp ) return &tmp->handler;
+    DBG("Error: this property type (%d) not supported", src->flags & PROPERTY_BASE_MASK);
     return NULL;
 }
 
@@ -52,6 +56,12 @@ void property_copy(property_t *dst, property_t src) {
     property_init(dst);
     property_handler_t *handler = get_property_type(&src);
     if ( handler && handler->copy ) handler->copy(dst, &src);
+}
+
+void property_copy_as(int tag, property_t *dst, property_t src) {
+    src.flags &= ~PROPERTY_BASE_MASK;
+    src.flags |= tag | is_owner;
+    property_copy(dst, src);
 }
 
 void property_weak_copy(property_t *dst, property_t src) {
@@ -81,11 +91,7 @@ property_t property_as_null_terminated(property_t *src) {
     property_t tmp;
     property_init(&tmp);
     if ( src->flags & is_raw ) {
-        tmp.size = src->size;
-        tmp.value = malloc(src->size + 1);
-        memcpy(tmp.value, src->value, src->size);
-        tmp.value[tmp.size] = 0x0; // null termination
-        tmp.flags |= ( is_owner | PROPERTY_DYNAMIC_TAG );
+        return raw_to_dynamic_property(src->value, src->size);
     } else {
         property_weak_copy(&tmp, *src);
     }
@@ -110,19 +116,31 @@ int property_concat(property_t *src1, property_t *src2) {
 
 void property_free(property_t *dst) {
     if ( !dst ) return;
-    if ( dst->flags & is_owner ) {
-        property_handler_t *handler = get_property_type(dst);
-        if ( handler && handler->destroy ) handler->destroy(dst);
+    if ( !IS_EMPTY(*dst) ) {
+        if ( dst->flags & is_owner ) {
+            property_handler_t *handler = get_property_type(dst);
+            if ( handler && handler->destroy ) handler->destroy(dst);
+        }
     }
     memset(dst, 0x0, sizeof(property_t));
 }
 
-int property_cmp(property_t *src, property_t *dst) {
+int property_cmp(property_t *src, property_t dst) {
     if ( src->flags & is_raw ) {
-        if ( src->size == dst->size &&
-             strncmp(src->value, dst->value, src->size) == 0 ) return 0;
+        if ( src->size == dst.size &&
+             strncmp(src->value, dst.value, src->size) == 0 ) return 0;
         return -1;
     }
-    if ( strcmp(src->value, dst->value) == 0 ) return 0;
+    if ( strcmp(src->value, dst.value) == 0 ) return 0;
     return -1;
+}
+
+// for c++
+#undef property
+property_t property(char *v, uint8_t f, uint16_t s) {
+    property_t tmp;
+    tmp.value = v;
+    tmp.flags = f;
+    tmp.size = s;
+    return tmp;
 }

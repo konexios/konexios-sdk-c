@@ -13,7 +13,12 @@
 #include <data/static_buf.h>
 CREATE_BUFFER(dynamicbuf, ARROW_DYNAMIC_STATIC_BUFFER_SIZE, 0x20)
 
+int dyn_static_mem_size() {
+    return static_buf_free_size(dynamicbuf);
+}
+
 static void *static_strndup(char *ptr, int size) {
+    if ( size <= 0  ) return NULL;
     void *p = static_buf_alloc(dynamicbuf, size + 1);
     if ( !p ) {
         DBG("Out of Memory: static dynamic");
@@ -35,12 +40,13 @@ void static_free(void *p) {
 
 #define STRNDUP static_strndup
 #define STRDUP  static_strdup
-#define REALLOC(ptr, size) static_buf_realloc(dynamicbuf, (ptr), (size))
+
+#define REALLOC(...) static_buf_realloc(dynamicbuf, __VA_ARGS__)
 #define FREE    static_free
 #else
 #define STRNDUP strndup
 #define STRDUP  strdup
-#define REALLOC(ptr, size) realloc((ptr), (size))
+#define REALLOC realloc
 #define FREE    free
 #endif
 
@@ -101,8 +107,9 @@ void dynmc_concat(property_t *dst, property_t *src) {
         dynmc_destroy(dst);
         return;
     }
+    dst->size += size_src;
     memcpy(dst->value + size_dst, src->value, size_src);
-    dst->value[size_dst + size_src +1] = '\0';
+    dst->value[size_dst + size_src] = '\0';
 }
 
 static property_dispetcher_t dynamic_property_type = {
@@ -111,4 +118,26 @@ static property_dispetcher_t dynamic_property_type = {
 
 property_dispetcher_t *property_type_get_dynamic() {
     return &dynamic_property_type;
+}
+
+void property_dynamic_destroy() {
+#if defined(STATIC_DYNAMIC_PROPERTY)
+    static_buf_clear_all(dynamicbuf);
+#endif
+}
+
+property_t string_to_dynamic_property(const char *name) {
+    property_t dst;
+    dst.value = (char *)STRDUP((char*)name);
+    dst.size = strlen(name);
+    dst.flags = PROPERTY_DYNAMIC_TAG | is_owner;
+    return dst;
+}
+
+property_t raw_to_dynamic_property(const char *name, int len) {
+    property_t dst;
+    dst.value = (char *)STRNDUP((char*)name, len);
+    dst.size = len;
+    dst.flags = PROPERTY_DYNAMIC_TAG | is_owner | is_raw;
+    return dst;
 }

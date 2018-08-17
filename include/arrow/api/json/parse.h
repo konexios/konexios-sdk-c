@@ -41,7 +41,7 @@ int timestamp_parse(timestamp_t *t, const char *s);
 #define json_fill_property(tmp, gx, x) do { \
     JsonNode *t = json_find_member(tmp, p_const(xstr(x))); \
     if ( t && t->tag == JSON_STRING ) \
-        property_copy( &(gx)->x, p_stack(t->string_)); \
+        property_copy( &(gx)->x, t->string_); \
   } while(0)
 
 #if defined(__cplusplus)

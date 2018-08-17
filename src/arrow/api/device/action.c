@@ -18,7 +18,7 @@ static void _device_action_create_init(http_request_t *request, void *arg) {
   strcat(uri, "/");
   strcat(uri, P_VALUE(dm->device->hid));
   strcat(uri, "/actions");
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("criteria"), json_mkstring(dm->model->criteria));
@@ -44,7 +44,7 @@ static void _device_action_delete_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN,
            "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(dm->device->hid), dm->model->index);
-  http_request_init(request, DELETE, uri);
+  http_request_init(request, DELETE, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -61,7 +61,7 @@ static void _device_action_list_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN,
            "%s/%s/actions", ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(dev->hid));
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -85,7 +85,7 @@ static void _action_type_list_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
            "%s/actions/types", ARROW_API_DEVICE_ENDPOINT);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -111,7 +111,7 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN,
            "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(dm->device->hid), dm->model->index);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("criteria"), json_mkstring(dm->model->criteria));

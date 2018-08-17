@@ -24,7 +24,9 @@ size_t json_size(JsonNode *o) {
         // FIXME add handler
         break;
     case JSON_STRING:
-        ret += encoded_strlen(tmp->string_);
+        if ( !IS_EMPTY(tmp->string_) ) {
+            ret += encoded_strlen(P_VALUE(tmp->string_));
+        }
         break;
     case JSON_NUMBER: {
         SB t;
@@ -93,10 +95,10 @@ int encoded_strlen(const char *str) {
 }
 
 int jem_encode_value_string(json_encode_machine_t *jem, char *s, int len) {
-    int value_size = encoded_strlen(jem->ptr->string_);
+    int value_size = encoded_strlen(P_VALUE(jem->ptr->string_));
 
     int r = jem_encode_string('\"', '\"',
-                              jem->ptr->string_,
+                              P_VALUE(jem->ptr->string_),
                               jem->start, s, len);
     if ( r < 0 ) return -1;
     jem->start += r;

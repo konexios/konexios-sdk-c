@@ -19,9 +19,10 @@
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 #include <bsd/socket.h>
 #include <http/request.h>
 #include <http/response.h>
@@ -36,9 +37,12 @@
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include <arrow/storage.h>
+#include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();
+    arrow_hosts_init();
 }
 
 void tearDown(void) {
@@ -69,7 +73,7 @@ void test_http_client_do( void ) {
    struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
 
     // test address
-    http_request_init(&request, GET, "http://api.arrowconnect.io:80/api/v1/kronos/gateways");
+    http_request_init(&request, GET, &p_const("/api/v1/kronos/gateways"));
     TEST_ASSERT( !request.query );
 
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);

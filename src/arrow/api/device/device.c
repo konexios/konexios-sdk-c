@@ -1,6 +1,7 @@
 #include "arrow/api/device/device.h"
 #include <http/routine.h>
 #include <debug.h>
+#include <json/decode.h>
 #include <data/chunk.h>
 
 #define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
@@ -13,7 +14,7 @@ typedef struct _gate_dev {
 
 static void _device_register_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
-  http_request_init(request, POST, ARROW_API_DEVICE_ENDPOINT);
+  http_request_init(request, POST, &p_const(ARROW_API_DEVICE_ENDPOINT));
   if ( IS_EMPTY(gd->device->gateway_hid) )
       arrow_prepare_device(gd->gateway, gd->device);
   http_request_set_payload(request, arrow_device_serialize(gd->device));
@@ -40,7 +41,7 @@ int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device) {
 
 static void _device_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
-  http_request_init(request, GET, ARROW_API_DEVICE_ENDPOINT);
+  http_request_init(request, GET, &p_const(ARROW_API_DEVICE_ENDPOINT));
   http_request_set_findby(request, params);
 }
 
@@ -65,14 +66,15 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
            "%s/%s",
            ARROW_API_DEVICE_ENDPOINT,
            hid);
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
 static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
     device_info_t *info = (device_info_t *)arg;
     device_info_init(info);
-    JsonNode *t = json_decode(P_VALUE(response->payload));
+    JsonNode *t = json_decode_property(response->payload);
+    if ( !t ) return -1;
     int ret = _device_info_parse(info, t);
     json_delete(t);
     return ret;
@@ -93,7 +95,7 @@ static void _device_update_init(http_request_t *request, void *arg) {
            ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(gd->device->hid));
   if ( ret > 0 ) uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, arrow_device_serialize(gd->device));
 }
@@ -109,7 +111,7 @@ static int _device_update_proc(http_response_t *response, void *arg) {
   return 0;
 }
 
-int arrow_update_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+int arrow_device_update(arrow_gateway_t *gateway, arrow_device_t *device) {
   gate_dev_t gd = {gateway, device};
   STD_ROUTINE(_device_update_init, &gd,
               _device_update_proc, device,
@@ -128,7 +130,7 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
            "%s/%s/events",
            ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(dp->device->hid));
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, dp->params);
 }
@@ -155,7 +157,7 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
            "%s/%s/logs",
            ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(dp->device->hid));
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, dp->params);
 }
@@ -187,7 +189,7 @@ static void _device_errors_init(http_request_t *request, void *arg) {
            "%s/%s/errors",
            ARROW_API_DEVICE_ENDPOINT,
            P_VALUE(de->device->hid));
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *error = json_mkobject();
   json_append_member(error, p_const("error"), json_mkstring(de->error));

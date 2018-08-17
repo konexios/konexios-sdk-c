@@ -1,7 +1,7 @@
 #include "arrow/state.h"
 #include <time/time.h>
 #include <http/client.h>
-#include <json/json.h>
+#include <json/decode.h>
 #include <sys/mem.h>
 #include <http/routine.h>
 #include <arrow/events.h>
@@ -51,7 +51,7 @@ typedef struct _state_handle_ {
 } state_handle_t;
 
 static int stateeq( arrow_state_list_t *sl, property_t name ) {
-    if ( property_cmp(&sl->name, &name) == 0 ) return 0;
+    if ( property_cmp(&sl->name, name) == 0 ) return 0;
     return -1;
 }
 
@@ -203,14 +203,18 @@ void arrow_device_state_free(void) {
 }
 
 int arrow_state_mqtt_is_running(void) {
-  if ( !__state_list ) return -1;
-  return 0;
+  return ( !IS_EMPTY(_device_hid) );
 }
 
 int arrow_state_mqtt_stop(void) {
-  if (__state_list) arrow_device_state_free();
   property_free(&_device_hid);
   return 0;
+}
+
+int arrow_state_deinit(void) {
+    arrow_state_mqtt_stop();
+    if (__state_list) arrow_device_state_free();
+    return 0;
 }
 
 int arrow_state_mqtt_run(arrow_device_t *device) {
@@ -227,7 +231,7 @@ static void _state_get_init(http_request_t *request, void *arg) {
   strcat(uri, "/");
   strcat(uri, P_VALUE(device->hid));
   strcat(uri, "/state");
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -243,16 +247,27 @@ static int _state_get_proc(http_response_t *response, void *arg) {
     if ( !IS_EMPTY(response->payload) ) {
         DBG("[%s]", P_VALUE(response->payload));
     }
-    JsonNode *_main = json_decode(P_VALUE(response->payload));
-    if ( !_main ) return -1;
+    int ret = -1;
+    JsonNode *_main = json_decode_property(response->payload);
+    if ( !_main ) {
+        DBG("decode error");
+        goto decode_error;
+    }
     JsonNode *dev_hid = json_find_member(_main, p_const("deviceHid"));
-    if ( !dev_hid ) return -1;
-    if ( strcmp(dev_hid->string_, P_VALUE(dev->hid)) != 0 ) return -1;
+    if ( !dev_hid ||
+         property_cmp(&dev_hid->string_, dev->hid) != 0 ) {
+        DBG("No hid device");
+        goto decode_error;
+    }
     JsonNode *states = json_find_member(_main, p_const("states"));
-    if ( !states ) return -1;
-    arrow_device_state_handler(states);
+    if ( !states ) {
+        DBG("No states");
+        goto decode_error;
+    }
+    ret = arrow_device_state_handler(states);
+decode_error:
     json_delete(_main);
-    return 0;
+    return ret;
 }
 
 int arrow_state_receive(arrow_device_t *device) {
@@ -287,8 +302,8 @@ static void _state_post_init(http_request_t *request, void *arg) {
       FREE_CHUNK(uri);
       return;
   }
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
-  http_request_init(request, POST, uri);
   JsonNode *_main = NULL;
   JsonNode *_states = NULL;
   _main = json_mkobject();
@@ -356,11 +371,11 @@ int arrow_device_state_handler(JsonNode *_main) {
       if ( ! value ) continue;
       JsonNode *timestamp = json_find_member(tmp, p_const("timestamp"));
       timestamp_t ts = {0};
-      timestamp_parse(&ts, timestamp->string_);
+      timestamp_parse(&ts, P_VALUE(timestamp->string_));
       if ( timestamp_less(&dev_state->ts, &ts) ) {
           dev_state->ts = ts;
           if ( is_valid_tag(dev_state->tag) && state_adder[dev_state->tag].parse ) {
-              state_adder[dev_state->tag].parse(dev_state, value->string_);
+              state_adder[dev_state->tag].parse(dev_state, P_VALUE(value->string_));
           }
       }
   }
@@ -397,8 +412,8 @@ static void _state_put_init(http_request_t *request, void *arg) {
       FREE_CHUNK(uri);
       return;
   }
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
-  http_request_init(request, PUT, uri);
   if ( _error ) {
     http_request_set_payload(request, json_encode_property(_error));
     json_delete(_error);
@@ -413,6 +428,7 @@ static int arrow_device_state_answer(property_t device_hid, _st_put_api put_type
 int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   mqtt_event_t *ev = (mqtt_event_t *)_ev;
   SSP_PARAMETER_NOT_USED(ev);
+  DBG("state request for [%s]", P_VALUE(_device_hid));
   if ( IS_EMPTY(_device_hid) ) return -1;
 
   JsonNode *device_hid = json_find_member(_parameters, p_const("deviceHid"));
@@ -434,25 +450,37 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   }
   int retry = 0;
 
-  while ( arrow_device_state_answer(_device_hid, st_received, trans_hid->string_) < 0 ) {
+  while ( arrow_device_state_answer(_device_hid, st_received, P_VALUE(trans_hid->string_)) < 0 ) {
       RETRY_UP(retry, {return -2;});
       msleep(ARROW_RETRY_DELAY);
   }
 
-  JsonNode *_states = json_decode(payload->string_);
-  int ret = arrow_device_state_handler(_states);
-
+  int ret = -1;
+  JsonNode *_states = json_decode_property(payload->string_);
+  if ( _states ) {
+      ret = arrow_device_state_handler(_states);
+  }
   if ( ret < 0 ) {
-    while ( arrow_device_state_answer(_device_hid, st_error, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_error, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
   } else {
-    while ( arrow_device_state_answer(_device_hid, st_complete, trans_hid->string_) < 0 ) {
+    while ( arrow_device_state_answer(_device_hid, st_complete, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
         msleep(ARROW_RETRY_DELAY);
     }
   }
   return 0;
 }
+
 #endif
+
+// for c++
+#undef state_pr
+arrow_state_pair_t state_pr(property_t x, int y) {
+    arrow_state_pair_t tmp;
+    property_copy(&tmp.name, x);
+    tmp.typetag = y;
+    return tmp;
+}

@@ -18,7 +18,7 @@ typedef struct _account {
 } account_t;
 
 static void _account_request(http_request_t *request, void *arg) {
-  http_request_init(request, POST, ARROW_API_ACCOUNT_ENDPOINT);
+  http_request_init(request, POST, &p_const(ARROW_API_ACCOUNT_ENDPOINT));
   account_t *acc = (account_t *)arg;
   JsonNode *_main = json_mkobject();
   json_append_member(_main, p_const("name"), json_mkstring(acc->name));

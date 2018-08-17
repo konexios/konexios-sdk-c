@@ -19,7 +19,7 @@ static_object_pool_type(property_map_t, ARROW_MAX_PROPERTY)
 #endif
 
 static int propkeyeq( property_map_t *s, property_t key ) {
-    if ( property_cmp ( &s->key, &key ) == 0 ) return 0;
+    if ( property_cmp ( &s->key, key ) == 0 ) return 0;
     return -1;
 }
 

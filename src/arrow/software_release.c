@@ -15,6 +15,7 @@
 #include <arrow/utf8.h>
 #include <time/time.h>
 #include <data/chunk.h>
+#include <json/decode.h>
 
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;
@@ -46,7 +47,7 @@ static void _gateway_software_releases_trans_init(http_request_t *request, void 
   CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/gateways/upgrade");
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
@@ -54,10 +55,11 @@ static void _gateway_software_releases_trans_init(http_request_t *request, void 
 static int _gateway_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
   if ( IS_EMPTY(response->payload) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
-  property_copy(&rs->trans_hid, p_stack(hid->string_));
+  property_copy(&rs->trans_hid, hid->string_);
   return 0;
 }
 
@@ -77,7 +79,7 @@ static void _device_software_releases_trans_init(http_request_t *request, void *
   CREATE_CHUNK(uri, URI_LEN);
   strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/devices/upgrade");
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, serialize_software_trans(P_VALUE(gs->gate->hid), gs->rs));
 }
@@ -85,10 +87,11 @@ static void _device_software_releases_trans_init(http_request_t *request, void *
 static int _device_software_releases_trans_proc(http_response_t *response, void *arg) {
   release_sched_t *rs = (release_sched_t *)arg;
   if ( IS_EMPTY(response->payload) )  return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *hid = json_find_member(_main, p_const("hid"));
   if ( !hid ) return -1;
-  property_copy(&rs->trans_hid, p_stack(hid->string_));
+  property_copy(&rs->trans_hid, hid->string_);
   return 0;
 }
 
@@ -129,7 +132,7 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   if ( n < 0 ) return;
   uri[n] = 0x0;
   DBG("uri %s", uri);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   if ( ans->state == fail && ans->error ) {
     JsonNode *_error = json_mkobject();
@@ -160,7 +163,7 @@ static void _software_releases_start_init(http_request_t *request, void *arg) {
   int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
   if ( n < 0 ) return;
   uri[n] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -173,12 +176,13 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *tmp = json_find_member(_parameters, p_const("softwareReleaseTransHid"));
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
-  char *trans_hid = tmp->string_;
+  char *trans_hid = json_string(tmp);
   wdt_feed();
 
-  http_session_close_set(current_client(), false);
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
+#else
+  http_session_close_set(current_client(), false);
 #endif
   int retry = 0;
   while( arrow_software_releases_trans_received(trans_hid) < 0) {
@@ -188,18 +192,18 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   wdt_feed();
   tmp = json_find_member(_parameters, p_const("tempToken"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_token = tmp->string_;
+  char *_token = json_string(tmp);
   DBG("FW TOKEN: %s", _token);
   DBG("FW HID: %s", trans_hid);
   tmp = json_find_member(_parameters, p_const("fromSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_from = tmp->string_;
+  char *_from = json_string(tmp);
   tmp = json_find_member(_parameters, p_const("toSoftwareVersion"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_to = tmp->string_;
+  char *_to = json_string(tmp);
   tmp = json_find_member(_parameters, p_const("md5checksum"));
   if ( !tmp || tmp->tag != JSON_STRING ) goto software_release_done;
-  char *_checksum = tmp->string_;
+  char *_checksum = json_string(tmp);
   wdt_feed();
   if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
@@ -209,7 +213,12 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       if ( ret < 0 ) goto software_release_done;
   }
   http_session_set_protocol(current_client(), api_via_http);
-  ret = arrow_software_release_download(_token, trans_hid, _checksum);
+  RETRY_CR(retry);
+  while ( (ret = arrow_software_release_download(_token, trans_hid, _checksum)) < 0 ) {
+      RETRY_UP(retry, { goto software_release_done; });
+      msleep(ARROW_RETRY_DELAY);
+  }
+//  ret = arrow_software_release_download(_token, trans_hid, _checksum);
 //#if defined(HTTP_VIA_MQTT)
 //  http_session_set_protocol(current_client(), 1);
 //#endif
@@ -299,10 +308,10 @@ int arrow_software_release_payload_handler(void *r,
 static void _software_releases_download_init(http_request_t *request, void *arg) {
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/%s/file", th->hid, th->token);
+  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
   if (n < 0) return;
   uri[n] = 0x0;
-  http_request_init(request, GET, uri);
+  http_request_init(request, GET, &p_stack(uri));
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
   wdt_feed();
@@ -373,7 +382,7 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     int n = snprintf(uri, URI_LEN, "%s/start", ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
     if (n < 0) return;
     uri[n] = 0x0;
-    http_request_init(request, POST, uri);
+    http_request_init(request, POST, &p_stack(uri));
     http_request_add_header(request,
                             p_const("x-arrow-apikey"),
                             p_const(DEFAULT_API_KEY));

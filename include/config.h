@@ -12,7 +12,7 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SDK_VERSION 1.3.10
+#define SDK_VERSION 1.3.12
 
 #if !defined(_KEYS_)
 #include "private.h"
@@ -105,5 +105,8 @@
     r = 0;
 #define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
 
+#if !defined(__attribute_warn_unused_result__)
+#define __attribute_warn_unused_result__ __attribute__ ((warn_unused_result))
+#endif
 
 #endif /* ACN_SDK_C_CONFIG_H_ */

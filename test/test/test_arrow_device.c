@@ -14,11 +14,14 @@
 #include <data/property_stack.h>
 #include <json/property_json.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 
 #include "mock_mac.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"

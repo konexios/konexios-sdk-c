@@ -34,6 +34,11 @@ int json_static_memory_max_sector(void) {
 #endif
 
 
+int json_static_free_size(void) {
+    return static_max_piece(jsonbuf);
+}
+#endif
+
 int sb_size(SB *sb) {
     return sb->end - sb->start;
 }
@@ -58,16 +63,28 @@ int sb_init(SB *sb) {
     return 0;
 }
 
+int sb_size_init(SB *sb, int need) {
+    sb->start = (char*) SB_ALLOC(need);
+    if (sb->start == NULL) {
+        DBG("SB: Out of memory");
+        return -1;
+    }
+    sb->cur = sb->start;
+    sb->end = sb->start + need;
+    return 0;
+}
+
 int sb_grow(SB *sb, int need) {
     size_t length = (size_t)(sb->cur - sb->start);
     size_t alloc = (size_t)(sb->end - sb->start);
 
     do {
-        alloc *= 2;
+        alloc += 16;
     } while (alloc < length + (size_t)need);
 
     sb->start = (char*) SB_REALLOC(sb->start, alloc + 1);
     if (sb->start == NULL) {
+        sb_clear(sb);
         DBG("SB: realloc fail");
         return -1;
     }
@@ -80,6 +97,15 @@ int sb_grow(SB *sb, int need) {
 int sb_need(SB *sb, int need) {
     if ((sb)->end - (sb)->cur < need)
         return sb_grow(sb, need);
+    return 0;
+}
+
+int sb_putc(SB *sb, char byte) {
+    if ((sb)->cur >= (sb)->end) {
+        int r = sb_grow(sb, 1);
+        if ( r < 0 ) return r;
+    }
+    *(sb)->cur++ = (byte);
     return 0;
 }
 
@@ -98,6 +124,14 @@ char *sb_finish(SB *sb) {
     if ( sb->cur ) *sb->cur = 0;
     assert(sb->start <= sb->cur && strlen(sb->start) == (size_t)(sb->cur - sb->start));
     return sb->start;
+}
+
+property_t sb_finish_property(SB *sb) {
+    property_t tmp;
+    tmp.size = sb->cur - sb->start;
+    tmp.value = sb_finish(sb);
+    tmp.flags = PROPERTY_JSON_TAG | is_owner;
+    return tmp;
 }
 
 void sb_clear(SB *sb) {

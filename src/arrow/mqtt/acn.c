@@ -9,6 +9,8 @@
 #include <arrow/mqtt.h>
 #include <arrow/sign.h>
 #include <debug.h>
+#include <arrow/storage.h>
+#include <arrow/credentials.h>
 
 #define USE_STATIC
 #include <data/chunk.h>
@@ -26,9 +28,13 @@ static int mqtt_common_init_iot(
         i_args *args) {
     CREATE_CHUNK(username, USERNAME_LEN);
 
+    property_t vhost;
+    property_init(&vhost);
+    restore_vhost(&vhost);
     int ret = snprintf(username,
                        USERNAME_LEN,
-                       VHOST "%s",
+                       "%s:%s",
+                       P_VALUE(vhost),
                        P_VALUE(args->gateway->hid));
     if ( ret < 0 ) return -1;
     username[ret] = 0x0;
@@ -38,9 +44,8 @@ static int mqtt_common_init_iot(
     env->data.clientID.cstring = P_VALUE(args->gateway->hid);
     env->data.username.cstring = P_VALUE(env->username);
     env->data.password.cstring = (char*)get_api_key();
-    property_copy(&env->addr, p_const(MQTT_COMMAND_ADDR));
+    property_copy(&env->addr, p_stack(arrow_mqtt_host()->host));
     FREE_CHUNK(username);
-
     return 0;
 }
 

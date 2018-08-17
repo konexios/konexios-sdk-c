@@ -2,6 +2,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <data/chunk.h>
+#include <json/decode.h>
 
 #define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 256
 
@@ -13,21 +14,22 @@ static void _test_gateway_init(http_request_t *request, void *arg) {
   int ret = snprintf(uri, URI_LEN, "%s/gateways/%s", ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(pg->hid));
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
 static int _test_gateway_proc(http_response_t *response, void *arg) {
   property_t *res_hid = (property_t *)arg;
   if ( response->m_httpResponseCode != 200 ) return -1;
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);
     return -1;
   }
-  DBG("test result hid %s", test_res->string_);
-  property_copy(res_hid, p_stack(test_res->string_));
+  DBG("test result hid %s", json_string(test_res));
+  property_copy(res_hid, test_res->string_);
   return 0;
 }
 
@@ -50,7 +52,7 @@ static void _test_gateway_hid_init(http_request_t *request, void *arg) {
                      P_VALUE(pg->gate->hid),
                      pg->value);
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -69,7 +71,7 @@ static void _test_gateway_name_init(http_request_t *request, void *arg) {
                      P_VALUE(pg->gate->hid),
                      pg->value);
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -87,7 +89,7 @@ static void _test_device_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TESTSUITE_ENDPOINT, P_VALUE(dev->hid));
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -99,14 +101,15 @@ static int _test_device_proc(http_response_t *response, void *arg) {
       }
       return -1;
   }
-  JsonNode *_main = json_decode(P_VALUE(response->payload));
+  JsonNode *_main = json_decode_property(response->payload);
+  if ( !_main ) return -1;
   JsonNode *test_res = json_find_member(_main, p_const("hid"));
   if ( !test_res ) {
     json_delete(_main);
     return -1;
   }
-  DBG("test result hid %s", test_res->string_);
-  property_copy(res_his, p_stack(test_res->string_));
+  DBG("test result hid %s", json_string(test_res));
+  property_copy(res_his, test_res->string_);
   return 0;
 }
 
@@ -129,7 +132,7 @@ static void _test_device_proc_hid_init(http_request_t *request, void *arg) {
                      P_VALUE(pd->dev->hid),
                      pd->value);
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -148,7 +151,7 @@ static void _test_device_proc_name_init(http_request_t *request, void *arg) {
                      P_VALUE(pd->dev->hid),
                      pd->value);
   uri[ret] = 0x0;
-  http_request_init(request, POST, uri);
+  http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -166,7 +169,7 @@ static void _test_begin_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/tests/%s/begin", ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(*res_hid));
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -182,7 +185,7 @@ static void _test_end_init(http_request_t *request, void *arg) {
   snprintf(uri, URI_LEN, "%s/tests/%s/end",
            ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(*res_hid));
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -204,7 +207,7 @@ static void _test_step_begin_init(http_request_t *request, void *arg) {
            ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -228,7 +231,7 @@ static void _test_step_success_end_init(http_request_t *request, void *arg) {
            P_VALUE(*st->res_hid),
            st->number);
   uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 
@@ -254,7 +257,7 @@ static void _test_step_fail_end_init(http_request_t *request, void *arg) {
            P_VALUE(*st->res_hid),
            st->number);
   uri[ret] = 0x0;
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   JsonNode *_main = json_mkobject();
   if ( st->code )
@@ -279,7 +282,7 @@ static void _test_step_skip_init(http_request_t *request, void *arg) {
            ARROW_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
 }
 

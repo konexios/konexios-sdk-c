@@ -23,6 +23,7 @@
 
 #include "json/json.h"
 
+#include <data/property.h>
 #include <json/property_json.h>
 #include <sys/mem.h>
 #if defined(__USE_STD__)
@@ -39,6 +40,12 @@ static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
 #endif
 
 #define out_of_memory() { DBG("JSON: Out of memory"); }
+
+#if defined(STATIC_JSON)
+int JsonNode_object_alloc_size() {
+    return static_alloc_size(JsonNode) / sizeof(JsonNode);
+}
+#endif
 
 /* Sadly, strdup is not portable. */
 char *json_strdup(const char *s) {
@@ -270,7 +277,7 @@ static void to_surrogate_pair(uchar_t unicode, uint16_t *uc, uint16_t *lc)
 }
 
 static bool parse_value     (const char **sp, JsonNode        **out);
-static bool parse_string    (const char **sp, char            **out);
+static bool parse_string    (const char **sp, property_t       *out);
 static bool parse_number    (const char **sp, double           *out);
 static bool parse_array     (const char **sp, JsonNode        **out);
 static bool parse_object    (const char **sp, JsonNode        **out);
@@ -279,9 +286,9 @@ static bool parse_hex16     (const char **sp, uint16_t         *out);
 static bool expect_literal  (const char **sp, const char *str);
 static void skip_space      (const char **sp);
 
-static void emit_value              (SB *out, const JsonNode *node);
+static int emit_value(SB *out, const JsonNode *node);
 static void emit_value_indented     (SB *out, const JsonNode *node, const char *space, int indent_level);
-static void emit_string             (SB *out, const char *str);
+static int emit_string(SB *out, const char *str);
 void emit_number             (SB *out, double num);
 static void emit_array              (SB *out, const JsonNode *array);
 static void emit_array_indented     (SB *out, const JsonNode *array, const char *space, int indent_level);
@@ -334,7 +341,10 @@ char *json_encode_string(const char *str)
 	SB sb;
     if ( sb_init(&sb) < 0 ) return NULL;
 	
-	emit_string(&sb, str);
+    if ( emit_string(&sb, str) ) {
+        sb_free(&sb);
+        return NULL;
+    }
 	
 	return sb_finish(&sb);
 }
@@ -359,7 +369,7 @@ void json_delete(JsonNode *node)
 		
 		switch (node->tag) {
         case JSON_STRING: {
-            json_delete_string(node->string_);
+            property_free(&node->string_);
         } break;
 			case JSON_ARRAY:
 			case JSON_OBJECT:
@@ -378,7 +388,7 @@ void json_delete(JsonNode *node)
 #else
 		free(node);
 #endif
-	}
+    }
 }
 
 void json_delete_string(char *json_str) {
@@ -387,11 +397,12 @@ void json_delete_string(char *json_str) {
     sb_free(&out);
 }
 
-int fill_string_from_json(JsonNode *_node, property_t name, property_t *p) {
+int weak_value_from_json(JsonNode *_node, property_t name, property_t *p) {
+    if ( !_node ) return -1;
+
     JsonNode *tmp = json_find_member(_node, name);
     if ( ! tmp || tmp->tag != JSON_STRING ) return -1;
-    property_t t = json_strdup_property(tmp->string_);
-    property_move(p, &t);
+    property_weak_copy(p, tmp->string_);
     return 0;
 }
 
@@ -435,7 +446,7 @@ JsonNode *json_find_member(JsonNode *object, property_t name)
 		return NULL;
 	
 	json_foreach(member, object)
-        if (property_cmp(&member->key, &name) == 0)
+        if (property_cmp(&member->key, name) == 0)
 			return member;
 	
 	return NULL;
@@ -458,6 +469,7 @@ static JsonNode *mknode(JsonTag tag)
     if (ret == NULL) {
         out_of_memory();
     } else {
+        memset(ret, 0x0, sizeof(JsonNode));
         ret->tag = tag;
     }
     return ret;
@@ -475,16 +487,30 @@ JsonNode *json_mkbool(bool b)
 	return ret;
 }
 
-static JsonNode *mkstring(char *s)
-{
+static JsonNode *mkstring(property_t *s) {
 	JsonNode *ret = mknode(JSON_STRING);
-    if ( ret ) ret->string_ = s;
+    if ( ret ) property_move(&ret->string_, s);
 	return ret;
 }
 
-JsonNode *json_mkstring(const char *s)
-{
-	return mkstring(json_strdup(s));
+static JsonNode *mk_weak_property(property_t s) {
+    JsonNode *ret = mknode(JSON_STRING);
+    if ( ret ) property_weak_copy(&ret->string_, s);
+    return ret;
+}
+
+JsonNode *json_mkstring(const char *s) {
+    property_t p = json_strdup_property(s);
+    if ( IS_EMPTY(p) ) return NULL;
+    return mkstring(&p);
+}
+
+JsonNode *json_mkproperty(property_t *s) {
+    return mkstring(s);
+}
+
+JsonNode *json_mk_weak_property(property_t s) {
+    return mk_weak_property(s);
 }
 
 JsonNode *json_mknumber(double n)
@@ -517,8 +543,7 @@ static void append_node(JsonNode *parent, JsonNode *child)
 	parent->children.tail = child;
 }
 
-static void prepend_node(JsonNode *parent, JsonNode *child)
-{
+static void prepend_node(JsonNode *parent, JsonNode *child) {
 	child->parent = parent;
 	child->prev = NULL;
 	child->next = parent->children.head;
@@ -530,47 +555,61 @@ static void prepend_node(JsonNode *parent, JsonNode *child)
 	parent->children.head = child;
 }
 
-static void append_member(JsonNode *object, property_t key, JsonNode *value)
-{
+static void append_member(JsonNode *object, property_t key, JsonNode *value) {
+    if ( !value ) {
+        DBG("%s : fail", __PRETTY_FUNCTION__);
+        return;
+    }
     property_move(&value->key, &key);
 	append_node(object, value);
 }
 
-void json_append_element(JsonNode *array, JsonNode *element)
-{
+void json_append_element(JsonNode *array, JsonNode *element) {
+    if ( !element ) {
+        DBG("%s : fail", __PRETTY_FUNCTION__);
+        return;
+    }
 	assert(array->tag == JSON_ARRAY);
 	assert(element->parent == NULL);
 	
 	append_node(array, element);
 }
 
-void json_prepend_element(JsonNode *array, JsonNode *element)
-{
+void json_prepend_element(JsonNode *array, JsonNode *element) {
+    if ( !element ) {
+        DBG("%s : fail", __PRETTY_FUNCTION__);
+        return;
+    }
 	assert(array->tag == JSON_ARRAY);
 	assert(element->parent == NULL);
 	
 	prepend_node(array, element);
 }
 
-void json_append_member(JsonNode *object, const property_t key, JsonNode *value)
-{
-	assert(object->tag == JSON_OBJECT);
-	assert(value->parent == NULL);
-	
+int json_append_member(JsonNode *object, const property_t key, JsonNode *value) {
+    if ( !value || IS_EMPTY(key) ) {
+        DBG("%s : fail", __PRETTY_FUNCTION__);
+        return -1;
+    }
+    if (object->tag != JSON_OBJECT) return -1;
+    if (value->parent != NULL) return -1;
     append_member(object, key, value);
+    return 0;
 }
 
-void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value)
-{
+void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value) {
+    if ( !value || IS_EMPTY(key) ) {
+        DBG("%s : fail", __PRETTY_FUNCTION__);
+        return;
+    }
 	assert(object->tag == JSON_OBJECT);
 	assert(value->parent == NULL);
-	
     property_copy(&value->key, key);
 	prepend_node(object, value);
 }
 
-void json_remove_from_parent(JsonNode *node)
-{
+// FIXME remove this
+void json_remove_from_parent(JsonNode *node) {
 	JsonNode *parent = node->parent;
 	
 	if (parent != NULL) {
@@ -597,8 +636,10 @@ static bool parse_value(const char **sp, JsonNode **out)
 	switch (*s) {
 		case 'n':
 			if (expect_literal(&s, "null")) {
-				if (out)
+                if (out) {
 					*out = json_mknull();
+                    if ( !*out ) return false;
+                }
 				*sp = s;
 				return true;
 			}
@@ -606,8 +647,10 @@ static bool parse_value(const char **sp, JsonNode **out)
 		
 		case 'f':
 			if (expect_literal(&s, "false")) {
-				if (out)
+                if (out) {
 					*out = json_mkbool(false);
+                    if ( !*out ) return false;
+                }
 				*sp = s;
 				return true;
 			}
@@ -615,18 +658,22 @@ static bool parse_value(const char **sp, JsonNode **out)
 		
 		case 't':
 			if (expect_literal(&s, "true")) {
-				if (out)
+                if (out) {
 					*out = json_mkbool(true);
+                    if ( !*out ) return false;
+                }
 				*sp = s;
 				return true;
 			}
 			return false;
 		
 		case '"': {
-			char *str;
+            property_t str;
 			if (parse_string(&s, out ? &str : NULL)) {
-				if (out)
-					*out = mkstring(str);
+                if (out) {
+                    *out = mkstring(&str);
+                    if ( !*out ) return false;
+                }
 				*sp = s;
 				return true;
 			}
@@ -650,8 +697,10 @@ static bool parse_value(const char **sp, JsonNode **out)
 		default: {
 			double num;
 			if (parse_number(&s, out ? &num : NULL)) {
-				if (out)
+                if (out) {
 					*out = json_mknumber(num);
+                    if ( !*out ) return false;
+                }
 				*sp = s;
 				return true;
 			}
@@ -665,6 +714,7 @@ static bool parse_array(const char **sp, JsonNode **out)
 	const char *s = *sp;
 	JsonNode *ret = out ? json_mkarray() : NULL;
 	JsonNode *element;
+    if ( !ret ) return false;
 	
 	if (*s++ != '[')
 		goto failure;
@@ -708,9 +758,10 @@ static bool parse_object(const char **sp, JsonNode **out)
 {
 	const char *s = *sp;
 	JsonNode *ret = out ? json_mkobject() : NULL;
-	char *key;
-	JsonNode *value;
-	
+    property_t key;
+    JsonNode *value = NULL;
+    if (!ret) return false;
+
 	if (*s++ != '{')
 		goto failure;
 	skip_space(&s);
@@ -734,7 +785,7 @@ static bool parse_object(const char **sp, JsonNode **out)
 		skip_space(&s);
 		
 		if (out)
-            append_member(ret, p_json(key), value);
+            append_member(ret, key, value);
 		
 		if (*s == '}') {
 			s++;
@@ -754,32 +805,32 @@ success:
 
 failure_free_key:
     if (out) {
-        json_delete_string(key);
+        property_free(&key);
     }
 failure:
 	json_delete(ret);
 	return false;
 }
 
-bool parse_string(const char **sp, char **out)
+bool parse_string(const char **sp, property_t *out)
 {
 	const char *s = *sp;
     SB sb = {NULL, NULL, NULL};
 	char throwaway_buffer[4];
 		/* enough space for a UTF-8 character */
-	char *b;
+    char *b;
 	
 	if (*s++ != '"')
 		return false;
 	
 	if (out) {
         if ( sb_init(&sb) < 0 ) return false;
-		sb_need(&sb, 4);
-		b = sb.cur;
-	} else {
-		b = throwaway_buffer;
-	}
-	
+        if ( sb_need(&sb, 4) < 0 ) goto failed;
+        b = sb.cur;
+    } else {
+        b = throwaway_buffer;
+    }
+
 	while (*s != '"') {
 		unsigned char c = (unsigned char) *s++;
 		
@@ -857,7 +908,7 @@ bool parse_string(const char **sp, char **out)
 		 */
 		if (out) {
 			sb.cur = b;
-			sb_need(&sb, 4);
+            if ( sb_need(&sb, 4) < 0 ) goto failed;
 			b = sb.cur;
 		} else {
 			b = throwaway_buffer;
@@ -866,13 +917,14 @@ bool parse_string(const char **sp, char **out)
 	s++;
 	
 	if (out)
-		*out = sb_finish(&sb);
+        *out = sb_finish_property(&sb);
 	*sp = s;
 	return true;
 
 failed:
-    if (out)
+    if (out) {
 		sb_free(&sb);
+    }
 	return false;
 }
 
@@ -942,9 +994,10 @@ static void skip_space(const char **sp)
 	*sp = s;
 }
 
-static void emit_value(SB *out, const JsonNode *node)
+static int emit_value(SB *out, const JsonNode *node)
 {
 	assert(tag_is_valid(node->tag));
+    int r = 0;
 	switch (node->tag) {
 		case JSON_NULL:
 			sb_puts(out, "null");
@@ -953,7 +1006,7 @@ static void emit_value(SB *out, const JsonNode *node)
 			sb_puts(out, node->bool_ ? "true" : "false");
 			break;
 		case JSON_STRING:
-			emit_string(out, node->string_);
+            r = emit_string(out, P_VALUE(node->string_));
 			break;
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
@@ -967,6 +1020,7 @@ static void emit_value(SB *out, const JsonNode *node)
 		default:
 			assert(false);
 	}
+    return r;
 }
 
 void emit_value_indented(SB *out, const JsonNode *node, const char *space, int indent_level)
@@ -980,7 +1034,7 @@ void emit_value_indented(SB *out, const JsonNode *node, const char *space, int i
 			sb_puts(out, node->bool_ ? "true" : "false");
 			break;
 		case JSON_STRING:
-			emit_string(out, node->string_);
+            emit_string(out, P_VALUE(node->string_));
 			break;
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
@@ -1074,8 +1128,7 @@ static void emit_object_indented(SB *out, const JsonNode *object, const char *sp
 	sb_putc(out, '}');
 }
 
-void emit_string(SB *out, const char *str)
-{
+int emit_string(SB *out, const char *str) {
 	bool escape_unicode = false;
 	const char *s = str;
 	char *b;
@@ -1086,7 +1139,7 @@ void emit_string(SB *out, const char *str)
 	 * 14 bytes is enough space to write up to two
 	 * \uXXXX escapes and two quotation marks.
 	 */
-	sb_need(out, 14);
+    if ( sb_need(out, 14) ) return -1;
 	b = out->cur;
 	
 	*b++ = '"';
@@ -1185,12 +1238,13 @@ void emit_string(SB *out, const char *str)
 		 * and set up b to write another encoded character.
 		 */
 		out->cur = b;
-		sb_need(out, 14);
+        if ( sb_need(out, 14) < 0 ) return -1;
 		b = out->cur;
 	}
 	*b++ = '"';
 	
 	out->cur = b;
+    return 0;
 }
 
 void emit_number(SB *out, double num)
@@ -1308,9 +1362,9 @@ bool json_check(const JsonNode *node, char errmsg[256])
 		if ((node->bool_ != false) && (node->bool_ != true))
 			problem("bool_ is neither false (%d) nor true (%d)", (int)false, (int)true);
 	} else if (node->tag == JSON_STRING) {
-		if (node->string_ == NULL)
+        if ( IS_EMPTY(node->string_) )
 			problem("string_ is NULL");
-		if (!utf8_validate(node->string_))
+        if (!utf8_validate(P_VALUE(node->string_)))
 			problem("string_ contains invalid UTF-8");
 	} else if (node->tag == JSON_ARRAY || node->tag == JSON_OBJECT) {
 		JsonNode *head = node->children.head;

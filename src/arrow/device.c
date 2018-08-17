@@ -9,19 +9,24 @@
 #include "arrow/device.h"
 #include <sys/mem.h>
 #include <config.h>
+#include <json/decode.h>
 
 void arrow_device_init(arrow_device_t *dev) {
     dev->info = NULL;
     dev->prop = NULL;
-    P_CLEAR(dev->name);
-    P_CLEAR(dev->type);
-    P_CLEAR(dev->uid);
-    P_CLEAR(dev->gateway_hid);
-    P_CLEAR(dev->hid);
+    property_init(&dev->name);
+    property_init(&dev->type);
+    property_init(&dev->uid);
+    property_init(&dev->gateway_hid);
+    property_init(&dev->hid);
     property_init(&dev->softwareName);
     property_init(&dev->softwareVersion);
+#if defined(ARROW_HAS_USERHID)
+    property_init(&dev->app);
+    property_init(&dev->user);
+#endif
 #if defined(__IBM__)
-    P_CLEAR(dev->eid);
+    property_init(&dev->eid);
 #endif
 }
 
@@ -33,6 +38,10 @@ void arrow_device_free(arrow_device_t *dev) {
   property_free(&dev->hid);
   property_free(&dev->softwareName);
   property_free(&dev->softwareVersion);
+#if defined(ARROW_HAS_USERHID)
+  property_free(&dev->app);
+  property_free(&dev->user);
+#endif
   if ( dev->info ) json_delete(dev->info);
   if ( dev->prop ) json_delete(dev->prop);
 #if defined(__IBM__)
@@ -52,12 +61,26 @@ void arrow_device_add_property(arrow_device_t *dev, property_t key, const char *
 
 property_t arrow_device_serialize(arrow_device_t *dev) {
   JsonNode *_main = json_mkobject();
-  json_append_member(_main, p_const("name"), json_mkstring(P_VALUE(dev->name)));
-  json_append_member(_main, p_const("type"), json_mkstring(P_VALUE(dev->type)));
-  json_append_member(_main, p_const("uid"), json_mkstring(P_VALUE(dev->uid)));
-  json_append_member(_main, p_const("gatewayHid"), json_mkstring(P_VALUE(dev->gateway_hid)));
-  json_append_member(_main, p_const("softwareName"), json_mkstring(P_VALUE(dev->softwareName)));
-  json_append_member(_main, p_const("softwareVersion"), json_mkstring(P_VALUE(dev->softwareVersion)));
+  if ( !IS_EMPTY(dev->name) )
+      json_append_member(_main, p_const("name"), json_mk_weak_property(dev->name));
+  if ( !IS_EMPTY(dev->type) )
+      json_append_member(_main, p_const("type"), json_mk_weak_property(dev->type));
+  if ( !IS_EMPTY(dev->uid) )
+      json_append_member(_main, p_const("uid"), json_mk_weak_property(dev->uid));
+  if ( !IS_EMPTY(dev->gateway_hid) )
+      json_append_member(_main, p_const("gatewayHid"), json_mk_weak_property(dev->gateway_hid));
+  if ( !IS_EMPTY(dev->softwareName) )
+      json_append_member(_main, p_const("softwareName"), json_mk_weak_property(dev->softwareName));
+  if ( !IS_EMPTY(dev->softwareVersion) )
+      json_append_member(_main, p_const("softwareVersion"), json_mk_weak_property(dev->softwareVersion));
+
+#if defined(ARROW_HAS_USERHID)
+  if ( !IS_EMPTY(dev->app) )
+      json_append_member(_main, p_const("applicationHid"), json_mk_weak_property(dev->app));
+  if ( !IS_EMPTY(dev->user) )
+      json_append_member(_main, p_const("userHid"), json_mk_weak_property(dev->user));
+#endif
+
   if ( dev->info ) json_append_member(_main, p_const("info"), dev->info);
   if ( dev->prop ) json_append_member(_main, p_const("properties"), dev->prop);
   property_t dev_property = json_encode_property(_main);
@@ -67,12 +90,12 @@ property_t arrow_device_serialize(arrow_device_t *dev) {
   return dev_property;
 }
 
-int arrow_device_parse(arrow_device_t *dev, const char *str) {
-    JsonNode *_main = json_decode(str);
+int arrow_device_parse(arrow_device_t *dev, const char *s) {
+    JsonNode *_main = json_decode_property(p_stack(s));
     if ( !_main ) return -1;
     JsonNode *hid = json_find_member(_main, p_const("hid"));
     if ( !hid || hid->tag != JSON_STRING ) return -1;
-    property_copy(&dev->hid, p_stack(hid->string_));
+    property_copy_as(PROPERTY_DYNAMIC_TAG, &dev->hid, hid->string_);
 #if defined(__IBM__)
     JsonNode *eid = json_find_member(_main, p_const("externalId"));
     if ( !eid || eid->tag != JSON_STRING ) return -1;
@@ -87,26 +110,42 @@ static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
 #endif
 
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
-  arrow_device_init(device);
-  property_weak_copy(&device->gateway_hid, gateway->hid );
-  property_copy(&device->name, p_const(DEVICE_NAME));
-  property_copy(&device->type, p_const(DEVICE_TYPE));
-  property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
-  property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
+  if ( IS_EMPTY(device->gateway_hid) )
+      property_weak_copy(&device->gateway_hid, gateway->hid );
+  if ( IS_EMPTY(device->name) )
+      property_copy(&device->name, p_const(DEVICE_NAME));
+  if ( IS_EMPTY(device->type) )
+      property_copy(&device->type, p_const(DEVICE_TYPE));
+  if ( IS_EMPTY(device->softwareName) )
+      property_copy(&device->softwareName, p_const(DEVICE_SOFTWARE_NAME));
+  if ( IS_EMPTY(device->softwareVersion) )
+      property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
-#if defined(STATIC_ACN)
-  char *uid = static_device_uid;
-#else
-  char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
+
+#if defined(ARROW_HAS_USERHID)
+  if ( IS_EMPTY(device->user) && !IS_EMPTY(gateway->user) ) {
+      property_weak_copy(&device->user, gateway->user);
+  }
+  if ( IS_EMPTY(device->app) && !IS_EMPTY(gateway->app) ) {
+      property_weak_copy(&device->app, gateway->app);
+  }
 #endif
-  strcpy(uid, P_VALUE(gateway->uid) );
-  strcat(uid, "-");
-  strcat(uid, DEVICE_UID_SUFFIX);
+
+  if ( IS_EMPTY(device->uid) ) {
 #if defined(STATIC_ACN)
-  property_t tmp = p_const(uid);
+      char *uid = static_device_uid;
 #else
-  property_t tmp = p_heap(uid);
+      char *uid = (char*)malloc(P_SIZE(gateway->uid)+sizeof(DEVICE_UID_SUFFIX)+2);
 #endif
-  property_move(&device->uid, &tmp);
+      strcpy(uid, P_VALUE(gateway->uid) );
+      strcat(uid, "-");
+      strcat(uid, DEVICE_UID_SUFFIX);
+#if defined(STATIC_ACN)
+      property_t tmp = p_const(uid);
+#else
+      property_t tmp = p_heap(uid);
+#endif
+      property_move(&device->uid, &tmp);
+  }
   return 0;
 }

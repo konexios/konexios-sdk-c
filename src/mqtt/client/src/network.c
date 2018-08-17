@@ -8,7 +8,7 @@
 #if defined(__USE_STD__)
 # include <errno.h>
 #endif
-
+#include <arrow/credentials.h>
 static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     if ( len <= 0 ) return -1;
     struct timeval interval = {timeout_ms / 1000, (timeout_ms % 1000) * 1000};
@@ -23,11 +23,11 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     while (bytes < len) {
         int rc = 0;
 //    	if (rc) DBG("mqtt recv ---%d", timeout_ms);
-#if defined(MQTT_CIPHER)
-    	rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));
-#else
-    	rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
-#endif
+        if ( arrow_mqtt_host()->scheme == arrow_mqtt_scheme_tls ) {
+            rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));
+        } else {
+            rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
+        }
 //      DBG("mqtt recv %d/%d", rc, len);
         if (rc <= 0) {
 #if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
@@ -59,12 +59,12 @@ static int _write(Network* n, unsigned char* buffer, int len, int timeout_ms) {
     setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     int rc = -1;
-#if defined(MQTT_CIPHER)
+if ( arrow_mqtt_host()->scheme == arrow_mqtt_scheme_tls ) {
 //    DBG("mqtt send %d", len);
      rc = ssl_send(n->my_socket, (char*)buffer, len);
-#else
+} else {
      rc = send(n->my_socket, (char*)buffer, len, 0);
-#endif
+}
     return rc;
 }
 
@@ -110,12 +110,12 @@ int NetworkConnect(Network* n, char* addr, int port) {
         soc_close(n->my_socket);
         return -2;
     }
-#if defined(MQTT_CIPHER)
+if ( arrow_mqtt_host()->scheme == arrow_mqtt_scheme_tls ) {
     if ( ssl_connect(n->my_socket) < 0 ) {
     	soc_close(n->my_socket);
     	return -3;
     }
-#endif
+}
     if (socket_connect_done(n->my_socket) < 0 ) {
         NetworkDisconnect(n);
         return -4;

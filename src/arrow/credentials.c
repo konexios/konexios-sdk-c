@@ -51,3 +51,20 @@ wifi_credentials_t *credentials_next() {
     }
     return NULL;
 }
+
+#include <arrow/storage.h>
+static arrow_host_t __api_host;
+static arrow_host_t __mqtt_host;
+
+arrow_host_t *arrow_api_host(void) {
+    return &__api_host;
+}
+
+arrow_host_t *arrow_mqtt_host(void) {
+    return &__mqtt_host;
+}
+
+void arrow_hosts_init() {
+    restore_api_address(&__api_host);
+    restore_mqtt_address(&__mqtt_host);
+}

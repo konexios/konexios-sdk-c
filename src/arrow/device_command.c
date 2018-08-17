@@ -58,17 +58,6 @@ void arrow_command_handler_free(void) {
 }
 
 // events
-static void form_evetns_url(property_t hid, cmd_type ev, char *uri) {
-    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
-    strcat(uri, "/");
-    strcat(uri, P_VALUE(hid));
-    switch(ev) {
-        case failed:    strcat(uri, "/failed"); break;
-        case received:  strcat(uri, "/received"); break;
-        case succeeded: strcat(uri, "/succeeded"); break;
-    }
-}
-
 typedef struct _event_data {
     property_t hid;
 	cmd_type ev;
@@ -78,8 +67,15 @@ typedef struct _event_data {
 static void _event_ans_init(http_request_t *request, void *arg) {
     CREATE_CHUNK(uri, sizeof(ARROW_API_EVENTS_ENDPOINT) + 100);
     event_data_t *data = (event_data_t *)arg;
-    form_evetns_url(data->hid, data->ev, uri);
-    http_request_init(request, PUT, uri);
+    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
+    strcat(uri, "/");
+    strcat(uri, P_VALUE(data->hid));
+    switch(data->ev) {
+        case failed:    strcat(uri, "/failed"); break;
+        case received:  strcat(uri, "/received"); break;
+        case succeeded: strcat(uri, "/succeeded"); break;
+    }
+    http_request_init(request, PUT, &p_stack(uri));
     FREE_CHUNK(uri);
     if ( !IS_EMPTY(data->payload) ) {
       http_request_set_payload(request, data->payload);
@@ -89,14 +85,16 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
     event_data_t edata = {p_null(), ev, p_null()};
     property_weak_copy(&edata.hid, hid);
-    property_weak_copy(&edata.payload, payload);
+    if ( !IS_EMPTY(payload) ) {
+        property_weak_copy(&edata.payload, payload);
+    }
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
                 "Arrow Event answer failed...");
 }
 
 static int cmdeq( cmd_handler *s, property_t name ) {
-    if ( property_cmp(&s->name, &name) == 0 ) return 0;
+    if ( property_cmp(&s->name, name) == 0 ) return 0;
     return -1;
 }
 
@@ -110,6 +108,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   http_session_set_protocol(current_client(), 1);
 #endif
   while( arrow_send_event_ans(ev->base.id, received, p_null()) < 0 ) {
+      http_session_set_protocol(current_client(), 1);
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
                    return -2;
@@ -135,7 +134,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                          json_mkstring("There is no command"));
       goto device_command_done;
   }
-  DBG("ev cmd: %s", cmd->string_);
+  DBG("ev cmd: %s", P_VALUE(cmd->string_));
 
   // FIXME workaround actually
   JsonNode *pay = json_find_member(_parameters, p_const("payload"));
@@ -149,7 +148,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 //  DBG("ev msg: %s", pay->string_);
 
   cmd_handler *cmd_h = NULL;
-  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, p_stack(cmd->string_) );
+  linked_list_find_node ( cmd_h, __handlers, cmd_handler, cmdeq, cmd->string_ );
   if ( cmd_h ) {
     ret = cmd_h->callback(pay->string_);
     if ( ret < 0 ) {
@@ -172,6 +171,7 @@ device_command_done:
     DBG("error string: %s", P_VALUE(_error_prop));
     while ( arrow_send_event_ans(ev->base.id, failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
+        http_session_set_protocol(current_client(), 1);
         msleep(ARROW_RETRY_DELAY);
     }
     property_free(&_error_prop);
@@ -179,6 +179,7 @@ device_command_done:
   } else {
     while ( arrow_send_event_ans(ev->base.id, succeeded, p_null()) < 0 ) {
         RETRY_UP(retry, {return -2;});
+        http_session_set_protocol(current_client(), 1);
         msleep(ARROW_RETRY_DELAY);
     }
   }

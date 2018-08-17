@@ -17,13 +17,18 @@
 #include <data/ringbuffer.h>
 #include <data/propmap.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 #include <bsd/socket.h>
 #include <http/request.h>
 #include <http/response.h>
 #include <data/find_by.h>
+
+#include <arrow/storage.h>
+#include "fakestorage.h"
+#include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();

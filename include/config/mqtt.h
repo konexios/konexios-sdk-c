@@ -39,11 +39,16 @@
 
 //#define MQTT_TASK
 
+enum {
+    arrow_mqtt_scheme_tcp,
+    arrow_mqtt_scheme_tls
+};
+
 #if defined(MQTT_CIPHER)
-#  define MQTT_SCH "tls"
+#  define MQTT_SCH arrow_mqtt_scheme_tls
 #  define MQTT_PORT 8883
 #else
-# define MQTT_SCH "tcp"
+# define MQTT_SCH arrow_mqtt_scheme_tcp
 # define MQTT_PORT 1883
 #endif
 
@@ -71,9 +76,9 @@
 
 #if !defined(VHOST)
 # if defined(DEV_ENV)
-#  define VHOST "/themis.dev:"
+#  define VHOST "/themis.dev"
 # else
-#  define VHOST "/pegasus:"
+#  define VHOST "/pegasus"
 # endif
 #endif
 

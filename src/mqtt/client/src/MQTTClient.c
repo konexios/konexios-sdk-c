@@ -72,6 +72,7 @@ void MQTTClientInit(MQTTClient *c, Network *network, unsigned int command_timeou
   c->readbuf_size = readbuf_size;
   c->isconnected = 0;
   c->cleansession = 0;
+  c->reject = 0;
   c->ping_outstanding = 0;
   c->defaultMessageHandler = NULL;
   c->next_packetid = 1;
@@ -215,7 +216,6 @@ int deliverMessage(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
 
   return rc;
 }
-
 
 int keepalive(MQTTClient *c) {
   int rc = MQTT_SUCCESS;
@@ -391,7 +391,6 @@ int MQTTStartTask(MQTTClient *client) {
   return ThreadStart(&client->thread, &MQTTRun, client);
 }
 #endif
-
 
 int waitfor(MQTTClient *c, int packet_type, TimerInterval *timer) {
   int rc = FAILURE;

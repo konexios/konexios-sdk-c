@@ -32,9 +32,10 @@
 #include <data/propmap.h>
 #include <data/find_by.h>
 #include <json/json.h>
-#include <sb.h>
+#include <json/sb.h>
+#include <json/aob.h>
 #include <encode.h>
-#include <decode.h>
+#include <json/decode.h>
 #include <arrow_mqtt_client.h>
 #include <mqtt/client/delivery.h>
 #include <http/client.h>
@@ -79,19 +80,26 @@
 #include "mock_mac.h"
 #include "mock_watchdog.h"
 #include "mock_sockdecl.h"
-#include "mock_storage.h"
 #include "mock_telemetry.h"
 
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
+#include "fakestorage.h"
+#include "storage_weak.h"
+
+static int test_count = 0;
 
 void setUp(void) {
-    arrow_init();
+    if ( ! test_count++ ) {
+        arrow_init();
+    }
 }
 
 void tearDown(void) {
-    arrow_deinit();
+    if ( test_count == 2  ) {
+        arrow_deinit();
+    }
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"

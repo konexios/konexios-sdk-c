@@ -24,10 +24,11 @@ void property_type_add(property_dispetcher_t *disp);
 
 void property_init(property_t *dst);
 void property_copy(property_t *dst, property_t src);
+void property_copy_as(int tag, property_t *dst, property_t src);
 void property_weak_copy(property_t *dst, property_t src);
 void property_move(property_t *dst, property_t *src);
 void property_free(property_t *dst);
-int property_cmp(property_t *src, property_t *dst);
+int property_cmp(property_t *src, property_t dst);
 
 property_t property_as_null_terminated(property_t *src);
 int property_concat(property_t *src1, property_t *src2);

@@ -30,12 +30,6 @@ enum METH {
   METH_count
 };
 
-enum Scheme {
-  http,
-  https,
-  Scheme_count
-};
-
 typedef property_t http_payload_t;
 
 // the payload handler for response
@@ -49,10 +43,11 @@ typedef struct __payload_meth {
 
 typedef struct __attribute_packed__ {
     property_t meth;
-    property_t scheme;
     property_t host;
     property_t uri;
     uint16_t port;
+    uint8_t scheme;
+    // FIXME flags
     int8_t is_corrupt;
     int8_t is_cipher;
     int8_t is_chunked;
@@ -63,7 +58,7 @@ typedef struct __attribute_packed__ {
     _payload_meth_t _response_payload_meth;
 } http_request_t;
 
-void http_request_init(http_request_t *req, int meth, const char *url);
+int  http_request_init(http_request_t *req, int meth, property_t *uri);
 void http_request_close(http_request_t *req);
 void http_request_add_header(http_request_t *req, property_t key, property_t value);
 void http_request_set_header(http_request_t *req, property_t key, property_t value);

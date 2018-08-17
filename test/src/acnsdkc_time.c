@@ -38,3 +38,7 @@ void timestamp(timestamp_t *ts) {
     ts->sec = tmp->tm_sec;
     ts->msec = ms;
 }
+
+int stime(const time_t *t) {
+    return 0;
+}

@@ -13,6 +13,7 @@
 #include <data/property.h>
 #include <arrow/events.h>
 #include <debug.h>
+#include <arrow/credentials.h>
 
 #define MQTT_DBG(...)
 
@@ -35,6 +36,7 @@ static arrow_mqtt_delivery_callback_t base_event_callbacks = {
     {NULL}
 };
 
+#if defined(HTTP_VIA_MQTT)
 static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     {0},
     process_http_init,
@@ -42,6 +44,7 @@ static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     process_http_finish,
     {NULL}
 };
+#endif
 
 #if defined(STATIC_MQTT_ENV)
   static uint8_t telemetry_recvbuf[MQTT_RECVBUF_LEN + 1];
@@ -93,7 +96,7 @@ static int _mqtt_init_common(mqtt_env_t *env) {
     env->readbuf.buf = (unsigned char*)malloc(env->readbuf.size+1);
 #endif
   env->timeout = DEFAULT_MQTT_TIMEOUT;
-  env->port = MQTT_PORT;
+  env->port = arrow_mqtt_host()->port;
   env->init = 0;
   arrow_linked_list_init(env);
   return 0;
@@ -180,6 +183,11 @@ static int _mqtt_env_free(mqtt_env_t *env) {
   _mqtt_deinit_common(env);
   _mqtt_env_unset_init(env, 0xffffffff);
   return 0;
+}
+
+static int _mqtt_env_pause(mqtt_env_t *env, int pause) {
+    env->client.reject = pause ? 1 : 0;
+    return 0;
 }
 
 static int mqttchannelseq( mqtt_env_t *ch, uint32_t num ) {
@@ -415,6 +423,13 @@ void mqtt_terminate(void) {
 #endif
   }
   __mqtt_channels = NULL;
+}
+
+void mqtt_pause(int pause) {
+    mqtt_env_t *curr = NULL;
+    arrow_linked_list_for_each ( curr, __mqtt_channels, mqtt_env_t ) {
+        _mqtt_env_pause(curr, pause);
+    }
 }
 
 #if !defined(NO_EVENTS)

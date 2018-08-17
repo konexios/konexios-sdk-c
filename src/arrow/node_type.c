@@ -9,7 +9,7 @@
 
 static void _node_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  http_request_init(request, GET, ARROW_API_NODE_ENDPOINT);
+  http_request_init(request, GET, &p_const(ARROW_API_NODE_ENDPOINT));
 }
 
 static int _node_type_list_proc(http_response_t *response, void *arg) {
@@ -37,7 +37,7 @@ static property_t arrow_node_type_serialize(arrow_node_type_t *node) {
 
 static void _node_type_create_init(http_request_t *request, void *arg) {
   arrow_node_type_t *node = (arrow_node_type_t *) arg;
-  http_request_init(request, POST, ARROW_API_NODE_TYPE_ENDPOINT);
+  http_request_init(request, POST, &p_const(ARROW_API_NODE_TYPE_ENDPOINT));
   http_request_set_payload(request, arrow_node_type_serialize(node));
 }
 
@@ -58,7 +58,7 @@ static void _node_type_update_init(http_request_t *request, void *arg) {
   arrow_node_type_t *node = (arrow_node_type_t *) arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/%s", ARROW_API_NODE_TYPE_ENDPOINT, node->hid);
-  http_request_init(request, PUT, uri);
+  http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, arrow_node_type_serialize(node));
 }
