@@ -73,7 +73,7 @@ ssize_t recv_cb(int sockfd, void *buf, size_t len, int flags, int count) {
         memcpy(buf, http_r[http_resp_cout].text + resp_index, size);
 //         printf("r[%s] %d\r\n", buf, size);
         resp_index += size;
-//        printf("---- last %d %d\r\n", resp_index, http_r[http_resp_cout].http_size);
+//        printf("---- la
         if ( resp_index == http_r[http_resp_cout].http_size &&
              http_resp_cout < 10 ) {
             // next expected message
