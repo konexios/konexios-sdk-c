@@ -35,6 +35,7 @@ static arrow_mqtt_delivery_callback_t base_event_callbacks = {
     {NULL}
 };
 
+#if defined(HTTP_VIA_MQTT)
 static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     {0},
     process_http_init,
@@ -42,6 +43,7 @@ static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     process_http_finish,
     {NULL}
 };
+#endif
 
 #if defined(STATIC_MQTT_ENV)
   static uint8_t telemetry_recvbuf[MQTT_RECVBUF_LEN + 1];
