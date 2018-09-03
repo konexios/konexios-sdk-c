@@ -11,13 +11,26 @@
 
 static property_dispetcher_t *prop_disp = NULL;
 
+static int propindexeq( property_dispetcher_t *s, uint8_t index ) {
+    if ( s->index == index ) return 0;
+    return -1;
+}
+
 void property_type_add(property_dispetcher_t *disp) {
     arrow_linked_list_add_node_last(prop_disp, property_dispetcher_t, disp);
 }
 
 void property_type_del(uint8_t index) {
-    // FIXME impl
     SSP_PARAMETER_NOT_USED(index);
+    property_dispetcher_t *pd = NULL;
+    linked_list_find_node(pd, prop_disp,
+                          property_dispetcher_t,
+                          propindexeq, index);
+    if ( pd ) {
+        arrow_linked_list_del_node( prop_disp,
+                                    property_dispetcher_t,
+                                    pd );
+    }
 }
 
 void property_types_init() {
