@@ -53,12 +53,10 @@ typedef struct _find_by {
 } find_by_t;
 
 #if defined(__cplusplus)
-#define find_by(x, y)       find_by_t((x), p_stack(y))
+#define find_by(x, y)       find_by_t((x), (y))
 #else
-#define find_by(x, y)       (find_by_t){ .key=(x), .value=p_stack((y)), .node={NULL} }
+#define find_by(x, y)       (find_by_t){ .key=(x), .value=(y), .node={NULL} }
 #endif
-#define find_by_const(x, y) (find_by_t){ .key=x, .value=p_const(y), .node={NULL} }
-#define find_by_heap(x, y)  (find_by_t){ .key=x, .value=p_heap(y), .node={NULL} }
 
 property_t get_find_by_name(int num);
 int find_by_validate_key(find_by_t *fb);
