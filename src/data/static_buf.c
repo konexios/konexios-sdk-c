@@ -8,7 +8,6 @@
 
 #include "data/static_buf.h"
 
-// FIXME inline
 static inline int __is_in_use(uint8_t *buf, uint32_t index)     { return (buf[(index)>>3] & (1 << ((index) % 8))); }
 static inline void __set_in_use(uint8_t *buf, uint32_t index)   { buf[(index)>>3] |= (1 << ((index) % 8)); }
 static inline void __unset_in_use(uint8_t *buf, uint32_t index) { buf[(index)>>3] &= ~(1 << ((index) % 8)); }

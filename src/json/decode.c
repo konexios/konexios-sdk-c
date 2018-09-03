@@ -386,31 +386,34 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
     return root;
 }
 
-JsonNode *json_decode_property(property_t prop) {
+typedef int (*decode_init_f)(json_parse_machine_t *sm, void *d);
+
+static int decode_init_size(json_parse_machine_t *sm, void *d) {
+    int *size = (int *)d;
+    return json_decode_init(sm, *size);
+}
+
+static int decode_init_property(json_parse_machine_t *sm, void *d) {
+    return json_decode_init_at_property(sm, (property_t *)d);
+}
+
+static JsonNode *__json_decode_property_init(property_t prop, decode_init_f decode_f, void *d) {
     int size = property_size(&prop);
     int ret = -1;
     json_parse_machine_t sm;
-    ret = json_decode_init(&sm, size);
+    ret = (decode_f)(&sm, d);
     if ( ret < 0 ) return NULL;
     ret = json_decode_part(&sm, P_VALUE(prop), size);
     JsonNode *_main = json_decode_finish(&sm);
-    if ( ret < 0 ){
-        return NULL;
-    }
+    if ( ret < 0 ) return NULL;
     return _main;
 }
 
-// FIXME code dublicate
-JsonNode *json_decode_property_at(property_t prop, property_t *buffer) {
+JsonNode *json_decode_property(property_t prop) {
     int size = property_size(&prop);
-    int ret = -1;
-    json_parse_machine_t sm;
-    ret = json_decode_init_at_property(&sm, buffer);
-    if ( ret < 0 ) return NULL;
-    ret = json_decode_part(&sm, P_VALUE(prop), size);
-    JsonNode *_main = json_decode_finish(&sm);
-    if ( ret < 0 ){
-        return NULL;
-    }
-    return _main;
+    return __json_decode_property_init(prop, decode_init_size, &size);
+}
+
+JsonNode *json_decode_property_at(property_t prop, property_t *buffer) {
+    return __json_decode_property_init(prop, decode_init_property, buffer);
 }
