@@ -62,7 +62,7 @@ int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *
 }
 
 // pasre this for ex "2018-05-21T13:40:32.173Z"
-int timestamp_parse(timestamp_t *t, const char *s) {
+int timestamp_parse(acn_timestamp_t *t, const char *s) {
     // parse year
     int tmp;
     char *p = copy_till_to_int(s, "-", &tmp);

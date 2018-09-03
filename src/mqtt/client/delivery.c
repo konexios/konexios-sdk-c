@@ -33,6 +33,7 @@ int arrow_mqtt_client_delivery_message_reg(arrow_mqtt_delivery_callback_t *dc) {
 }
 
 int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
+    SSP_PARAMETER_NOT_USED(c);
     arrow_mqtt_delivery_callback_t *tmp;
     linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->init ) return tmp->init(message->payloadlen);
@@ -40,6 +41,7 @@ int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName
 }
 
 int arrow_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
+    SSP_PARAMETER_NOT_USED(c);
     arrow_mqtt_delivery_callback_t *tmp;
     linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->process ) return tmp->process((char *)message->payload, message->payloadlen);
@@ -47,6 +49,8 @@ int arrow_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicN
 }
 
 int arrow_mqtt_client_delivery_message_done(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
+    SSP_PARAMETER_NOT_USED(c);
+    SSP_PARAMETER_NOT_USED(message);
     arrow_mqtt_delivery_callback_t *tmp;
     linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->done ) return tmp->done();

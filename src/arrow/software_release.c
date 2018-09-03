@@ -276,6 +276,11 @@ typedef struct _token_hid_ {
   const char *hid;
 } token_hid_t;
 
+typedef struct _download_result_ {
+  const char *checksum;
+  int complete;
+} download_result_t;
+
 
 // set the callback for update file processing
 int arrow_software_release_dowload_set_cb(
@@ -319,8 +324,7 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
 
 static int _software_releases_download_proc(http_response_t *response, void *arg) {
     SSP_PARAMETER_NOT_USED(response);
-    SSP_PARAMETER_NOT_USED(arg);
-    char *checksum = (char *)arg;
+    download_result_t *dres = (download_result_t *)arg;
     wdt_feed();
     if ( response->m_httpResponseCode != 200 ) return -1;
     if ( __download ) {
@@ -329,8 +333,9 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
         int size = md5_chunk_hash(hash);
         hex_encode(hash_hex, hash, size);
         hash_hex[2*size] = 0x0;
-        DBG("fw hash cmp {%s, %s}", checksum, hash_hex);
-        if ( strncmp(hash_hex, checksum, 2*size) == 0 ) {
+        DBG("fw hash cmp {%s, %s}", dres->checksum, hash_hex);
+        dres->complete = 1;
+        if ( strncmp(hash_hex, dres->checksum, 2*size) == 0 ) {
             return __download(FW_SUCCESS);
         } else {
             DBG("fw md5 checksum failed...");
@@ -342,7 +347,16 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
 
 int arrow_software_release_download(const char *token, const char *tr_hid, const char *checksum) {
   token_hid_t th = { token, tr_hid };
-  STD_ROUTINE(_software_releases_download_init, &th, _software_releases_download_proc, (void*)checksum, "File download fail");
+  download_result_t dr = { checksum, 0 };
+  int ret = __http_routine(_software_releases_download_init,
+                           &th,
+                           _software_releases_download_proc,
+                           &dr);
+  if ( ret < 0 ) {
+      if ( !dr.complete && __download ) __download(FW_DOWNLOAD_FAIL);
+      DBG("Error: File download fail");
+  }
+  return ret;
 }
 
 // schedules

@@ -247,6 +247,9 @@ int memory_check(int size, int reserved) {
         DBG("No mem for processing %d/%d", 2*size, json_static_memory_max_sector());
         return -1;
     }
+#else
+    SSP_PARAMETER_NOT_USED(size);
+    SSP_PARAMETER_NOT_USED(reserved);
 #endif
     return 0;
 }

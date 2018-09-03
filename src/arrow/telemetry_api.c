@@ -59,7 +59,9 @@ static void _telemetry_init(http_request_t *request, void *arg) {
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
-  http_request_set_payload(request, telemetry_serialize(dt->device, dt->data));
+  JsonNode *payload_json = telemetry_serialize_json(dt->device, dt->data);
+  http_request_set_payload(request, json_encode_property(payload_json));
+  json_delete(payload_json);
 }
 
 int arrow_send_telemetry(arrow_device_t *device, void *d) {

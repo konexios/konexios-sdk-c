@@ -1380,3 +1380,18 @@ void test_size_json_decode_static_overflow(void) {
     STATIC_MEMORY_CHECK;
 }
 #endif
+
+void test_parse_json_empty_part(void) {
+    snprintf(test, sizeof(test), JSON_BOOL_EX, "key", bool2str(true));
+    json_parse_machine_t sm;
+    int ret = json_decode_init(&sm, strlen(test));
+    TEST_ASSERT_EQUAL_INT( 0, ret );
+    strcpy(test, " wrong}");
+    int pr = json_decode_part(&sm, test, strlen(test));
+    TEST_ASSERT_EQUAL_INT( -1, pr );
+    JsonNode *_main = json_decode_finish(&sm);
+    TEST_ASSERT(_main);
+    json_delete(_main);
+
+    STATIC_MEMORY_CHECK;
+}

@@ -36,10 +36,12 @@ typedef struct _timestamp_ {
     uint32_t min     : 6;   //  0-59 6bits
     uint32_t hour    : 5;   //  1-24 5bits
 #endif
-} timestamp_t;
+} acn_timestamp_t;
 
-int timestamp_less(timestamp_t *t1, timestamp_t *t2);
-int timestamp_is_empty(timestamp_t *t);
+#define acn_timestapm_init { 0, 0, 0, 0, 0, 0, 0, 0 }
+
+int timestamp_less(acn_timestamp_t *t1, acn_timestamp_t *t2);
+int timestamp_is_empty(acn_timestamp_t *t);
 
 #if defined(ARCH_TIME)
 # include <sys/arch/time.h>
@@ -55,8 +57,8 @@ int msleep(int m_sec);
 time_t build_time(void);
 void get_time(char *ts);
 int stime(const time_t *t);
-void timestamp(timestamp_t *ts);
-void timestamp_string(timestamp_t *ts, char *s);
+void timestamp(acn_timestamp_t *ts);
+void timestamp_string(acn_timestamp_t *ts, char *s);
 
 #if defined(__cplusplus)
 }

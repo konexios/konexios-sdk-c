@@ -11,7 +11,8 @@ extern "C" {
 
 enum arrow_ota_result {
     FW_SUCCESS = 0x00,
-    FW_MD5SUM
+    FW_MD5SUM,
+    FW_DOWNLOAD_FAIL
 };
 
 enum arrow_ota_init {

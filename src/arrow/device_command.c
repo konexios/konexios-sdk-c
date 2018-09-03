@@ -83,7 +83,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 }
 
 int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
-    event_data_t edata = {p_null(), ev, p_null()};
+    event_data_t edata = {p_null, ev, p_null};
     property_weak_copy(&edata.hid, hid);
     if ( !IS_EMPTY(payload) ) {
         property_weak_copy(&edata.payload, payload);
@@ -107,7 +107,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), 1);
 #endif
-  while( arrow_send_event_ans(ev->base.id, received, p_null()) < 0 ) {
+  while( arrow_send_event_ans(ev->base.id, received, p_null) < 0 ) {
       http_session_set_protocol(current_client(), 1);
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
@@ -177,7 +177,7 @@ device_command_done:
     property_free(&_error_prop);
     json_delete(_error);
   } else {
-    while ( arrow_send_event_ans(ev->base.id, succeeded, p_null()) < 0 ) {
+    while ( arrow_send_event_ans(ev->base.id, succeeded, p_null) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), 1);
         msleep(ARROW_RETRY_DELAY);

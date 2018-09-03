@@ -9,12 +9,12 @@
 #include <config.h>
 #include "arrow/storage.h"
 
-void save_key_setting(const char *api_key, const char *sec_key) {
+void __attribute_weak__ save_key_setting(const char *api_key, const char *sec_key) {
     SSP_PARAMETER_NOT_USED(api_key);
     SSP_PARAMETER_NOT_USED(sec_key);
 }
 
-int restore_key_setting(char *api, char *sec) {
+int __attribute_weak__ restore_key_setting(char *api, char *sec) {
     if (api) strcpy(api, DEFAULT_API_KEY);
     if (sec) strcpy(sec, DEFAULT_SECRET_KEY);
     return 0;
@@ -56,8 +56,12 @@ void __attribute_weak__ save_apphid_address(char *hid) {
 }
 
 int __attribute_weak__ restore_apphid_address(char *hid) {
-    SSP_PARAMETER_NOT_USED(hid);
+#if defined(DEFAULT_APP_HID)
+    if (hid) strcpy(hid, DEFAULT_APP_HID);
+    return 0;
+#else
     return -1;
+#endif
 }
 
 void __attribute_weak__ save_userhid_address(char *hid) {
@@ -65,6 +69,10 @@ void __attribute_weak__ save_userhid_address(char *hid) {
 }
 
 int __attribute_weak__ restore_userhid_address(char *hid) {
-    SSP_PARAMETER_NOT_USED(hid);
+#if defined(DEFAULT_USER_HID)
+    if (hid) strcpy(hid, DEFAULT_USER_HID);
+    return 0;
+#else
     return -1;
+#endif
 }

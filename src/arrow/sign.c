@@ -155,7 +155,7 @@ static void get_canonical_string(char *buffer, http_request_t *req){
 }
 
 void sign_request(http_request_t *req) {
-    timestamp_t timest;
+    acn_timestamp_t timest;
     static char ts[25];
     static char signature[70];
     char *canonicalQuery = NULL;

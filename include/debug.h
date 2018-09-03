@@ -24,7 +24,8 @@ extern "C" {
 # if !defined(DBG_LINE_SIZE)
 #  define DBG_LINE_SIZE 256
 # endif
-void dbg_line(const char *fmt, ...);
+void dbg_line(const char *fmt, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
 # define DBG(...) dbg_line(__VA_ARGS__);
 
 void hex_dump(const char *data, int size);

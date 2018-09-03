@@ -18,7 +18,7 @@ typedef struct _state_list_ {
         bool _bool;
         double _number;
     } value;
-    timestamp_t ts;
+    acn_timestamp_t ts;
     arrow_linked_list_head_node;
 } arrow_state_list_t;
 
@@ -35,8 +35,8 @@ static_object_pool_type(arrow_state_list_t, ARROW_MAX_DEVICE_STATES)
 #define is_valid_tag(t) (( t & JSON_BOOL ) || ( t & JSON_STRING ) || ( t & JSON_NUMBER ))
 
 static arrow_state_list_t *__state_list = NULL;
-static property_t _device_hid = {0};
-static timestamp_t _last_modify = {0};
+static property_t _device_hid = p_static_null;
+static acn_timestamp_t _last_modify = acn_timestapm_init;
 
 typedef void(*_state_add_f_)(arrow_state_list_t *st, void *d);
 typedef JsonNode*(*_state_json_f_)(arrow_state_list_t *st);
@@ -93,7 +93,7 @@ static int state_value_number_parse(arrow_state_list_t *st, const char *s) {
 
 static void state_value_string_add(arrow_state_list_t *st, void *d) {
     if ( !d ) {
-        st->value._property = p_null();
+        st->value._property = p_null;
     } else {
         property_t *p = (property_t *)d;
         property_move(&st->value._property, p);
@@ -118,7 +118,7 @@ static void state_value_string_free(arrow_state_list_t *st) {
 }
 
 state_handle_t state_adder[] = {
-    {NULL, NULL},
+    {NULL, NULL, NULL, NULL},
     {state_add_bool, state_value_bool_json, state_value_bool_parse, NULL},
     {state_value_string_add, state_value_string_json, state_value_string_parse, state_value_string_free},
     {state_add_number, state_value_number_json, state_value_number_parse, NULL}
@@ -126,15 +126,15 @@ state_handle_t state_adder[] = {
 
 void arrow_device_state_list_init(arrow_state_list_t *st) {
     property_init(&st->name);
-    st->value._property = p_null();
-    memset(&st->ts, 0x0, sizeof(timestamp_t));
+    st->value._property = p_null;
+    memset(&st->ts, 0x0, sizeof(acn_timestamp_t));
     arrow_linked_list_init(st);
 }
 
 void arrow_device_state_list_free(arrow_state_list_t *st) {
     property_free(&st->name);
     if ( is_valid_tag(st->tag) && state_adder[st->tag].free ) {
-        state_adder[st->tag].free(st);
+        (state_adder[st->tag].free)(st);
     }
 }
 
@@ -370,7 +370,7 @@ int arrow_device_state_handler(JsonNode *_main) {
       JsonNode *value = json_find_member(tmp, p_const("value"));
       if ( ! value ) continue;
       JsonNode *timestamp = json_find_member(tmp, p_const("timestamp"));
-      timestamp_t ts = {0};
+      acn_timestamp_t ts = acn_timestapm_init;
       timestamp_parse(&ts, P_VALUE(timestamp->string_));
       if ( timestamp_less(&dev_state->ts, &ts) ) {
           dev_state->ts = ts;

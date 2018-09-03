@@ -168,12 +168,13 @@ DLLExport int MQTTConnect(MQTTClient* client, MQTTPacket_connectData* options);
  *  @return success code
  */
 
-typedef int(*payload_border)(void);
-typedef int(*payload_part)(char *, int);
+typedef int(*payload_border)(void *);
+typedef int(*payload_part)(void *, char *, int);
 typedef struct mqtt_payload_drive {
     payload_border init;
     payload_part   part;
     payload_border fin;
+    void *data;
 } mqtt_payload_drive_t;
 
 int MQTTPublish_part(MQTTClient* c,

@@ -46,8 +46,9 @@ int __http_routine(response_init_f req_init, void *arg_init,
   int ret = 0;
   http_request_t request;
   http_response_t response;
+  DBG("client protocol: %d", _cli.protocol);
   if ( _cli.protocol > client_protocol_size ) {
-      DBG("Unknown client protocol %lu", _cli.protocol);
+      DBG("Unknown client protocol %u", _cli.protocol);
       return -2;
   }
   req_init(&request, arg_init);
@@ -57,15 +58,21 @@ int __http_routine(response_init_f req_init, void *arg_init,
   protocol_handler_t *ph = &client_protocols[_cli.protocol];
   if ( (ret = ph->client_open(&_cli, &request)) >= 0 ) {
       ret = ph->client_do(&_cli, &response);
+  } else {
+      DBG("client open error %d", ret);
   }
   http_request_close(&request);
   ph->client_close(&_cli);
-  if ( ret < 0 ) goto http_error;
+  if ( ret < 0 ) {
+      DBG("client error %d", ret);
+      goto http_error;
+  }
   if ( resp_proc ) {
     ret = resp_proc(&response, arg_proc);
   } else {
     if ( response.m_httpResponseCode != 200 ) {
       ret = -1;
+      DBG("client response %d", response.m_httpResponseCode);
       goto http_error;
     }
   }

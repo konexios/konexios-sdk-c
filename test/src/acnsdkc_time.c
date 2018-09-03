@@ -22,7 +22,7 @@ int msleep(int m_sec) {
     return 0;
 }
 
-void timestamp(timestamp_t *ts) {
+void timestamp(acn_timestamp_t *ts) {
     struct tm *tmp;
     int ms;
     time_t s = time(NULL);

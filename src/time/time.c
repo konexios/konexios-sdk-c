@@ -11,7 +11,7 @@
 
 time_t build_time(void) {
   static const char *built = __DATE__ " " __TIME__;
-  struct tm t = {0};
+  struct tm t = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   const char *ret = (const char *)strptime(built, "%b %d %Y %H:%M:%S", &t);
   if ( ret ) {
     t.tm_hour = 0;
@@ -22,7 +22,7 @@ time_t build_time(void) {
   return 0;
 }
 
-int timestamp_less(timestamp_t *t1, timestamp_t *t2) {
+int timestamp_less(acn_timestamp_t *t1, acn_timestamp_t *t2) {
     uint32_t *data1 = (uint32_t*)t1;
     uint32_t *data2 = (uint32_t*)t2;
     if ( *data1 < *data2 ) return 1;
@@ -34,7 +34,7 @@ int timestamp_less(timestamp_t *t1, timestamp_t *t2) {
     return 0;
 }
 
-int timestamp_is_empty(timestamp_t *t) {
+int timestamp_is_empty(acn_timestamp_t *t) {
     uint32_t *data = (uint32_t*)t;
     if ( *data ) return 0;
     data++;
@@ -42,7 +42,7 @@ int timestamp_is_empty(timestamp_t *t) {
     return 1;
 }
 
-void timestamp_string(timestamp_t *ts, char *s) {
+void timestamp_string(acn_timestamp_t *ts, char *s) {
     snprintf(s, 25,
              "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
              ts->year,

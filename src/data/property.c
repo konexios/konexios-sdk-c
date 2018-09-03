@@ -17,6 +17,7 @@ void property_type_add(property_dispetcher_t *disp) {
 
 void property_type_del(uint8_t index) {
     // FIXME impl
+    SSP_PARAMETER_NOT_USED(index);
 }
 
 void property_types_init() {

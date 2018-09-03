@@ -40,6 +40,7 @@ void *__static_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buf
 
 int __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
     SSP_PARAMETER_NOT_USED(__alloc_head);
+    SSP_PARAMETER_NOT_USED(buffer);
   int i = 0;
   int sector = 0;
   int max = 0;
@@ -56,6 +57,7 @@ int __find_max_alloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buf
 
 int __static_buf_free_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
     SSP_PARAMETER_NOT_USED(__alloc_head);
+    SSP_PARAMETER_NOT_USED(buffer);
   int i = 0;
   int sector = 0;
   for (i=0; i < (int)_buf_size; i++) {
@@ -66,6 +68,8 @@ int __static_buf_free_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_
 
 int __static_buf_clean(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, size_t chunk) {
     SSP_PARAMETER_NOT_USED(__alloc_head);
+    SSP_PARAMETER_NOT_USED(buffer);
+    SSP_PARAMETER_NOT_USED(chunk);
   int i = 0;
   for (i=0; i < (int)_buf_size; i++) {
     __unset_in_use(__alloc_space, i);
@@ -85,6 +89,7 @@ void __static_free(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffe
 }
 
 static uint16_t __static_buf_size(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *buffer, uint32_t _buf_size, void *ptr, size_t chunk) {
+    SSP_PARAMETER_NOT_USED(_buf_size);
     int shift = (uint8_t *)ptr - buffer;
     if ( shift < 0 ) return 0;
     shift /= chunk;
@@ -138,6 +143,7 @@ static int __static_decrise_memory(
         size_t chunk,
         void *ptr,
         int size) {
+    SSP_PARAMETER_NOT_USED(_buf_size);
     int i= 0;
     int r = (size / chunk) + (size % chunk ? 1 : 0);
     int start = (uint8_t *)ptr - buffer;

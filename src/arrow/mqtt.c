@@ -29,7 +29,7 @@
 static mqtt_env_t *__mqtt_channels = NULL;
 
 static arrow_mqtt_delivery_callback_t base_event_callbacks = {
-    {0},
+    {NULL, 0, 0},
     process_event_init,
     process_event,
     process_event_finish,
@@ -327,45 +327,52 @@ int mqtt_telemetry_terminate(void) {
   return 0;
 }
 
-static JsonNode *mqtt_pub_pay = NULL;
-static json_encode_machine_t em;
+typedef struct mqtt_json_machine_ {
+    JsonNode *mqtt_pub_pay;
+    json_encode_machine_t em;
+} mqtt_json_machine_t;
 
-
-int p_init() {
-    int len = json_size(mqtt_pub_pay);
-    if ( json_encode_init(&em, mqtt_pub_pay) < 0 ) {
+int mqtt_json_part_init(void *d) {
+    mqtt_json_machine_t *mq = (mqtt_json_machine_t *)d;
+    int len = json_size(mq->mqtt_pub_pay);
+    if ( json_encode_init(&mq->em, mq->mqtt_pub_pay) < 0 ) {
         return -1;
     }
     return len;
 }
 
-int p_part(char *ptr, int len) {
-    int r = json_encode_part(&em, ptr, len);
+int mqtt_json_part(void *d, char *ptr, int len) {
+    mqtt_json_machine_t *mq = (mqtt_json_machine_t *)d;
+    int r = json_encode_part(&mq->em, ptr, len);
     return r;
 }
 
-int p_fin() {
-    int r = json_encode_fin(&em);
+int mqtt_json_fin(void *d) {
+    mqtt_json_machine_t *mq = (mqtt_json_machine_t *)d;
+    int r = json_encode_fin(&mq->em);
+    json_delete(mq->mqtt_pub_pay);
     return r;
 }
 
 mqtt_payload_drive_t mqtt_json_drive = {
-    p_init,
-    p_part,
-    p_fin
+    mqtt_json_part_init,
+    mqtt_json_part,
+    mqtt_json_fin,
+    NULL
 };
 
 int mqtt_publish(arrow_device_t *device, void *d) {
+    static mqtt_json_machine_t mqtt_json_payload;
     MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
     int ret = -1;
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
-        mqtt_pub_pay = telemetry_serialize_json(device, d);
+        mqtt_json_payload.mqtt_pub_pay = telemetry_serialize_json(device, d);
+        mqtt_json_drive.data = (void*)&mqtt_json_payload;
         ret = MQTTPublish_part(&tmp->client,
                                P_VALUE(tmp->p_topic),
                                &msg,
                                &mqtt_json_drive);
-        json_delete(mqtt_pub_pay);
     }
     return ret;
 }

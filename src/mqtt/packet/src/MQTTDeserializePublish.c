@@ -85,6 +85,10 @@ exit:
 int MQTTDeserialize_ack(unsigned char* packettype, unsigned char* dup, unsigned short* packetid, unsigned char* buf, int buflen)
 {
     SSP_PARAMETER_NOT_USED(buflen);
+    SSP_PARAMETER_NOT_USED(packettype);
+    SSP_PARAMETER_NOT_USED(packetid);
+    SSP_PARAMETER_NOT_USED(dup);
+    SSP_PARAMETER_NOT_USED(buf);
 //	MQTTHeader header = {0};
 //	unsigned char* curdata = buf;
 //	unsigned char* enddata = NULL;

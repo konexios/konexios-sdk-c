@@ -37,6 +37,10 @@ extern "C" {
 #define ARROW_MIN(a,b) ((a) < (b)) ? (a) : (b)
 #endif
 
+#if !defined(ARROW_MAX)
+#define ARROW_MAX(a,b) ((a) > (b)) ? (a) : (b)
+#endif
+
 #if defined(__xtensa__) || defined(__XCC__)
 # define __attribute_packed__
 #else

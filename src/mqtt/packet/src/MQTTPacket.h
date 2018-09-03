@@ -78,6 +78,7 @@ typedef struct
 	char* data;
 } MQTTLenString;
 
+// FIXME replace it
 typedef struct
 {
 	char* cstring;

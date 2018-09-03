@@ -124,6 +124,9 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
       device_info_free(&list);
     }
   }
+# else
+  DBG("No device request: close socket");
+  http_client_close(current_client());
 # endif
 #endif
   arrow_state_mqtt_run(device);
@@ -158,6 +161,7 @@ arrow_routine_error_t arrow_gateway_initialize_routine(void) {
 
 arrow_routine_error_t arrow_initialize_routine(void) {
   wdt_feed();
+  http_session_set_protocol(current_client(), 0);
   http_session_close_set(current_client(), false);
   int retry = 0;
   int ret = 0;

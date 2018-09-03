@@ -100,23 +100,12 @@ exit:
 int MQTTDeserialize_suback(unsigned short* packetid, int maxcount, int* count, int grantedQoSs[], unsigned char* buf, int buflen)
 {
     SSP_PARAMETER_NOT_USED(buflen);
-//	MQTTHeader header = {0};
+    SSP_PARAMETER_NOT_USED(packetid);
 	unsigned char* curdata = buf;
     unsigned char* enddata = NULL;
 	int rc = 0;
-//	int mylen;
 
 	FUNC_ENTRY;
-//	header.byte = readChar(&curdata);
-//	if (header.bits.type != SUBACK)
-//		goto exit;
-
-//	curdata += (rc = MQTTPacket_decodeBuf(curdata, &mylen)); /* read remaining length */
-//	enddata = curdata + mylen;
-//	if (enddata - curdata < 2)
-//		goto exit;
-
-//	*packetid = readInt(&curdata);
 
     enddata = buf + readInt(&curdata);
 

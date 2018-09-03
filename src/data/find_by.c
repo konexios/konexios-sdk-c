@@ -29,7 +29,7 @@ property_t get_find_by_name(int num) {
   if ( num < FindBy_count ) {
     return p_const(find_by_name[num]);
   }
-  return p_null();
+  return p_null;
 }
 
 int find_by_validate_key(find_by_t *fb) {

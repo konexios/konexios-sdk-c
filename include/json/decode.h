@@ -49,6 +49,7 @@ int json_parse_machine_init(json_parse_machine_t *jpm, alloc_only_t *allocator);
 int json_parse_machine_process(json_parse_machine_t *jpm, char byte);
 int json_parse_machine_fin(json_parse_machine_t *jpm);
 
+int json_decode_init_at_property(json_parse_machine_t *sm, property_t *buffer);
 int json_decode_init(json_parse_machine_t *sm, int len) __attribute_warn_unused_result__;
 int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) __attribute_warn_unused_result__;
 JsonNode *json_decode_finish(json_parse_machine_t *sm) __attribute_warn_unused_result__;

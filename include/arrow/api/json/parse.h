@@ -35,7 +35,7 @@ void who_when_free(who_when_t *ww);
 void who_when_move(who_when_t *dst, who_when_t *src);
 int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person);
 
-int timestamp_parse(timestamp_t *t, const char *s);
+int timestamp_parse(acn_timestamp_t *t, const char *s);
 
 // FIXME useless?
 #define json_fill_property(tmp, gx, x) do { \

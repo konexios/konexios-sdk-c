@@ -187,7 +187,7 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
         jpm->complete = 1;
         if ( !IS_EMPTY(jpm->key) ) {
             if ( jpm_append_to_parent(jpm) < 0 ) return -1;
-            jpm->key = p_null();
+            jpm->key = p_null;
         }
         BUFFER_CLEAR(jpm);
         jpm->root = NULL;
@@ -198,13 +198,13 @@ static int jpm_value_end(json_parse_machine_t *jpm, char byte) {
             return -1;
         else
             jpm->root = NULL;
-        jpm->key = p_null();
+        jpm->key = p_null;
         BUFFER_CLEAR(jpm);
         jpm->process_byte = NULL;
     } break;
     case ',': {
         if ( jpm_append_to_parent(jpm) < 0 ) return -1;
-        jpm->key = p_null();
+        jpm->key = p_null;
         json_parse_machine_t *prev = jpm->p;
         json_parse_machine_clear(jpm);
         BUFFER_CLEAR(jpm);
@@ -371,7 +371,16 @@ JsonNode *json_decode_finish(json_parse_machine_t *sm) {
         }
     }
     if ( sm->buffer ) {
+        if ( !sm->buffer->offset && !sm->buffer->len ) {
+            DBG("there are no allocations for this property %p", sm->buffer->source.value);
+            DBG("start %p", sm->buffer->start);
+            DBG("size %d", sm->buffer->size);
+            DBG("offset %d", sm->buffer->offset);
+            DBG("len %d", sm->buffer->len);
+            property_free(&sm->buffer->source);
+        }
         free(sm->buffer);
+        sm->buffer = NULL;
     }
     json_parse_machine_fin(sm);
     return root;

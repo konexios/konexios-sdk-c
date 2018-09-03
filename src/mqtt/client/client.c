@@ -48,7 +48,7 @@ int waitfor_r(MQTTClient *c, int packet_type, TimerInterval *timer) {
 static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     int rc = MQTT_SUCCESS;
     int rest_buffer = c->readbuf_size;
-    MQTTMessage msg = {0};
+    MQTTMessage msg = { 0, 0, 0, 0, 0, 0 };
     msg.payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
     msg.dup = m->head.bits.dup;
     msg.qos = (enum QoS) m->head.bits.qos;
@@ -79,7 +79,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     }
     total_len -= len;
 
-    MQTTString topicName = {0};
+    MQTTString topicName = MQTTString_initializer;
     unsigned char* curdata = c->readbuf;
 
     topicName.lenstring.len = readInt(&curdata);
@@ -182,6 +182,8 @@ static int cycle_subscribe(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) 
 }
 
 static int cycle_ping(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
+    SSP_PARAMETER_NOT_USED(m);
+    SSP_PARAMETER_NOT_USED(timer);
     c->ping_outstanding = 0;
     return MQTT_SUCCESS;
 }
@@ -276,7 +278,7 @@ int MQTTPublish_part(MQTTClient* c,
     if (message->qos == QOS1 || message->qos == QOS2)
         message->id = getNextPacketId(c);
 
-    int payloadlen = drive->init();
+    int payloadlen = drive->init(drive->data);
     if ( payloadlen <= 0 )
         goto exit;
     int rem_len = MQTTSerialize_publishLength(message->qos, topic, payloadlen);
@@ -309,7 +311,7 @@ int MQTTPublish_part(MQTTClient* c,
     len = c->buf_size;
     while( total && !TimerIsExpired(&timer) ) {
         int chunk = total < len ? total : len;
-        chunk = drive->part((char*)ptr, chunk);
+        chunk = drive->part(drive->data, (char*)ptr, chunk);
         if ( chunk <= 0 ) {
             rc = FAILURE;
             goto exit;
@@ -319,7 +321,7 @@ int MQTTPublish_part(MQTTClient* c,
         total -= chunk;
     }
     if ( !total ) {
-        drive->fin();
+        drive->fin(drive->data);
         rc = MQTT_SUCCESS;
     } else {
         rc = FAILURE;

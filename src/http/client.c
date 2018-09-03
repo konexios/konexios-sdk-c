@@ -467,7 +467,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             chunk_len = get_chunked_payload_size(cli, res);
         } else {
             chunk_len = res->recvContentLength;
-            DBG("Con-Len %lu", res->recvContentLength);
+            DBG("Con-Len %u", res->recvContentLength);
         }
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {

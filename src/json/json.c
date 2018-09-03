@@ -61,7 +61,7 @@ char *json_strdup(const char *s) {
 
 property_t  json_strdup_property(const char *str) {
     char *tmp = json_strdup(str);
-    if ( !tmp ) return p_null();
+    if ( !tmp ) return p_null;
     return p_json(tmp);
 }
 
@@ -326,7 +326,7 @@ JsonNode *json_decode(const char *json)
 
 property_t json_encode_property(const JsonNode *node) {
     char *alloc_string = json_stringify(node, NULL);
-    if ( !alloc_string ) return p_null();
+    if ( !alloc_string ) return p_null;
     property_t t = p_json(alloc_string);
     return t;
 }

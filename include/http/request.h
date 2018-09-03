@@ -45,12 +45,11 @@ typedef struct __attribute_packed__ {
     property_t meth;
     property_t host;
     property_t uri;
-    uint16_t port;
-    uint8_t scheme;
-    // FIXME flags
-    int8_t is_corrupt;
-    int8_t is_cipher;
-    int8_t is_chunked;
+    uint32_t port       : 16;
+    uint32_t scheme     : 13;
+    uint32_t is_corrupt : 1;
+    uint32_t is_cipher  : 1;
+    uint32_t is_chunked : 1;
     property_map_t *header;
     property_map_t content_type;
     property_map_t *query;
