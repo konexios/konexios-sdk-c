@@ -557,7 +557,7 @@ static void prepend_node(JsonNode *parent, JsonNode *child) {
 
 static void append_member(JsonNode *object, property_t key, JsonNode *value) {
     if ( !value ) {
-        DBG("%s : fail", __PRETTY_FUNCTION__);
+        DBG("%s : fail", __func__);
         return;
     }
     property_move(&value->key, &key);
@@ -566,7 +566,7 @@ static void append_member(JsonNode *object, property_t key, JsonNode *value) {
 
 void json_append_element(JsonNode *array, JsonNode *element) {
     if ( !element ) {
-        DBG("%s : fail", __PRETTY_FUNCTION__);
+        DBG("%s : fail", __func__);
         return;
     }
 	assert(array->tag == JSON_ARRAY);
@@ -577,7 +577,7 @@ void json_append_element(JsonNode *array, JsonNode *element) {
 
 void json_prepend_element(JsonNode *array, JsonNode *element) {
     if ( !element ) {
-        DBG("%s : fail", __PRETTY_FUNCTION__);
+        DBG("%s : fail", __func__);
         return;
     }
 	assert(array->tag == JSON_ARRAY);
@@ -588,7 +588,7 @@ void json_prepend_element(JsonNode *array, JsonNode *element) {
 
 int json_append_member(JsonNode *object, const property_t key, JsonNode *value) {
     if ( !value || IS_EMPTY(key) ) {
-        DBG("%s : fail", __PRETTY_FUNCTION__);
+        DBG("%s : fail", __func__);
         return -1;
     }
     if (object->tag != JSON_OBJECT) return -1;
@@ -599,7 +599,7 @@ int json_append_member(JsonNode *object, const property_t key, JsonNode *value) 
 
 void json_prepend_member(JsonNode *object, const property_t key, JsonNode *value) {
     if ( !value || IS_EMPTY(key) ) {
-        DBG("%s : fail", __PRETTY_FUNCTION__);
+        DBG("%s : fail", __func__);
         return;
     }
 	assert(object->tag == JSON_OBJECT);

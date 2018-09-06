@@ -226,7 +226,7 @@ http_mqtt_error:
     arrow_mqtt_api_wait(0);
     if ( ret < 0 ) {
         mqtt_error = 1;
-        DBG("%s %d", __PRETTY_FUNCTION__, ret);
+        DBG("%s %d", __func__, ret);
     }
     return ret;
 }
