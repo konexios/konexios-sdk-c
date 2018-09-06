@@ -36,8 +36,7 @@ int default_add_payload_handler( void *r,
 
 void http_response_init(http_response_t *res, _payload_meth_t *handler) {
   memset(res, 0x00, sizeof(http_response_t));
-  res->_p_meth._p_set_handler = handler->_p_set_handler;
-  res->_p_meth._p_add_handler = handler->_p_add_handler;
+  memcpy(&res->_p_meth, handler, sizeof(_payload_meth_t));
 }
 
 void http_response_free(http_response_t *res) {

@@ -278,8 +278,9 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( req->is_chunked ) {
             ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
         } else {
+            int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
             ret = snprintf((char*)tmpbuffer,
-                           ringbuf_capacity(cli->queue),
+                           maxlen,
                            "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
             if ( ret < 0 ) return ret;
             if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 )
@@ -288,8 +289,9 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         }
         ringbuf_clear(buf);
         if ( ret < 0 ) return ret;
+        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,
-                       ringbuf_capacity(cli->queue),
+                       maxlen,
                        "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
         if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
         if ( ret < 0 ) return ret;
@@ -298,8 +300,9 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
     property_map_t *head = NULL;
     arrow_linked_list_for_each(head, req->header, property_map_t) {
         ringbuf_clear(buf);
+        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,
-                           ringbuf_capacity(cli->queue),
+                           maxlen,
                            "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
     	if ( ret < 0 ) return ret;
         if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
@@ -467,7 +470,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
             chunk_len = get_chunked_payload_size(cli, res);
         } else {
             chunk_len = res->recvContentLength;
-            DBG("Con-Len %u", res->recvContentLength);
+            DBG("Con-Len %u", (unsigned int) res->recvContentLength);
         }
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {

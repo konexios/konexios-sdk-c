@@ -46,9 +46,9 @@ int __http_routine(response_init_f req_init, void *arg_init,
   int ret = 0;
   http_request_t request;
   http_response_t response;
-  DBG("client protocol: %d", _cli.protocol);
+  DBG("client protocol: %u", (unsigned int)_cli.protocol);
   if ( _cli.protocol > client_protocol_size ) {
-      DBG("Unknown client protocol %u", _cli.protocol);
+      DBG("Unknown client protocol %u", (unsigned int)_cli.protocol);
       return -2;
   }
   req_init(&request, arg_init);
