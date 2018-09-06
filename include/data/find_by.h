@@ -78,9 +78,7 @@ int find_by_validate_key(find_by_t *fb);
 
 #define find_by_for_each(tmp, params) \
     arrow_linked_list_for_each(tmp, params, find_by_t) \
-    if ( find_by_validate_key(tmp) == 0 ) \
-
-// FIXME if value is property, rm p_stack
+    if ( find_by_validate_key(tmp) == 0 )
 
 #if defined(__cplusplus)
 }

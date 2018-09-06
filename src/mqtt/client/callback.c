@@ -6,10 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <mqtt/client/delivery.h>
-
-// FIXME handlers into client
-static arrow_mqtt_delivery_callback_t *__delivery_cb;
+#include <mqtt/client/callback.h>
 
 static int deliveryeq( arrow_mqtt_delivery_callback_t *cb, MQTTString *topic ) {
     if ( topic->cstring ) {
@@ -20,13 +17,13 @@ static int deliveryeq( arrow_mqtt_delivery_callback_t *cb, MQTTString *topic ) {
     return -1;
 }
 
-int arrow_mqtt_client_delivery_message_reg(arrow_mqtt_delivery_callback_t *dc) {
+int arrow_mqtt_client_delivery_message_reg(MQTTClient *c, arrow_mqtt_delivery_callback_t *dc) {
     arrow_mqtt_delivery_callback_t *tmp;
     MQTTString topicname;
     topicname.cstring = P_VALUE(dc->topic);
-    linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, &topicname);
+    linked_list_find_node(tmp, c->delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, &topicname);
     if ( !tmp ) {
-        arrow_linked_list_add_node_last(__delivery_cb, arrow_mqtt_delivery_callback_t, dc);
+        arrow_linked_list_add_node_last(c->delivery_cb, arrow_mqtt_delivery_callback_t, dc);
         return 0;
     }
     return 0;
@@ -35,7 +32,7 @@ int arrow_mqtt_client_delivery_message_reg(arrow_mqtt_delivery_callback_t *dc) {
 int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
     SSP_PARAMETER_NOT_USED(c);
     arrow_mqtt_delivery_callback_t *tmp;
-    linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
+    linked_list_find_node(tmp, c->delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->init ) return tmp->init(message->payloadlen);
     return -1;
 }
@@ -43,7 +40,7 @@ int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName
 int arrow_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
     SSP_PARAMETER_NOT_USED(c);
     arrow_mqtt_delivery_callback_t *tmp;
-    linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
+    linked_list_find_node(tmp, c->delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->process ) return tmp->process((char *)message->payload, message->payloadlen);
     return -1;
 }
@@ -52,7 +49,7 @@ int arrow_mqtt_client_delivery_message_done(MQTTClient *c, MQTTString *topicName
     SSP_PARAMETER_NOT_USED(c);
     SSP_PARAMETER_NOT_USED(message);
     arrow_mqtt_delivery_callback_t *tmp;
-    linked_list_find_node(tmp, __delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
+    linked_list_find_node(tmp, c->delivery_cb, arrow_mqtt_delivery_callback_t, deliveryeq, topicName);
     if ( tmp && tmp->done ) return tmp->done();
     return -1;
 }

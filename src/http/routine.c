@@ -81,6 +81,7 @@ http_error:
   if ( http_session_is_open(&_cli) && ret < 0 ) {
       http_session_close_set(&_cli, true);
       ph->client_close(&_cli);
+      http_session_set_protocol(&_cli, api_via_http);
   }
   return ret;
 }

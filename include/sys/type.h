@@ -26,6 +26,7 @@ extern "C" {
 #if defined(__USE_STD__)
 #include <stdbool.h>
 #include <unistd.h>
+#include <ctype.h>
 #else
 typedef int bool;
 #define false 0

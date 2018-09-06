@@ -180,7 +180,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   wdt_feed();
 
 #if defined(HTTP_VIA_MQTT)
-  http_session_set_protocol(current_client(), 1);
+  http_session_set_protocol(current_client(), api_via_mqtt);
 #else
   http_session_close_set(current_client(), false);
 #endif
@@ -208,21 +208,20 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   if ( strcmp( _from, GATEWAY_SOFTWARE_VERSION ) != 0 ) {
       DBG("Warning: wrong base version [%s != %s]", _from, GATEWAY_SOFTWARE_VERSION);
   }
+  http_session_set_protocol(current_client(), api_via_http);
+  RETRY_CR(retry);
+   do {
+      wdt_feed();
   if ( __download_init ) {
       ret = __download_init(_checksum);
       if ( ret < 0 ) goto software_release_done;
   }
-  http_session_set_protocol(current_client(), api_via_http);
-  RETRY_CR(retry);
-  while ( (ret = arrow_software_release_download(_token, trans_hid, _checksum)) < 0 ) {
+      ret = arrow_software_release_download(_token, trans_hid, _checksum);
+      if ( ret ) {
       RETRY_UP(retry, { goto software_release_done; });
       msleep(ARROW_RETRY_DELAY);
   }
-//  ret = arrow_software_release_download(_token, trans_hid, _checksum);
-//#if defined(HTTP_VIA_MQTT)
-//  http_session_set_protocol(current_client(), 1);
-//#endif
-  wdt_feed();
+  } while( ret < 0 );
   SSP_PARAMETER_NOT_USED(_to);
 software_release_done:
   // close session after next request

@@ -24,6 +24,7 @@
 #endif
 #include <config.h>
 #include <network.h>
+#include <mqtt/client/delivery.h>
 
 #if defined(WIN32_DLL) || defined(WIN64_DLL)
   #define DLLImport __declspec(dllimport)
@@ -117,6 +118,7 @@ typedef struct MQTTClient
     int isconnected;
     int cleansession;
     int reject;
+    arrow_mqtt_delivery_callback_t *delivery_cb;
 
     struct MessageHandlers
     {

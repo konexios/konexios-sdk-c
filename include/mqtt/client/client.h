@@ -9,7 +9,7 @@
 #if !defined(ACN_SDK_C_MQTT_CLIENT_CLIENT_H_)
 #define ACN_SDK_C_MQTT_CLIENT_CLIENT_H_
 
-#include <mqtt/client/delivery.h>
+#include <mqtt/client/callback.h>
 
 #if !defined(MQTT_CLIENT_MAX_PAYLOAD_LEN)
 #define MQTT_CLIENT_MAX_PAYLOAD_LEN 3000

@@ -379,6 +379,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
 
 #if defined(HTTP_VIA_MQTT)
 int mqtt_api_publish(JsonNode *data) {
+    static mqtt_json_machine_t mqtt_json_payload;
   MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
   int ret = -1;
   mqtt_env_t *tmp = get_telemetry_env();
@@ -386,7 +387,8 @@ int mqtt_api_publish(JsonNode *data) {
     if ( !data ) {
       return -1;
     }
-    mqtt_pub_pay = data;
+    mqtt_json_payload.mqtt_pub_pay = data;
+    mqtt_json_drive.data = (void*)&mqtt_json_payload;
     msg.payload = (void *)data;
     msg.payloadlen = json_size(data);
     MQTT_DBG("[%d][%s]", msg.payloadlen, msg.payload);
@@ -497,13 +499,13 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
     _mqtt_env_set_init(tmp, MQTT_SUBSCRIBE_INIT);
   }
   property_weak_copy(&base_event_callbacks.topic, tmp->s_topic);
-  if ( arrow_mqtt_client_delivery_message_reg(&base_event_callbacks) < 0 ) {
+  if ( arrow_mqtt_client_delivery_message_reg(&tmp->client, &base_event_callbacks) < 0 ) {
       DBG("MQTT handler fail");
   }
 
 #if defined(HTTP_VIA_MQTT)
   property_weak_copy(&http_event_callbacks.topic, tmp->s_api_topic);
-  if ( arrow_mqtt_client_delivery_message_reg(&http_event_callbacks) < 0 ) {
+  if ( arrow_mqtt_client_delivery_message_reg(&tmp->client, &http_event_callbacks) < 0 ) {
       DBG("MQTT API handler fail");
   }
 #endif

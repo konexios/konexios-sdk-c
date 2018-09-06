@@ -74,6 +74,7 @@ void MQTTClientInit(MQTTClient *c, Network *network, unsigned int command_timeou
   c->cleansession = 0;
   c->reject = 0;
   c->ping_outstanding = 0;
+  c->delivery_cb = 0;
   c->defaultMessageHandler = NULL;
   c->next_packetid = 1;
   TimerInit(&c->last_sent);

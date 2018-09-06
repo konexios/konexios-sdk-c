@@ -161,7 +161,7 @@ arrow_routine_error_t arrow_gateway_initialize_routine(void) {
 
 arrow_routine_error_t arrow_initialize_routine(void) {
   wdt_feed();
-  http_session_set_protocol(current_client(), 0);
+  http_session_set_protocol(current_client(), api_via_http);
   http_session_close_set(current_client(), false);
   int retry = 0;
   int ret = 0;

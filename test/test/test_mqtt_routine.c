@@ -35,7 +35,7 @@
 #include <encode.h>
 #include <json/decode.h>
 #include <arrow_mqtt_client.h>
-#include <mqtt/client/delivery.h>
+#include <mqtt/client/callback.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>

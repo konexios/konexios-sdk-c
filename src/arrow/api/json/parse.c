@@ -50,12 +50,10 @@ JsonNode *parse_size_data(JsonNode *_main, page_size_t *ps) {
 
 
 int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *person) {
-    // FIXME parse timestamp
-    // FIXME property
-    JsonNode *t = json_find_member(tmp, p_stack(date));
+    JsonNode *t = json_find_member(tmp, p_const(date));
     if ( t && t->tag == JSON_STRING )
         strptime(P_VALUE(t->string_), "%Y-%m-%dT%H:%M:%S", &ww->date);
-    t = json_find_member(tmp, p_stack(person));
+    t = json_find_member(tmp, p_const(person));
     if ( t && t->tag == JSON_STRING )
         property_copy_as( PROPERTY_DYNAMIC_TAG, &ww->by, t->string_);
     return 0;

@@ -396,7 +396,7 @@ int arrow_mqtt_client_subscribe(MQTTClient *c,
       subdata.grantedQoS = QOS0;
       if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&subdata.grantedQoS, c->readbuf, c->readbuf_size) == 1) {
         if (subdata.grantedQoS != 0x80) {
-          rc = arrow_mqtt_client_delivery_message_reg(cb);
+          rc = arrow_mqtt_client_delivery_message_reg(c, cb);
         }
       }
     } else {

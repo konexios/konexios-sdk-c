@@ -4,21 +4,10 @@
 #include <sys/mem.h>
 #include <debug.h>
 #include <arrow/utf8.h>
-// FIXME std?
-#include <ctype.h>
 
 #include <data/chunk.h>
 
 #define MAX_PARAM_LINE 20
-
-#if defined(STATIC_MQTT_ENV)
-// FIXME buffer len?
-//static char static_canonical_prm[3000];
-#else
-static int cmpstringp(const void *p1, const void *p2) {
-  return strcmp(* (char * const *) p1, * (char * const *) p2);
-}
-#endif
 
 #if defined(STATIC_MQTT_ENV)
 typedef struct _str_t {
@@ -127,6 +116,9 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
   return can_buffer;
 }
 #else
+static int cmpstringp(const void *p1, const void *p2) {
+  return strcmp(* (char * const *) p1, * (char * const *) p2);
+}
 
 static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffer_len) {
   JsonNode *child;

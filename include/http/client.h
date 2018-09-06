@@ -17,6 +17,9 @@
 #define HTTP_VERS " HTTP/1.1\r\n"
 
 #define api_via_http 0
+#if defined(HTTP_VIA_MQTT)
+#define api_via_mqtt 1
+#endif
 
 typedef struct __session_flags {
   uint8_t _close;

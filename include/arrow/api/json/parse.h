@@ -17,7 +17,6 @@ extern "C" {
 #include <json/json.h>
 #include <time/time.h>
 
-// FIXME move to file
 typedef struct _page_size_ {
     int size;
     int page;
@@ -37,7 +36,6 @@ int who_when_parse(JsonNode *tmp, who_when_t *ww, const char *date, const char *
 
 int timestamp_parse(acn_timestamp_t *t, const char *s);
 
-// FIXME useless?
 #define json_fill_property(tmp, gx, x) do { \
     JsonNode *t = json_find_member(tmp, p_const(xstr(x))); \
     if ( t && t->tag == JSON_STRING ) \

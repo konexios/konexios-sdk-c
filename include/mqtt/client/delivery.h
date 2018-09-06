@@ -9,7 +9,6 @@
 #if !defined(ACN_SDK_C_MQTT_CLIENT_DELIVERY_H_)
 #define ACN_SDK_C_MQTT_CLIENT_DELIVERY_H_
 
-#include <MQTTClient.h>
 #include <data/property.h>
 #include <data/linkedlist.h>
 
@@ -24,10 +23,5 @@ typedef struct arrow_mqtt_delivery_callback_ {
     arrow_mqtt_delivery_close done;
     arrow_linked_list_head_node;
 } arrow_mqtt_delivery_callback_t;
-
-int arrow_mqtt_client_delivery_message_reg(arrow_mqtt_delivery_callback_t *dc);
-int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
-int arrow_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
-int arrow_mqtt_client_delivery_message_done(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
 
 #endif
