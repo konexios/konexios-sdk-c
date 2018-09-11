@@ -60,122 +60,102 @@ int http_mqtt_client_close(http_client_t *cli) {
 }
 
 int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
-    int ret = 0;
+    int ret = -1;
     http_request_t *req = cli->request;
     if ( !req ) return -1;
     http_response_init(res, &req->_response_payload_meth);
     JsonNode *_node = json_mkobject();
     if ( !_node ) {
-        http_session_force_http(1);
+        http_session_set_protocol(cli, api_via_http);
         return -1;
     }
     JsonNode *_parameters = json_mkobject();
     if ( !_parameters ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     property_map_t *tmp = NULL;
     char reqhid[50];
     strcpy(reqhid, "GS-");
     get_time(reqhid+3);
-    property_t weak_p;
     ret = json_append_member(_node,
                              p_const("requestId"),
                              json_mkstring(reqhid));
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
 
     ret = json_append_member(_node,
                              p_const("eventName"),
-                             json_mkstring("GatewayToServer_ApiRequest"));
+                             json_mk_weak_property(p_const("GatewayToServer_ApiRequest")));
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     ret = json_append_member(_node,
                              p_const("encrypted"),
                              json_mkbool(false));
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     //add parameter
-    property_weak_copy(&weak_p, req->uri);
     ret = json_append_member(_parameters,
                              p_const("uri"),
-                             json_mkproperty(&weak_p));
+                             json_mk_weak_property(req->uri));
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
-    property_weak_copy(&weak_p, req->meth);
     ret = json_append_member(_parameters,
                        p_const("method"),
-                       json_mkproperty(&weak_p));
+                       json_mk_weak_property(req->meth));
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-apikey");
     if ( tmp ) {
-        property_weak_copy(&weak_p, tmp->value);
         ret = json_append_member(_parameters,
                            p_const("apiKey"),
-                           json_mkproperty(&weak_p));
+                           json_mk_weak_property(tmp->value));
         if ( ret < 0 ) {
-            http_session_force_http(1);
             goto http_mqtt_error;
         }
     }
     if ( !IS_EMPTY(req->payload) ) {
-        property_weak_copy(&weak_p, req->payload);
         ret = json_append_member(_parameters,
                            p_const("body"),
-                           json_mkproperty(&weak_p));
+                           json_mk_weak_property(req->payload));
         if ( ret < 0 ) {
-            http_session_force_http(1);
             goto http_mqtt_error;
         }
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-signature");
     if ( tmp ) {
-        property_weak_copy(&weak_p, tmp->value);
         ret = json_append_member(_parameters,
                            p_const("apiRequestSignature"),
-                           json_mkproperty(&weak_p));
+                           json_mk_weak_property(tmp->value));
         if ( ret < 0 ) {
-            http_session_force_http(1);
             goto http_mqtt_error;
         }
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-version");
     if ( tmp ) {
-        property_weak_copy(&weak_p, tmp->value);
         ret = json_append_member(_parameters,
                            p_const("apiRequestSignatureVersion"),
-                           json_mkproperty(&weak_p));
+                           json_mk_weak_property(tmp->value));
         if ( ret < 0 ) {
-            http_session_force_http(1);
             goto http_mqtt_error;
         }
     }
     linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-date");
     if ( tmp ) {
-        property_weak_copy(&weak_p, tmp->value);
         ret  =json_append_member(_parameters,
                            p_const("timestamp"),
-                           json_mkproperty(&weak_p));
+                           json_mk_weak_property(tmp->value));
         if ( ret < 0 ) {
-            http_session_force_http(1);
             goto http_mqtt_error;
         }
     }
     char sig[65] = {0};
     ret = json_append_member(_node, p_const("parameters"), _parameters);
     if ( ret < 0 ) {
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     if ( arrow_event_sign(sig,
@@ -184,7 +164,6 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                   0,
                   _parameters ) < 0 ) {
         _parameters = NULL;
-        http_session_force_http(1);
         goto http_mqtt_error;
     }
     _parameters = NULL;
@@ -225,6 +204,7 @@ http_mqtt_error:
     if ( _parameters ) json_delete(_parameters);
     arrow_mqtt_api_wait(0);
     if ( ret < 0 ) {
+        http_session_set_protocol(cli, api_via_http);
         mqtt_error = 1;
         DBG("%s %d", __func__, ret);
     }

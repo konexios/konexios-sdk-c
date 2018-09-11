@@ -51,6 +51,7 @@ static void mqtt_event_base_init(mqtt_event_base_t *mq) {
     property_init(&mq->id);
     property_init(&mq->name);
     mq->encrypted = 0;
+    mq->node = NULL;
     mq->parameters = NULL;
 }
 
@@ -82,7 +83,7 @@ typedef int (*submodule)(void *, JsonNode *);
 typedef void (*module_init)();
 typedef void (*module_deinit)();
 typedef struct {
-  char *name;
+  const char *name;
   submodule proc;
   module_init init;
   module_deinit deinit;

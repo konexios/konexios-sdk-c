@@ -10,56 +10,87 @@ Example:
 #ifndef ACN_SDK_C_PRIVATE_H_
 #define ACN_SDK_C_PRIVATE_H_
 
-#define DEFAULT_API_KEY             "abc"
+#define DEFAULT_API_KEY                  "abc"
 #define DEFAULT_SECRET_KEY          "xyz"
-//#define DEV_ENV
-//#define HTTP_DEBUG
 
-#define DEFAULT_WIFI_SSID           "yourSSID"
-#define DEFAULT_WIFI_PASS           "password"
-#define DEFAULT_WIFI_SEC            0x00040003
+#define DEFAULT_WIFI_SSID               "yourSSID"
+#define DEFAULT_WIFI_PASS              "password"
+#define DEFAULT_WIFI_SEC                 0x00040003
 
 /* gateway */
 #define GATEWAY_UID_PREFIX          "QCA"
-#define GATEWAY_NAME                "QCA-gateway-demo"
-#define GATEWAY_OS                  "ThreadX"
+#define GATEWAY_NAME                    "QCA-gateway-demo"
+#define GATEWAY_OS                          "ThreadX"
 
 /* gateway firmware */
-#define GATEWAY_SOFTWARE_NAME       "SX-ULPGN-EVK-TEST-FW"
+#define GATEWAY_SOFTWARE_NAME         "SX-ULPGN-EVK-TEST-FW"
 #define GATEWAY_SOFTWARE_VERSION    "1.2.4"
 
 /* device */
-#define DEVICE_NAME                 "ULPGN"
-#define DEVICE_TYPE                 "SX_ULPGN"
+#define DEVICE_NAME                     "ULPGN"
+#define DEVICE_TYPE                      "SX_ULPGN"
 #define DEVICE_UID_SUFFIX           "devkit"
 ```
 
 ### Defines ###
 You can define this options in the private.h file or use "-Dxxx" compiler flag
 
-define NO_EVENTS            to switch off the event handlers for a mqtt connection
+define **NO_EVENTS**            to switch off the event handlers for a mqtt connection
 
-define NO_RELEASE_UPDATE    turn off the firmware update capability (based on a arrow_software_release_dowload_set_cb functions)
+define **NO_RELEASE_UPDATE**    turn off the firmware update capability (based on a arrow_software_release_dowload_set_cb functions)
 
-define NO_SOFTWARE_UPDATE   turn off the software update capability (based on a arrow_gateway_software_update_set_cb function)
+define **NO_SOFTWARE_UPDATE**   turn off the software update capability (based on a arrow_gateway_software_update_set_cb function)
 
-define ARCH_MEM             use the platform specific header with memory functions (bzero, bcopy, strcpy, strncpy etc) in a ${SDK_IMPL}/sys/arch/mem.h (if your platform need the implementation this one)
+define **ARROW_HAS_USERHID**  device would use user HID and application HID to register a gateway and device. For this option the **DEFAULT_APP_HID** and **DEFAULT_USER_HID** should be defined.
+For example:
+```c
+#define ARROW_HAS_USERHID
+#define DEFAULT_APP_HID "0452808a4abc39e3de6ae764aad457553ec00e8a"
+#define DEFAULT_USER_HID "2bbae13ae3a7d5e47c4741375ce8112f0b54616b"
+```
 
-define ARCH_TYPE            use the platform specific header with common types (uint8_t, uint16_t etc) in a ${SDK_IMPL}/sys/arch/type.h
+define **ARCH_MEM**             use the platform specific header with memory functions (*bzero, bcopy, strcpy, strncpy* etc) in a *${SDK_IMPL}/sys/arch/mem.h* (if your platform need the implementation this one)
 
-define ARCH_SOCK            use the platform specific header with socket layer additional headers and definitions (if needed) in a ${SDK_IMPL}/sys/arch/socket.h
+define **ARCH_TYPE**            use the platform specific header with common types (uint8_t, uint16_t etc) in a *${SDK_IMPL}/sys/arch/type.h*
 
-define ARCH_SSL             use the wolfSSL settings file ${SDK_IMPL}/sys/arch/ssl.h (if you don't reimplement ssl functions and use default ssl_connect, ssl_recv etc)
+define **ARCH_SOCK**            use the platform specific header with socket layer additional headers and definitions (if needed) in a* ${SDK_IMPL}/sys/arch/socket.h*
 
-define ARCH_TIME            use the platform specific headers or define needed types for common time functions (struct tm etc)
+define **ARCH_SSL**             use the wolfSSL settings file *${SDK_IMPL}/sys/arch/ssl.h* (if you don't reimplement ssl functions and use default ssl_connect, ssl_recv etc)
+
+define **ARCH_TIME**            use the platform specific headers or define needed types for common time functions (struct tm etc)
+
+### SDK initialize ###
+You should perform the ACN SDK initialisation before you start work with any SDK methods.
+There are 3 methods related:
+```c
+arrow_routine_error_t arrow_init(void);
+arrow_routine_error_t arrow_deinit(void);
+void arrow_close(void);
+```
+**arrow_init** function initializes all needed structures for an SDK.
+**arrow_deinit** function destroys all structures and working objects.
+**arrow_close** close all connections and terminate the gateway and device objects.
+
+### Gateway and Device registration ###
+To get started with ArrowConnect gateway and device you should register it.
+You can call this function to register gateway and device:
+```c
+arrow_routine_error_t arrow_initialize_routine(void);
+```
+or this function to register the gateway only.
+```c
+arrow_routine_error_t arrow_gateway_initialize_routine(void);
+```
+You can call these function at begin of your application. The gateway and device would be register only one time if you implement the storage methods.
+If these gateway/device already registered these methods call checkin request to gateway.
 
 ### examples ###
 
-On devices with disabled RTC possible to use NTP time setup:
+On devices with disabled RTC it's possible to use NTP time setup:
 ```c
 ntp_set_time_cycle();
 ```
-related defins in the config/ntp.h file:
+related defins in the *config/ntp.h* file:
 
 ```c
 #define NTP_DEFAULT_SERVER "0.pool.ntp.org"
@@ -72,13 +103,14 @@ function will endlessly try to get current time through the net.
 or use parametric function
 
 ```c
-ntp_set_time_common(const char *server, uint16_t port, int timeout, int try)
+int ntp_set_time_common(const char *server, uint16_t port, int timeout, int try)
 ```
 where
-server - ntp server
-port - ntp port
-timeout - timeout for time setting
-try - attempt to get time setting
+*server* - ntp server
+*port* - ntp port
+*timeout* - timeout for time setting
+*try* - attempt to get time setting
+this function returns 0 in success and returns -1 in other case.
 
 ### Find Gateway ###
 ```c
@@ -140,8 +172,18 @@ arrow_initialize_routine();
 ```
 
 To access the Gateway and Device objects you can use following function:
+```c
 arrow_gateway_t *current_gateway();
 arrow_device_t *current_device();
+```
+
+You can use the raw API requests instead
+to register a gateway/device:
+```c
+int arrow_register_gateway(arrow_gateway_t *gateway);
+int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
+```
+gateway and device objects should be filled before.
 
 ### Checkin Gateway ###
 
@@ -210,13 +252,13 @@ where MAC is device MAC-address
 
 ### Commands ###
 
-You can to set your own command handler. At first you need to declare the handler function: int (*)(const char *str), where str - string with a JSON body. If the command processing are succeeded this handler shoud return 0.
+You can to set your own command handler. At first you need to declare the handler function: int (*)(property_t p), where p - string with a JSON body. If the command processing are succeeded this handler shoud return 0.
 After this you should register the command handler before the gateway initializing.
 
 Example:
 ```c
-static int test_cmd_proc(const char *str) {
-  printf("test: [%s]", str);
+static int test_cmd_proc(property_t payload) {
+  printf("test: [%s]", P_VALUE(payload));
   return 0;
 }
 // ... in the main function:
@@ -230,9 +272,7 @@ Simple example:
 ```c
 arrow_gateway_t gateway;
 arrow_device_t device;
-telemetry_data_type *data;
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-while ( arrow_connect_device(&gateway, &device) < 0 ) { printf("arrow device connection fail\r\n"); } // Device registration
+...
 data = get_telemetry_data_from_sensors();
 while ( arrow_send_telemetry(&device, data) < 0 ) { printf("send telemetry fail\r\n") }
 arrow_device_free(&device);
@@ -291,6 +331,7 @@ For a test suite creation you need to know the testProcedureHid.
 
 The gateway example:
 
+```c
 CREATE_TEST_SUITE(gate_test, "384f9d6832ce2272f18f3ee8597e0f108f6a8109");
 arrow_test_gateway(current_gateway(), &gate_test);
 
@@ -305,10 +346,11 @@ if ( 1 ) {
 }
 // end test
 arrow_test_end(&gate_test);
-
+```
 
 The device example: 
 
+```c
 CREATE_TEST_SUITE(p, "a53f0aa3e8bf7806ff5b8770ad4d9d3477d534c9");
 arrow_test_device(current_device(), &p);
 printf("test device result hid {%s}\r\n", P_VALUE(p.result_hid));
@@ -341,6 +383,7 @@ arrow_test_step_fail(&p, 3, "not ARM");
 #endif
 // end test
 arrow_test_end(&p);
+```
 
 ### Software Update ###
 
@@ -369,6 +412,7 @@ arrow_software_release_set_cb(&arrow_software_update);
 
 There is a capability to update the firmware via an SDK. It's sufficiantly to implement the callback function for an upgrade procedure and set this one:
 
+```c
 // somewere in the main function:
 #include <arrow/software_update.h>
 
@@ -384,11 +428,13 @@ int main() {
   arrow_gateway_software_update_set_cb(qca_gateway_software_update);
   // ...
 }
+```
 
 Or reimplement the arrow_gateway_software_update function:
 
 int arrow_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
 For example for the linux:
+```c
 #include <stdio.h>
 #include <curl/curl.h>
 
@@ -416,16 +462,18 @@ int arrow_gateway_software_update(const char *url) {
   curl_easy_cleanup(curl);
   return 0;
 }
-
+```
 
 This function for the QCA4010 board is more complicated. You can find it into acn-embedded  xtensa directory.
 The JSON message for a QCA update should be like this:
+```json
 {
   "url": "http://192.168.83.129:80/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
 }
+```
 or
+```json
 {
   "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
 }
-
-
+```

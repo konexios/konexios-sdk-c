@@ -29,7 +29,7 @@
 static mqtt_env_t *__mqtt_channels = NULL;
 
 static arrow_mqtt_delivery_callback_t base_event_callbacks = {
-    {NULL, 0, 0},
+    p_static_null,
     process_event_init,
     process_event,
     process_event_finish,
@@ -38,7 +38,7 @@ static arrow_mqtt_delivery_callback_t base_event_callbacks = {
 
 #if defined(HTTP_VIA_MQTT)
 static arrow_mqtt_delivery_callback_t http_event_callbacks = {
-    {0},
+    p_static_null,
     process_http_init,
     process_http,
     process_http_finish,
@@ -350,7 +350,6 @@ int mqtt_json_part(void *d, char *ptr, int len) {
 int mqtt_json_fin(void *d) {
     mqtt_json_machine_t *mq = (mqtt_json_machine_t *)d;
     int r = json_encode_fin(&mq->em);
-    json_delete(mq->mqtt_pub_pay);
     return r;
 }
 
@@ -373,6 +372,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
                                P_VALUE(tmp->p_topic),
                                &msg,
                                &mqtt_json_drive);
+        json_delete(mqtt_json_payload.mqtt_pub_pay);
     }
     return ret;
 }

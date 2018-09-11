@@ -78,8 +78,8 @@ int arrow_connect_gateway(arrow_gateway_t *gateway) {
       int ret = restore_gateway_info(gateway);
       if ( ret < 0 ) {
           // new registration
-          if ( arrow_register_gateway(gateway) < 0 ) {
-              return -1;
+          if ( (ret = arrow_register_gateway(gateway)) < 0 ) {
+              return ret;
           }
           save_gateway_info(gateway);
           return 0;
@@ -115,8 +115,8 @@ int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
 # if defined(CHECK_DEVICE_REG)
   else {
     device_info_t list;
-    if ( arrow_device_find_by_hid(&list, P_VALUE(device->hid)) < 0 ) {
-      return -1;
+    if ( (ret = arrow_device_find_by_hid(&list, P_VALUE(device->hid))) < 0 ) {
+      return ret;
     } else {
       if ( list.enabled ) {
         DBG("device: %s", P_VALUE(list.name));

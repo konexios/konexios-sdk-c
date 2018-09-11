@@ -62,7 +62,7 @@ int sb_init(SB *sb) {
 }
 
 int sb_size_init(SB *sb, int need) {
-    sb->start = (char*) SB_ALLOC(need);
+    sb->start = (char*) SB_ALLOC(need+1);
     if (sb->start == NULL) {
         DBG("SB: Out of memory");
         return -1;

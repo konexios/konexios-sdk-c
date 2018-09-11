@@ -90,7 +90,6 @@ property_t alloc_only_finish_property(alloc_only_t *p) {
 }
 
 #include <json/json.h>
-#include <debug.h>
 
 void aob_weak(property_t *dst, property_t *src) {
     dst->value = src->value;
