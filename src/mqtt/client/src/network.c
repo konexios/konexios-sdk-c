@@ -82,9 +82,13 @@ void NetworkDisconnect(Network* n) {
     soc_close(n->my_socket);
 }
 
-int NetworkConnect(Network* n, char* addr, int port) {
+// FIMXE connection timeout impl
+int NetworkConnect(Network* n, char* addr, int port, int timeout) {
     struct sockaddr_in serv;
     struct hostent *serv_resolve;
+
+    struct timeval interval = {timeout / 1000, (timeout % 1000) * 1000};
+
     serv_resolve = gethostbyname(addr);
     if (serv_resolve == NULL) {
         DBG("MQTT ERROR: no such host %s", addr);
@@ -106,6 +110,10 @@ int NetworkConnect(Network* n, char* addr, int port) {
         DBG("MQTT connetion fail %d", n->my_socket);
         return n->my_socket;
     }
+
+    setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO,
+               (char *)&interval, sizeof(struct timeval));
+
     if ( connect(n->my_socket, (struct sockaddr*)&serv, sizeof(serv)) < 0) {
         soc_close(n->my_socket);
         return -2;

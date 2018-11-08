@@ -55,7 +55,7 @@ int timestamp_is_empty(acn_timestamp_t *t);
 
 int msleep(int m_sec);
 time_t build_time(void);
-void get_time(char *ts);
+void get_time(char *s);
 int stime(const time_t *t);
 void timestamp(acn_timestamp_t *ts);
 void timestamp_string(acn_timestamp_t *ts, char *s);

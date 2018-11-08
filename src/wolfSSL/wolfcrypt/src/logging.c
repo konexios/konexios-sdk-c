@@ -24,6 +24,10 @@
     #include <config.h>
 #endif
 
+#if __linux__
+#include <stdio.h>
+#endif
+
 #include <wolfssl/wolfcrypt/settings.h>
 
 /* submitted by eof */

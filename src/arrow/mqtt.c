@@ -144,7 +144,8 @@ static int _mqtt_env_connect(mqtt_env_t *env) {
   NetworkInit(&env->net);
   ret = NetworkConnect(&env->net,
                        P_VALUE(env->addr),
-                       env->port);
+                       env->port,
+                       env->timeout);
   DBG("MQTT Connecting %s %d", P_VALUE(env->addr), env->port);
   if ( ret < 0 ) {
     DBG("MQTT Connecting fail %s %d [%d]",

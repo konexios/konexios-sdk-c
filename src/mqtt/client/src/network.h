@@ -58,7 +58,7 @@ void TimerCountdown(TimerInterval*, unsigned int);
 int TimerLeftMS(TimerInterval*);
 
 DLLExport void NetworkInit(Network*);
-DLLExport int NetworkConnect(Network*, char*, int);
+DLLExport int NetworkConnect(Network*, char*, int, int);
 DLLExport void NetworkDisconnect(Network*);
 
 #endif /* ACN_SDK_C_MQTT_NETWORK_H_ */

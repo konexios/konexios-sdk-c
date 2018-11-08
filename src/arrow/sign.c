@@ -186,17 +186,23 @@ void sign_request(http_request_t *req) {
     http_request_add_header(req,
                             p_const("x-arrow-signature"),
                             p_const(signature));
-    http_request_set_content_type(req, p_const("application/json"));
+    http_request_set_content_type(req, p_const("application/x-www-form-urlencoded"));
     http_request_add_header(req,
+                                p_const("Content-Type"),
+                                p_const("application/x-www-form-urlencoded"));
+    http_request_add_header(req,
+                                p_const("Content-Length"),
+                                p_const("0"));
+    /*http_request_add_header(req,
                             p_const("Accept"),
-                            p_const("application/json"));
-    http_request_add_header(req,
+                            p_const("application/json"));*/
+    /*http_request_add_header(req,
                             p_const("Connection"),
-                            p_const("Keep-Alive"));
-    http_request_add_header(req,
+                            p_const("Keep-Alive"));*/
+    /*http_request_add_header(req,
                             p_const("Accept-Encoding"),
-                            p_const("gzip, deflate"));
-    http_request_add_header(req,
+                            p_const("gzip, deflate"));*/
+    /*http_request_add_header(req,
                             p_const("User-Agent"),
-                            p_const("Eos"));
+                            p_const("Eos"));*/
 }
