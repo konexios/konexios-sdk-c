@@ -179,9 +179,10 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   char *trans_hid = json_string(tmp);
   wdt_feed();
 
-#if defined(HTTP_VIA_MQTT)
+#if (0) // defined(HTTP_VIA_MQTT) // mw1903 :: api via mqtt is not needed for software update.
   http_session_set_protocol(current_client(), api_via_mqtt);
 #else
+  http_session_set_protocol(current_client(), api_via_http);
   http_session_close_set(current_client(), false);
 #endif
   int retry = 0;
@@ -212,15 +213,15 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   RETRY_CR(retry);
    do {
       wdt_feed();
-  if ( __download_init ) {
-      ret = __download_init(_checksum);
-      if ( ret < 0 ) goto software_release_done;
-  }
+      if ( __download_init ) {
+          ret = __download_init(_checksum);
+          if ( ret < 0 ) goto software_release_done;
+      }
       ret = arrow_software_release_download(_token, trans_hid, _checksum);
       if ( ret ) {
-      RETRY_UP(retry, { goto software_release_done; });
-      msleep(ARROW_RETRY_DELAY);
-  }
+          RETRY_UP(retry, { goto software_release_done; });
+          msleep(ARROW_RETRY_DELAY);
+      }
   } while( ret < 0 );
   SSP_PARAMETER_NOT_USED(_to);
 software_release_done:
@@ -316,6 +317,14 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
   if (n < 0) return;
   uri[n] = 0x0;
   http_request_init(request, GET, &p_stack(uri));
+#ifdef PETNET_API_SOFTWARE_RELEASE_HOST
+  property_free(&request->host);
+  request->scheme = PETNET_API_SOFTWARE_RELEASE_SCHEME;
+  request->is_cipher = request->scheme == arrow_scheme_http ? 0 : 1;
+  request->port = PETNET_API_SOFTWARE_RELEASE_PORT;
+  property_copy(&request->host, p_const(PETNET_API_SOFTWARE_RELEASE_HOST));
+  DBG("PN WORKAROUND: Redirecting to Petnet proxy: %s", P_VALUE(request->host));
+#endif
   request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
   FREE_CHUNK(uri);
   wdt_feed();

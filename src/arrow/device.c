@@ -112,8 +112,13 @@ static char static_device_uid[GATEWAY_UID_SIZE + sizeof(DEVICE_UID_SUFFIX)+2];
 int arrow_prepare_device(arrow_gateway_t *gateway, arrow_device_t *device) {
   if ( IS_EMPTY(device->gateway_hid) )
       property_weak_copy(&device->gateway_hid, gateway->hid );
+
+#if defined(DEBUG_NJOHNSON)
+#else
   if ( IS_EMPTY(device->name) )
       property_copy(&device->name, p_const(DEVICE_NAME));
+#endif
+
   if ( IS_EMPTY(device->type) )
       property_copy(&device->type, p_const(DEVICE_TYPE));
   if ( IS_EMPTY(device->softwareName) )

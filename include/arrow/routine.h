@@ -92,7 +92,8 @@ arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, voi
 
 arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data);
 arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data);
-arrow_routine_error_t arrow_mqtt_event_receive_routine();
+arrow_routine_error_t arrow_mqtt_event_receive_routine(void);
+arrow_routine_error_t arrow_mqtt_check_init(void);
 
 #if defined(__cplusplus)
 }

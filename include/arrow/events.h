@@ -8,6 +8,7 @@ extern "C" {
 #include <json/json.h>
 #include <data/linkedlist.h>
 #include <http/response.h>
+#include <arrow/device_command.h>
 
 typedef struct {
     property_t id;
@@ -37,10 +38,10 @@ int process_http_init(int size);
 int process_http(const char *str, int len);
 int process_http_finish();
 
-
 int arrow_mqtt_has_events(void);
 int arrow_mqtt_event_proc(void);
 
+int arrow_mqtt_api_send(mqtt_event_t *event, cmd_type status);
 int arrow_mqtt_api_wait(int num);
 int arrow_mqtt_api_has_events(void);
 int arrow_mqtt_api_event_proc(http_response_t *res);

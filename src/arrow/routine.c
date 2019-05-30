@@ -86,6 +86,10 @@ int arrow_connect_gateway(arrow_gateway_t *gateway) {
       }
   }
   // hid already set
+  if (!P_VALUE(gateway->hid)) {
+  	  DBG("gateway hid NULL");
+  	  return 0;
+  }
   DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
   int ret = arrow_gateway_checkin(gateway);
   if ( !ret ) {
@@ -243,7 +247,7 @@ arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void) {
   while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
     DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+    msleep(MQTT_RETRY_DELAY);
   }
   _init_mqtt |= MQTT_INIT_TELEMETRY_ROUTINE;
   DBG(DEVICE_MQTT_CONNECT, "ok");
@@ -277,7 +281,7 @@ arrow_routine_error_t arrow_mqtt_connect_event_routine(void) {
   while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
     DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+    msleep(MQTT_RETRY_DELAY);
   }
   _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
   return ROUTINE_SUCCESS;
@@ -287,7 +291,7 @@ arrow_routine_error_t arrow_mqtt_subscribe_event_routine(void) {
   while( mqtt_subscribe() < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
     DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+    msleep(MQTT_RETRY_DELAY);
     _init_mqtt &= ~MQTT_INIT_COMMAND_ROUTINE;
   }
   _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
@@ -469,7 +473,7 @@ arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, voi
   return ROUTINE_SUCCESS;
 }
 
-arrow_routine_error_t arrow_mqtt_event_receive_routine() {
+arrow_routine_error_t arrow_mqtt_event_receive_routine(void) {
   if ( !_init_done ||
        !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
     DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
@@ -484,6 +488,16 @@ arrow_routine_error_t arrow_mqtt_event_receive_routine() {
   wdt_feed();
   if ( ret > 0 ) {
     return ROUTINE_RECEIVE_EVENT;
+  } else if (ret == FAILURE_REQUIRES_RESTART) {
+      return ROUTINE_ERROR;
+  } else return ROUTINE_SUCCESS;
+}
+
+arrow_routine_error_t arrow_mqtt_check_init(void) {
+  if ( !_init_done ||
+       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
+    DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+    return ROUTINE_NOT_INITIALIZE;
   }
   return ROUTINE_SUCCESS;
 }

@@ -36,7 +36,7 @@ static arrow_mqtt_delivery_callback_t base_event_callbacks = {
     {NULL}
 };
 
-#if defined(HTTP_VIA_MQTT)
+#if defined(HTTP_VIA_MQTT) && ACN_API_ENABLED
 static arrow_mqtt_delivery_callback_t http_event_callbacks = {
     p_static_null,
     process_http_init,
@@ -141,6 +141,12 @@ static void _mqtt_env_unset_init(mqtt_env_t *env, uint32_t init_mask) {
 
 static int _mqtt_env_connect(mqtt_env_t *env) {
   int ret = -1;
+
+  if (!P_VALUE(env->addr)) {
+	  DBG("addr NULL");
+	  return -1;
+  }
+
   NetworkInit(&env->net);
   ret = NetworkConnect(&env->net,
                        P_VALUE(env->addr),
@@ -208,7 +214,7 @@ static uint32_t get_telemetry_mask() {
   return mqttmask;
 }
 
-static mqtt_env_t *get_telemetry_env() {
+mqtt_env_t *get_telemetry_env() {
   int mqttmask = get_telemetry_mask();
   mqtt_env_t *tmp = NULL;
   linked_list_find_node(tmp,
@@ -361,12 +367,32 @@ mqtt_payload_drive_t mqtt_json_drive = {
     NULL
 };
 
+
+/**
+ * @brief
+ * @b Purpose:	Client to broker PUBLISH. Send JSON data to broker
+ * \n           and setup transaction if required by QOS level.
+ *
+ * @param[in]	device: Feeder specific identifiers
+ * @param[in]	d: outbound data (of type out_msg_t) to be serialized.
+ *
+ *
+ * @return MQTT_SUCCESS on good send, else FAILURE.
+ */
 int mqtt_publish(arrow_device_t *device, void *d) {
     static mqtt_json_machine_t mqtt_json_payload;
-    MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
-    int ret = -1;
+    out_msg_t *data = (out_msg_t*)d;
+    MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_ORIGINAL, 0, NULL, 0};
+    int ret = FAILURE;
+
     mqtt_env_t *tmp = get_telemetry_env();
     if ( tmp ) {
+        if (data->packetId > 0) {
+        	//this is a retransmission.
+        	msg.id = data->packetId;
+        	msg.dup = 1;
+        }
+
         mqtt_json_payload.mqtt_pub_pay = telemetry_serialize_json(device, d);
         mqtt_json_drive.data = (void*)&mqtt_json_payload;
         ret = MQTTPublish_part(&tmp->client,
@@ -374,6 +400,9 @@ int mqtt_publish(arrow_device_t *device, void *d) {
                                &msg,
                                &mqtt_json_drive);
         json_delete(mqtt_json_payload.mqtt_pub_pay);
+
+        // retain the packetId for retries.
+        data->packetId = msg.id;
     }
     return ret;
 }
@@ -381,7 +410,7 @@ int mqtt_publish(arrow_device_t *device, void *d) {
 #if defined(HTTP_VIA_MQTT)
 int mqtt_api_publish(JsonNode *data) {
     static mqtt_json_machine_t mqtt_json_payload;
-  MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_DUP, 0, NULL, 0};
+  MQTTMessage msg = {MQTT_QOS, MQTT_RETAINED, MQTT_ORIGINAL, 0, NULL, 0};
   int ret = -1;
   mqtt_env_t *tmp = get_telemetry_env();
   if ( tmp ) {
@@ -490,7 +519,8 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
       DBG("MQTT subscribe setting fail");
       return ret;
     }
-#if defined(HTTP_VIA_MQTT)
+
+#if (ACN_API_ENABLED)//defined(HTTP_VIA_MQTT)
     ret = drv->api_subscribe_init(tmp, &args);
     if ( ret < 0 ) {
       DBG("MQTT API subscribe setting fail");
@@ -504,7 +534,7 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
       DBG("MQTT handler fail");
   }
 
-#if defined(HTTP_VIA_MQTT)
+#if (ACN_API_ENABLED) //defined(HTTP_VIA_MQTT)
   property_weak_copy(&http_event_callbacks.topic, tmp->s_api_topic);
   if ( arrow_mqtt_client_delivery_message_reg(&tmp->client, &http_event_callbacks) < 0 ) {
       DBG("MQTT API handler fail");
@@ -557,7 +587,11 @@ int mqtt_subscribe(void) {
        _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) &&
        !_mqtt_env_is_init(tmp, MQTT_COMMANDS_INIT) ) {
 
-    DBG("Subscribing to %s", P_VALUE(tmp->s_topic));
+	  char *st = "(null)";
+	  if (P_VALUE(tmp->s_topic)) {
+		  st = P_VALUE(tmp->s_topic);
+	  }
+    DBG("Subscribing to %s", st);
     int rc = arrow_mqtt_client_subscribe(&tmp->client,
                            QOS2,
                            &base_event_callbacks);
@@ -565,8 +599,7 @@ int mqtt_subscribe(void) {
       DBG("Subscribe failed %d\n", rc);
       return rc;
     }
-
-#if defined(HTTP_VIA_MQTT)
+#if (ACN_API_ENABLED)//defined(HTTP_VIA_MQTT)
     DBG("Subscribing API to %s", P_VALUE(tmp->s_api_topic));
     rc = arrow_mqtt_client_subscribe(&tmp->client,
                                QOS2,

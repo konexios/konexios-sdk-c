@@ -71,9 +71,9 @@ static void _event_ans_init(http_request_t *request, void *arg) {
     strcat(uri, "/");
     strcat(uri, P_VALUE(data->hid));
     switch(data->ev) {
-        case failed:    strcat(uri, "/failed"); break;
-        case received:  strcat(uri, "/received"); break;
-        case succeeded: strcat(uri, "/succeeded"); break;
+        case cmd_failed:    strcat(uri, "/failed"); break;
+        case cmd_received:  strcat(uri, "/received"); break;
+        case cmd_succeeded: strcat(uri, "/succeeded"); break;
     }
     http_request_init(request, PUT, &p_stack(uri));
     FREE_CHUNK(uri);
@@ -90,7 +90,7 @@ int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
     }
     STD_ROUTINE(_event_ans_init, &edata,
                 NULL, NULL,
-                "Arrow Event answer failed...");
+                "Fail:ACN API call %d Event %s", ev, P_VALUE(hid));
 }
 
 static int cmdeq( cmd_handler *s, property_t name ) {
@@ -101,13 +101,15 @@ static int cmdeq( cmd_handler *s, property_t name ) {
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
-  mqtt_event_t *ev = (mqtt_event_t *)_ev;
+//  mqtt_event_t *ev = (mqtt_event_t *)_ev;
+
+#if(0)  //mw1902: this should be handled elsewhere // begin API /received call
   int retry = 0;
   http_session_close_set(current_client(), false);
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), api_via_mqtt);
 #endif
-  while( arrow_send_event_ans(ev->base.id, received, p_null) < 0 ) {
+  while( arrow_send_event_ans(ev->base.id, cmd_received, p_null) < 0 ) {
       http_session_set_protocol(current_client(), api_via_http);
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
@@ -115,6 +117,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                });
       msleep(ARROW_RETRY_DELAY);
   }
+#endif // end API call
   DBG("start device command processing");
 
   JsonNode *tmp = json_find_member(_parameters, p_const("deviceHid"));
@@ -133,6 +136,13 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
       json_append_member(_error, p_const("error"),
                          json_mkstring("There is no command"));
       goto device_command_done;
+  }
+  if (!P_VALUE(cmd->string_)) {
+	  DBG("ev cmd NULL");
+	  _error = json_mkobject();
+	  json_append_member(_error, p_const("error"),
+			  json_mkstring("There is NULL command"));
+	  goto device_command_done;
   }
   DBG("ev cmd: %s", P_VALUE(cmd->string_));
 
@@ -164,12 +174,13 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   }
   // close session after next request
 device_command_done:
+#if(0) //mw1902: this should be handled elsewhere // begin API call /succeeded or /failed
   http_session_close_set(current_client(), true);
   RETRY_CR(retry);
   if ( _error ) {
     property_t _error_prop = json_encode_property(_error);
     DBG("error string: %s", P_VALUE(_error_prop));
-    while ( arrow_send_event_ans(ev->base.id, failed, _error_prop) < 0 ) {
+    while ( arrow_send_event_ans(ev->base.id, cmd_failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
         msleep(ARROW_RETRY_DELAY);
@@ -177,13 +188,14 @@ device_command_done:
     property_free(&_error_prop);
     json_delete(_error);
   } else {
-    while ( arrow_send_event_ans(ev->base.id, succeeded, p_null) < 0 ) {
+    while ( arrow_send_event_ans(ev->base.id, cmd_succeeded, p_null) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
         msleep(ARROW_RETRY_DELAY);
     }
   }
   http_session_set_protocol(current_client(), api_via_http);
+#endif // end API call /succeeded or /failed
   return 0;
 }
 #else

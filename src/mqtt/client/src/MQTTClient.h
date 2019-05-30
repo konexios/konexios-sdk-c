@@ -49,6 +49,7 @@
 #endif
 
 #define MAX_PACKET_ID 65535 /* according to the MQTT specification - do not change! */
+#define MQTT_RECEIVE_TIMEOUT 2000
 
 #if !defined(MAX_MESSAGE_HANDLERS)
 #define MAX_MESSAGE_HANDLERS 1 /* redefinable - how many subscriptions do you want? */
@@ -57,8 +58,7 @@
 enum QoS { QOS0, QOS1, QOS2, SUBFAIL=0x80 };
 
 /* all failure return codes must be negative */
-enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, MQTT_SUCCESS = 0 };
-
+enum returnCode { FAILURE_REQUIRES_RESTART = -3, BUFFER_OVERFLOW = -2, FAILURE = -1, MQTT_SUCCESS = 0 };
 /* The Platform specific header must define the Network and Timer structures and functions
  * which operate on them.
  *
@@ -127,7 +127,7 @@ typedef struct MQTTClient
     } messageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
 
     void (*defaultMessageHandler) (MessageData*);
-
+    void (*queueHandler)(out_msg_t *msg, int priority);
     Network* ipstack;
     TimerInterval last_sent, last_received;
 #if defined(MQTT_TASK)
@@ -137,6 +137,25 @@ typedef struct MQTTClient
 } MQTTClient;
 
 #define DefaultClient {0, 0, 0, 0, NULL, NULL, 0, 0, 0}
+
+int sendPacket(	MQTTClient *c,
+				unsigned char* buf,
+				int length,
+				TimerInterval *timer);
+
+int MQTTSendAck(out_msg_t *out_msg);
+void MQTTSetQueueCallback(void (*queueHandler));
+int MQTTBuildAck(MQTTClient *c, MQTTMessage *msg, int packet_type, TimerInterval *timer);
+
+/**
+ * @brief
+ * @b Purpose:	Build and send an MQTT ping message
+ *
+ * @param[in]	c: pointer to an MQTT client, info for transmission buffer and channel.
+ *
+ * @return FAILURE if Ping could not be sent, else MQTT_SUCCESS.
+ */
+int MQTTDeliverPing(MQTTClient *c);
 
 /**
  * Create an MQTT client object

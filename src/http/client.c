@@ -178,8 +178,8 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
         }
         memset(&serv, 0, sizeof(serv));
         serv.sin_family = PF_INET;
-        bcopy((char *)serv_resolve->h_addr,
-              (char *)&serv.sin_addr.s_addr,
+       memcpy((char *)&serv.sin_addr.s_addr,
+    		  (char *)serv_resolve->h_addr,
               (uint32_t)serv_resolve->h_length);
         serv.sin_port = htons(req->port);
 
@@ -475,9 +475,9 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {
             uint32_t need_to_read = ARROW_MIN(chunk_len, CHUNK_SIZE);
-            HTTP_DBG("need to read %d", need_to_read);
+            HTTP_DBG("need to read %lu", need_to_read);
             while ( (int)ringbuf_size(cli->queue) < (int)need_to_read ) {
-                HTTP_DBG("get chunk add %d", need_to_read-ringbuf_size(cli->queue));
+                HTTP_DBG("get chunk add %lu", need_to_read-ringbuf_size(cli->queue));
                 int ret = client_recv(cli, need_to_read-ringbuf_size(cli->queue));
                 if ( ret < 0 ) {
                     // ret < 0 - error
@@ -485,7 +485,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
                     if ( no_data_error ++ > 2) return -1;
                 }
             }
-            HTTP_DBG("add payload{%d:s}", need_to_read);//, buf);
+            HTTP_DBG("add payload{%lu:s}", need_to_read);//, buf);
             if ( ringbuf_pop(cli->queue, tmpbuffer, need_to_read) < 0 ) return -1;
             if ( http_response_add_payload(res,
                                            p_stack_raw(tmpbuffer, need_to_read) ) < 0 ) {
@@ -494,7 +494,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
                 return -1;
             }
             chunk_len -= need_to_read;
-            HTTP_DBG("%d %d", chunk_len, need_to_read);
+            HTTP_DBG("%d %lu", chunk_len, need_to_read);
         }
         if ( !res->is_chunked ) break;
         else {
@@ -505,7 +505,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         }
     } while(1);
 
-    HTTP_DBG("body{%s}", P_VALUE(res->payload));
+    HTTP_DBG("body{%s}", IS_EMPTY(res->payload)?"NULL PAYLOAD":P_VALUE(res->payload));
     return 0;
 }
 
@@ -567,5 +567,11 @@ int default_http_client_do(http_client_t *cli, http_response_t *res) {
         DBG("Receiving payload error (%d)", ret);
         return -1;
     }
+    if (!IS_EMPTY(res->payload)) {
+        DBG("HTTP response: %s", P_VALUE(res->payload));
+    } else {
+        DBG("HTTP response: EMPTY");
+    }
+
     return 0;
 }

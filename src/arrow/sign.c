@@ -26,8 +26,6 @@
 
 // by default keys
 #if defined(DEFAULT_API_KEY) && defined(DEFAULT_SECRET_KEY)
-static const char *default_api_key = DEFAULT_API_KEY;
-static const char *default_secret_key = DEFAULT_SECRET_KEY;
 #else
 static const char *default_api_key = NULL;
 static const char *default_secret_key = NULL;
@@ -46,7 +44,7 @@ static iot_key_t secret = {NULL};
 char *get_api_key(void) {
   if (api.key) return api.key;
   if ( restore_key_setting(api_key, NULL) < 0 ) {
-      return (char*)default_api_key;
+    return (char*)default_api_key;
   }
   return api_key;
 }
@@ -54,7 +52,7 @@ char *get_api_key(void) {
 char *get_secret_key(void) {
   if (secret.key) return secret.key;
   if ( restore_key_setting(NULL, secret_key) < 0 ) {
-      return (char*)default_secret_key;
+    return (char*)default_secret_key;
   }
   return secret_key;
 }
@@ -168,7 +166,7 @@ void sign_request(http_request_t *req) {
     if ( http_request_find_header(req, p_const("x-arrow-apikey"), NULL) < 0 ) {
         http_request_add_header(req,
                                 p_const("x-arrow-apikey"),
-                                p_const(get_api_key()));
+                                p_const(DEFAULT_API_KEY));
     }
     http_request_add_header(req,
                             p_const("x-arrow-date"),
@@ -186,23 +184,17 @@ void sign_request(http_request_t *req) {
     http_request_add_header(req,
                             p_const("x-arrow-signature"),
                             p_const(signature));
-    http_request_set_content_type(req, p_const("application/x-www-form-urlencoded"));
+    http_request_set_content_type(req, p_const("application/json"));
     http_request_add_header(req,
-                                p_const("Content-Type"),
-                                p_const("application/x-www-form-urlencoded"));
-    http_request_add_header(req,
-                                p_const("Content-Length"),
-                                p_const("0"));
-    /*http_request_add_header(req,
                             p_const("Accept"),
-                            p_const("application/json"));*/
-    /*http_request_add_header(req,
+                            p_const("application/json"));
+    http_request_add_header(req,
                             p_const("Connection"),
-                            p_const("Keep-Alive"));*/
-    /*http_request_add_header(req,
+                            p_const("Keep-Alive"));
+    http_request_add_header(req,
                             p_const("Accept-Encoding"),
-                            p_const("gzip, deflate"));*/
-    /*http_request_add_header(req,
+                            p_const("gzip, deflate"));
+    http_request_add_header(req,
                             p_const("User-Agent"),
-                            p_const("Eos"));*/
+                            p_const("Eos"));
 }

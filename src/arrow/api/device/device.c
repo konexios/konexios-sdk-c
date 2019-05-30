@@ -22,13 +22,19 @@ static void _device_register_init(http_request_t *request, void *arg) {
 
 static int _device_register_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
+  DBG("payload: {%s}", IS_EMPTY(response->payload)?"NULL":P_VALUE(response->payload));
+  if ( response->m_httpResponseCode != 200 ) {
+      DBG("ERROR: HTTP response code: %d", response->m_httpResponseCode);
+      return -1;
+  }
+
   if ( arrow_device_parse(dev, P_VALUE(response->payload)) < 0) {
       DBG("Parse error [%s]", P_VALUE(response->payload));
-      return DEVICE_REGISTER_ERROR;
+      return -1;
   } else {
       DBG("device hid: %s", P_VALUE(dev->hid));
   }
-  return DEVICE_SUCCESS;
+  return 0;
 }
 
 // device should be already initialized or filled
@@ -48,9 +54,7 @@ static void _device_find_by_init(http_request_t *request, void *arg) {
 static int _device_find_by_proc(http_response_t *response, void *arg) {
     device_info_t **devs = (device_info_t **)arg;
     *devs = NULL;
-    if ( device_info_parse(devs, P_VALUE(response->payload)) < 0 )
-        return DEVICE_FINDBY_ERROR;
-    return DEVICE_SUCCESS;
+    return device_info_parse(devs, P_VALUE(response->payload));
 }
 
 int arrow_device_find_by(device_info_t **list, int n, ...) {
@@ -76,10 +80,10 @@ static int _device_find_by_hid_proc(http_response_t *response, void *arg) {
     device_info_t *info = (device_info_t *)arg;
     device_info_init(info);
     JsonNode *t = json_decode_property(response->payload);
-    if ( !t ) return DEVICE_FINDBY_ERROR;
+    if ( !t ) return -1;
     int ret = _device_info_parse(info, t);
     json_delete(t);
-    return ret < 0 ? DEVICE_FINDBY_ERROR : DEVICE_SUCCESS;
+    return ret;
 }
 
 
@@ -106,11 +110,11 @@ static int _device_update_proc(http_response_t *response, void *arg) {
   arrow_device_t *dev = (arrow_device_t *)arg;
   if ( arrow_device_parse(dev, P_VALUE(response->payload)) < 0) {
       DBG("Parse error");
-      return DEVICE_UPDATE_ERROR;
+      return -1;
   } else {
       DBG("device hid: %s", P_VALUE(dev->hid));
   }
-  return DEVICE_SUCCESS;
+  return 0;
 }
 
 int arrow_device_update(arrow_gateway_t *gateway, arrow_device_t *device) {
@@ -140,10 +144,7 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
 static int _device_list_events_proc(http_response_t *response, void *arg) {
     device_event_t **evns = (device_event_t **)arg;
     *evns = NULL;
-    if ( device_event_parse(evns, P_VALUE(response->payload)) < 0 ) {
-        return DEVICE_EVLIST_ERROR;
-    }
-    return DEVICE_SUCCESS;
+    return device_event_parse(evns, P_VALUE(response->payload));
 }
 
 int arrow_list_device_events(device_event_t **list, arrow_device_t *device, int n, ...) {
@@ -170,9 +171,7 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
 static int _device_list_logs_proc(http_response_t *response, void *arg) {
   log_t **logs = (log_t **)arg;
   *logs = NULL;
-  if ( log_parse(logs, P_VALUE(response->payload)) < 0 )
-      return DEVICE_LOGS_ERROR;
-  return DEVICE_SUCCESS;
+  return log_parse(logs, P_VALUE(response->payload));
 }
 
 int arrow_list_device_logs(log_t **list, arrow_device_t *device, int n, ...) {
