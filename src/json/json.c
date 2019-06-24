@@ -24,8 +24,10 @@
 #include "json/json.h"
 
 #if defined(__arm__)
-#include <cmsis_rtos.h>
-#include "trace.h"
+#if defined(ENABLE_ARM_TRACE)
+//#include <cmsis_rtos.h>
+//#include "trace.h"
+#endif
 #endif
 #include <data/property.h>
 #include <json/property_json.h>
@@ -474,8 +476,12 @@ static JsonNode *mknode(JsonTag tag)
 #endif
     if (ret == NULL) {
 #if defined(__arm__)
+        #if defined(ENABLE_ARM_TRACE)
         trace(TRACE_CRITICAL, "JSON: Out of memory");
         xTimerStart(xTimerCreate("v_reboot", pdMS_TO_TICKS(20000), pdFALSE, NULL, delayed_reboot),0);
+        #else
+        DBG("JSON: Out of memory");
+        #endif
 #endif
     } else {
         memset(ret, 0x0, sizeof(JsonNode));

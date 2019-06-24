@@ -43,9 +43,11 @@ arrow_gateway_config_t *current_gateway_config(void);
 arrow_routine_error_t arrow_init(void) __attribute_warn_unused_result__;
 arrow_routine_error_t arrow_deinit(void);
 
-arrow_routine_error_t arrow_initialize_routine(void) __attribute_warn_unused_result__;
+arrow_routine_error_t arrow_initialize_routine(bool update_gateway_info) __attribute_warn_unused_result__;
 
-arrow_routine_error_t arrow_gateway_initialize_routine(void) __attribute_warn_unused_result__;
+arrow_routine_error_t arrow_initialize_routine(bool update_gateway_info);
+
+int arrow_startup_sequence(bool update_gateway_info);
 
 // Routine function for terminating current connections with the cloud
 // and terminate all gateway/device information.
@@ -54,11 +56,11 @@ void arrow_close(void);
 // If there is no the stored gateway information
 // form the register gateway request and save a taken information
 // In other case just form the gateway checkin request
-int arrow_connect_gateway(arrow_gateway_t *gateway);
+int arrow_connect_gateway(arrow_gateway_t *gateway,bool update_gateway_info);
 
 // If there is no any device information form the device register request
 // and save the taken information
-int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device);
+int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device, bool update_device_info);
 
 // Routine function for telemetry sending to the cloud
 // there is extremely needed the telemetry_serialize function implementation to serealize 'data' correctly

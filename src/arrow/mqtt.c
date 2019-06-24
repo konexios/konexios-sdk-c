@@ -6,6 +6,11 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
+#include <stdint.h>
+
+// This is where out_msg_t is defined
+#include <arrow/mqtt_out_msg.h>
+
 #include "arrow/mqtt.h"
 #include <config.h>
 #include <mqtt/client/client.h>
@@ -20,12 +25,17 @@
 #define USE_STATIC
 #include <data/chunk.h>
 
+// Determine if we clear topic handlers when we close
+// the mqtt client, and if we send the 'clean session flag'
+// to the broker
 #if defined(NO_EVENTS)
   #define MQTT_CLEAN_SESSION 1
 #else
   #define MQTT_CLEAN_SESSION 0
 #endif
 
+// Pointer to a linked list that holds all
+// the mqtt_env_t 'channels'
 static mqtt_env_t *__mqtt_channels = NULL;
 
 static arrow_mqtt_delivery_callback_t base_event_callbacks = {
@@ -52,6 +62,7 @@ static arrow_mqtt_delivery_callback_t http_event_callbacks = {
   static mqtt_env_t static_telemetry_channel;
   #if !defined(NO_EVENTS)
     #if defined(MQTT_TWO_CHANNEL)
+// Azure and IBM require a second receive buffer?
       static uint8_t command_recvbuf[MQTT_RECVBUF_LEN + 1];
       static uint8_t command_buf[MQTT_BUF_LEN + 1];
       static mqtt_env_t static_command_channel;
@@ -64,6 +75,7 @@ static arrow_mqtt_delivery_callback_t http_event_callbacks = {
   #endif
 #endif
 
+// Define the external structures for the MQTT networks
 extern mqtt_driver_t iot_driver;
 #if defined(__IBM__)
   extern mqtt_driver_t ibm_driver;
@@ -72,6 +84,11 @@ extern mqtt_driver_t iot_driver;
   extern mqtt_driver_t azure_driver;
 #endif
 
+
+// Private functions
+// ---------------------------------------------------------------------------
+
+// default the header data
 static void data_prep(MQTTPacket_connectData *data) {
   MQTTPacket_connectData d = MQTTPacket_connectData_initializer;
   *data = d;
@@ -79,6 +96,7 @@ static void data_prep(MQTTPacket_connectData *data) {
   data->keepAliveInterval = 10;
 }
 
+// Initialize a 'channel'
 static int _mqtt_init_common(mqtt_env_t *env) {
   property_init(&env->p_topic);
   property_init(&env->s_topic);
@@ -88,7 +106,12 @@ static int _mqtt_init_common(mqtt_env_t *env) {
 #endif
   property_init(&env->username);
   property_init(&env->addr);
+
+    // Initialize the data for this 'channel'
   data_prep(&env->data);
+
+    // If not static, malloc a receive buffer for
+    // the channel
 #if !defined(STATIC_MQTT_ENV)
     env->buf.size = MQTT_BUF_LEN;
     env->buf.buf = (unsigned char*)malloc(env->buf.size+1);
@@ -102,6 +125,7 @@ static int _mqtt_init_common(mqtt_env_t *env) {
   return 0;
 }
 
+// Free a 'channel'
 static int _mqtt_deinit_common(mqtt_env_t *env) {
 #if defined(MQTT_TASK)
   arrow_mutex_deinit(env->client.mutex);
@@ -123,6 +147,7 @@ static int _mqtt_deinit_common(mqtt_env_t *env) {
   return 0;
 }
 
+// init mask functions
 static int _mqtt_env_is_init(mqtt_env_t *env, uint32_t init_mask) {
   int ret = 0;
   if ( env->init & init_mask ) {
@@ -139,7 +164,9 @@ static void _mqtt_env_unset_init(mqtt_env_t *env, uint32_t init_mask) {
   env->init &= ~init_mask;
 }
 
-static int _mqtt_env_connect(mqtt_env_t *env) {
+// Get a new socket and connect to the server
+static int _mqtt_env_connect(mqtt_env_t *env)
+{
   int ret = -1;
 
   if (!P_VALUE(env->addr)) {
@@ -160,21 +187,31 @@ static int _mqtt_env_connect(mqtt_env_t *env) {
         ret);
     return -1;
   }
+
+    // Initialize the client
   MQTTClientInit(&env->client,
                  &env->net,
                  env->timeout,
                  env->buf.buf, env->buf.size,
                  env->readbuf.buf, env->readbuf.size);
+
+    // Connect to the broker
   ret = MQTTConnect(&env->client, &env->data);
   if ( ret != MQTT_SUCCESS ) {
     DBG("MQTT Connect fail %d", ret);
     NetworkDisconnect(&env->net);
     return -1;
   }
+
+    // Mark client as initialized
   _mqtt_env_set_init(env, MQTT_CLIENT_INIT);
+
+
   return 0;
 }
 
+// Close the network connection and close the
+// socket
 static int _mqtt_env_close(mqtt_env_t *env) {
   MQTTDisconnect(&env->client);
   NetworkDisconnect(&env->net);
@@ -183,6 +220,7 @@ static int _mqtt_env_close(mqtt_env_t *env) {
   return 0;
 }
 
+// Close the connection and de-init the variables
 static int _mqtt_env_free(mqtt_env_t *env) {
   if ( _mqtt_env_is_init(env, MQTT_CLIENT_INIT) ) {
     _mqtt_env_close(env);
@@ -197,6 +235,9 @@ static int _mqtt_env_pause(mqtt_env_t *env, int pause) {
     return 0;
 }
 
+
+// Checks mask == num. Used for searching
+// a linked list for a channel 'type'
 static int mqttchannelseq( mqtt_env_t *ch, uint32_t num ) {
   if ( ch->mask == num ) {
     return 0;
@@ -204,6 +245,7 @@ static int mqttchannelseq( mqtt_env_t *ch, uint32_t num ) {
   return -1;
 }
 
+// Get the type of connection??
 static uint32_t get_telemetry_mask() {
   int mqttmask = ACN_num;
 #if defined(__IBM__)
@@ -214,37 +256,62 @@ static uint32_t get_telemetry_mask() {
   return mqttmask;
 }
 
-mqtt_env_t *get_telemetry_env() {
-  int mqttmask = get_telemetry_mask();
+// Get the current 'channel'
+mqtt_env_t *get_telemetry_env()
+{
+    int mqttmask;
   mqtt_env_t *tmp = NULL;
+
+    // Get the type
+    mqttmask = get_telemetry_mask();
+
+    // Find the channel in the linked list that
+    // matches this mask
   linked_list_find_node(tmp,
                         __mqtt_channels,
                         mqtt_env_t,
                         mqttchannelseq,
                         mqttmask );
+
+    // If we don't have an 'active' channel, make a new
+    // one and add it to the linked list
   if ( !tmp ) {
 #if defined(STATIC_MQTT_ENV)
     tmp = &static_telemetry_channel;
 #else
     tmp = (mqtt_env_t *)calloc(1, sizeof(mqtt_env_t));
 #endif
+
+        // Initialize the 'channel'
     _mqtt_init_common(tmp);
+
+        // Why isn't this in mqtt_init_common()??????
 #if defined(STATIC_MQTT_ENV)
     tmp->buf.size = sizeof(telemetry_buf) - 1;
     tmp->buf.buf = (unsigned char *)telemetry_buf;
     tmp->readbuf.size = sizeof(telemetry_recvbuf) - 1;
     tmp->readbuf.buf = (unsigned char *)telemetry_recvbuf;
 #endif
+
+        // Mark this 'channel' with the type it is
+        // Why isn't this in mqtt_init_common()??????
     tmp->mask = mqttmask;
+
+        // Add to the linked list
     arrow_linked_list_add_node_last(__mqtt_channels,
                                     mqtt_env_t,
                                     tmp);
   }
+
+    // return the pointer to the 'channel'
   return tmp;
 }
 
+// get the current 'driver' structure, depending on what
+// kind of MQTT we are talking to.
 static mqtt_driver_t *get_telemetry_driver(uint32_t mqttmask) {
   mqtt_driver_t *drv = NULL;
+
   switch(mqttmask) {
     case ACN_num:
       drv = &iot_driver;
@@ -265,21 +332,50 @@ static mqtt_driver_t *get_telemetry_driver(uint32_t mqttmask) {
   return drv;
 }
 
+// Public functions
+// ---------------------------------------------------------------------------
+
+// Arrow MQTT logic
 int mqtt_telemetry_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config) {
+
+    // Get the 'channel' and 'driver' struct, all initialized
+    // and ready to go
   int mqttmask = get_telemetry_mask();
   mqtt_driver_t *drv = get_telemetry_driver(mqttmask);
+
+    // Group the arguments into an i_args struct to be passed
+    // to more init function
   i_args args = { device, gateway, config };
   mqtt_env_t *tmp = get_telemetry_env();
   if ( !tmp ) {
     DBG("Telemetry memory error");
     return -1;
   }
+
+    // NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE
+    /*
+    // These are the init fucntions for the IOT driver
+    // found in acn.c
+    mqtt_driver_t iot_driver = {
+        mqtt_telemetry_init_iot,    <---- telemetry_init
+        mqtt_subscribe_init_iot,    <---- commands_init
+        mqtt_common_init_iot        <---- common_init
+    };
+    */
+    // NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE:NOTE
+
+
+    // If not initialized, do the common_init() (Setup username and connection info)
+
   if ( ! _mqtt_env_is_init(tmp, MQTT_COMMON_INIT) ) {
     drv->common_init(tmp, &args);
     _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
   }
+
+    // If the 'telemetry' is not initialized, set up
+    // the publish topic
   if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) ) {
     int ret = drv->telemetry_init(tmp, &args);
     if ( ret < 0 ) {
@@ -293,8 +389,11 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
       return ret;
     }
 #endif
+
     _mqtt_env_set_init(tmp, MQTT_TELEMETRY_INIT);
   }
+    // Do the actual connection to the server
+
   if ( !_mqtt_env_is_init(tmp, MQTT_CLIENT_INIT) ) {
     int ret = _mqtt_env_connect(tmp);
     if ( ret < 0 ) {
@@ -304,11 +403,14 @@ int mqtt_telemetry_connect(arrow_gateway_t *gateway,
   return 0;
 }
 
-int mqtt_telemetry_disconnect(void) {
+// Mark the 'channel' as not initialized
+int mqtt_telemetry_disconnect(void)
+{
   mqtt_env_t *tmp = get_telemetry_env();
   if ( !tmp ) {
     return -1;
   }
+    // If we are not subscribed, closed the 'channel'
   if ( ! _mqtt_env_is_init(tmp,  MQTT_SUBSCRIBE_INIT) ) {
     _mqtt_env_close(tmp);
   } else {
@@ -317,6 +419,7 @@ int mqtt_telemetry_disconnect(void) {
   return 0;
 }
 
+// Stop the 'publish' topic logic
 int mqtt_telemetry_terminate(void) {
   mqtt_env_t *tmp = get_telemetry_env();
   if ( !tmp ) {
@@ -329,6 +432,8 @@ int mqtt_telemetry_terminate(void) {
     free(tmp);
 #endif
   } else {
+
+        // If we are subscribed, just mark publish as not initialized???
     _mqtt_env_unset_init(tmp, MQTT_TELEMETRY_INIT);
   }
   return 0;
@@ -379,6 +484,7 @@ mqtt_payload_drive_t mqtt_json_drive = {
  *
  * @return MQTT_SUCCESS on good send, else FAILURE.
  */
+// Send the data to the publish topic
 int mqtt_publish(arrow_device_t *device, void *d) {
     static mqtt_json_machine_t mqtt_json_payload;
     out_msg_t *data = (out_msg_t*)d;
@@ -442,6 +548,7 @@ int mqtt_is_telemetry_connect(void) {
   return 0;
 }
 
+// Close all channels
 void mqtt_disconnect(void) {
   mqtt_env_t *curr = NULL;
   arrow_linked_list_for_each ( curr, __mqtt_channels, mqtt_env_t ) {
@@ -451,6 +558,7 @@ void mqtt_disconnect(void) {
   }
 }
 
+// Free all channels
 void mqtt_terminate(void) {
   mqtt_env_t *curr = NULL;
   arrow_linked_list_for_each_safe ( curr, __mqtt_channels, mqtt_env_t ) {
@@ -461,6 +569,7 @@ void mqtt_terminate(void) {
     free(curr);
 #endif
   }
+    // Mark the linked list as NULL
   __mqtt_channels = NULL;
 }
 
@@ -500,9 +609,13 @@ static mqtt_env_t *get_event_env() {
   return tmp;
 }
 
+
+// Setup and subscribe to the receive topic
 int mqtt_subscribe_connect(arrow_gateway_t *gateway,
                            arrow_device_t *device,
                            arrow_gateway_config_t *config) {
+
+    // Get the 'driver' and the 'channel' for the subscription
   mqtt_driver_t *drv = &iot_driver;
   i_args args = { device, gateway, config };
   mqtt_env_t *tmp = get_event_env();
@@ -513,6 +626,9 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
     drv->common_init(tmp, &args);
     _mqtt_env_set_init(tmp, MQTT_COMMON_INIT);
   }
+
+    // Set up the receive topic.  In this design there is only one
+    // subscribe topic.  What a pile.
   if ( ! _mqtt_env_is_init(tmp, MQTT_SUBSCRIBE_INIT) ) {
     int ret = drv->commands_init(tmp, &args);
     if ( ret < 0 ) {
@@ -547,9 +663,13 @@ int mqtt_subscribe_connect(arrow_gateway_t *gateway,
       return -1;
     }
   }
+
+    // Done
   return 0;
 }
 
+
+// Close the subscribe logic
 int mqtt_subscribe_disconnect(void) {
   mqtt_env_t *tmp = get_event_env();
   if ( !tmp ) {
@@ -564,6 +684,7 @@ int mqtt_subscribe_disconnect(void) {
   return 0;
 }
 
+// Close all channels that are only receiving
 int mqtt_subscribe_terminate(void) {
   mqtt_env_t *tmp = get_event_env();
   if ( !tmp ) {
@@ -572,6 +693,7 @@ int mqtt_subscribe_terminate(void) {
   if ( ! _mqtt_env_is_init(tmp, MQTT_TELEMETRY_INIT) ) {
     arrow_linked_list_del_node(__mqtt_channels, mqtt_env_t, tmp);
     _mqtt_env_free(tmp);
+
 #if !defined(STATIC_MQTT_ENV)
     free(tmp);
 #endif
@@ -581,6 +703,7 @@ int mqtt_subscribe_terminate(void) {
   return 0;
 }
 
+// Send the the actual subscribe packets
 int mqtt_subscribe(void) {
   mqtt_env_t *tmp = get_event_env();
   if ( tmp &&
@@ -613,6 +736,7 @@ int mqtt_subscribe(void) {
   return 0;
 }
 
+// Check to see if we are connected to the server?
 int mqtt_is_subscribe_connect(void) {
   mqtt_env_t *tmp = get_event_env();
   if ( tmp ) {
@@ -623,6 +747,7 @@ int mqtt_is_subscribe_connect(void) {
   return 0;
 }
 #endif
+
 
 int mqtt_yield(int timeout_ms) {
 #if !defined(NO_EVENTS)
@@ -660,3 +785,5 @@ int mqtt_receive(int timeout_ms) {
   return -1;
 }
 #endif
+
+// EOF

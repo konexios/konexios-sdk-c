@@ -72,14 +72,9 @@ enum {
 #if !defined(GATEWAY_SOFTWARE_NAME)
 #define GATEWAY_SOFTWARE_NAME       "eos"
 #endif
-#if 0
+
 #if !defined(GATEWAY_SOFTWARE_VERSION)
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
-#endif
-#else
-extern const char *gateway_software_version; //#include "build.h"
-
-#define GATEWAY_SOFTWARE_VERSION    gateway_software_version
 #endif
 
 #if !defined(DEVICE_SOFTWARE_NAME)

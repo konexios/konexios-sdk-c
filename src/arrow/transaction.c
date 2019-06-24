@@ -13,14 +13,28 @@
 * 		\n All Rights Reserved
 *
 */
+#include <stdbool.h>
+#include <stdint.h>
+#include <arrow/mqtt_out_msg.h>
+
 #include "transaction.h"
 #include "MQTTClient.h"
 #include "arrow/mqtt.h"
-#include "trace.h"
+//#include "trace.h"
 #include "debug.h"
 
+#define trace(...)
 
+#ifndef pdFALSE
+#define pdFALSE     false
+#endif
+#ifndef pdTRUE
+#define pdTRUE      true
+#endif
+
+#ifdef FREERTOS_TIMERS
 static TimerHandle_t    ack_handle = NULL;
+#endif
 static out_msg_t 	    activeMsg;
 static int              pendingType = RESERVED;
 
@@ -64,14 +78,16 @@ void transaction_timeout(void* arg) {
  * @return void
  */
 void transaction_init(void) {
+#ifdef FREERTOS_TIMERS
     if (ack_handle == NULL) {
 	    TickType_t period = pdMS_TO_TICKS(MQTT_ACK_WAIT);
-	    ack_handle = xTimerCreate("ackTimer", period, pdFALSE, NULL, transaction_timeout);
+	    ack_handle = xTimerCreate("ackTimer", period, pdFalse, NULL, transaction_timeout);
+
     }
     else {
 		xTimerStop(ack_handle, 10);
     }
-
+#endif
 	pendingType = RESERVED;
 }
 
@@ -92,11 +108,12 @@ void transaction_start(out_msg_t *msg, int mqttType, int qos) {
 	if (qos > QOS0) {
 		activeMsg = *msg;
 		pendingType = mqttType;
-
+#ifdef FREERTOS_TIMERS
 		if (xTimerReset(ack_handle, pdMS_TO_TICKS(MQTT_ACK_WAIT)) != pdTRUE)
 		{
 			DBG("Couldn't start transaction timer\n");
 		}
+#endif
 
 	}
 }
@@ -108,7 +125,11 @@ void transaction_start(out_msg_t *msg, int mqttType, int qos) {
  * @return TRUE if the transaction timer is running, else FALSE.
  */
 int transaction_pending(void) {
+#ifdef FREERTOS_TIMERS
 	return xTimerIsTimerActive(ack_handle);
+#else
+	return false;
+#endif
 }
 
 /**
@@ -122,11 +143,13 @@ int transaction_pending(void) {
  */
 int transaction_match(int packetId, int packetType) {
 	if (packetId == activeMsg.packetId) {
+#ifdef FREERTOS_TIMERS
 		// The parameters match, so cancel and clear the active transaction.
 		if (xTimerStop(ack_handle, 10) != pdTRUE)
 		{
 			DBG("Couldn't stop transition timer\n");
 		}
+#endif
 
 		pendingType = RESERVED;
 		return pdTRUE;

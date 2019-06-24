@@ -26,6 +26,8 @@
 
 // by default keys
 #if defined(DEFAULT_API_KEY) && defined(DEFAULT_SECRET_KEY)
+static const char *default_api_key = DEFAULT_API_KEY;
+static const char *default_secret_key = DEFAULT_SECRET_KEY;
 #else
 static const char *default_api_key = NULL;
 static const char *default_secret_key = NULL;

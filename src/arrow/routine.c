@@ -16,6 +16,23 @@
 #include <json/property_json.h>
 #include <json/aob.h>
 
+// Types and definitions
+// ---------------------------------------------------------------------------
+
+#if defined(ARROW_INFO)
+#define ARROW_INF  printf
+#else
+#define ARROW_INF(...)
+#endif
+
+#if defined(ARROW_DEBUG)
+#define ARROW_DBG       DBG
+#else
+#define ARROW_DBG(...)
+#endif
+
+#define TRACE(...)  DBG(__VA_ARGS__)
+
 #define GATEWAY_CONNECT "Gateway connection [%s]"
 #define GATEWAY_CONFIG "Gateway config [%s]"
 #define DEVICE_CONNECT "Device connection [%s]"
@@ -23,29 +40,39 @@
 #define DEVICE_MQTT_CONNECT "Device mqtt connection [%s]"
 #define DEVICE_MQTT_TELEMETRY "Device mqtt telemetry [%s]"
 
+enum MQTT_INIT_FLAGS {
+    MQTT_INIT_SYSTEM_DONE = 0x01,
+    MQTT_INIT_SUBSCRIBE_DONE   = 0x02
+};
+
+// Variables
+// ---------------------------------------------------------------------------
+
 static arrow_gateway_t _gateway;
 static arrow_gateway_config_t _gateway_config;
 static arrow_device_t _device;
-static int _init_done = 0;
+static int acn_register_init_done = 0;
+static int acn_mqtt_init_flags = 0;
 
-enum MQTT_INIT_FLAGS {
-  MQTT_INIT_TELEMETRY_ROUTINE = 0x01,
-  MQTT_INIT_COMMAND_ROUTINE   = 0x02
-};
-static int _init_mqtt = 0;
+// Public functions
+// ---------------------------------------------------------------------------
 
-arrow_device_t *current_device(void) {
+arrow_device_t *arrow_get_current_device(void) {
+    TRACE("Enter");
   return &_device;
 }
 
-arrow_gateway_t *current_gateway(void) {
+arrow_gateway_t *arrow_get_current_gateway(void) {
+    TRACE("Enter");
   return &_gateway;
 }
 
-arrow_gateway_config_t *current_gateway_config(void) {
+arrow_gateway_config_t *arrow_get_current_gateway_config(void) {
+    TRACE("Enter");
   return &_gateway_config;
 }
 
+// Initialize the http and mqtt subsystems
 arrow_routine_error_t arrow_init(void) {
   property_types_init();
   property_type_add(property_type_get_json());
@@ -53,7 +80,8 @@ arrow_routine_error_t arrow_init(void) {
   arrow_hosts_init();
   arrow_gateway_init(&_gateway);
   arrow_device_init(&_device);
-  if ( __http_init() < 0 ) {
+
+  if ( http_init() < 0 ) {
     return ROUTINE_ERROR;
   }
 #if !defined(NO_EVENTS)
@@ -67,139 +95,202 @@ arrow_routine_error_t arrow_deinit(void) {
   arrow_mqtt_events_done();
 #endif
   arrow_state_deinit();
-  __http_done();
+  http_done();
   property_types_deinit();
   return ROUTINE_SUCCESS;
 }
 
-int arrow_connect_gateway(arrow_gateway_t *gateway) {
+// Init, load, and Register/Checkin gateway
+int arrow_connect_gateway(arrow_gateway_t *gateway, bool update_gateway_info)
+{
+    TRACE("Enter");
+    int ret;
+
+    // Init gateway
   arrow_prepare_gateway(gateway);
-  if ( IS_EMPTY(gateway->hid) ) {
-      int ret = restore_gateway_info(gateway);
-      if ( ret < 0 ) {
+  if ( IS_EMPTY(gateway->hid) )
+  {
+      ret = restore_gateway_info(gateway);
+
+      if ( ret < 0 )
+      {
           // new registration
-          if ( (ret = arrow_register_gateway(gateway)) < 0 ) {
-              return ret;
-          }
-          save_gateway_info(gateway);
-          return 0;
+        ARROW_INF("ACN: New gateway registration\n");
+        if ( arrow_register_gateway(gateway) < 0 )
+        {
+            // If we fail, return the fail code
+            int rc = http_last_response_code();
+            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+            if(rc!=200)
+                return (-1*rc);
+            return rc;
+        }
+        // Success, save this info
+        save_gateway_info(gateway);
+
+      } else {
+        // hid already set so checkin gateway
+        ARROW_INF("ACN: Check in gateway\n");
+        ARROW_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
+        if(arrow_gateway_checkin(gateway)<0)
+        {
+            ARROW_INF("ACN: Error in checkin\n");
+            // If we fail, return the fail code
+            int rc = http_last_response_code();
+            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+            if(rc!=200)
+                return (-1*rc);
+            return rc;
+        }
       }
   }
-  // hid already set
-  if (!P_VALUE(gateway->hid)) {
-  	  DBG("gateway hid NULL");
-  	  return 0;
-  }
-  DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
-  int ret = arrow_gateway_checkin(gateway);
-  if ( !ret ) {
-      ret = arrow_gateway_update(gateway);
-  }
-  return ret;
+
+    // If we need to send the gateway 'update' request
+    // do it here
+    if(update_gateway_info)
+    {
+        ARROW_INF("ACN: Updating gateway info\n");
+        if(arrow_gateway_update(gateway)<0)
+        {
+            // If we fail, return the fail code
+            int rc = http_last_response_code();
+            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+            if(rc!=200)
+                return (-1*rc);
+            return rc;
+        }
+    }
+
+    return 200;
 }
 
-int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device) {
+int arrow_connect_device(arrow_gateway_t *gateway, arrow_device_t *device, bool update_device_info) {
   int ret = 0;
   arrow_prepare_device(gateway, device);
   if ( !IS_EMPTY(device->hid) )
       return ROUTINE_SUCCESS;
   if ( restore_device_info(device) < 0 ) {
-    if ( (ret = arrow_register_device(gateway, device)) < 0 ) {
-      goto dev_reg_error;
+        ARROW_INF("ACN: Register device\n");
+        if ( arrow_register_device(gateway, device) < 0 )
+        {
+            // If we fail, return the fail code
+            int rc = http_last_response_code();
+            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+            if(rc!=200)
+                return (-1*rc);
+            return rc;
     }
     save_device_info(device);
+  }else{
+    ARROW_INF("ACN: Device already registered\n");
+    //return 200;
   }
-#if !defined(NO_SOFTWARE_UPDATE) && !defined(NO_RELEASE_UPDATE)
-  else {
-      ret = arrow_device_update(gateway, device);
-      if ( ret < 0 )
-          goto dev_reg_error;
-  }
-#else
-# if defined(CHECK_DEVICE_REG)
-  else {
-    device_info_t list;
-    if ( (ret = arrow_device_find_by_hid(&list, P_VALUE(device->hid))) < 0 ) {
-      return ret;
-    } else {
-      if ( list.enabled ) {
-        DBG("device: %s", P_VALUE(list.name));
-      }
-      device_info_free(&list);
+
+    // Send the device config????
+    // If we need to send the gateway 'update' request
+    // do it here
+    if(update_device_info)
+    {
+        ARROW_INF("ACN: Updating device info\n");
+        if(arrow_device_update(gateway, device)<0)
+        {
+            // If we fail, return the fail code
+            int rc = http_last_response_code();
+            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+            if(rc!=200)
+                return (-1*rc);
+            return rc;
+        }
     }
-  }
-# else
-  DBG("No device request: close socket");
-  http_client_close(current_client());
-# endif
-#endif
-  arrow_state_mqtt_run(device);
-  return ret;
-dev_reg_error:
-  arrow_device_free(device);
-  return ret;
+
+  return 200;
 }
 
+// Do the initialization just for the gateway
+#if 0
 arrow_routine_error_t arrow_gateway_initialize_routine(void) {
-  wdt_feed();
-  http_session_close_set(current_client(), false);
-  int retry = 0;
-  while ( arrow_connect_gateway(&_gateway) < 0 ) {
+    TRACE("Enter");
+    int retry;
+
+    // Keep the socket open after next HTTP transfer
+    http_session_keep_active(true);
+    retry = 0;
+
+    // Do the gateway connect logic
+    while ( arrow_connect_gateway(&_gateway,false) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-    DBG(GATEWAY_CONNECT, "fail");
+        ARROW_DBG(GATEWAY_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
-  DBG(GATEWAY_CONNECT, "ok");
-  http_session_close_set(current_client(), true);
-  wdt_feed();
-  RETRY_CR(retry);
+    ARROW_DBG(GATEWAY_CONNECT, "ok");
+
+    // Close the socket after next HTTP transfer
+    http_session_keep_active(false);
+
+    // Get the gateway config
+    retry=0;
   while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-    DBG(GATEWAY_CONFIG, "fail");
+      ARROW_DBG(GATEWAY_CONFIG, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
-  DBG(GATEWAY_CONFIG, "ok");
-  _init_done = 1;
+    ARROW_DBG(GATEWAY_CONFIG, "ok");
+
+    // Mark as intialized and done
+    acn_register_init_done = 1;
   return ROUTINE_SUCCESS;
 }
+#endif
 
-arrow_routine_error_t arrow_initialize_routine(void) {
-  wdt_feed();
-  http_session_set_protocol(current_client(), api_via_http);
-  http_session_close_set(current_client(), false);
+
+// Do the initialization for the gateway and device
+arrow_routine_error_t arrow_initialize_routine(bool update_gateway_info)
+{
+    TRACE("Enter");
   int retry = 0;
-  int ret = 0;
-  DBG("register gateway via API");
-  while ( (ret = arrow_connect_gateway(&_gateway)) < 0 ) {
-    RETRY_UP(retry, {goto gateway_reg_error;});
-    DBG(GATEWAY_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
-  }
-  DBG(GATEWAY_CONNECT, "ok");
+  int ret=0;
 
-  wdt_feed();
-  RETRY_CR(retry);
-  while ( (ret = arrow_gateway_config(&_gateway, &_gateway_config)) < 0 ) {
-    RETRY_UP(retry, {goto gateway_config_error;});
-    DBG(GATEWAY_CONFIG, "fail");
-    msleep(ARROW_RETRY_DELAY);
-  }
-  DBG(GATEWAY_CONFIG, "ok");
+    // Keep socket connections alive for all HTTP transfers
+    http_session_keep_active(true);
 
-  // device registaration
-  wdt_feed();
-  RETRY_CR(retry);
-  DBG("register device via API");
-  // close session after next request
-  http_session_close_set(current_client(), true);
-  while ( (ret = arrow_connect_device(&_gateway, &_device)) < 0 ) {
-    RETRY_UP(retry, {goto device_reg_error;});
-    DBG(DEVICE_CONNECT, "fail");
+    // Connect to Arrow Connect
+    // (Do gateway register/checkin)
+    while ( arrow_connect_gateway(&_gateway, update_gateway_info) < 0 ) {
+      RETRY_UP(retry, {return ROUTINE_ERROR;});
+      ARROW_DBG(GATEWAY_CONNECT, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
-  DBG(DEVICE_CONNECT, "ok");
-  _init_done = 1;
+    ARROW_DBG(GATEWAY_CONNECT, "ok");
+
+    // Get gateway config
+    retry=0;
+    ARROW_INF("ACN: Get gateway config\n");
+    while ( arrow_gateway_config(&_gateway, &_gateway_config) < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_ERROR;});
+        ARROW_DBG(GATEWAY_CONFIG, "fail");
+    msleep(ARROW_RETRY_DELAY);
+  }
+    ARROW_DBG(GATEWAY_CONFIG, "ok");
+
+    // close session after next HTTP request
+    http_session_keep_active(true);
+
+    // device registration
+    retry=0;
+    while ( arrow_connect_device(&_gateway, &_device, update_gateway_info) < 0 ) {
+        RETRY_UP(retry, {return ROUTINE_ERROR;});
+        ARROW_DBG(DEVICE_CONNECT, "fail");
+    msleep(ARROW_RETRY_DELAY);
+  }
+    ARROW_DBG(DEVICE_CONNECT, "ok");
+
+    // Close the session!!!!
+    http_end();
+
+    // Mark as initialized and return
+    acn_register_init_done = 1;
   return ROUTINE_SUCCESS;
+
 device_reg_error:
   arrow_device_free(&_device);
 gateway_config_error:
@@ -209,154 +300,262 @@ gateway_reg_error:
   return ret;
 }
 
-arrow_routine_error_t arrow_device_states_sync() {
-    arrow_state_receive(current_device());
-    if ( !_init_done ) return ROUTINE_ERROR;
-    arrow_post_state_request(current_device());
-    return ROUTINE_SUCCESS;
+// Do the initialization for the gateway and device
+int arrow_startup_sequence(bool update_gateway_info)
+{
+    TRACE("Enter");
+    int retry = 0;
+    int rc;
+
+    // Keep socket connections alive for all HTTP transfers
+    http_session_keep_active(true);
+
+    // Connect to Arrow Connect
+    // (Do gateway register/checkin)
+    rc = arrow_connect_gateway(&_gateway, update_gateway_info);
+    if(rc != 200 )
+    {
+        printf("ACN: Gateway register/checkin failed (%d)\n",rc);
+        return rc;
+}
+    ARROW_INF("ACN: Gateway register/checkin success\n");
+
+    // Get gateway config
+    retry=0;
+    ARROW_INF("ACN: Get gateway config\n");
+    rc = arrow_gateway_config(&_gateway, &_gateway_config);
+    if(rc < 0 )
+    {
+        printf("Gateway config [failed]\n");
+        return rc;
+    }
+    ARROW_INF("ACN: Gateway config [ok]\n");
+
+    // close session after next HTTP request
+    //http_session_keep_active(true);
+
+    // device registration
+    retry=0;
+    rc = arrow_connect_device(&_gateway, &_device, false);
+    if(rc != 200 )
+    {
+        printf("ACN: Device connect [failed]\n");
+        return rc;
+    }
+    ARROW_INF("ACN: Device connect [ok]\n");
+
+    // Close the session!!!!
+    http_end();
+
+    // Mark as initialized and return
+    acn_register_init_done = 1;
+    return 200;
 }
 
-arrow_routine_error_t arrow_device_states_update() {
-    if ( !_init_done ) return ROUTINE_ERROR;
+
+arrow_routine_error_t arrow_update_state(const char *name, const char *value) {
+    TRACE("Enter");
+  //add_state(name, value);
+  if ( acn_register_init_done ) {
     arrow_post_state_update(&_device);
     return ROUTINE_SUCCESS;
+  }
+  return ROUTINE_ERROR;
 }
 
 arrow_routine_error_t arrow_send_telemetry_routine(void *data) {
-  if ( !_init_done ) {
-    return ROUTINE_NOT_INITIALIZE;
-  }
-  wdt_feed();
+    TRACE("Enter");
+
+    // Must register first
+    if ( !acn_register_init_done ) return ROUTINE_NOT_INITIALIZE;
+
+    // Collect and send telemetry
   int retry = 0;
   while ( arrow_send_telemetry(&_device, data) < 0) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-    DBG(DEVICE_TELEMETRY, "fail");
+        ARROW_DBG(DEVICE_TELEMETRY, "fail");
     msleep(ARROW_RETRY_DELAY);
   }
-  DBG(DEVICE_TELEMETRY, "ok");
+
+    // Success
+    ARROW_DBG(DEVICE_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
 // MQTT
 
 arrow_routine_error_t arrow_mqtt_connect_telemetry_routine(void) {
-  if ( _init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE ) {
-    return ROUTINE_ERROR;
-  }
-  int retry = 0;
+    TRACE("Enter");
+    int retry;
+
+    // Don't reinit
+    if ( acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE ) return ROUTINE_ERROR;
+
+    // Run the connect routine for the MQTT client
+    retry = 0;
   while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
-    DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(MQTT_RETRY_DELAY);
+        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
   }
-  _init_mqtt |= MQTT_INIT_TELEMETRY_ROUTINE;
-  DBG(DEVICE_MQTT_CONNECT, "ok");
+
+    // Mark MQTT as initialized
+    acn_mqtt_init_flags |= MQTT_INIT_SYSTEM_DONE;
+    ARROW_DBG(DEVICE_MQTT_CONNECT, "ok");
   return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_mqtt_disconnect_telemetry_routine(void) {
-  if ( ! ( _init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE ) ) {
-    return ROUTINE_ERROR;
-  }
-  if ( mqtt_telemetry_terminate() < 0 ) {
-    return ROUTINE_ERROR;
-  }
+    TRACE("Enter");
+
+    // Check for init
+    if ( ! ( acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE ) ) return ROUTINE_ERROR;
+
+    // Terminate the MQTT connection
+    if ( mqtt_telemetry_terminate() < 0 ) return ROUTINE_ERROR;
+
   return ROUTINE_SUCCESS;
 }
 
+#if 0
+// Pointless function
 arrow_routine_error_t arrow_mqtt_terminate_telemetry_routine(void) {
-  if ( mqtt_telemetry_terminate() < 0 ) {
-    return ROUTINE_ERROR;
-  }
+    TRACE("Enter");
+    if ( mqtt_telemetry_terminate() < 0 ) return ROUTINE_ERROR;
   return ROUTINE_SUCCESS;
 }
+#endif
 
 
+// If EVENTS are enabled
 #if !defined(NO_EVENTS)
+
+// TODO: What is the difference between this and the one belowl????
 arrow_routine_error_t arrow_mqtt_connect_event_routine(void) {
-  if ( _init_mqtt & MQTT_INIT_COMMAND_ROUTINE ) {
-    return ROUTINE_ERROR;
-  }
-  int retry = 0;
+    TRACE("Enter");
+    int retry;
+
+    // Make sure MQTT subscribe has not been done before
+    if ( acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE ) return ROUTINE_ERROR;
+
+    // do mqtt_subscribe_connect()
+    // Subscribe to gateway topics
+    retry = 0;
   while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-    DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(MQTT_RETRY_DELAY);
+        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
   }
-  _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
+
+    // Mark subscribe as done
+    acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
   return ROUTINE_SUCCESS;
 }
+
+// TODO: What is the difference between this and the one above????
 arrow_routine_error_t arrow_mqtt_subscribe_event_routine(void) {
+    TRACE("Enter");
   int retry = 0;
+
+    // Do mqtt_subscribe()
   while( mqtt_subscribe() < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-    DBG(DEVICE_MQTT_CONNECT, "fail");
-    msleep(MQTT_RETRY_DELAY);
-    _init_mqtt &= ~MQTT_INIT_COMMAND_ROUTINE;
+        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(ARROW_RETRY_DELAY);
+        acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE;
   }
-  _init_mqtt |= MQTT_INIT_COMMAND_ROUTINE;
+
+    // Make subscribe as done
+    acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
   return ROUTINE_SUCCESS;
 }
 
-arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void) {
-  if ( ! ( _init_mqtt & MQTT_INIT_COMMAND_ROUTINE ) ) {
-    return ROUTINE_ERROR;
-  }
-  if ( mqtt_subscribe_disconnect() < 0 ) {
-    return ROUTINE_ERROR;
-  }
+// Stop event routine
+arrow_routine_error_t arrow_mqtt_disconnect_event_routine(void)
+{
+    TRACE("Enter");
+
+    // Only run when subscribe is done
+    if ( ! ( acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE ) ) return ROUTINE_ERROR;
+
+    // Disconnect
+    if ( mqtt_subscribe_disconnect() < 0 ) return ROUTINE_ERROR;
+
+    // Clear the flag?
+    //acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE
+
   return ROUTINE_SUCCESS;
 }
 
+#if 0
+// Pointless function
 arrow_routine_error_t arrow_mqtt_terminate_event_routine(void) {
-  if ( mqtt_subscribe_terminate() < 0 ) {
-    return ROUTINE_ERROR;
-  }
+    TRACE("Enter");
+    if ( mqtt_subscribe_terminate() < 0 ) return ROUTINE_ERROR;
   return ROUTINE_SUCCESS;
 }
+#endif
 
 #endif
 
-arrow_routine_error_t arrow_mqtt_connect_routine(void) {
-  if ( !_init_done ) {
-    return ROUTINE_NOT_INITIALIZE;
-  }
-  // init MQTT
-  DBG("mqtt connect...");
-  arrow_routine_error_t ret = ROUTINE_ERROR;
-  ret = arrow_mqtt_connect_telemetry_routine();
-  if ( ret != ROUTINE_SUCCESS ) {
-    return ret;
-  }
 
+arrow_routine_error_t arrow_mqtt_connect_routine(void)
+{
+    TRACE("Enter");
+  arrow_routine_error_t ret = ROUTINE_ERROR;
+
+    // Must call register first
+    if ( !acn_register_init_done ) return ROUTINE_NOT_INITIALIZE;
+
+    // Start the MQTT telemetry
+    ARROW_DBG("mqtt connect...");
+  ret = arrow_mqtt_connect_telemetry_routine();
+    if ( ret != ROUTINE_SUCCESS ) return ret;
+
+    // TODO: What is this?
+    arrow_state_mqtt_run(&_device);
+
+    // Start the MQTT events
 #if !defined(NO_EVENTS)
   ret = arrow_mqtt_connect_event_routine();
-  if ( ret != ROUTINE_SUCCESS ) {
-    return ret;
-  }
+    if ( ret != ROUTINE_SUCCESS ) return ret;
 
-  // process postponed messages
+    // TODO: What is this?
+    // process postponed messages?
   if ( arrow_mqtt_event_receive_routine() != ROUTINE_RECEIVE_EVENT ) {
     arrow_mqtt_subscribe_event_routine();
   }
 #endif
+
+    // Return success
   return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_mqtt_disconnect_routine() {
-  if ( _init_mqtt ) {
+    TRACE("Enter");
+
+    // If we have INIT or SUBSCRIBE flags set
+    if ( acn_mqtt_init_flags ) {
+        // Disconnect?
     mqtt_disconnect();
-    _init_mqtt = 0;
+        // Clear flags
+        acn_mqtt_init_flags = 0;
     return ROUTINE_SUCCESS;
   }
+
+    // Error since no flags are set
   return ROUTINE_ERROR;
 }
 
+#if 1
+// Another pointless function???
 arrow_routine_error_t arrow_mqtt_terminate_routine() {
+    TRACE("Enter");
   mqtt_terminate();
-  _init_mqtt = 0;
+  acn_mqtt_init_flags = 0;
   return ROUTINE_SUCCESS;
 }
+#endif
 
 arrow_routine_error_t arrow_mqtt_pause_routine(int pause) {
     mqtt_pause(pause);
@@ -364,138 +563,210 @@ arrow_routine_error_t arrow_mqtt_pause_routine(int pause) {
 }
 
 arrow_routine_error_t arrow_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE)
+    TRACE("Enter");
+
+    // Can't send if not fully connected
+    if( !acn_register_init_done ||
+       !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE)
 #if !defined(NO_EVENTS)
-       || !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE)
+       || !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE)
 #endif
-     ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+       )
+    {
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
-  wdt_feed();
-  while (1) {
-    mqtt_receive(TELEMETRY_DELAY);
+
+    // The main loop for telemetry and events
+    while (1)
+    {
+        // TODO: What does this do?
+        mqtt_yield(TELEMETRY_DELAY);
+
+        // Handle receiving events?
 #if !defined(NO_EVENTS)
     if ( arrow_mqtt_has_events() ) {
-      DBG("There is an event");
+            ARROW_DBG("There is an event");
       return ROUTINE_RECEIVE_EVENT;
     }
 #endif
-    int get_data_result = data_cb(data);
+
+        // Collect telemetry into 'data'
+        int get_data_result;
+        get_data_result = data_cb(data);
     if ( get_data_result < 0 ) {
-      DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+            //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
     } else if (get_data_result > 0 ) {
       // skip this
       continue;
     }
-    wdt_feed();
-    if ( mqtt_publish(&_device, data) < 0 ) {
-      DBG(DEVICE_MQTT_TELEMETRY, "fail");
+
+        // We now have get_data_result==0 and some data in 'data'
+
+        // Publish the data for this device
+        if ( mqtt_publish(&_device, data) < 0 )
+        {
+            ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
       return ROUTINE_MQTT_PUBLISH_FAILED;
     }
+
+        // Some tests?
 #if defined(VALGRIND_TEST)
     static int count = 0;
-    if ( count++ > VALGRIND_TEST ) {
+        if ( count++ > VALGRIND_TEST )
       return ROUTINE_TEST_DONE;
-    }
-    DBG("test count [%d]", count);
+        ARROW_DBG("test count [%d]", count);
 #endif
-    DBG(DEVICE_MQTT_TELEMETRY, "ok");
+
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
+
+    // Why return success? There are no breaks in the while(1)
   return ROUTINE_SUCCESS;
 }
 
-void arrow_close(void) {
+// Shutdown the http and mqtt subsystems
+void arrow_close(void)
+{
   arrow_mqtt_terminate_routine();
-  if ( arrow_state_mqtt_is_running() )
-      arrow_state_mqtt_stop();
-  if ( _init_done ) {
+    if ( acn_register_init_done )
+    {
+        // Free the structures
     arrow_device_free(&_device);
     arrow_gateway_free(&_gateway);
     arrow_gateway_config_free(&_gateway_config);
-    _init_done = 0;
+
+        // Stop events
+        #if !defined(NO_EVENTS)
+        arrow_mqtt_events_done();
+        #endif
+
+        // Clear flags
+        acn_register_init_done = 0;
   }
+
+    // Stop the HTTP client?
+    http_end();
+    http_done();
+
+    return;
 }
 
-arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+// What's the difference between this and arrow_mqtt_send_telemetry_routine()
+arrow_routine_error_t arrow_mqtt_telemetry_routine(get_data_cb data_cb, void *data)
+{
+    TRACE("Enter");
+
+    // Can't run if not fully connected
+    if ( !acn_register_init_done ||
+         !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) )
+    {
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
-  wdt_feed();
-  while (1) {
+
+    //
+    while (1)
+    {
+        // Wait a bit
     msleep(TELEMETRY_DELAY);
-    int get_data_result = data_cb(data);
+
+        // Load the telemetry data
+        int get_data_result;
+        get_data_result = data_cb(data);
     if ( get_data_result < 0 ) {
-      DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+            //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
     } else if (get_data_result > 0 ) {
       // skip this
       continue;
     }
-    wdt_feed();
-    if ( mqtt_publish(&_device, data) < 0 ) {
-      DBG(DEVICE_MQTT_TELEMETRY, "fail");
+
+        // Now have data in 'data'
+
+        // Send the data
+        if ( mqtt_publish(&_device, data) < 0 )
+        {
+            ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
       return ROUTINE_MQTT_PUBLISH_FAILED;
     }
+
+        // Some tests?
 #if defined(VALGRIND_TEST)
     static int count = 0;
-    if ( count++ > VALGRIND_TEST ) {
+        if ( count++ > VALGRIND_TEST )
       return ROUTINE_TEST_DONE;
-    }
-    DBG("test count [%d]", count);
+        ARROW_DBG("test count [%d]", count);
 #endif
-    DBG(DEVICE_MQTT_TELEMETRY, "ok");
+
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
+
+    // TODO: Why send success? No break in while(1)
   return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data) {
-  if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_TELEMETRY_ROUTINE) ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+    TRACE("Enter");
+
+    // Can't send if not initialized
+    if ( !acn_register_init_done ||
+         !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) ) {
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
-  wdt_feed();
+
+
+    // Collected the data into 'data'
   int get_data_result = data_cb(data);
   if ( get_data_result != 0 ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
     return ROUTINE_GET_TELEMETRY_FAILED;
   }
+
+    // Send the data
   if ( mqtt_publish(&_device, data) < 0 ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "fail");
+        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
     return ROUTINE_MQTT_PUBLISH_FAILED;
   }
-  DBG(DEVICE_MQTT_TELEMETRY, "ok");
+
+    // Success!
+    ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
-arrow_routine_error_t arrow_mqtt_event_receive_routine(void) {
-  if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
-    DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+arrow_routine_error_t arrow_mqtt_event_receive_routine() {
+    //TRACE("Enter");
+    int ret;
+
+    // Can't receive if not subscribed
+    if ( !acn_register_init_done ||
+         !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE) ) {
+        //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
-#if defined(NO_EVENTS)
-  int ret = MQTT_SUCCESS;
-  msleep(TELEMETRY_DELAY);
-#else
-  int ret = mqtt_yield(TELEMETRY_DELAY);
-#endif
-  wdt_feed();
-  if ( ret > 0 ) {
+
+    printf("mqtt_yield Start\n");
+
+    // yield blocks for a period of time and returns what
+    // events the MQTT client has received.
+    // MQTT_SUCCESS == we have a message (aka an 'event'
+    // FAILURE = timeout?????
+    ret = mqtt_yield(TELEMETRY_DELAY);
+
+    printf("mqtt_yield End\n");
+
+    // TODO: Return if we have events?
+    if ( ret == MQTT_SUCCESS )
     return ROUTINE_RECEIVE_EVENT;
-  } else if (ret == FAILURE_REQUIRES_RESTART) {
-      return ROUTINE_ERROR;
-  } else return ROUTINE_SUCCESS;
+
+    return ROUTINE_SUCCESS;
 }
 
 arrow_routine_error_t arrow_mqtt_check_init(void) {
-  if ( !_init_done ||
-       !(_init_mqtt & MQTT_INIT_COMMAND_ROUTINE) ) {
+  if ( !acn_register_init_done ||
+       !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE) ) {
     DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }

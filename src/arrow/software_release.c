@@ -26,6 +26,7 @@ static __release_cb  __release = NULL;
 static __download_init_cb __download_init = NULL;
 static __download_payload_cb  __payload = NULL;
 static __download_complete_cb __download = NULL;
+static __download_finish_cb __finish = NULL;
 
 static property_t serialize_software_trans(const char *hid, release_sched_t *rs) {
   JsonNode *_main = json_mkobject();
@@ -179,6 +180,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   char *trans_hid = json_string(tmp);
   wdt_feed();
 
+
 #if (0) // defined(HTTP_VIA_MQTT) // mw1903 :: api via mqtt is not needed for software update.
   http_session_set_protocol(current_client(), api_via_mqtt);
 #else
@@ -286,10 +288,13 @@ typedef struct _download_result_ {
 int arrow_software_release_dowload_set_cb(
         __download_init_cb icb,
         __download_payload_cb pcb,
-        __download_complete_cb ccb) {
+        __download_complete_cb ccb,
+        __download_finish_cb finish_callback)
+{
     __download_init = icb;
     __payload = pcb;
     __download = ccb;
+    __finish = finish_callback;
     return 0;
 }
 
@@ -356,7 +361,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
 int arrow_software_release_download(const char *token, const char *tr_hid, const char *checksum) {
   token_hid_t th = { token, tr_hid };
   download_result_t dr = { checksum, 0 };
-  int ret = __http_routine(_software_releases_download_init,
+  int ret = http_routine(_software_releases_download_init,
                            &th,
                            _software_releases_download_proc,
                            &dr);

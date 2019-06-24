@@ -18,8 +18,12 @@
 #include "MQTTClient.h"
 #include "arrow/mqtt.h"
 
+// This is where out_msg_t is defined
+#include <arrow/mqtt_out_msg.h>
+
 #if defined(__arm__)
-#include "trace.h" //factory ota failure debug
+//#include "trace.h" //factory ota failure debug
+#define trace(...)
 #endif
 
 #if defined(__USE_STD__)

@@ -34,7 +34,7 @@ void http_session_close_set(http_client_t *cli, bool mode) {
 #if defined(HTTP_SOCK_KEEP_OPEN)
     mode = false;
 #endif
-  cli->flags._close = mode;
+  cli->flags.close_socket = mode;
 }
 
 static int ignore_protocol_change = 0;
@@ -127,7 +127,7 @@ int __attribute_weak__ http_client_init(http_client_t *cli) {
         return ret;
     }
     cli->sock = -1;
-    cli->flags._close = true;
+    cli->flags.close_socket = true;
     cli->flags._cipher = 0;
     cli->timeout = DEFAULT_API_TIMEOUT;
     cli->protocol = api_via_http;
@@ -201,7 +201,7 @@ int default_http_client_open(http_client_t *cli, http_request_t *req) {
             cli->flags._cipher = true;
             if ( ssl_connect(cli->sock) < 0 ) {
                 HTTP_DBG("SSL connect fail");
-                cli->flags._close = true;
+                cli->flags.close_socket = true;
                 http_client_close(cli);
                 return -1;
             }
@@ -223,7 +223,7 @@ int default_http_client_close(http_client_t *cli) {
     cli->request = NULL;
     if ( cli->protocol != api_via_http ) return  -1;
     if ( cli->sock < 0 ) return -1;
-    if ( !cli->flags._close ) return 1;
+    if ( !cli->flags.close_socket ) return 1;
     if ( cli->flags._cipher ) {
         ssl_close(cli->sock);
         cli->flags._cipher = 0;

@@ -435,9 +435,9 @@ int arrow_mqtt_api_send(mqtt_event_t *event, cmd_type status) {
 	  DBG("xx Event Base Name: %s xx", bn);
 	  http_session_close_set(current_client(), false);		// keep API session open?
 
-//#if defined(HTTP_VIA_MQTT)
+#if defined(HTTP_VIA_MQTT)
 	  http_session_set_protocol(current_client(), api_via_mqtt); // set API via mqtt
-//#endif
+#endif
 
 	  DBG("send received %s", P_VALUE(event->base.id));
 

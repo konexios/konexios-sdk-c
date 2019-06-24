@@ -26,6 +26,8 @@
 #include <network.h>
 #include <mqtt/client/delivery.h>
 
+#include <arrow/mqtt_out_msg.h>
+
 #if defined(WIN32_DLL) || defined(WIN64_DLL)
   #define DLLImport __declspec(dllimport)
   #define DLLExport __declspec(dllexport)

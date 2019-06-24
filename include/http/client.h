@@ -22,7 +22,7 @@
 #endif
 
 typedef struct __session_flags {
-  uint8_t _close;
+  uint8_t close_socket;
   uint8_t _cipher;
 } __session_flags_t;
 
@@ -46,8 +46,20 @@ void http_session_set_protocol(http_client_t *cli, int prot);
 // FIXME
 void http_session_force_http(int prot);
 
+// Indicate if the HTTP client should close the
+// socket when the 'session' is closed
+void http_session_close_set(http_client_t *cli, bool close_socket);
+
+// Close the session and socket
+void http_session_close_now(http_client_t *cli);
+
+// Initialize the HTTP client
 int http_client_init(http_client_t *cli);
+
+// Destroy the HTTP client
 int http_client_free(http_client_t *cli);
+
+// Make a
 int http_client_open(http_client_t *cli, http_request_t *req);
 int http_client_close(http_client_t *cli);
 
