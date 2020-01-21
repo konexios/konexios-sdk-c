@@ -1,4 +1,4 @@
-# Arrow Connect SDK #
+# Konexios SDK #
 
 ### private data ###
 
