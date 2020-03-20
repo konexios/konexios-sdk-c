@@ -42,6 +42,11 @@ int ntp_set_time(
   struct sockaddr_in serveraddr;
   struct hostent *server;
 
+  if (!host) {
+	  DBG("host NULL");
+	  return -1;
+  }
+
   udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
   if (udp_sock < 0) {
       DBG("ERROR opening socket %d", udp_sock);
@@ -68,10 +73,10 @@ int ntp_set_time(
   }
 
   /* build the server's Internet address */
-  bzero((char *) &serveraddr, sizeof(serveraddr));
+  memset((char *) &serveraddr, 0, sizeof(serveraddr));
   serveraddr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr,
-          (char *)&serveraddr.sin_addr.s_addr, (size_t)server->h_length);
+  memcpy((char *)&serveraddr.sin_addr.s_addr,
+		  (char *)server->h_addr, (size_t)server->h_length);
   serveraddr.sin_port = htons(port);
   serverlen = sizeof(serveraddr);
 

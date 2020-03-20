@@ -27,9 +27,11 @@
 
 #include <debug.h>
 #include <http/client.h>
+#include <http/routine.h>
 #include <json/json.h>
 #include <json/decode.h>
 #include <sys/mem.h>
+#include <time/time.h>
 #include <arrow/gateway_payload_sign.h>
 
 #if defined(STATIC_MQTT_ENV)
@@ -131,11 +133,16 @@ static int check_sign_1(const char *sign,
                              encrypted,
                              parameters);
 
+  if (!sign) {
+	  DBG("sign NULL");
+	  return -1;
+  }
   if ( !err && strcmp(sign, signature) == 0 ) {
       return 0;
   }
 
-  DBG("sing check failed { %s, %s }", sign, signature);
+
+  DBG("sign check failed { %s, %s }", sign, signature);
   return -1;
 }
 
@@ -260,10 +267,11 @@ static json_parse_machine_t sm;
 
 int process_event_init(int size) {
 #if defined(ARROW_MAX_MQTT_COMMANDS)
+	// TODO: mw190304: since commands vary in size, the queue should max out on memory used rather number of commands
     int queue_size = arrow_mqtt_has_events();
     if ( queue_size >= ARROW_MAX_MQTT_COMMANDS) {
 #if defined(HTTP_VIA_MQTT)
-        DBG("Queue is full: force HTTP request");
+        DBG("Event Queue is full.  Marking event as FAILED, and forcing HTTP ACK responses until queue returns to baseline.");
         http_session_force_http(1);
 #endif
         return -1;
@@ -276,7 +284,7 @@ int process_event_init(int size) {
 #endif
 
 #if defined(STATIC_JSON)
-    DBG("Static memory size %d [%d]", json_static_free_size(), size);
+    DBG("Static memory size: %d Need: [%d]", json_static_free_size(), size);
     if ( memory_check(size, 512) < 0 ) {
         http_session_force_http(1);
         return -1;
@@ -328,8 +336,9 @@ int process_event_finish() {
   }
 
   arrow_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
-  DBG("event queue size %d", arrow_mqtt_has_events());
-#if defined(ARROW_MAX_MQTT_COMMANDS)
+  DBG("Enque hid: %s, event queue size %d", P_VALUE(mqtt_e->base.id), arrow_mqtt_has_events());
+
+  #if defined(ARROW_MAX_MQTT_COMMANDS)
   if ( arrow_mqtt_has_events() == ARROW_MAX_MQTT_COMMANDS )
       http_session_force_http(1);
 #endif
@@ -346,6 +355,7 @@ error:
 no_event_error:
   return ret;
 }
+
 
 int arrow_mqtt_has_events(void) {
     int ret = 0;
@@ -369,6 +379,11 @@ int arrow_mqtt_event_proc(void) {
         return -1;
     }
 
+#if(ACN_API_ENABLED)
+    // Send /received to API 
+    arrow_mqtt_api_send(tmp, cmd_received);
+#endif
+//    DBG("xxx try event_proc hid: %s xxx", P_VALUE(tmp->base.id));
     submodule current_processor = NULL;
     int i = 0;
     for (i=0; i < (int)(sizeof(sub_list)/sizeof(sub_t)); i++) {
@@ -380,13 +395,24 @@ int arrow_mqtt_event_proc(void) {
     if ( current_processor ) {
       ret = current_processor(tmp, tmp->base.parameters);
     } else {
-      DBG("No event processor for %s", P_VALUE(tmp->base.name));
+    	char *bn = "(null)";
+    	if (P_VALUE(tmp->base.name)) {
+    		  bn = P_VALUE(tmp->base.name);
+    	}
+      DBG("No event processor for %s", bn);
       goto mqtt_event_proc_error;
     }
 mqtt_event_proc_error:
     MQTT_EVENTS_QUEUE_LOCK;
     arrow_linked_list_del_node_first(__event_queue, mqtt_event_t);
     MQTT_EVENTS_QUEUE_UNLOCK;
+    DBG("\tdeleted, queue size %d", arrow_mqtt_has_events());
+
+#if(ACN_API_ENABLED)
+    // Send /succeeded to API
+    arrow_mqtt_api_send(tmp, cmd_succeeded);
+#endif
+	// TODO: add logic for /failed if API is used
     mqtt_event_free(tmp);
 #if defined(STATIC_MQTT_ENV)
     static_free(mqtt_event_t, tmp);
@@ -399,6 +425,33 @@ mqtt_event_proc_error:
 
 static json_parse_machine_t sm_http;
 static int api_mqtt_max_capacity = 0;
+
+int arrow_mqtt_api_send(mqtt_event_t *event, cmd_type status) {
+	  int retry = 0;
+	  char *bn = "(null)";
+	  if (P_VALUE(event->base.name)) {
+		  bn = P_VALUE(event->base.name);
+	  }
+	  DBG("xx Event Base Name: %s xx", bn);
+	  http_session_close_set(current_client(), false);		// keep API session open?
+
+#if defined(HTTP_VIA_MQTT)
+	  http_session_set_protocol(current_client(), api_via_mqtt); // set API via mqtt
+#endif
+
+	  DBG("send received %s", P_VALUE(event->base.id));
+
+	  while( arrow_send_event_ans(event->base.id, status, p_null) < 0 ) {
+		  DBG("\tsend_event_ans < 0, retry api_via_http");
+	      http_session_set_protocol(current_client(), api_via_http);
+	      RETRY_UP(retry, { DBG("exit -2, Max retry %d", retry); return -2; });
+	      DBG("sleep %d", ARROW_RETRY_DELAY);
+	      msleep(ARROW_RETRY_DELAY);
+	  }
+	  return 0;
+
+//#endif // end API /received sending
+}
 
 int arrow_mqtt_api_wait(int num) {
     api_mqtt_max_capacity = num;
@@ -535,7 +588,11 @@ int arrow_mqtt_api_event_proc(http_response_t *res) {
     if ( property_cmp(&status->string_, p_const("OK")) != 0 ) {
         JsonNode *body = json_find_member(_parameters, p_const("payload"));
         if ( body ) {
-            DBG("[%s]", P_VALUE(body->string_));
+        	char *bs = "(null)";
+        	if (P_VALUE(body->string_)) {
+        		bs = P_VALUE(body->string_);
+        	}
+            DBG("[%s]", bs);
         }
         DBG("Not OK");
         goto mqtt_api_error;

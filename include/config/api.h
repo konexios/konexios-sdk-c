@@ -34,10 +34,12 @@ enum {
 # define ARROW_SCH arrow_scheme_http
 # define ARROW_PORT 12001
 #endif
-#if defined(DEV_ENV)
-# define ARROW_ADDR "pgsdev01.arrowconnect.io"
-#else
-# define ARROW_ADDR "api.arrowconnect.io"
+#if !defined(ARROW_ADDR)
+# if defined(DEV_ENV)
+#  define ARROW_ADDR "pgsdev01.arrowconnect.io"
+# else
+#  define ARROW_ADDR "api.arrowconnect.io"
+# endif
 #endif
 
 #define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
@@ -70,6 +72,7 @@ enum {
 #if !defined(GATEWAY_SOFTWARE_NAME)
 #define GATEWAY_SOFTWARE_NAME       "eos"
 #endif
+
 #if !defined(GATEWAY_SOFTWARE_VERSION)
 #define GATEWAY_SOFTWARE_VERSION    "0.1"
 #endif
@@ -95,6 +98,9 @@ enum {
 
 #if !defined(ARROW_ERROR_DELAY)
 #define ARROW_RETRY_DELAY 3000
+#endif
+#if !defined(MQTT_ERROR_DELAY)
+#define MQTT_RETRY_DELAY 6000
 #endif
 
 #endif // ACN_SDK_C_API_CONFIG_H_

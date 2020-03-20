@@ -74,6 +74,8 @@ typedef struct _mqtt_driver {
     int (*common_init)(mqtt_env_t *env, i_args *arg);
 } mqtt_driver_t;
 
+mqtt_env_t *get_telemetry_env(void);
+
 // Establishing MQTT connection depends used define:
 // __IBM__ or __AZURE__ in private.h file
 // if there is no define IoT connection will be used as default.

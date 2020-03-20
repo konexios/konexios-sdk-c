@@ -216,7 +216,7 @@ int gateway_payload_sign(char *signature,
 
 #if defined(DEBUG_GATEWAY_PAYLOAD_SIGN)
   DBG("api: %s", get_api_key());
-  DBG("sec: %s", get_secret_key());
+  DBG("secret: %s", get_secret_key());
 #endif
   hmac256(tmp, get_api_key(), (int)strlen(get_api_key()), get_secret_key(), (int)strlen(get_secret_key()));
   hex_encode(hex_tmp, tmp, 32);

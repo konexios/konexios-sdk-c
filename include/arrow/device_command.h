@@ -9,9 +9,9 @@ extern "C" {
 #include <data/linkedlist.h>
 
 typedef enum {
-    failed,
-    received,
-    succeeded
+    cmd_failed,
+    cmd_received,
+    cmd_succeeded
 } cmd_type;
 
 typedef enum {

@@ -21,7 +21,6 @@ extern "C" {
 #include <arrow/api/log.h>
 
 enum {
-    DEVICE_SUCCESS          = 0,
     DEVICE_ERROR            = -200,
     DEVICE_REGISTER_ERROR   = -201,
     DEVICE_FINDBY_ERROR     = -206,

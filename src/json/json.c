@@ -23,9 +23,16 @@
 
 #include "json/json.h"
 
+#if defined(__arm__)
+#if defined(ENABLE_ARM_TRACE)
+//#include <cmsis_rtos.h>
+//#include "trace.h"
+#endif
+#endif
 #include <data/property.h>
 #include <json/property_json.h>
 #include <sys/mem.h>
+#include <sys/reboot.h>
 #if defined(__USE_STD__)
 #include <assert.h>
 #else
@@ -38,8 +45,6 @@
 #include <data/static_alloc.h>
 static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
 #endif
-
-#define out_of_memory() { DBG("JSON: Out of memory"); }
 
 #if defined(STATIC_JSON)
 int JsonNode_object_alloc_size() {
@@ -459,6 +464,9 @@ JsonNode *json_first_child(const JsonNode *node)
 	return NULL;
 }
 
+static void delayed_reboot(void* param) {
+    reboot();
+}
 static JsonNode *mknode(JsonTag tag)
 {
 #if defined(STATIC_JSON)
@@ -467,7 +475,14 @@ static JsonNode *mknode(JsonTag tag)
     JsonNode *ret = (JsonNode*) calloc(1, sizeof(JsonNode));
 #endif
     if (ret == NULL) {
-        out_of_memory();
+#if defined(__arm__)
+        #if defined(ENABLE_ARM_TRACE)
+        trace(TRACE_CRITICAL, "JSON: Out of memory");
+        xTimerStart(xTimerCreate("v_reboot", pdMS_TO_TICKS(20000), pdFALSE, NULL, delayed_reboot),0);
+        #else
+        DBG("JSON: Out of memory");
+        #endif
+#endif
     } else {
         memset(ret, 0x0, sizeof(JsonNode));
         ret->tag = tag;
@@ -496,7 +511,7 @@ static JsonNode *mkstring(property_t *s) {
 static JsonNode *mk_weak_property(property_t s) {
     JsonNode *ret = mknode(JSON_STRING);
     if ( ret ) property_weak_copy(&ret->string_, s);
-    return ret;
+	return ret;
 }
 
 JsonNode *json_mkstring(const char *s) {
@@ -818,7 +833,7 @@ bool parse_string(const char **sp, property_t *out)
     SB sb = {NULL, NULL, NULL};
 	char throwaway_buffer[4];
 		/* enough space for a UTF-8 character */
-    char *b;
+	char *b;
 	
 	if (*s++ != '"')
 		return false;
@@ -826,11 +841,11 @@ bool parse_string(const char **sp, property_t *out)
 	if (out) {
         if ( sb_init(&sb) < 0 ) return false;
         if ( sb_need(&sb, 4) < 0 ) goto failed;
-        b = sb.cur;
-    } else {
-        b = throwaway_buffer;
-    }
-
+		b = sb.cur;
+	} else {
+		b = throwaway_buffer;
+	}
+	
 	while (*s != '"') {
 		unsigned char c = (unsigned char) *s++;
 		
