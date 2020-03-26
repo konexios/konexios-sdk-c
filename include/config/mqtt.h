@@ -105,8 +105,8 @@ enum {
 #if !defined(MQTT_RETAINED)
 #define MQTT_RETAINED   0
 #endif
-#if !defined(MQTT_DUP)
-#define MQTT_DUP        0
+#if !defined(MQTT_ORIGINAL)
+#define MQTT_ORIGINAL        0
 #endif
 
 #endif // ACN_SDK_C_MQTT_CONFIG_H_

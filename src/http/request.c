@@ -82,7 +82,9 @@ int http_request_init(http_request_t *req,
   DBG("host: %s", P_VALUE(req->host));
   DBG("port: %d", req->port);
 #endif
-  DBG("uri: %s", P_VALUE(req->uri));
+  if(req->uri.size > 0){
+	  DBG("uri: %s", P_VALUE(req->uri));
+  }
   return 0;
 }
 

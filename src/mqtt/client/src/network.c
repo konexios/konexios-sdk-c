@@ -17,25 +17,30 @@ static int _read(Network* n, unsigned char* buffer, int len, int timeout_ms) {
         interval.tv_usec = 100;
     }
 
-    setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
-
+//    setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval));
+    if(setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&interval, sizeof(struct timeval)) != 0){
+//           DBG("error: Set Socket Option Failure");
+           return -1;
+    }
     int bytes = 0;
     while (bytes < len) {
         int rc = 0;
 //    	if (rc) DBG("mqtt recv ---%d", timeout_ms);
         if ( arrow_mqtt_host()->scheme == arrow_mqtt_scheme_tls ) {
-            rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));
+    	rc = ssl_recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes));
         } else {
-            rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
+    	rc = recv(n->my_socket, (char*)(buffer + bytes), (uint16_t)(len - bytes), 0);
         }
 //      DBG("mqtt recv %d/%d", rc, len);
-        if (rc <= 0) {
+        if (rc < 0) {
 #if defined(errno) && defined(__linux__) && defined(MQTT_DEBUG)
             DBG("error(%d): %s", rc, strerror(errno));
 #endif
             bytes = -1;
             break;
-        } else {
+        } else if (rc == 0) {
+            break;
+        }else {
             bytes += rc;
         }
     }
@@ -86,8 +91,12 @@ void NetworkDisconnect(Network* n) {
 int NetworkConnect(Network* n, char* addr, int port, int timeout) {
     struct sockaddr_in serv;
     struct hostent *serv_resolve;
-
     struct timeval interval = {timeout / 1000, (timeout % 1000) * 1000};
+
+    if (!addr) {
+    	DBG("addr NULL");
+    	return -1;
+    }
 
     serv_resolve = gethostbyname(addr);
     if (serv_resolve == NULL) {
@@ -98,8 +107,8 @@ int NetworkConnect(Network* n, char* addr, int port, int timeout) {
 
     if (serv_resolve->h_addrtype == AF_INET) {
         serv.sin_family = PF_INET;
-        bcopy((char *)serv_resolve->h_addr,
-                (char *)&serv.sin_addr.s_addr,
+        memcpy((char *)&serv.sin_addr.s_addr,
+        		(char *)serv_resolve->h_addr,
                 (size_t)serv_resolve->h_length);
         serv.sin_port = htons((uint16_t)port);
     } else

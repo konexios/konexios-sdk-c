@@ -30,13 +30,14 @@ static void _gateway_config_init(http_request_t *request, void *arg) {
 }
 
 static int _gateway_config_proc(http_response_t *response, void *arg) {
-    int ret = GATEWAY_ERROR;
+    int ret = -1;
 	arrow_gateway_config_t *config = (arrow_gateway_config_t *)arg;
     arrow_gateway_config_init(config);
+    DBG("payload: {%s}", P_VALUE(response->payload));
     if ( response->m_httpResponseCode != 200 ) {
-        return ret;
+        DBG("ERROR: HTTP response code: %d", response->m_httpResponseCode);
+		return -1;
     }
-    DBG("pay: {%s}", P_VALUE(response->payload));
 
     JsonNode *_main = json_decode_property(response->payload);
 	if ( !_main ) {
@@ -63,7 +64,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		}
         if ( api && sec ) {
             save_key_setting(json_string(api), json_string(sec));
-        }
+		}
 	} else {
         DBG("There are no keys!");
         goto gateway_config_error;
@@ -92,7 +93,7 @@ static int _gateway_config_proc(http_response_t *response, void *arg) {
 		if ( tmp ) arrow_gateway_config_add_accessKey(config, tmp->string_);
 	}
 #endif
-    ret = GATEWAY_SUCCESS;
+    ret = 0;
 gateway_config_error:
 	json_delete(_main);
     return ret;
@@ -117,15 +118,18 @@ static void _gateway_register_init(http_request_t *request, void *arg) {
 
 static int _gateway_register_proc(http_response_t *response, void *arg) {
   arrow_gateway_t *gateway = (arrow_gateway_t *)arg;
-  if ( response->m_httpResponseCode == 200 ) {
-      if ( arrow_gateway_parse(gateway, P_VALUE(response->payload)) < 0 ) {
-          DBG("parse error");
-          return GATEWAY_REGISTER_ERROR;
-      } else {
-          DBG("gateway hid: %s", P_VALUE(gateway->hid) );
-      }
-  } else return GATEWAY_REGISTER_ERROR;
-  return GATEWAY_SUCCESS;
+  DBG("payload: {%s}", IS_EMPTY(response->payload)?"NULL PAYLOAD":P_VALUE(response->payload));
+  if ( response->m_httpResponseCode != 200 ) {
+      DBG("ERROR: HTTP response code: %d", response->m_httpResponseCode);
+      return -1;
+  }
+  if ( arrow_gateway_parse(gateway, P_VALUE(response->payload)) < 0 ) {
+      DBG("parse error");
+      return -1;
+  } else {
+      DBG("gateway hid: %s", P_VALUE(gateway->hid) );
+  }
+  return 0;
 }
 
 int arrow_register_gateway(arrow_gateway_t *gateway) {
@@ -186,7 +190,7 @@ static int _gateway_find_proc(http_response_t *response, void *arg) {
     gateway_info_t *info = (gateway_info_t *)arg;
     gateway_info_t *list;
     int ret = gateway_info_parse(&list, P_VALUE(response->payload));
-    if ( ret < 0 ) return GATEWAY_FIND_ERROR;
+    if ( ret < 0 ) return -1;
     if ( list ) {
         gateway_info_move(info, list);
         gateway_info_t *tmp = NULL;
@@ -213,9 +217,7 @@ static void _gateway_find_by_init(http_request_t *request, void *arg) {
 static int _gateway_find_by_proc(http_response_t *response, void *arg) {
   gateway_info_t **info = (gateway_info_t **)arg;
   *info = NULL;
-  if ( gateway_info_parse(info, P_VALUE(response->payload)) < 0 )
-      return GATEWAY_FINDBY_ERROR;
-  return GATEWAY_SUCCESS;
+  return gateway_info_parse(info, P_VALUE(response->payload));
 }
 
 
@@ -248,9 +250,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
 static int _gateway_list_logs_proc(http_response_t *response, void *arg) {
     log_t **logs = (log_t **)arg;
     *logs = NULL;
-    if ( log_parse(logs, P_VALUE(response->payload)) < 0 )
-        return GATEWAY_LOGS_ERROR;
-    return GATEWAY_SUCCESS;
+    return log_parse(logs, P_VALUE(response->payload));
 }
 
 int arrow_gateway_logs_list(log_t **logs, arrow_gateway_t *gateway, int n, ...) {
@@ -274,9 +274,7 @@ static void _gateway_devices_list_init(http_request_t *request, void *arg) {
 static int _gateway_devices_list_proc(http_response_t *response, void *arg) {
     device_info_t **devs = (device_info_t **)arg;
     *devs = NULL;
-    if ( device_info_parse(devs, P_VALUE(response->payload)) < 0 )
-        return GATEWAY_DEVLIST_ERROR;
-    return GATEWAY_SUCCESS;
+    return device_info_parse(devs, P_VALUE(response->payload));
 }
 
 int arrow_gateway_devices_list(device_info_t **list, const char *hid) {
@@ -361,9 +359,8 @@ static void _gateway_update_init(http_request_t *request, void *arg) {
 
 static int _gateway_update_proc(http_response_t *response, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  if ( response->m_httpResponseCode != 200 )
-      return GATEWAY_UPDATE_ERROR;
-  return GATEWAY_SUCCESS;
+  if ( response->m_httpResponseCode != 200 ) return -1;
+  return 0;
 }
 
 int arrow_gateway_update(arrow_gateway_t *gateway) {

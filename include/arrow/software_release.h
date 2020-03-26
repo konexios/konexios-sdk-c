@@ -28,6 +28,7 @@ typedef int (*__release_cb)(const char *url,
 typedef int (*__download_init_cb)(void *arg);
 typedef int (*__download_payload_cb)(const char *,int,int);
 typedef int (*__download_complete_cb)(int);
+typedef void (*__download_finish_cb)(void);
 
 typedef struct _release_sched_ {
   property_t trans_hid;
@@ -61,7 +62,8 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
 int arrow_software_release_dowload_set_cb(
         __download_init_cb icb,
         __download_payload_cb pcb,
-        __download_complete_cb ccb);
+        __download_complete_cb ccb,
+        __download_finish_cb finish_callback);
 
 int arrow_software_release(const char *token,
                            const char *chsum,

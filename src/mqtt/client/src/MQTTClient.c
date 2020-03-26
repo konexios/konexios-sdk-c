@@ -16,6 +16,15 @@
  *   Ian Craggs - add ability to set message handler separately #6
  *******************************************************************************/
 #include "MQTTClient.h"
+#include "arrow/mqtt.h"
+
+// This is where out_msg_t is defined
+#include <arrow/mqtt_out_msg.h>
+
+#if defined(__arm__)
+//#include "trace.h" //factory ota failure debug
+#define trace(...)
+#endif
 
 #if defined(__USE_STD__)
   #include <stdio.h>
@@ -23,6 +32,7 @@
 #endif
 
 extern int cycle_r(MQTTClient* c, TimerInterval* timer);
+extern mqtt_env_t *get_telemetry_env();
 
 static void NewMessageData(MessageData *md, MQTTString *aTopicName, MQTTMessage *aMessage) {
   md->topicName = aTopicName;
@@ -35,12 +45,23 @@ int getNextPacketId(MQTTClient *c) {
 }
 
 
-int sendPacket(MQTTClient *c, int length, TimerInterval *timer) {
+/**
+ * @brief
+ * @b Purpose:	Send an outbound message
+ *
+ * @param[in]	c: pointer to MQTTClient with write-to destination set
+ * @param[in]	buf: message buffer
+ * @param[in]	length: length of message
+ * @param[in]	timer:	pointer to timer governing max. transmission time allowed
+ *
+ * @return MQTT_SUCCESS on successful transmission, else FAILURE
+ */
+int sendPacket(MQTTClient *c, unsigned char* buf, int length, TimerInterval *timer) {
   int rc = FAILURE,
       sent = 0;
 
   while (sent < length && !TimerIsExpired(timer)) {
-    rc = c->ipstack->mqttwrite(c->ipstack, &c->buf[sent], length, TimerLeftMS(timer));
+    rc = c->ipstack->mqttwrite(c->ipstack, &buf[sent], length, TimerLeftMS(timer));
     if (rc <= 0) { // there was an error writing the data
         rc = FAILURE;
         break;
@@ -76,6 +97,7 @@ void MQTTClientInit(MQTTClient *c, Network *network, unsigned int command_timeou
   c->ping_outstanding = 0;
   c->delivery_cb = 0;
   c->defaultMessageHandler = NULL;
+  c->queueHandler = NULL;
   c->next_packetid = 1;
   TimerInit(&c->last_sent);
   TimerInit(&c->last_received);
@@ -84,7 +106,44 @@ void MQTTClientInit(MQTTClient *c, Network *network, unsigned int command_timeou
 #endif
 }
 
-int decodePacket(MQTTClient *c, int *value, int timeout) {
+/**
+ * @brief
+ * @b Purpose:	Send an MQTT Ack packet on the wire
+ *
+ * @param	msg: pointer to an outbound message with a properly built MQTT ack in the buffer
+ *
+ * @return MQTT_SUCCESS on successful transmission, else FAILURE
+ */
+int MQTTSendAck(out_msg_t *out_msg)
+{
+    mqtt_env_t *tmp;
+	TimerInterval timer;
+	int rc = FAILURE;
+
+    if( mqtt_is_telemetry_connect() ) {
+        tmp = get_telemetry_env();
+        if (tmp) {
+     	    TimerInit(&timer);
+     	    TimerCountdownMS(&timer, tmp->client.command_timeout_ms);
+
+     		rc = sendPacket(&tmp->client, out_msg->mqtt_ack.resp, out_msg->mqtt_ack.len, &timer); // send the packet
+        }
+    }
+
+    return rc;
+}
+
+/**
+ * @brief
+ * @b Purpose:	Inspect a received MQTT packet to determine its length.
+ *
+ * @param[in]	c: pointer to an MQTT client, info for receive buffer and channel.
+ * @param[out]  value: Length in bytes of inbound packet. 0 on failure.
+ * @param[in]	timeout:  maximum time in msec to wait while reading incoming stream.
+ *
+ * @return number of bytes read on inbound packet to determine length, else 0 on failure.
+ */
+int decodePacketLength(MQTTClient *c, int *value, int timeout) {
   unsigned char i = 0x0;
   int multiplier = 1;
   int len = 0;
@@ -94,11 +153,18 @@ int decodePacket(MQTTClient *c, int *value, int timeout) {
   do {
     int rc = MQTTPACKET_READ_ERROR;
     rc = c->ipstack->mqttread(c->ipstack, &i, 1, timeout);
+//    trace(TRACE_DEBUG, "read bytes:%d", rc); //gs
     if (rc != 1) {
+ //     trace(TRACE_DEBUG, "exit _read returned: %d", rc); //gs
+      *value = 0; //gs
+      len = 0; //gs
       goto exit;
     }
     if (++len > MAX_NO_OF_REMAINING_LENGTH_BYTES) {
       rc = MQTTPACKET_READ_ERROR; /* bad data */
+//      trace(TRACE_DEBUG, "error, len > MAX_NO_OF_REMAINING_LENGTH_BYTES"); //gs
+      *value = 0; //gs
+      len = 0; //gs
       goto exit;
     }
     *value += (i & 127) * multiplier;
@@ -122,7 +188,7 @@ static int readPacket(MQTTClient *c, TimerInterval *timer) {
 
   len = 1;
   /* 2. read the remaining length.  This is variable in itself */
-  decodePacket(c, &rem_len, TimerLeftMS(timer));
+  decodePacketLength(c, &rem_len, TimerLeftMS(timer));
   if ( rem_len <= 0 ) {
     // didn't receive decode byte
     rc = 0;
@@ -218,6 +284,97 @@ int deliverMessage(MQTTClient *c, MQTTString *topicName, MQTTMessage *message) {
   return rc;
 }
 
+/**
+ * @brief
+ * @b Purpose:	Build up an MQTT acknowledge packet.
+ *
+ * @param[in]	c: pointer to an MQTT client, info for transmission buffer and channel.
+ * @param[in]	msg: pointer to message for packet id.
+ * @param[in]	packet_type: the packet type to acknowledge.
+ * @param[in]	timer: pointer to a delivery interval timer.
+ *
+ * @return FAILURE if Ack could not be sent, else MQTT_SUCCESS.
+ */
+int MQTTBuildAck(MQTTClient *c, MQTTMessage *msg, int packet_type, TimerInterval *timer) {
+   int len=0;
+   int rc = MQTT_SUCCESS;
+   int acktype=0;
+   out_msg_t out_msg;
+
+   switch (packet_type) {
+     default:
+        break;
+     case CONNECT:
+        // if we are server?
+       acktype = CONNACK;
+       break;
+     case CONNACK:
+     case PUBACK:
+     case SUBACK:
+     case UNSUBACK:
+     case PUBCOMP:
+     case PINGRESP:
+        break;
+     case PUBLISH:
+        if (msg->qos == QOS1) {
+        	acktype = PUBACK;
+    	}
+    	else if (msg->qos == QOS2) {
+    		acktype = PUBREC;
+    	}
+    	else {
+    		// nothing to send
+     	}
+       break;
+     case PUBREC:
+    	 acktype = PUBREL;
+    	 break;
+     case PUBREL:
+        acktype = PUBCOMP;
+        break;
+     case SUBSCRIBE:
+         acktype = SUBACK;
+         break;
+     case UNSUBSCRIBE:
+         acktype = UNSUBACK;
+         break;
+     case PINGREQ:
+        acktype = PINGRESP;
+        break;
+   }
+
+   if (acktype != 0) {
+      out_msg.type = OUT_MQTT_ACK;
+      len = MQTTSerialize_ack(out_msg.mqtt_ack.resp, MQTT_ACK_LENGTH, acktype, 0, msg->id);
+
+      if (len <= 0) {
+         rc = FAILURE;
+      } else {
+         out_msg.mqtt_ack.len = len;
+         if (c->queueHandler != NULL) {
+        	 // send Acks with high priority
+            c->queueHandler(&out_msg, 1);
+         } else {
+            // fall-back to send immediate if queue function is not set.
+            rc = sendPacket(c, out_msg.mqtt_ack.resp, out_msg.mqtt_ack.len, timer);
+         }
+         
+         trace(TRACE_DEBUG,"sent ACK type: %d", acktype);
+      }
+   }
+
+   return rc;
+}
+
+/**
+ * @brief
+ * @b Purpose:	Check if we need to signal client on-line.
+ * 				Send a ping message as needed.
+ *
+ * @param[in]	c: pointer to an MQTT client, info for transmission buffer and channel.
+ *
+ * @return FAILURE if Ping response not received, else MQTT_SUCCESS.
+ */
 int keepalive(MQTTClient *c) {
   int rc = MQTT_SUCCESS;
 
@@ -229,18 +386,46 @@ int keepalive(MQTTClient *c) {
     if (c->ping_outstanding) {
       rc = FAILURE;  /* PINGRESP not received in keepalive interval */
     } else {
-      TimerInterval timer;
-      TimerInit(&timer);
-      TimerCountdownMS(&timer, 1000);
-      int len = MQTTSerialize_pingreq(c->buf, c->buf_size);
-      if (len > 0 && (rc = sendPacket(c, len, &timer)) == MQTT_SUCCESS) { // send the ping packet
-        c->ping_outstanding = 1;
-      }
+    	MQTTDeliverPing(c);
     }
   }
 
 exit:
   return rc;
+}
+
+
+/**
+ * @brief
+ * @b Purpose:	Build and send an MQTT ping message
+ *
+ * @param[in]	c: pointer to an MQTT client, info for transmission buffer and channel.
+ *
+ * @return FAILURE if Ping could not be sent, else MQTT_SUCCESS.
+ */
+int MQTTDeliverPing(MQTTClient *c) {
+   int rc = MQTT_SUCCESS;
+   out_msg_t out_msg;
+
+   out_msg.mqtt_ack.len = MQTTSerialize_pingreq(out_msg.mqtt_ack.resp, MQTT_ACK_LENGTH);
+   if (out_msg.mqtt_ack.len > 0) {
+      if (c->queueHandler != NULL) {
+         c->queueHandler(&out_msg, 0);
+      } else {
+         TimerInterval timer;
+
+         // fall-back to send immediate if queue function is not set.
+         TimerInit(&timer);
+         TimerCountdownMS(&timer, 1000);
+         rc = sendPacket(c, out_msg.mqtt_ack.resp, out_msg.mqtt_ack.len, &timer);
+      }
+
+      c->ping_outstanding = 1;
+   } else {
+      rc = FAILURE;
+   }
+
+   return rc;
 }
 
 
@@ -262,8 +447,8 @@ void MQTTCloseSession(MQTTClient *c) {
 }
 
 int cycle(MQTTClient *c, TimerInterval *timer) {
-  int len = 0,
-      rc = MQTT_SUCCESS;
+  int rc = MQTT_SUCCESS;
+  MQTTMessage msg;
 
   int packet_type = readPacket(c, timer);     /* read the socket, see what work is due */
   switch (packet_type) {
@@ -280,7 +465,6 @@ int cycle(MQTTClient *c, TimerInterval *timer) {
       break;
     case PUBLISH: {
       MQTTString topicName;
-      MQTTMessage msg;
       int intQoS;
       msg.payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
       if (MQTTDeserialize_publish(&msg.dup, &intQoS, &msg.retained, &msg.id, &topicName,
@@ -289,20 +473,10 @@ int cycle(MQTTClient *c, TimerInterval *timer) {
       }
       msg.qos = (enum QoS)intQoS;
       deliverMessage(c, &topicName, &msg);
-      if (msg.qos != QOS0) {
-        if (msg.qos == QOS1) {
-          len = MQTTSerialize_ack(c->buf, c->buf_size, PUBACK, 0, msg.id);
-        } else if (msg.qos == QOS2) {
-          len = MQTTSerialize_ack(c->buf, c->buf_size, PUBREC, 0, msg.id);
-        }
-        if (len <= 0) {
-          rc = FAILURE;
-        } else {
-          rc = sendPacket(c, len, timer);
-        }
-        if (rc == FAILURE) {
-          goto exit;  // there was a problem
-        }
+
+      rc = MQTTBuildAck(c, &msg, packet_type, timer);
+      if (rc == FAILURE) {
+        goto exit;  // there was a problem
       }
       break;
     }
@@ -310,16 +484,19 @@ int cycle(MQTTClient *c, TimerInterval *timer) {
     case PUBREL: {
       unsigned short mypacketid;
       unsigned char dup, type;
-      if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-        rc = FAILURE;
-      } else if ((len = MQTTSerialize_ack(c->buf, c->buf_size,
-                                          (packet_type == PUBREC) ? PUBREL : PUBCOMP, 0, mypacketid)) <= 0) {
-        rc = FAILURE;
-      } else if ((rc = sendPacket(c, len, timer)) != MQTT_SUCCESS) { // send the PUBREL packet
-        rc = FAILURE;  // there was a problem
+      int result;
+
+      result = MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size);
+      if (result != 1) {
+    	  rc = FAILURE;
+    	  goto exit;
       }
-      if (rc == FAILURE) {
-        goto exit;  // there was a problem
+
+      msg.id = mypacketid;
+      result = MQTTBuildAck(c, &msg, packet_type, timer);
+      if (result != MQTT_SUCCESS) {
+    	  rc = FAILURE;
+    	  goto exit;
       }
       break;
     }
@@ -432,7 +609,7 @@ int MQTTConnectWithResults(MQTTClient *c, MQTTPacket_connectData *options, MQTTC
   if ((len = MQTTSerialize_connect(c->buf, c->buf_size, options)) <= 0) {
     goto exit;
   }
-  if ((rc = sendPacket(c, len, &connect_timer)) != MQTT_SUCCESS) { // send the connect packet
+  if ((rc = sendPacket(c, c->buf, len, &connect_timer)) != MQTT_SUCCESS) { // send the connect packet
     goto exit;  // there was a problem
   }
 
@@ -525,7 +702,7 @@ int MQTTSubscribeWithResults(MQTTClient *c, const char *topicFilter, enum QoS qo
   if (len <= 0) {
     goto exit;
   }
-  if ((rc = sendPacket(c, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
+  if ((rc = sendPacket(c, c->buf, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
     goto exit;  // there was a problem
   }
 
@@ -579,7 +756,7 @@ int MQTTUnsubscribe(MQTTClient *c, const char *topicFilter) {
   if ((len = MQTTSerialize_unsubscribe(c->buf, c->buf_size, 0, getNextPacketId(c), 1, &topic)) <= 0) {
     goto exit;
   }
-  if ((rc = sendPacket(c, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
+  if ((rc = sendPacket(c, c->buf, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
     goto exit;  // there was a problem
   }
 
@@ -629,30 +806,8 @@ int MQTTPublish(MQTTClient *c, const char *topicName, MQTTMessage *message) {
   if (len <= 0) {
     goto exit;
   }
-  if ((rc = sendPacket(c, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
+  if ((rc = sendPacket(c, c->buf, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
     goto exit;  // there was a problem
-  }
-
-  if (message->qos == QOS1) {
-    if (waitfor(c, PUBACK, &timer) == PUBACK) {
-      unsigned short mypacketid;
-      unsigned char dup, type;
-      if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-        rc = FAILURE;
-      }
-    } else {
-      rc = FAILURE;
-    }
-  } else if (message->qos == QOS2) {
-    if (waitfor(c, PUBCOMP, &timer) == PUBCOMP) {
-      unsigned short mypacketid;
-      unsigned char dup, type;
-      if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1) {
-        rc = FAILURE;
-      }
-    } else {
-      rc = FAILURE;
-    }
   }
 
 exit:
@@ -666,10 +821,19 @@ exit:
 }
 
 
+/**
+ * @brief
+ * @b Purpose:	Build and send an MQTT disconnect message
+ *
+ * @param[in]	c: pointer to an MQTT client, info for transmission buffer and channel.
+ *
+ * @return FAILURE if Disconnect could not be sent, else MQTT_SUCCESS.
+ */
 int MQTTDisconnect(MQTTClient *c) {
   int rc = FAILURE;
   TimerInterval timer;     // we might wait for incomplete incoming publishes to complete
   int len = 0;
+  unsigned char buf[MQTT_DISCONNECT_LENGTH];
 
 #if defined(MQTT_TASK)
   MutexLock(&c->mutex);
@@ -677,9 +841,9 @@ int MQTTDisconnect(MQTTClient *c) {
   TimerInit(&timer);
   TimerCountdownMS(&timer, c->command_timeout_ms);
 
-  len = MQTTSerialize_disconnect(c->buf, c->buf_size);
+  len = MQTTSerialize_disconnect(buf, MQTT_DISCONNECT_LENGTH);
   if (len > 0) {
-    rc = sendPacket(c, len, &timer);  // send the disconnect packet
+    rc = sendPacket(c, buf, len, &timer);  // send the disconnect packet
   }
   MQTTCloseSession(c);
 
@@ -692,3 +856,25 @@ int MQTTDisconnect(MQTTClient *c) {
 DLLExport int MQTTIsConnected(MQTTClient *client) {
   return client->isconnected;
 }
+
+/**
+ * @brief
+ * @b Purpose:	Register an external function to queue MQTT responses
+ * \n           (generally, a means of queueing ACKs generated by the SDK)
+ *
+ * @param[in]	queueHandler: pointer to application function to queue outbound messages
+ *
+ * @return Nil.
+ */
+void MQTTSetQueueCallback(void (*queueHandler))
+{
+    mqtt_env_t *tmp;
+
+    if( mqtt_is_telemetry_connect() ) {
+        tmp = get_telemetry_env();
+        if (tmp) {
+        	tmp->client.queueHandler = queueHandler;
+        }
+    }
+}
+

@@ -127,7 +127,7 @@ int codepoint_len(const unsigned int cp)
 unsigned int to_utf8(const unsigned int cp)
 {
 	unsigned int retval = 0x0;
-	char *ret = &retval;
+	char *ret = (char*)&retval;
 	const int bytes = codepoint_len(cp);
 
 	int shift = utf[0]->bits_stored * (bytes - 1);

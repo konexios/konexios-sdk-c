@@ -9,6 +9,7 @@
 #include <MQTTClient.h>
 #include <mqtt/client/client.h>
 #include <debug.h>
+#include "arrow/transaction.h"
 
 typedef struct mqtthead {
     MQTTHeader head;
@@ -17,13 +18,13 @@ typedef struct mqtthead {
 
 typedef int(*_cycle_callback)(MQTTClient* c, mqtt_head_t *msg, TimerInterval* timer);
 
-extern int sendPacket(MQTTClient *c, int length, TimerInterval *timer);
-extern int decodePacket(MQTTClient *c, int *value, int timeout);
+extern int decodePacketLength(MQTTClient *c, int *value, int timeout);
 extern int keepalive(MQTTClient *c);
 extern int getNextPacketId(MQTTClient *c);
 extern int waitfor(MQTTClient *c, int packet_type, TimerInterval *timer);
 
 static int cycle_connack(MQTTClient* c, mqtt_head_t *msg, TimerInterval* timer) {
+	//DBG(" "); //debug for factory ota fail
     int rc = MQTT_SUCCESS;
     if ( (rc = c->ipstack->mqttread(c->ipstack,
                                     c->readbuf,
@@ -45,6 +46,18 @@ int waitfor_r(MQTTClient *c, int packet_type, TimerInterval *timer) {
   return rc;
 }
 
+/**
+ * @brief
+ * @b Purpose:	Handle an MQTT publish packet from the broker and pass to the
+ * \n           appropriate app handler as registered with arrow_command_handler_add( )
+ * \n			e.g. feed_cmd(), schedule_add(), schedule_clear()...
+ *
+ * @param[in]	c: pointer to an MQTT client, info for receive buffer and channel.
+ * @param[in]	m:  pointer to the MQTT header previously decoded for this incoming packet.
+ * @param[in]	timer:  pointer to a timer initialized with the maximum time allowed to receive the packet
+ *
+ * @return MQTT_SUCCESS on
+ */
 static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     int rc = MQTT_SUCCESS;
     int rest_buffer = c->readbuf_size;
@@ -67,7 +80,8 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
             if ( r > 0 ) total_len -= r;
             else break;
         }
-        return -1;
+        DBG("ERROR --> Rejecting Packet.");
+        return FAILURE;
     }
 
     int len = c->ipstack->mqttread(c->ipstack,
@@ -75,6 +89,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
                                    2,
                                    TimerLeftMS(timer));
     if ( len <= 0 ) {
+        DBG("ERROR --> Rejecting Packet.");
         return FAILURE;
     }
     total_len -= len;
@@ -86,6 +101,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 
     if ( topicName.lenstring.len >= total_len ) {
         // too short buffer or broken packet
+        DBG("ERROR --> Too short buffer or broken packet.");
         return FAILURE;
     }
 
@@ -94,6 +110,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
                                    topicName.lenstring.len,
                                    TimerLeftMS(timer));
     if ( len != topicName.lenstring.len ) {
+        DBG("ERROR --> Failed to read the topic length.");
         return FAILURE;
     }
     total_len -= len;
@@ -101,7 +118,10 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 
     topicName.lenstring.data = (char*)c->readbuf;
 
-    if ( rest_buffer <= 0 ) return FAILURE;
+    if ( rest_buffer <= 0 ) {
+        DBG("ERROR --> read buffer ran out of space!");
+        return FAILURE;
+    }
 
     if (msg.qos > 0) {
         uint8_t tmp[2];
@@ -110,12 +130,22 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
                                            2,
                                            TimerLeftMS(timer));
         if ( len != 2 ) {
+            DBG("ERROR --> Failed to read message id when processing inbound mqtt.");
             return FAILURE;
         }
 
         total_len -= len;
         curdata = tmp;
         msg.id = readInt(&curdata);
+    }
+
+    if(msg.dup == 0)
+    {
+    	DBG("PUBLISH ID %d:, retain %d", msg.id, msg.retained);
+    }
+    else
+    {
+    	DBG("*** RE-PUBLISH ID %d: dup %d, retain %d ***", msg.id, msg.dup, msg.retained);
     }
 
     msg.payloadlen = total_len;
@@ -132,6 +162,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
                                        chunk,
                                        TimerLeftMS(timer));
         if ( len <= 0 ) {
+            DBG("ERROR --> Failed to read mqtt payload.  Disconnecting and Returning ERROR.");
             return FAILURE;
         } else {
             total_len -= len;
@@ -145,20 +176,45 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 
     if ( !msg_err ) {
         msg_err = arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
+    } else {
+        DBG("ERROR --> Arrow delivery message done error.  Will not send ACK!");
     }
 
     // don't send ack if error
-    if ( !msg_err && msg.qos != QOS0)
-    {
-        if (msg.qos == QOS1) {
-            len = MQTTSerialize_ack(c->buf, c->buf_size, PUBACK, 0, msg.id);
-        } else if (msg.qos == QOS2) {
-            len = MQTTSerialize_ack(c->buf, c->buf_size, PUBREC, 0, msg.id);
-        }
-        if (len <= 0)
-            rc = FAILURE;
-        else
-            rc = sendPacket(c, len, timer);
+    if ( !msg_err ) {
+    	rc = MQTTBuildAck(c, &msg, PUBLISH, timer);
+    }
+    return rc;
+}
+
+static int cycle_puback(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
+    int rc = MQTT_SUCCESS;
+    int total_len = m->rem_len;
+
+    //DBG("RX %d : PUBACK with QoS %d and %d rem_len", m->head.bits.type, m->head.bits.qos, total_len);
+
+    uint8_t buf[2] = {0};
+    unsigned char* msgIdP = buf;
+    if (total_len > 0 && total_len < 3) {
+    	int len = c->ipstack->mqttread(c->ipstack,
+                                   buf,
+                                   total_len,
+                                   TimerLeftMS(timer));
+		if ( len <= 0 )
+		{
+			rc = FAILURE;
+		}
+		else
+		{
+		    int receivedId = readInt(&msgIdP);
+		    transaction_match(receivedId, PUBLISH);
+
+			DBG("PUBACK msgId: %d", receivedId);
+		}
+    }
+    else {
+    	DBG("\trem_len %d invalid", total_len);
+    	rc = FAILURE;
     }
     return rc;
 }
@@ -189,70 +245,120 @@ static int cycle_ping(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 }
 
 _cycle_callback __cycle_collection[] = {
-    NULL,
+    NULL, //reserved
     NULL,
     cycle_connack,
     cycle_publish,
+	cycle_puback,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
     NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    cycle_subscribe,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
     cycle_ping,
-    NULL
+	NULL,
+	//NULL	//reserved
 };
 
+/**
+ * @brief
+ * @b Purpose:	Monitor the receive buffer for inbound MQTT messages and pass a
+ * \n           valid packet to the appropriate receive handler in cycle_collection[]
+ *
+ * @param[in]	c: pointer to an MQTT client, info for receive buffer and channel.
+ * @param[in]	timeout:  maximum time in msec to wait while reading incoming stream.
+ *
+ * @return the type of MQTT packet received on a valid packet, else an appropriate failure code (-ve)
+ */
 int cycle_r(MQTTClient* c, TimerInterval* timer) {
     mqtt_head_t header = {{0}, 0};
     int len = 0;
     int rem_len = 0;
     int rc = FAILURE;
     uint32_t pack_type = 0;
-    uint8_t tmp[4];
+    uint8_t tmp[16];
+//    DBG("xxxxxxxxxxx Entry. xxxxxxxxxxx")
+    // Read MQTT packet Control Header (1 Byte)
     rc = c->ipstack->mqttread(c->ipstack, tmp, 1, TimerLeftMS(timer));
-    if (rc != 1) {
+    if (rc <= 0)
+    {
+        if(rc == -1) {
+        	DBG("MQTT read empty (%d)", rc);
+        }else {
+        	DBG("MQTT read rc: %d", rc);
+        }
         rc = FAILURE;
         goto exit;
     }
+    // Received an mqtt header byte. Reload receive timer.
+    TimerCountdownMS(timer, MQTT_RECEIVE_TIMEOUT);
+
     header.head.byte = tmp[0];
     pack_type = (uint32_t)header.head.bits.type;
-//    DBG("mqtt recv type %d", (int)pack_type);
+    DBG("mqtt recv header message type %d", (int)pack_type);
     if ( pack_type < 1 || pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) {
-        rc = FAILURE;
+        DBG("Control Header Data Error, pack_type = %lu", pack_type);
+        if(pack_type < CONNECT) {
+            DBG("pack_type Forbidden/Reserved");
+        }
+        else {
+            DBG("pack_type > #of handlers in __cycle_collection");
+        }
+//        rc = FAILURE;
+//        goto exit;
+    }
+
+    // Read MQTT packet Packet Length (1-4 Bytes)
+    len = decodePacketLength(c, &rem_len, TimerLeftMS(timer));
+
+    // If the decodePacket returned an error or the packet length is too large
+    if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN ){
+        DBG("Packet Length error.");
+        rc = FAILURE_REQUIRES_RESTART; // SP
         goto exit;
     }
 
-    len = decodePacket(c, &rem_len, TimerLeftMS(timer));
-    if ( len <= 0 || rem_len > MQTT_CLIENT_MAX_MSG_LEN ) goto exit;
-
-    if ( !__cycle_collection[pack_type] ) {
-        while ( rem_len ) {
+    // If the MQTT packet type is not supported
+    if ( __cycle_collection[pack_type] == NULL ) {
+    	// Read and ignore/dump the packet contents
+        DBG("Control Header type is not supported. Dump the packet.");
+    	while ( rem_len ) {
             int chunk = rem_len < (int)sizeof(tmp) ? rem_len : (int)sizeof(tmp);
             int r = c->ipstack->mqttread(c->ipstack, tmp, chunk, TimerLeftMS(timer));
             if ( r > 0 ) rem_len -= r;
             else break;
         }
         rc = pack_type;
+//        rc = FAILURE; // pack_type;  SP
         goto exit;
     }
+
+    // Pass execution to the Control Header-specific read function.
     header.rem_len = rem_len;
     rc = __cycle_collection[pack_type](c, &header, timer);
     if ( rc == MQTT_SUCCESS ) {
         TimerCountdown(&c->last_received, c->keepAliveInterval);
     }
+    else{
+        DBG("MQTT Packet Payload failure");
+        rc = FAILURE_REQUIRES_RESTART;
+        goto exit;
+    }
 
     if (keepalive(c) != MQTT_SUCCESS) {
         //check only keepalive FAILURE status so that previous FAILURE status can be considered as FAULT
+        DBG("Keepalive failure.  ");
         rc = FAILURE;
     }
 
 exit:
     if (rc == MQTT_SUCCESS)
         rc = pack_type;
+
+//    DBG("xxxxxxxxxxx Exit. rc = %d xxxxxxxxxxx", rc);
     return rc;
 }
 
@@ -269,18 +375,24 @@ int MQTTPublish_part(MQTTClient* c,
 #if defined(MQTT_TASK)
       MutexLock(&c->mutex);
 #endif
-      if (!c->isconnected)
+      if (!c->isconnected) {
             goto exit;
+      }
 
     TimerInit(&timer);
     TimerCountdownMS(&timer, c->command_timeout_ms);
 
-    if (message->qos == QOS1 || message->qos == QOS2)
-        message->id = getNextPacketId(c);
+    if (message->dup == MQTT_ORIGINAL) {
+    	//Sending the first attempt. Get next id if needed.
+        if (message->qos == QOS1 || message->qos == QOS2) {
+            message->id = getNextPacketId(c);
+        }
+    }
 
     int payloadlen = drive->init(drive->data);
-    if ( payloadlen <= 0 )
+    if ( payloadlen <= 0 ) {
         goto exit;
+    }
     int rem_len = MQTTSerialize_publishLength(message->qos, topic, payloadlen);
 
     unsigned char *ptr = c->buf;
@@ -297,13 +409,15 @@ int MQTTPublish_part(MQTTClient* c,
 
     writeMQTTString(&ptr, topic);
 
-    if (message->qos > 0)
+    if (message->qos > 0) {
         writeInt(&ptr, message->id);
+    }
 
     int len = ptr - c->buf;
 
-    if ((rc = sendPacket(c, len, &timer)) != MQTT_SUCCESS) // send the subscribe packet
+    if ((rc = sendPacket(c, c->buf, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
         goto exit; // there was a problem
+    }
 
     ptr = c->buf;
     // send packet body
@@ -313,40 +427,23 @@ int MQTTPublish_part(MQTTClient* c,
         int chunk = total < len ? total : len;
         chunk = drive->part(drive->data, (char*)ptr, chunk);
         if ( chunk <= 0 ) {
+//        	DBG("chunk failure.")
             rc = FAILURE;
             goto exit;
         }
-        if ((rc = sendPacket(c, chunk, &timer)) != MQTT_SUCCESS) // send the subscribe packet
+        if ((rc = sendPacket(c, c->buf, chunk, &timer)) != MQTT_SUCCESS){ // send the subscribe packet
+        	DBG("sendPacket failure.")
             goto exit;
+        }
         total -= chunk;
     }
     if ( !total ) {
         drive->fin(drive->data);
         rc = MQTT_SUCCESS;
     } else {
+//    	DBG("total failure.")
         rc = FAILURE;
         goto exit;
-    }
-
-    if (message->qos == QOS1) {
-        if (waitfor(c, PUBACK, &timer) == PUBACK) {
-            unsigned short mypacketid;
-            unsigned char dup, type;
-            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
-                rc = FAILURE;
-        } else {
-            rc = FAILURE;
-        }
-    } else if (message->qos == QOS2) {
-        if (waitfor(c, PUBCOMP, &timer) == PUBCOMP)
-        {
-            unsigned short mypacketid;
-            unsigned char dup, type;
-            if (MQTTDeserialize_ack(&type, &dup, &mypacketid, c->readbuf, c->readbuf_size) != 1)
-                rc = FAILURE;
-        }
-        else
-            rc = FAILURE;
     }
 
 exit:
@@ -386,7 +483,7 @@ int arrow_mqtt_client_subscribe(MQTTClient *c,
     if (len <= 0) {
       goto exit;
     }
-    if ((rc = sendPacket(c, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
+    if ((rc = sendPacket(c, c->buf, len, &timer)) != MQTT_SUCCESS) { // send the subscribe packet
       goto exit;  // there was a problem
     }
 
