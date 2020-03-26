@@ -10,6 +10,8 @@
 
 #include <arrow/credentials.h>
 #include <arrow/device.h>
+#include <arrow/routine.h>
+#include <arrow/transaction.h>
 #include <arrow/api/device/event.h>
 #include <arrow/api/device/info.h>
 #include <arrow/api/json/parse.h>

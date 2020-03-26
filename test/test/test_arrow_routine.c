@@ -11,6 +11,7 @@
 #include <arrow/credentials.h>
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
+#include <arrow/transaction.h>
 #include <arrow/api/device/info.h>
 #include <arrow/api/json/parse.h>
 #include <arrow/gateway.h>
@@ -138,7 +139,7 @@ void test_arrow_connect_gateway(void) {
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
 
-    int ret = arrow_connect_gateway(&_test_gateway);
+    int ret = arrow_connect_gateway(&_test_gateway,0);
     TEST_ASSERT_EQUAL_INT(0, ret);
     TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
 }
@@ -204,10 +205,10 @@ void test_arrow_gateway_initialize_routine() {
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
 
-    int ret = arrow_gateway_initialize_routine();
+    int ret = arrow_initialize_routine(0);
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
-    TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(current_gateway()->hid));
-    TEST_ASSERT_EQUAL_INT(IoT, current_gateway_config()->type);
+    TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
+    TEST_ASSERT_EQUAL_INT(IoT, _test_gateway_config.type);
     TEST_ASSERT_EQUAL_STRING(TEST_API_KEY, get_api_key());
     TEST_ASSERT_EQUAL_STRING(TEST_SECRET_KEY, get_secret_key());
 }

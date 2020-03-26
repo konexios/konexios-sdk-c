@@ -9,6 +9,7 @@
 #include <arrow/credentials.h>
 #include <arrow/api/device/event.h>
 #include <arrow/device.h>
+#include <arrow/transaction.h>
 #include <arrow/api/device/info.h>
 #include <arrow/api/json/parse.h>
 #include <arrow/gateway.h>
@@ -189,9 +190,9 @@ void test_mqtt_connect(void) {
     arrow_routine_error_t ret = arrow_initialize_routine();
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
 
-    property_copy(&current_gateway()->hid, p_const(TEST_GATEWAY_HID));
-    property_copy(&current_device()->hid, p_const(TEST_DEVICE_HID));
-    property_copy(&current_device()->gateway_hid, p_const(TEST_GATEWAY_HID));
+    property_copy(&arrow_get_current_gateway()->hid, p_const(TEST_GATEWAY_HID));
+    property_copy(&arrow_get_current_device()->hid, p_const(TEST_DEVICE_HID));
+    property_copy(&arrow_get_current_device()->gateway_hid, p_const(TEST_GATEWAY_HID));
 
     ret = arrow_mqtt_connect_routine();
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);

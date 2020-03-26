@@ -30,4 +30,6 @@
 #define STATIC_JSON
 #define STATIC_DYNAMIC_PROPERTY
 
+#define __arm__
+
 #endif //

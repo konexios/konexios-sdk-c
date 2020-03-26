@@ -53,3 +53,8 @@ void timestamp_string(acn_timestamp_t *ts, char *s) {
              ts->sec,
              ts->msec);
 }
+
+
+void timestamp(acn_timestamp_t *ts) {
+
+}

@@ -53,6 +53,7 @@
   :include:
     - acn-sdk-c/include
     - +:acn-sdk-c
+    - +:acn-sdk-c/src
     - +:acn-sdk-c/include/arrow
     - +:acn-sdk-c/include/json
     - +:acn-sdk-c/include/sys
