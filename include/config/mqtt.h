@@ -13,13 +13,9 @@
 # define DEFAULT_MQTT_TIMEOUT 10000
 #endif
 
-#if defined(__IBM__) || \
-  ( defined(__AZURE__) || !defined(DEV_ENV) )
-# define MQTT_CIPHER
-#endif
-
 #if defined(__IBM__) || defined(__AZURE__)
 #define MQTT_TWO_CHANNEL
+# define MQTT_CIPHER
 #endif
 
 #if !defined(MQTT_BUF_LEN)
@@ -67,19 +63,11 @@ enum {
 #endif
 
 #if !defined(MQTT_COMMAND_ADDR)
-# if defined(DEV_ENV)
-#  define MQTT_COMMAND_ADDR "pgsdev01.arrowconnect.io"
-# else
-#  define MQTT_COMMAND_ADDR "mqtt-a01.arrowconnect.io"
-# endif
+#  define MQTT_COMMAND_ADDR "mqtt-helios.konexios.io"
 #endif
 
 #if !defined(VHOST)
-# if defined(DEV_ENV)
-#  define VHOST "/themis.dev"
-# else
 #  define VHOST "/pegasus"
-# endif
 #endif
 
 #if defined(__IBM__)

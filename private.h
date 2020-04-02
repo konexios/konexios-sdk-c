@@ -3,8 +3,6 @@
 
 #define DEFAULT_API_KEY             "abc"
 #define DEFAULT_SECRET_KEY          "xyz"
-//#define DEV_ENV
-//#define HTTP_DEBUG
 
 #define DEFAULT_WIFI_SSID           "yourSSID"
 #define DEFAULT_WIFI_PASS           "password"
@@ -29,6 +27,8 @@
 #define ARROW_DYNAMIC_STATIC_BUFFER_SIZE 1
 #define STATIC_JSON
 #define STATIC_DYNAMIC_PROPERTY
+
+# define HTTP_CIPHER
 
 #define __arm__
 
