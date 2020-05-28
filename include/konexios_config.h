@@ -18,48 +18,48 @@ typedef enum {
 } scheme_http_t;
 
 typedef enum {
-	arrow_mqtt_scheme_tcp,
-	arrow_mqtt_scheme_tls
+    arrow_mqtt_scheme_tcp,
+    arrow_mqtt_scheme_tls
 } mqtt_scheme_t;
 
 
 typedef struct {
-    char 			mqtthost[255];
-    mqtt_scheme_t 	mqtt_scheme;
-    uint16_t 		mqttport;
-    char 			mqttvirtualhost[50];
+    char mqtthost[255];
+    mqtt_scheme_t mqtt_scheme;
+    uint16_t mqttport;
+    char     mqttvirtualhost[50];
 } IoT_Client_Init_Mqtt;
 
 #if defined(MQTT_CIPHER)
-#define IoT_Client_Init_Mqtt_Default2 					  \
-		((IoT_Client_Init_Mqtt)   						        \
-		{     											                  \
-		 	  .mqtthost = { MQTT_COMMAND_ADDR }         \
-		 	 ,.mqtt_scheme = arrow_mqtt_scheme_tls      \
-			 ,.mqttport    = 8883                       \
-		})
+#define IoT_Client_Init_Mqtt_Default2             \
+  ((IoT_Client_Init_Mqtt)                       \
+     {                                             \
+        .mqtthost = { MQTT_COMMAND_ADDR }         \
+       ,.mqtt_scheme = arrow_mqtt_scheme_tls      \
+       ,.mqttport    = 8883                       \
+    })
 #else    //MQTT_CIPHER
-#define IoT_Client_Init_Mqtt_Default2 					  \
-		((IoT_Client_Init_Mqtt)   						        \
-		{     											                  \
-		 	  .mqtthost = { MQTT_COMMAND_ADDR }         \
-		 	 ,.mqtt_scheme = arrow_mqtt_scheme_tcp      \
-			 ,.mqttport    = 1883                       \
-		})
+#define IoT_Client_Init_Mqtt_Default2             \
+  ((IoT_Client_Init_Mqtt)                       \
+    {                                             \
+        .mqtthost = { MQTT_COMMAND_ADDR }         \
+       ,.mqtt_scheme = arrow_mqtt_scheme_tcp      \
+       ,.mqttport    = 1883                       \
+    })
 #endif   //MQTT_CIPHER
 extern IoT_Client_Init_Mqtt iotClientInitMqttDefault;
 
 typedef struct {
-    char apikey[256];
-    char secretkey[256];
+     char apikey[256];
+     char secretkey[256];
 }IoT_Client_Init_Key;
 
 extern IoT_Client_Init_Key iotClientInitKeyDefault;
 
 typedef struct {
-    char 			apihost[255];
-    scheme_http_t 	api_scheme;
-    uint16_t 		apiport;
+     char  apihost[255];
+     scheme_http_t api_scheme;
+     uint16_t apiport;
 }IoT_Client_Init_Api;
 
 #if defined(HTTP_CIPHER)
