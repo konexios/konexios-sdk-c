@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <config.h>
+#include <konexios_config.h>
 #include "arrow/storage.h"
 
 void __attribute_weak__ save_key_setting(const char *api_key, const char *sec_key) {
@@ -25,9 +25,9 @@ void __attribute_weak__ save_api_address(arrow_host_t *host) {
 }
 
 int __attribute_weak__ restore_api_address(arrow_host_t *host) {
-    host->host = ARROW_ADDR;
-    host->port = ARROW_PORT;
-    host->scheme = ARROW_SCH;
+    host->host   = iotClientInitApiDefault.apihost;
+    host->port   = iotClientInitApiDefault2.apiport;
+    host->scheme = iotClientInitApiDefault2.api_scheme;
     return 0;
 }
 

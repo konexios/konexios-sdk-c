@@ -9,30 +9,32 @@
 #ifndef ACN_SDK_C_API_CONFIG_H_
 #define ACN_SDK_C_API_CONFIG_H_
 
+#include "konexios_config.h"
+
 #if !defined(DEFAULT_API_TIMEOUT)
 # define DEFAULT_API_TIMEOUT 10000
 #endif
 
-enum {
-    arrow_scheme_http,
-    arrow_scheme_https
-};
+//enum {
+//    arrow_scheme_http,
+//    arrow_scheme_https
+//};
 
 /* cloud connectivity */
 //# define ARROW_SCH arrow_scheme_https
 //# define ARROW_PORT 22001
 //#el
-#if defined(HTTP_CIPHER)
-# define ARROW_SCH arrow_scheme_https
-# define ARROW_PORT 443
-#else
-# define ARROW_SCH arrow_scheme_http
-# define ARROW_PORT 12001
-#endif
+//#if defined(HTTP_CIPHER)
+//# define ARROW_SCH arrow_scheme_https
+//# define ARROW_PORT 443
+//#else
+//# define ARROW_SCH arrow_scheme_http
+//# define ARROW_PORT 12001
+//#endif
 
-#if !defined(ARROW_ADDR)
-#  define ARROW_ADDR "api-helios.konexios.io"
-#endif
+//#if !defined(ARROW_ADDR)
+//#  define ARROW_ADDR "api-helios.konexios.io"
+//#endif
 
 #define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
 #define ARROW_API_GATEWAY_ENDPOINT          "/api/v1/kronos/gateways"

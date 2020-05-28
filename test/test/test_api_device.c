@@ -92,6 +92,8 @@
 #include "storage_weak.h"
 
 
+#include "konexios_config.h"
+
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"
 #define DEVICE_UID GATEWAY_UID "-" DEVICE_UID_SUFFIX
@@ -140,11 +142,15 @@ char http_resp_text[] =
         "\",\"links\": {}, \"message\": \"OK\"}\r\n00\r\n";
 
 void test_arrow_register_device(void) {
+    IoT_Client_Init_Api iot_Init_Api = iotClientInitApiDefault;
+    strcpy(iot_Init_Api.apihost, ARROW_ADDR);
+    iot_Init_Api.apiport = ARROW_PORT;
+
     set_http_cb(http_resp_text, sizeof(http_resp_text));
-    struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
-    struct sockaddr_in *serv = prepsock(fake_addr, ARROW_PORT);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iot_Init_Api.apihost);
+    struct sockaddr_in *serv = prepsock(fake_addr, iot_Init_Api.apiport);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(ARROW_ADDR, fake_addr);
+    gethostbyname_ExpectAndReturn(iot_Init_Api.apihost, fake_addr);
     setsockopt_IgnoreAndReturn(0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);

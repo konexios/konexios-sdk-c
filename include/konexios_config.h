@@ -31,17 +31,17 @@ typedef struct {
 } IoT_Client_Init_Mqtt;
 
 #if defined(MQTT_CIPHER)
-#define IoT_Client_Init_Mqtt_Default2 					\
-		((IoT_Client_Init_Mqtt)   						\
-		{     											\
+#define IoT_Client_Init_Mqtt_Default2 					  \
+		((IoT_Client_Init_Mqtt)   						        \
+		{     											                  \
 		 	  .mqtthost = { MQTT_COMMAND_ADDR }         \
 		 	 ,.mqtt_scheme = arrow_mqtt_scheme_tls      \
 			 ,.mqttport    = 8883                       \
 		})
 #else    //MQTT_CIPHER
-#define IoT_Client_Init_Mqtt_Default2 					\
-		((IoT_Client_Init_Mqtt)   						\
-		{     											\
+#define IoT_Client_Init_Mqtt_Default2 					  \
+		((IoT_Client_Init_Mqtt)   						        \
+		{     											                  \
 		 	  .mqtthost = { MQTT_COMMAND_ADDR }         \
 		 	 ,.mqtt_scheme = arrow_mqtt_scheme_tcp      \
 			 ,.mqttport    = 1883                       \
@@ -63,18 +63,18 @@ typedef struct {
 }IoT_Client_Init_Api;
 
 #if defined(HTTP_CIPHER)
-#define iotClientInitApiDefault2 						\
-		((IoT_Client_Init_Api)   						\
-		{     											\
-        	.apihost ={ ARROW_ADDR }      				\
-           ,.api_scheme  = arrow_scheme_https           \
-           ,.apiport	 = 443                          \
+#define iotClientInitApiDefault2 						      \
+		((IoT_Client_Init_Api)   						          \
+		{     											                  \
+        	.apihost ={ ARROW_ADDR }      				  \
+           ,.api_scheme  = arrow_scheme_https     \
+           ,.apiport	 = 443                      \
 		})
 #else   // HTTP_CIPHER
-		((IoT_Client_Init_Api)   						\
-		{     											\
+		((IoT_Client_Init_Api)   						          \
+		{     											                  \
 			.apihost ={ ARROW_ADDR }                    \
-		   ,.api_scheme  = arrow_scheme_http            \
+		   ,.api_scheme  = arrow_scheme_http          \
 		   ,.apiport	 = 12001                        \
 		})
 #endif  // HTTP_CIPHER

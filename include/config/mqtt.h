@@ -9,6 +9,8 @@
 #ifndef ACN_SDK_C_MQTT_CONFIG_H_
 #define ACN_SDK_C_MQTT_CONFIG_H_
 
+#include "konexios_config.h"
+
 #if !defined(DEFAULT_MQTT_TIMEOUT)
 # define DEFAULT_MQTT_TIMEOUT 10000
 #endif
@@ -35,18 +37,18 @@
 
 //#define MQTT_TASK
 
-enum {
-    arrow_mqtt_scheme_tcp,
-    arrow_mqtt_scheme_tls
-};
+//enum {
+//    arrow_mqtt_scheme_tcp,
+//    arrow_mqtt_scheme_tls
+//};
 
-#if defined(MQTT_CIPHER)
-#  define MQTT_SCH arrow_mqtt_scheme_tls
-#  define MQTT_PORT 8883
-#else
-# define MQTT_SCH arrow_mqtt_scheme_tcp
-# define MQTT_PORT 1883
-#endif
+//#if defined(MQTT_CIPHER)
+//#  define MQTT_SCH arrow_mqtt_scheme_tls
+//#  define MQTT_PORT 8883
+//#else
+//# define MQTT_SCH arrow_mqtt_scheme_tcp
+//# define MQTT_PORT 1883
+//#endif
 
 #if !defined(S_TOP_NAME)
 #define S_TOP_NAME "krs/cmd/stg/"
