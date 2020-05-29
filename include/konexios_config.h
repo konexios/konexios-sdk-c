@@ -263,7 +263,7 @@ typedef struct {
         .host = { MQTT_COMMAND_ADDR }             \
        ,.scheme = arrow_mqtt_scheme_tls           \
        ,.port    = 8883                           \
-	   ,.virtualhost = { VHOST }                  \
+       ,.virtualhost = { VHOST }                  \
     })
 #else    //MQTT_CIPHER
 #define IOT_CLIENT_INIT_MQTT_DEFAULT              \
@@ -292,11 +292,11 @@ typedef struct {
 
 #if defined(HTTP_CIPHER)
 #define IOT_CLIENT_INIT_API_DEFAULT               \
-	((IoT_Client_Init_Api)                        \
+     ((IoT_Client_Init_Api)                       \
       {                                           \
             .host ={ ARROW_ADDR }                 \
            ,.scheme  = arrow_scheme_https         \
-           ,.port	 = 443                        \
+           ,.port    = 443                        \
         })
 #else   // HTTP_CIPHER
 #define IOT_CLIENT_INIT_API_DEFAULT               \
@@ -304,7 +304,7 @@ typedef struct {
       {                                           \
             .host ={ ARROW_ADDR }                 \
            ,.scheme  = arrow_scheme_http          \
-           ,.port	 = 12001                      \
+           ,.port    = 12001                      \
         })
 #endif  // HTTP_CIPHER
 
