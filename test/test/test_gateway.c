@@ -1,7 +1,7 @@
 #include "unity.h"
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+#include <konexios_config.h>
 #include <debug.h>
 #include <arrow/credentials.h>
 #include <arrow/gateway.h>

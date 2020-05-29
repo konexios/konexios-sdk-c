@@ -7,15 +7,15 @@
  */
 #include "konexios_config.h"
 
-IoT_Client_Init_Mqtt iotClientInitMqttDefault = IoT_Client_Init_Mqtt_Default2;
+IoT_Client_Init_Mqtt iotClientInitMqtt = IOT_CLIENT_INIT_MQTT_DEFAULT;
 
 
-IoT_Client_Init_Key iotClientInitKeyDefault   ={
+IoT_Client_Init_Key iotClientInitKey   ={
 		.apikey = { DEFAULT_API_KEY }
 	   ,.secretkey = { DEFAULT_SECRET_KEY }
 	};
 
 
-IoT_Client_Init_Api iotClientInitApiDefault =  iotClientInitApiDefault2;
+IoT_Client_Init_Api iotClientInitApi =  IOT_CLIENT_INIT_API_DEFAULT;
 
 

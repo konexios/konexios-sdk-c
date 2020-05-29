@@ -1,5 +1,5 @@
 #include "unity.h"
-#include <config.h>
+#include <konexios_config.h>
 #include <debug.h>
 #include <arrow/credentials.h>
 #include <data/static_buf.h>
@@ -44,8 +44,8 @@ void test_http_request_init(void) {
     TEST_ASSERT(_test_request._response_payload_meth._p_add_handler);
     TEST_ASSERT(_test_request._response_payload_meth._p_set_handler);
     TEST_ASSERT_EQUAL_INT(0, _test_request.is_corrupt);
-    TEST_ASSERT_EQUAL_STRING(ARROW_ADDR, P_VALUE(_test_request.host));
-    TEST_ASSERT_EQUAL_INT(ARROW_PORT, _test_request.port);
+    TEST_ASSERT_EQUAL_STRING(iotClientInitApi.host, P_VALUE(_test_request.host));
+    TEST_ASSERT_EQUAL_INT(iotClientInitApi.port, _test_request.port);
     TEST_ASSERT_EQUAL_STRING("GET", P_VALUE(_test_request.meth));
     TEST_ASSERT_EQUAL_INT(arrow_scheme_http, _test_request.scheme);
     TEST_ASSERT( IS_EMPTY(_test_request.payload) );

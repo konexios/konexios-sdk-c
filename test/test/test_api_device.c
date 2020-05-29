@@ -1,5 +1,4 @@
 #include "unity.h"
-#include <config.h>
 
 #include <debug.h>
 #include "api_gateway_gateway.h"
@@ -142,15 +141,11 @@ char http_resp_text[] =
         "\",\"links\": {}, \"message\": \"OK\"}\r\n00\r\n";
 
 void test_arrow_register_device(void) {
-    IoT_Client_Init_Api iot_Init_Api = iotClientInitApiDefault;
-    strcpy(iot_Init_Api.apihost, ARROW_ADDR);
-    iot_Init_Api.apiport = ARROW_PORT;
-
     set_http_cb(http_resp_text, sizeof(http_resp_text));
-    struct hostent *fake_addr = dns_fake(0xc0a80001, iot_Init_Api.apihost);
-    struct sockaddr_in *serv = prepsock(fake_addr, iot_Init_Api.apiport);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
+    struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitApi.port);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(iot_Init_Api.apihost, fake_addr);
+    gethostbyname_ExpectAndReturn(iotClientInitApi.host, fake_addr);
     setsockopt_IgnoreAndReturn(0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);

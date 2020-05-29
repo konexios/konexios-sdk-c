@@ -1,5 +1,5 @@
 #include "unity.h"
-#include <config.h>
+#include <konexios_config.h>
 #include <debug.h>
 #include <arrow/gateway.h>
 #include <arrow/device.h>

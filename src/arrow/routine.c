@@ -1,5 +1,5 @@
 #include "arrow/routine.h"
-#include <config.h>
+#include <konexios_config.h>
 #include <debug.h>
 #include <time/time.h>
 #include <sys/watchdog.h>

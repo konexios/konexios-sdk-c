@@ -43,7 +43,7 @@ int timestamp_is_empty(acn_timestamp_t *t) {
 }
 
 void timestamp_string(acn_timestamp_t *ts, char *s) {
-    snprintf(s, 25,
+    snprintf(s, 29,
              "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
              ts->year,
              ts->mon,
@@ -55,6 +55,19 @@ void timestamp_string(acn_timestamp_t *ts, char *s) {
 }
 
 
-void timestamp(acn_timestamp_t *ts) {
-
+void __attribute_weak__ timestamp(acn_timestamp_t *ts) {
+    struct tm *tmp;
+    int ms;
+    time_t s = time(NULL);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    tmp = gmtime(&s);
+    ms = (tv.tv_usec/1000)%1000;
+    ts->year = 1900 + tmp->tm_year;
+    ts->mon = 1 + tmp->tm_mon;
+    ts->day = tmp->tm_mday;
+    ts->hour = tmp->tm_hour;
+    ts->min = tmp->tm_min;
+    ts->sec = tmp->tm_sec;
+    ts->msec = ms;
 }

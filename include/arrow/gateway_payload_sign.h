@@ -1,7 +1,7 @@
 #if !defined(_ARROW_GATEWAY_PAYLOAD_SIGN_H_)
 #define _ARROW_GATEWAY_PAYLOAD_SIGN_H_
 
-#include <config.h>
+#include <konexios_config.h>
 #include <json/json.h>
 
 int gateway_payload_sign(char *signature,

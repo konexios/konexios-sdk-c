@@ -5,13 +5,9 @@
 #define DEFAULT_SECRET_KEY          "xyz"
 
 #define ARROW_ADDR "api-helios.konexios.io"
-#define ARROW_PORT  433
-#define MQTT_COMMAND_ADDR "mqtt-.konexios.io"
-#define MQTT_PORT 8883
-#define VHOST "/pegasus"
 
-#  define MQTT_SCH arrow_mqtt_scheme_tls
-#  define MQTT_PORT 8883
+#define MQTT_COMMAND_ADDR "mqtt-helios.konexios.io"
+#define VHOST "/pegasus"
 
 #define DEFAULT_WIFI_SSID           "yourSSID"
 #define DEFAULT_WIFI_PASS           "password"
@@ -35,10 +31,12 @@
 #define STATIC_DYNAMIC_PROPERTY
 #define ARROW_MAX_JSON_OBJECTS           (16*10)
 #define ARROW_JSON_STATIC_BUFFER_SIZE    (16*160)
-#define ARROW_DYNAMIC_STATIC_BUFFER_SIZE (32*10)
+#define ARROW_DYNAMIC_STATIC_BUFFER_SIZE (32*20)
 
-#define HTTP_CIPHER
-
+#define HTTP_VIA_MQTT
+//#define HTTP_CIPHER
+//#define MQTT_CIPHER
+#define ARROW_THREAD
 #define __arm__
 
 #endif //

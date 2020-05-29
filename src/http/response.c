@@ -8,7 +8,7 @@
 
 #include "http/response.h"
 #include <debug.h>
-#include <config.h>
+#include <konexios_config.h>
 #include <sys/mem.h>
 #include <arrow/utf8.h>
 
