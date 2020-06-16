@@ -54,8 +54,7 @@ void timestamp_string(acn_timestamp_t *ts, char *s) {
              ts->msec);
 }
 
-
-void __attribute_weak__ timestamp(acn_timestamp_t *ts) {
+void __attribute_weak__ timestamp(acn_timestamp_t *ts){
     struct tm *tmp;
     int ms;
     time_t s = time(NULL);
@@ -71,3 +70,4 @@ void __attribute_weak__ timestamp(acn_timestamp_t *ts) {
     ts->sec = tmp->tm_sec;
     ts->msec = ms;
 }
+
