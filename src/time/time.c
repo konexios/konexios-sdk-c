@@ -76,3 +76,4 @@ void __attribute_weak__ get_time(char *s) {
     timestamp(&ts);
     timestamp_string(&ts, s);
 }
+
