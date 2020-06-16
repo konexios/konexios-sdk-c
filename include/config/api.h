@@ -13,17 +13,12 @@
 # define DEFAULT_API_TIMEOUT 10000
 #endif
 
-#if !defined(DEV_ENV)
-# define HTTP_CIPHER
-#endif
-
 enum {
     arrow_scheme_http,
     arrow_scheme_https
 };
 
 /* cloud connectivity */
-//#if defined(HTTP_CIPHER) && defined(DEV_ENV)
 //# define ARROW_SCH arrow_scheme_https
 //# define ARROW_PORT 22001
 //#el
@@ -34,12 +29,9 @@ enum {
 # define ARROW_SCH arrow_scheme_http
 # define ARROW_PORT 12001
 #endif
+
 #if !defined(ARROW_ADDR)
-# if defined(DEV_ENV)
-#  define ARROW_ADDR "pgsdev01.arrowconnect.io"
-# else
-#  define ARROW_ADDR "api.arrowconnect.io"
-# endif
+#  define ARROW_ADDR "api-helios.konexios.io"
 #endif
 
 #define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)

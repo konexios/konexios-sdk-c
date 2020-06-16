@@ -16,13 +16,7 @@ extern "C" {
 #include <arrow/device.h>
 #include <arrow/gateway.h>
 
-#if !defined(FLASH_MAGIC_NUMBER)
-  #if defined(DEV_ENV)
-    #define FLASH_MAGIC_NUMBER 0xdea1beac
-  #else
-    #define FLASH_MAGIC_NUMBER 0xdeadbeaf
-  #endif
-#endif
+#define FLASH_MAGIC_NUMBER 0xdeadbeaf
 
 // default structure for the device information
 typedef struct store_host {
