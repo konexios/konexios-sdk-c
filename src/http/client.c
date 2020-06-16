@@ -296,6 +296,15 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
         if ( ret < 0 ) return ret;
         if ( (ret = client_send(cli)) < 0 ) return ret;
+    } else {
+        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
+        ret = snprintf((char*)tmpbuffer,
+                        maxlen,
+                        "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
+        if ( ret < 0 ) return ret;
+        if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 )
+            return -1;
+        ret = client_send(cli);
     }
     property_map_t *head = NULL;
     arrow_linked_list_for_each(head, req->header, property_map_t) {
