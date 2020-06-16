@@ -15,7 +15,7 @@
 */
 #include <stdbool.h>
 #include <stdint.h>
-#include <arrow/mqtt_out_msg.h>
+//#include <arrow/mqtt_out_msg.h>
 
 #include "transaction.h"
 #include "MQTTClient.h"

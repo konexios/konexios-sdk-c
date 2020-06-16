@@ -16,7 +16,7 @@
 
 // @section include file references
 //#include <json/models.h>
-
+#include <arrow/mqtt_out_msg.h>
 
 // @section enumerations
 #define MQTT_MAX_RETRIES    2       // maximum no. of retries

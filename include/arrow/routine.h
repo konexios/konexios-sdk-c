@@ -33,9 +33,9 @@ typedef int (*get_data_cb)(void *);
 
 // There is only one gateway and device for this space
 // to get these static objects use the functions:
-arrow_device_t *current_device(void);
-arrow_gateway_t *current_gateway(void);
-arrow_gateway_config_t *current_gateway_config(void);
+arrow_device_t *arrow_get_current_device(void);
+arrow_gateway_t *arrow_get_current_gateway(void);
+arrow_gateway_config_t *arrow_get_current_gateway_config(void);
 
 // Initialize the gateway object and device object as well
 // This function implemented the algorithm to get complete information about a gateway and device.
