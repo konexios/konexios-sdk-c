@@ -9,7 +9,7 @@
 #ifndef ACN_SDK_C_SYS_MUTEX_H_
 #define ACN_SDK_C_SYS_MUTEX_H_
 
-#include <config.h>
+#include <konexios_config.h>
 
 #if defined(ARROW_THREAD)
 typedef void arrow_mutex;

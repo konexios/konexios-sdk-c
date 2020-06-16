@@ -140,7 +140,7 @@ void test_arrow_connect_gateway(void) {
     soc_close_Expect(0);
 
     int ret = arrow_connect_gateway(&_test_gateway,0);
-    TEST_ASSERT_EQUAL_INT(0, ret);
+    TEST_ASSERT_EQUAL_INT(200, ret);
     TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
 }
 

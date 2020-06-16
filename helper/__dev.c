@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "config.h"
+#include "konexios_config.h"
 
 int main() {
   printf("gateway uid:\t%s-<mac>\r\n", GATEWAY_UID_PREFIX);

@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <config.h>
+#include <konexios_config.h>
 #include <bsd/inet.h>
 typedef int __dummy;
 

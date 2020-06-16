@@ -47,7 +47,7 @@ void test_http_request_init(void) {
     TEST_ASSERT_EQUAL_STRING(iotClientInitApi.host, P_VALUE(_test_request.host));
     TEST_ASSERT_EQUAL_INT(iotClientInitApi.port, _test_request.port);
     TEST_ASSERT_EQUAL_STRING("GET", P_VALUE(_test_request.meth));
-    TEST_ASSERT_EQUAL_INT(arrow_scheme_http, _test_request.scheme);
+    TEST_ASSERT_EQUAL_INT(arrow_scheme_https, _test_request.scheme);
     TEST_ASSERT( IS_EMPTY(_test_request.payload) );
     TEST_ASSERT( ! _test_request.header );
     TEST_ASSERT( IS_EMPTY(_test_request.content_type.value) );
