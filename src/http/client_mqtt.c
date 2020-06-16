@@ -53,7 +53,7 @@ int http_mqtt_client_open(http_client_t *cli, http_request_t *req) {
 
 int http_mqtt_client_close(http_client_t *cli) {
     SSP_PARAMETER_NOT_USED(cli);
-    if ( cli->flags._close ) {
+    if ( cli->flags.close_socket ) {
         cli->sock = -1;
     }
     return 0;
@@ -76,7 +76,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     property_map_t *tmp = NULL;
     char reqhid[50];
     strcpy(reqhid, "GS-");
-    get_time(reqhid+3);
+    //get_time(reqhid+3);
     ret = json_append_member(_node,
                              p_const("requestId"),
                              json_mkstring(reqhid));

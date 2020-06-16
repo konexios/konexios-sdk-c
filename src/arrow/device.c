@@ -8,7 +8,7 @@
 
 #include "arrow/device.h"
 #include <sys/mem.h>
-#include <config.h>
+#include <konexios_config.h>
 #include <json/decode.h>
 
 void arrow_device_init(arrow_device_t *dev) {

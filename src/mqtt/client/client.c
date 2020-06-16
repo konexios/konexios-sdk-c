@@ -300,7 +300,7 @@ int cycle_r(MQTTClient* c, TimerInterval* timer) {
     pack_type = (uint32_t)header.head.bits.type;
     DBG("mqtt recv header message type %d", (int)pack_type);
     if ( pack_type < 1 || pack_type >= sizeof(__cycle_collection)/sizeof(_cycle_callback) ) {
-        DBG("Control Header Data Error, pack_type = %lu", pack_type);
+        DBG("Control Header Data Error, pack_type = %lu", (long unsigned int)pack_type);
         if(pack_type < CONNECT) {
             DBG("pack_type Forbidden/Reserved");
         }

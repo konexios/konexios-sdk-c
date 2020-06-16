@@ -12,7 +12,7 @@
 #include <arrow/mqtt_out_msg.h>
 
 #include "arrow/mqtt.h"
-#include <config.h>
+#include <konexios_config.h>
 #include <mqtt/client/client.h>
 #include <json/telemetry.h>
 #include <data/property.h>

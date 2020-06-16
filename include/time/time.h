@@ -9,7 +9,7 @@
 #ifndef COMMON_TIME_TIME_H_
 #define COMMON_TIME_TIME_H_
 
-#include <config.h>
+#include <konexios_config.h>
 #include <sys/type.h>
 
 #if defined(__cplusplus)
@@ -42,6 +42,8 @@ typedef struct _timestamp_ {
 
 int timestamp_less(acn_timestamp_t *t1, acn_timestamp_t *t2);
 int timestamp_is_empty(acn_timestamp_t *t);
+
+#define __USE_XOPEN
 
 #if defined(ARCH_TIME)
 # include <sys/arch/time.h>

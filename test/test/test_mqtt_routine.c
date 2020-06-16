@@ -1,5 +1,5 @@
 #include "unity.h"
-#include <config.h>
+#include <konexios_config.h>
 
 #include <debug.h>
 #include "api_gateway_info.h"
@@ -150,8 +150,8 @@ char mqtt_api_pub_text[] = { "\x32\xb9\x02\x00\x34"
 #if defined(HTTP_VIA_MQTT)
 void test_mqtt_connect(void) {
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
-    struct hostent *fake_addr = dns_fake(0xc0a80001, MQTT_COMMAND_ADDR);
-    struct sockaddr_in *serv = prepsock(fake_addr, MQTT_PORT);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitMqtt.host);
+    struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitMqtt.port);
 
     wdt_feed_IgnoreAndReturn(0);
     fake_set_gateway_hid(TEST_GATEWAY_HID);
@@ -178,7 +178,7 @@ void test_mqtt_connect(void) {
 
     arrow_gateway_config_IgnoreAndReturn(0);
 
-    gethostbyname_ExpectAndReturn(MQTT_COMMAND_ADDR, fake_addr);
+    gethostbyname_ExpectAndReturn(iotClientInitMqtt.host, fake_addr);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     setsockopt_IgnoreAndReturn(0);
@@ -187,7 +187,7 @@ void test_mqtt_connect(void) {
 //    soc_close_Expect(0);
 
     arrow_command_handler_add("test", &test_cmd_proc);
-    arrow_routine_error_t ret = arrow_initialize_routine();
+    arrow_routine_error_t ret = arrow_initialize_routine(0);
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
 
     property_copy(&arrow_get_current_gateway()->hid, p_const(TEST_GATEWAY_HID));

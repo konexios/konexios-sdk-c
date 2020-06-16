@@ -8,7 +8,7 @@
 #ifndef ACN_SDK_C_MQTT_NETWORK_H_
 #define ACN_SDK_C_MQTT_NETWORK_H_
 
-#include <config.h>
+#include <konexios_config.h>
 
 #if !defined(USHRT_MAX)
 # define USHRT_MAX 0xFFFFU

@@ -1,5 +1,4 @@
 #include "unity.h"
-#include <config.h>
 
 #include <debug.h>
 #include "api_gateway_gateway.h"
@@ -92,6 +91,8 @@
 #include "storage_weak.h"
 
 
+#include "konexios_config.h"
+
 #define GATEWAY_UID GATEWAY_UID_PREFIX "-111213141516"
 #define TEST_GATEWAY_HID "000TEST000"
 #define DEVICE_UID GATEWAY_UID "-" DEVICE_UID_SUFFIX
@@ -141,10 +142,10 @@ char http_resp_text[] =
 
 void test_arrow_register_device(void) {
     set_http_cb(http_resp_text, sizeof(http_resp_text));
-    struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
-    struct sockaddr_in *serv = prepsock(fake_addr, ARROW_PORT);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
+    struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitApi.port);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(ARROW_ADDR, fake_addr);
+    gethostbyname_ExpectAndReturn(iotClientInitApi.host, fake_addr);
     setsockopt_IgnoreAndReturn(0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);

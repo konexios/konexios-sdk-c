@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <config.h>
+#include <konexios_config.h>
 #include <json/json.h>
 #if defined(__USE_STD__)
 #include <assert.h>

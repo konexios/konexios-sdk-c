@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <konexios_config.h>
 
 //Debug is disabled by default
 #if defined(DEBUG)

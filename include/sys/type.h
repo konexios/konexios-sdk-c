@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <konexios_config.h>
 
 #if defined(ARCH_TYPE)
 #include "sys/arch/type.h"

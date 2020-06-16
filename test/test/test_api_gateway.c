@@ -1,5 +1,5 @@
 #include "unity.h"
-#include <config.h>
+#include <konexios_config.h>
 
 #include <debug.h>
 #include "api_gateway_gateway.h"
@@ -133,10 +133,10 @@ void test_gateway_register(void) {
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
     set_http_cb(http_resp_text, sizeof(http_resp_text));
-    struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
-    struct sockaddr_in *serv = prepsock(fake_addr, ARROW_PORT);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
+    struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitApi.port);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(ARROW_ADDR, fake_addr);
+    gethostbyname_ExpectAndReturn(iotClientInitApi.host, fake_addr);
     setsockopt_IgnoreAndReturn(0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);
@@ -178,10 +178,10 @@ char gateway_config_text[] =
 
 void test_gateway_config() {
     set_http_cb(gateway_config_text, sizeof(gateway_config_text));
-    struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
-    struct sockaddr_in *serv = prepsock(fake_addr, ARROW_PORT);
+    struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
+    struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitApi.port);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
-    gethostbyname_ExpectAndReturn(ARROW_ADDR, fake_addr);
+    gethostbyname_ExpectAndReturn(iotClientInitApi.host, fake_addr);
     setsockopt_IgnoreAndReturn(0);
     connect_ExpectAndReturn(0, (struct sockaddr*)serv, sizeof(struct sockaddr_in), 0);
     send_StubWithCallback(send_cb);

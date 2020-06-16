@@ -22,7 +22,7 @@
 #if defined(__cplusplus)
  extern "C" {
 #endif
-#include <config.h>
+#include <konexios_config.h>
 #include <network.h>
 #include <mqtt/client/delivery.h>
 

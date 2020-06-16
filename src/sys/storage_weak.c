@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include <config.h>
+#include <konexios_config.h>
 #include "arrow/storage.h"
 
 void __attribute_weak__ save_key_setting(const char *api_key, const char *sec_key) {
@@ -15,8 +15,8 @@ void __attribute_weak__ save_key_setting(const char *api_key, const char *sec_ke
 }
 
 int __attribute_weak__ restore_key_setting(char *api, char *sec) {
-    if (api) strcpy(api, DEFAULT_API_KEY);
-    if (sec) strcpy(sec, DEFAULT_SECRET_KEY);
+    if (api) strcpy(api, iotClientInitKey.apikey);
+    if (sec) strcpy(sec, iotClientInitKey.secretkey);
     return 0;
 }
 
@@ -25,9 +25,9 @@ void __attribute_weak__ save_api_address(arrow_host_t *host) {
 }
 
 int __attribute_weak__ restore_api_address(arrow_host_t *host) {
-    host->host = ARROW_ADDR;
-    host->port = ARROW_PORT;
-    host->scheme = ARROW_SCH;
+    host->host   = iotClientInitApi.host;
+    host->port   = iotClientInitApi.port;
+    host->scheme = iotClientInitApi.scheme;
     return 0;
 }
 
@@ -36,9 +36,9 @@ void __attribute_weak__ save_mqtt_address(arrow_host_t *host) {
 }
 
 int __attribute_weak__ restore_mqtt_address(arrow_host_t *host) {
-    host->host = MQTT_TELEMETRY_ADDR;
-    host->port = MQTT_PORT;
-    host->scheme = MQTT_SCH;
+	host->host = iotClientInitMqtt.host;
+    host->port = iotClientInitMqtt.port;
+    host->scheme = iotClientInitMqtt.scheme;
     return 0;
 }
 
@@ -47,7 +47,7 @@ void __attribute_weak__ save_vhost(property_t vh) {
 }
 
 int __attribute_weak__ restore_vhost(property_t *vh) {
-    property_copy(vh, p_const(VHOST));
+    property_copy(vh, p_const(iotClientInitMqtt.virtualhost));
     return 0;
 }
 

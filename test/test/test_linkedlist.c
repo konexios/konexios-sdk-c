@@ -1,7 +1,7 @@
 #include "unity.h"
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+#include <konexios_config.h>
 #include <data/linkedlist.h>
 
 typedef struct _test_ {

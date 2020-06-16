@@ -1,7 +1,7 @@
 #include "unity.h"
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
+#include <konexios_config.h>
 #include <debug.h>
 #include <arrow/credentials.h>
 #include <http/client.h>
@@ -70,7 +70,7 @@ static http_response_t response;
 void test_http_client_do( void ) {
     set_http_cb(http_resp_text, sizeof(http_resp_text));
 
-   struct hostent *fake_addr = dns_fake(0xc0a80001, ARROW_ADDR);
+   struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
 
     // test address
     http_request_init(&request, GET, &p_const("/api/v1/kronos/gateways"));

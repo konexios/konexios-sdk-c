@@ -4,10 +4,14 @@
 #define DEFAULT_API_KEY             "5a86fccc83703142f1caa97ad38a01ad4985bb90956cfc7a3104342c961ab24c"
 #define DEFAULT_SECRET_KEY          "2O2GrpT1x09tMddzXPMt5QLG8wB16I0I15ZbeA/6d00="
 
+#define ARROW_ADDR "api-helios.konexios.io"
+
+#define MQTT_COMMAND_ADDR "mqtt-helios.konexios.io"
+#define VHOST "/pegasus"
+
 #define DEFAULT_WIFI_SSID           "yourSSID"
 #define DEFAULT_WIFI_PASS           "123456789"
 #define DEFAULT_WIFI_SEC            0x00040003
-
 
 /* gateway */
 #define GATEWAY_UID_PREFIX          "b-l475e-iot01a"
@@ -23,11 +27,9 @@
 #define DEVICE_TYPE                 "Local"
 #define DEVICE_UID_SUFFIX           "b-l475e-iot01a-dev"
 
-
 #define HTTP_CIPHER
 #define MQTT_CIPHER
 #define __arm__
-
 
 #define STATIC_JSON
 #define STATIC_DYNAMIC_PROPERTY

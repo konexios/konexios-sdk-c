@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include <config.h>
+#include <konexios_config.h>
 #include <sys/type.h>
 #if defined(__USE_STD__)
 # include <stdio.h>
