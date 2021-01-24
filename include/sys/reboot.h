@@ -9,6 +9,7 @@
 #if !defined(ACN_SDK_C_SYS_REBOOT_H_)
 #define ACN_SDK_C_SYS_REBOOT_H_
 
-void reboot(void) __attribute__ ((noreturn));
+// void reboot(void) __attribute__ ((noreturn));
+// int reboot
 
 #endif  // ACN_SDK_C_SYS_REBOOT_H_

@@ -4,7 +4,7 @@
 #include <arrow/routine.h>
 #include <arrow/api/gateway/gateway.h>
 #include <time/time.h>
-#include <sys/reboot.h>
+// #include <sys/reboot.h>
 
 #if defined(NO_SOFTWARE_UPDATE)
 typedef void __dummy__;
@@ -21,7 +21,7 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
 
   if ( arrow_gateway_software_update(P_VALUE(tmp->string_)) < 0 ) return -1;
   DBG("Reboot...");
-  reboot();
+  reboot(0);
   return 0;
 }
 

@@ -10,7 +10,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <sys/watchdog.h>
-#include <sys/reboot.h>
+// #include <sys/reboot.h>
 #include <ssl/md5sum.h>
 #include <arrow/utf8.h>
 #include <time/time.h>
@@ -241,7 +241,7 @@ software_release_done:
           RETRY_UP(retry, {return -2;});
           msleep(ARROW_RETRY_DELAY);
       }
-      reboot();
+      reboot(0);
   }
   http_session_set_protocol(current_client(), api_via_http);
   return ret;
@@ -396,9 +396,9 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     if (n < 0) return;
     uri[n] = 0x0;
     http_request_init(request, POST, &p_stack(uri));
-    http_request_add_header(request,
-                            p_const("x-arrow-apikey"),
-                            p_const(DEFAULT_API_KEY));
+    //http_request_add_header(request,
+    //                        p_const("x-arrow-apikey"),
+    //                        p_const(DEFAULT_API_KEY));
     JsonNode *_main = json_mkobject();
     if ( sch->device_category == schedule_GATEWAY ) {
         json_append_member(_main, p_const("deviceCategory"), json_mkstring("GATEWAY"));
