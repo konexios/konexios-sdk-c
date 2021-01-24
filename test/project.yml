@@ -33,10 +33,10 @@
     - src/*.c
     - +:acn-sdk-c/src/debug.c
     - +:acn-sdk-c/src/sys/**
-    - +:acn-sdk-c/src/arrow/*
-    - +:acn-sdk-c/src/arrow/api/device/info.c
-    - +:acn-sdk-c/src/arrow/api/device/event.c
-    - +:acn-sdk-c/src/arrow/api/json/parse.c
+    - +:acn-sdk-c/src/konexios/*
+    - +:acn-sdk-c/src/konexios/api/device/info.c
+    - +:acn-sdk-c/src/konexios/api/device/event.c
+    - +:acn-sdk-c/src/konexios/api/json/parse.c
     - +:acn-sdk-c/src/bsd/**
     - +:acn-sdk-c/src/data/**
     - +:acn-sdk-c/src/http/**
@@ -54,7 +54,7 @@
     - acn-sdk-c/include
     - +:acn-sdk-c
     - +:acn-sdk-c/src
-    - +:acn-sdk-c/include/arrow
+    - +:acn-sdk-c/include/konexios
     - +:acn-sdk-c/include/json
     - +:acn-sdk-c/include/sys
     - +:acn-sdk-c/include/bsd

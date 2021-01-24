@@ -3,12 +3,12 @@
 #include <string.h>
 #include <konexios_config.h>
 #include <debug.h>
-#include <arrow/credentials.h>
+#include <konexios/credentials.h>
 #include <http/client.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
 #include <data/property_base.h>
@@ -37,12 +37,12 @@
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
-#include <arrow/storage.h>
+#include <konexios/storage.h>
 #include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();
-    arrow_hosts_init();
+    konexios_hosts_init();
 }
 
 void tearDown(void) {
@@ -102,7 +102,7 @@ void test_http_client_free( void ) {
 
 /*
 void test_gateway_serialize( void ) {
-    char *t = arrow_gateway_serialize(&_test_gateway);
+    char *t = konexios_gateway_serialize(&_test_gateway);
     const char *test = "{\"name\":\"probook-gateway-demo\","
                       "\"uid\":\"probook-111213141516\","
                       "\"osName\":\"linux\","
@@ -116,7 +116,7 @@ void test_gateway_serialize( void ) {
 #define TEST_HID "9be7ab0b255cecb726cc912ddc1f29e57a9cbdd3"
 void test_gateway_response( void ) {
     char *serv_resp = "{ \"hid\":\"" TEST_HID "\" }";
-    arrow_gateway_parse(&_test_gateway, serv_resp);
+    konexios_gateway_parse(&_test_gateway, serv_resp);
     TEST_ASSERT_EQUAL_STRING(TEST_HID, P_VALUE(_test_gateway.hid));
 }
 */

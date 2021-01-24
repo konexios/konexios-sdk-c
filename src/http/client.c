@@ -16,7 +16,7 @@
 #include <debug.h>
 #include <bsd/socket.h>
 #include <time/time.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 
 #include <ssl/ssl.h>
 
@@ -244,7 +244,7 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
         char *queryString = (char*)tmpbuffer;
         strcpy(queryString, "?");
         property_map_t *query = NULL;
-        arrow_linked_list_for_each(query, req->query, property_map_t) {
+        konexios_linked_list_for_each(query, req->query, property_map_t) {
           if ( (int)strlen(P_VALUE(query->key)) +
                (int)strlen(P_VALUE(query->value)) + 3 >
                (int)ringbuf_capacity(cli->queue) ) break;
@@ -307,7 +307,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         ret = client_send(cli);
     }
     property_map_t *head = NULL;
-    arrow_linked_list_for_each(head, req->header, property_map_t) {
+    konexios_linked_list_for_each(head, req->header, property_map_t) {
         ringbuf_clear(buf);
         int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,

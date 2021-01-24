@@ -12,7 +12,7 @@
 #include <debug.h>
 #include <konexios_config.h>
 #include <sys/mem.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 
 static const char *METH_str[] = { "GET", "POST", "PUT", "DELETE", "HEAD"};
 
@@ -45,7 +45,7 @@ extern int default_set_payload_handler(void *r,
 extern int default_add_payload_handler(void *r,
                                        property_t buf);
 
-#include <arrow/credentials.h>
+#include <konexios/credentials.h>
 
 int http_request_init(http_request_t *req,
                        int meth,
@@ -65,14 +65,14 @@ int http_request_init(http_request_t *req,
   req->_response_payload_meth._p_set_handler = default_set_payload_handler;
   req->_response_payload_meth._p_add_handler = default_add_payload_handler;
 
-  if ( !arrow_api_host() ) {
+  if ( !konexios_api_host() ) {
       req->is_corrupt = 1;
       return -1;
   }
-  req->host = p_const(arrow_api_host()->host);
-  req->port = arrow_api_host()->port;
-  req->scheme = arrow_api_host()->scheme;
-  req->is_cipher = (req->scheme == arrow_scheme_https ? 1 : 0);
+  req->host = p_const(konexios_api_host()->host);
+  req->port = konexios_api_host()->port;
+  req->scheme = konexios_api_host()->scheme;
+  req->is_cipher = (req->scheme == konexios_scheme_https ? 1 : 0);
 
   property_move(&req->uri, uri);
 

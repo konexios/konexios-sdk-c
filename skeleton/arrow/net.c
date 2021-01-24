@@ -6,7 +6,7 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "arrow/net.h"
+#include "konexios/net.h"
 
 int get_mac_address(char *mac) {
     // FIXME implementation

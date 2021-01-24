@@ -874,9 +874,9 @@ void fe_mul(fe h,const fe f,const fe g)
 
   /*
   |h0| <= (1.65*1.65*2^52*(1+19+19+19+19)+1.65*1.65*2^50*(38+38+38+38+38))
-    i.e. |h0| <= 1.4*2^60; narrower ranges for h2, h4, h6, h8
+    i.e. |h0| <= 1.4*2^60; nkonexioser ranges for h2, h4, h6, h8
   |h1| <= (1.65*1.65*2^51*(1+1+19+19+19+19+19+19+19+19))
-    i.e. |h1| <= 1.7*2^59; narrower ranges for h3, h5, h7, h9
+    i.e. |h1| <= 1.7*2^59; nkonexioser ranges for h3, h5, h7, h9
   */
 
   carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;

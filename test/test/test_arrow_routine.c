@@ -8,19 +8,19 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
-#include <arrow/credentials.h>
-#include <arrow/api/device/event.h>
-#include <arrow/device.h>
-#include <arrow/transaction.h>
-#include <arrow/api/device/info.h>
-#include <arrow/api/json/parse.h>
-#include <arrow/gateway.h>
-#include <arrow/api/log.h>
-#include <arrow/utf8.h>
+#include <konexios/credentials.h>
+#include <konexios/api/device/event.h>
+#include <konexios/device.h>
+#include <konexios/transaction.h>
+#include <konexios/api/device/info.h>
+#include <konexios/api/json/parse.h>
+#include <konexios/gateway.h>
+#include <konexios/api/log.h>
+#include <konexios/utf8.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/sign.h>
+#include <konexios/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
@@ -37,21 +37,21 @@
 #include <json/aob.h>
 #include <encode.h>
 #include <json/decode.h>
-#include <arrow_mqtt_client.h>
+#include <konexios_mqtt_client.h>
 #include <mqtt/client/callback.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>
 #include <ssl/crypt.h>
-#include <arrow/state.h>
-#include <arrow/routine.h>
-#include <arrow/telemetry_api.h>
-#include <arrow/mqtt.h>
-#include <arrow/events.h>
-#include <arrow/gateway_payload_sign.h>
-#include <arrow/device_command.h>
-#include <arrow/software_release.h>
-#include <arrow/software_update.h>
+#include <konexios/state.h>
+#include <konexios/routine.h>
+#include <konexios/telemetry_api.h>
+#include <konexios/mqtt.h>
+#include <konexios/events.h>
+#include <konexios/gateway_payload_sign.h>
+#include <konexios/device_command.h>
+#include <konexios/software_release.h>
+#include <konexios/software_update.h>
 #include <ssl/md5sum.h>
 #include <http/client_mqtt.h>
 
@@ -90,14 +90,14 @@
 #include "storage_weak.h"
 
 void setUp(void) {
-    if ( arrow_init() < 0 ) {
-        printf("arrow_init init fail!\r\n");
+    if ( konexios_init() < 0 ) {
+        printf("konexios_init init fail!\r\n");
         return;
     }
 }
 
 void tearDown(void) {
-    arrow_deinit();
+    konexios_deinit();
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"
@@ -121,10 +121,10 @@ char gateway_register_text[] =
         TEST_GATEWAY_HID
         "\",\"links\": {}, \"message\": \"OK\"}\r\n00\r\n";
 
-static arrow_gateway_t _test_gateway;
-static arrow_gateway_config_t _test_gateway_config;
+static konexios_gateway_t _test_gateway;
+static konexios_gateway_config_t _test_gateway_config;
 
-void test_arrow_connect_gateway(void) {
+void test_konexios_connect_gateway(void) {
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
@@ -139,7 +139,7 @@ void test_arrow_connect_gateway(void) {
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
 
-    int ret = arrow_connect_gateway(&_test_gateway,0);
+    int ret = konexios_connect_gateway(&_test_gateway,0);
     TEST_ASSERT_EQUAL_INT(200, ret);
     TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
 }
@@ -187,7 +187,7 @@ const char gateway_config_text[] =
         "\" }}"
         "\r\n00\r\n\r\n";
 
-void test_arrow_gateway_initialize_routine() {
+void test_konexios_gateway_initialize_routine() {
     set_http_cb(gateway_register_text, sizeof(gateway_register_text));
     add_http_cb(gateway_ok_text, sizeof(gateway_ok_text));
     add_http_cb(gateway_config_text, sizeof(gateway_config_text));
@@ -205,7 +205,7 @@ void test_arrow_gateway_initialize_routine() {
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
 
-    int ret = arrow_initialize_routine(0);
+    int ret = konexios_initialize_routine(0);
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
     TEST_ASSERT_EQUAL_STRING(TEST_GATEWAY_HID, P_VALUE(_test_gateway.hid));
     TEST_ASSERT_EQUAL_INT(IoT, _test_gateway_config.type);

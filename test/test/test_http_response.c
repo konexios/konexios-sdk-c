@@ -3,10 +3,10 @@
 #include <string.h>
 #include <konexios_config.h>
 #include <debug.h>
-#include <arrow/credentials.h>
+#include <konexios/credentials.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
 #include <data/property_base.h>
@@ -26,7 +26,7 @@
 #include <http/response.h>
 #include <data/find_by.h>
 
-#include <arrow/storage.h>
+#include <konexios/storage.h>
 #include "fakestorage.h"
 #include "storage_weak.h"
 
@@ -64,7 +64,7 @@ void test_http_request_add_header(void) {
     http_response_add_header(&_test_response, p_heap("hello"), p_heap("kokoko"));
     TEST_ASSERT( _test_response.header );
     property_map_t *tmp = NULL;
-    arrow_linked_list_for_each(tmp, _test_response.header, property_map_t) {
+    konexios_linked_list_for_each(tmp, _test_response.header, property_map_t) {
         TEST_ASSERT_EQUAL_STRING("hello", P_VALUE(tmp->key));
         TEST_ASSERT_EQUAL_STRING("kokoko", P_VALUE(tmp->value));
     }

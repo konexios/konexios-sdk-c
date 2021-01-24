@@ -20,7 +20,7 @@ extern "C" {
 typedef struct __attribute_packed__ _property_map_list {
   property_t key;
   property_t value;
-  arrow_linked_list_head_node;
+  konexios_linked_list_head_node;
 } property_map_t;
 
 int property_map_init(property_map_t *root);

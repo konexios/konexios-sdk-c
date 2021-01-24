@@ -16,10 +16,10 @@
  *   Ian Craggs - add ability to set message handler separately #6
  *******************************************************************************/
 #include "MQTTClient.h"
-#include "arrow/mqtt.h"
+#include "konexios/mqtt.h"
 
 // This is where out_msg_t is defined
-#include <arrow/mqtt_out_msg.h>
+#include <konexios/mqtt_out_msg.h>
 
 #if defined(__arm__)
 //#include "trace.h" //factory ota failure debug

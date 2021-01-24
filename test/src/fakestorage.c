@@ -14,7 +14,7 @@ void fake_set_device_hid(const char *hid) {
     else strcpy(d_hid, hid);
 }
 
-int restore_gateway_info(arrow_gateway_t *gateway) {
+int restore_gateway_info(konexios_gateway_t *gateway) {
     if ( g_hid[0] ) {
         property_t t = p_stack(g_hid);
       property_copy(&gateway->hid, t);
@@ -24,11 +24,11 @@ int restore_gateway_info(arrow_gateway_t *gateway) {
 }
 
 
-void save_gateway_info(const arrow_gateway_t *gateway) {
+void save_gateway_info(const konexios_gateway_t *gateway) {
     strcpy(g_hid, gateway->hid.value);
 }
 
-int restore_device_info(arrow_device_t *device) {
+int restore_device_info(konexios_device_t *device) {
   if ( !d_hid[0] ) return -1;
   property_copy(&device->hid, p_stack(d_hid));
 #if defined(__IBM__)
@@ -37,6 +37,6 @@ int restore_device_info(arrow_device_t *device) {
     return 0;
 }
 
-void save_device_info(arrow_device_t *dev) {
+void save_device_info(konexios_device_t *dev) {
     strcpy(d_hid, dev->hid.value);
 }

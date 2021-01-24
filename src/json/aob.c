@@ -12,7 +12,7 @@
 typedef struct ao_traits_ {
     void *key;
     property_t source;
-    arrow_linked_list_head_node;
+    konexios_linked_list_head_node;
 } ao_traits_t;
 
 ao_traits_t *__traits = NULL;
@@ -80,10 +80,10 @@ property_t alloc_only_finish_property(alloc_only_t *p) {
         // origin head of memory
         tmp.flags |= is_owner;
         ao_traits_t *aot = alloc_type(ao_traits_t);
-        arrow_linked_list_init(aot);
+        konexios_linked_list_init(aot);
         aot->key = P_VALUE(p->source);
         property_move(&aot->source, &p->source);
-        arrow_linked_list_add_node_last(__traits, ao_traits_t, aot);
+        konexios_linked_list_add_node_last(__traits, ao_traits_t, aot);
     }
     tmp.value = alloc_only_finish(p);
     return tmp;
@@ -117,7 +117,7 @@ void aob_destroy(property_t *dst) {
     ao_traits_t *aot = NULL;
     linked_list_find_node(aot, __traits, ao_traits_t, traiteq, P_VALUE(*dst));
     if ( aot ) {
-        arrow_linked_list_del_node(__traits, ao_traits_t, aot);
+        konexios_linked_list_del_node(__traits, ao_traits_t, aot);
         property_free(&aot->source);
         memset(dst, 0x0, sizeof(property_t));
         free(aot);

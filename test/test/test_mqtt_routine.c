@@ -6,19 +6,19 @@
 #include "http_routine.h"
 #include "socket_weak.h"
 
-#include <arrow/credentials.h>
-#include <arrow/api/device/event.h>
-#include <arrow/device.h>
-#include <arrow/transaction.h>
-#include <arrow/api/device/info.h>
-#include <arrow/api/json/parse.h>
-#include <arrow/gateway.h>
-#include <arrow/api/log.h>
-#include <arrow/utf8.h>
+#include <konexios/credentials.h>
+#include <konexios/api/device/event.h>
+#include <konexios/device.h>
+#include <konexios/transaction.h>
+#include <konexios/api/device/info.h>
+#include <konexios/api/json/parse.h>
+#include <konexios/gateway.h>
+#include <konexios/api/log.h>
+#include <konexios/utf8.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/sign.h>
+#include <konexios/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
@@ -35,21 +35,21 @@
 #include <json/aob.h>
 #include <encode.h>
 #include <json/decode.h>
-#include <arrow_mqtt_client.h>
+#include <konexios_mqtt_client.h>
 #include <mqtt/client/callback.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>
 #include <ssl/crypt.h>
-#include <arrow/state.h>
-#include <arrow/routine.h>
-#include <arrow/telemetry_api.h>
-#include <arrow/mqtt.h>
-#include <arrow/events.h>
-#include <arrow/gateway_payload_sign.h>
-#include <arrow/device_command.h>
-#include <arrow/software_release.h>
-#include <arrow/software_update.h>
+#include <konexios/state.h>
+#include <konexios/routine.h>
+#include <konexios/telemetry_api.h>
+#include <konexios/mqtt.h>
+#include <konexios/events.h>
+#include <konexios/gateway_payload_sign.h>
+#include <konexios/device_command.h>
+#include <konexios/software_release.h>
+#include <konexios/software_update.h>
 #include <ssl/md5sum.h>
 #include <http/client_mqtt.h>
 
@@ -83,7 +83,7 @@
 #include "mock_api_gateway_gateway.h"
 #include "mock_api_device_device.h"
 
-#include <arrow/storage.h>
+#include <konexios/storage.h>
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
@@ -91,14 +91,14 @@
 #include "storage_weak.h"
 
 void setUp(void) {
-    if ( arrow_init() < 0 ) {
-        printf("arrow_init fail!\r\n");
+    if ( konexios_init() < 0 ) {
+        printf("konexios_init fail!\r\n");
         return;
     }
 }
 
 void tearDown(void) {
-    arrow_deinit();
+    konexios_deinit();
 }
 
 #define TEST_GATEWAY_HID "e000000f63b1a317222772437dc586cb59d680fe"
@@ -156,11 +156,11 @@ void test_mqtt_connect(void) {
     wdt_feed_IgnoreAndReturn(0);
     fake_set_gateway_hid(TEST_GATEWAY_HID);
     fake_set_device_hid(TEST_DEVICE_HID);
-    arrow_gateway_checkin_IgnoreAndReturn(0);
-    arrow_gateway_update_IgnoreAndReturn(0);
+    konexios_gateway_checkin_IgnoreAndReturn(0);
+    konexios_gateway_update_IgnoreAndReturn(0);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
-    arrow_register_gateway_IgnoreAndReturn(0);
+    konexios_register_gateway_IgnoreAndReturn(0);
     set_http_cb(mqtt_connack_text,
                 sizeof(mqtt_connack_text));
     add_http_cb(NULL, -1);
@@ -176,7 +176,7 @@ void test_mqtt_connect(void) {
     add_http_cb(mqtt_puback_text, sizeof(mqtt_puback_text));
     add_http_cb(mqtt_api_pub_text, sizeof(mqtt_api_pub_text)-1);
 
-    arrow_gateway_config_IgnoreAndReturn(0);
+    konexios_gateway_config_IgnoreAndReturn(0);
 
     gethostbyname_ExpectAndReturn(iotClientInitMqtt.host, fake_addr);
     socket_ExpectAndReturn(PF_INET, SOCK_STREAM, IPPROTO_TCP, 0);
@@ -186,22 +186,22 @@ void test_mqtt_connect(void) {
     recv_StubWithCallback(recv_cb);
 //    soc_close_Expect(0);
 
-    arrow_command_handler_add("test", &test_cmd_proc);
-    arrow_routine_error_t ret = arrow_initialize_routine(0);
+    konexios_command_handler_add("test", &test_cmd_proc);
+    konexios_routine_error_t ret = konexios_initialize_routine(0);
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
 
-    property_copy(&arrow_get_current_gateway()->hid, p_const(TEST_GATEWAY_HID));
-    property_copy(&arrow_get_current_device()->hid, p_const(TEST_DEVICE_HID));
-    property_copy(&arrow_get_current_device()->gateway_hid, p_const(TEST_GATEWAY_HID));
+    property_copy(&konexios_get_current_gateway()->hid, p_const(TEST_GATEWAY_HID));
+    property_copy(&konexios_get_current_device()->hid, p_const(TEST_DEVICE_HID));
+    property_copy(&konexios_get_current_device()->gateway_hid, p_const(TEST_GATEWAY_HID));
 
-    ret = arrow_mqtt_connect_routine();
+    ret = konexios_mqtt_connect_routine();
     TEST_ASSERT_EQUAL_INT(ROUTINE_SUCCESS, ret);
 
-    ret = arrow_mqtt_event_receive_routine();
+    ret = konexios_mqtt_event_receive_routine();
     TEST_ASSERT_EQUAL_INT(ROUTINE_RECEIVE_EVENT, ret);
 
-    TEST_ASSERT(arrow_mqtt_has_events());
-    arrow_mqtt_event_proc();
+    TEST_ASSERT(konexios_mqtt_has_events());
+    konexios_mqtt_event_proc();
 
     TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector());
 }

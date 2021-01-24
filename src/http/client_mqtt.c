@@ -8,23 +8,23 @@
 
 #include "http/client_mqtt.h"
 #if defined(HTTP_VIA_MQTT)
-#include <arrow/mqtt.h>
-#include <arrow/sign.h>
-#include <arrow/events.h>
-#include <arrow/routine.h>
+#include <konexios/mqtt.h>
+#include <konexios/sign.h>
+#include <konexios/events.h>
+#include <konexios/routine.h>
 #include <debug.h>
-#include <arrow/gateway_payload_sign.h>
+#include <konexios/gateway_payload_sign.h>
 
 static int mqtt_connection_error() {
-    arrow_mqtt_disconnect_routine();
-    arrow_routine_error_t connect_error = ROUTINE_ERROR;
+    konexios_mqtt_disconnect_routine();
+    konexios_routine_error_t connect_error = ROUTINE_ERROR;
     int retry = 0;
     while ( connect_error != ROUTINE_SUCCESS &&
             connect_error != ROUTINE_RECEIVE_EVENT ) {
         RETRY_UP(retry, {
                      return -1;
                  });
-        connect_error = arrow_mqtt_connect_routine();
+        connect_error = konexios_mqtt_connect_routine();
     }
     return 0;
 }
@@ -109,7 +109,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     if ( ret < 0 ) {
         goto http_mqtt_error;
     }
-    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-apikey");
+    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-konexios-apikey");
     if ( tmp ) {
         ret = json_append_member(_parameters,
                            p_const("apiKey"),
@@ -126,7 +126,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
             goto http_mqtt_error;
         }
     }
-    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-signature");
+    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-konexios-signature");
     if ( tmp ) {
         ret = json_append_member(_parameters,
                            p_const("apiRequestSignature"),
@@ -135,7 +135,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
             goto http_mqtt_error;
         }
     }
-    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-version");
+    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-konexios-version");
     if ( tmp ) {
         ret = json_append_member(_parameters,
                            p_const("apiRequestSignatureVersion"),
@@ -144,7 +144,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
             goto http_mqtt_error;
         }
     }
-    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-arrow-date");
+    linked_list_find_node(tmp, req->header, property_map_t, headbyname, "x-konexios-date");
     if ( tmp ) {
         ret  =json_append_member(_parameters,
                            p_const("timestamp"),
@@ -158,7 +158,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     if ( ret < 0 ) {
         goto http_mqtt_error;
     }
-    if ( arrow_event_sign(sig,
+    if ( konexios_event_sign(sig,
                   p_stack(reqhid),
                   "GatewayToServer_ApiRequest",
                   0,
@@ -177,7 +177,7 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
                        json_mkstring("1"));
     if ( ret < 0 ) goto http_mqtt_error;
 
-    arrow_mqtt_api_wait(1);
+    konexios_mqtt_api_wait(1);
     ret = mqtt_api_publish(_node);
 
     if ( ret < 0 ) {
@@ -188,21 +188,21 @@ int http_mqtt_client_do(http_client_t *cli, http_response_t *res) {
     TimerInterval timer;
     TimerInit(&timer);
     TimerCountdownMS(&timer, (unsigned int) cli->timeout);
-    while ( !arrow_mqtt_api_has_events() && !TimerIsExpired(&timer) ) {
+    while ( !konexios_mqtt_api_has_events() && !TimerIsExpired(&timer) ) {
         ret = mqtt_yield(TimerLeftMS(&timer));
     }
 
-    if ( arrow_mqtt_api_has_events() <= 0 ) {
+    if ( konexios_mqtt_api_has_events() <= 0 ) {
         ret = -1;
         goto http_mqtt_error;
     }
 
-    while ( (ret = arrow_mqtt_api_event_proc(res)) > 0)
+    while ( (ret = konexios_mqtt_api_event_proc(res)) > 0)
         ;
 http_mqtt_error:
     if ( _node ) json_delete(_node);
     if ( _parameters ) json_delete(_parameters);
-    arrow_mqtt_api_wait(0);
+    konexios_mqtt_api_wait(0);
     if ( ret < 0 ) {
         http_session_set_protocol(cli, api_via_http);
         mqtt_error = 1;

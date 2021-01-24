@@ -13,10 +13,10 @@
 extern "C" {
 #endif
 
-#include <arrow/device.h>
+#include <konexios/device.h>
     
-JsonNode *telemetry_serialize_json(arrow_device_t *device, void *data);
-property_t telemetry_serialize(arrow_device_t *device, void *data);
+JsonNode *telemetry_serialize_json(konexios_device_t *device, void *data);
+property_t telemetry_serialize(konexios_device_t *device, void *data);
 
 #if defined(__cplusplus)
 }

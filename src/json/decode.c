@@ -322,7 +322,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
         if ( !nvalue ) return -1;
         json_parse_machine_init(nvalue, jpm->buffer);
-        arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
+        konexios_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_key_init;
         jpm->root = json_mkobject();
         if ( !jpm->root ) return -1;
@@ -344,7 +344,7 @@ static int jpm_value_init(json_parse_machine_t *jpm, char byte) {
         json_parse_machine_t *nvalue = alloc_type(json_parse_machine_t);
         if ( !nvalue ) return -1;
         json_parse_machine_init(nvalue, jpm->buffer);
-        arrow_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
+        konexios_linked_list_add_node_last(jpm, json_parse_machine_t, nvalue);
         nvalue->process_byte = (_json_parse_fn) jpm_value_init;
         jpm->root = json_mkarray();
         if ( !jpm->root ) return -1;
@@ -470,7 +470,7 @@ int json_parse_machine_init(json_parse_machine_t *jpm, alloc_only_t *allocator) 
     jpm->root = NULL;
     jpm->buffer = allocator;
     BUFFER_INIT(jpm);
-    arrow_linked_list_init(jpm);
+    konexios_linked_list_init(jpm);
     return 0;
 }
 
@@ -481,17 +481,17 @@ static int json_parse_machine_clear(json_parse_machine_t *jpm) {
     jpm->p = NULL;
     jpm->root = NULL;
     BUFFER_CLEAR(jpm);
-    arrow_linked_list_init(jpm);
+    konexios_linked_list_init(jpm);
     return 0;
 }
 
 int json_parse_machine_process(json_parse_machine_t *jpm, char byte) {
     json_parse_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, jpm, json_parse_machine_t);
+    konexios_linked_list_next_node(next, jpm, json_parse_machine_t);
     if ( next ) {
         // pass into last machine
         if ( next->complete ) {
-            arrow_linked_list_del_node(jpm, json_parse_machine_t, next);
+            konexios_linked_list_del_node(jpm, json_parse_machine_t, next);
             json_parse_machine_fin(next);
             free(next);
             return json_parse_machine_process(jpm, byte);
@@ -554,10 +554,10 @@ int json_decode_part(json_parse_machine_t *sm, const char *json, size_t size) {
 JsonNode *json_decode_finish(json_parse_machine_t *sm) {
     JsonNode *root = sm->root;
     json_parse_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, sm, json_parse_machine_t);
+    konexios_linked_list_next_node(next, sm, json_parse_machine_t);
     if ( next ) {
         json_parse_machine_t *tmp = NULL;
-        arrow_linked_list_for_each_safe(tmp, next, json_parse_machine_t) {
+        konexios_linked_list_for_each_safe(tmp, next, json_parse_machine_t) {
             json_parse_machine_fin(tmp);
             free(tmp);
         }

@@ -49,7 +49,7 @@ typedef struct _property_handler_ {
 typedef struct _property_dispetcher_ {
     uint8_t index;
     property_handler_t handler;
-    arrow_linked_list_head_node;
+    konexios_linked_list_head_node;
 } property_dispetcher_t;
 
 #if defined(__cplusplus)

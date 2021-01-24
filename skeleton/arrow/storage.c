@@ -6,26 +6,26 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "arrow/storage.h"
-#include <arrow/utf8.h>
+#include "konexios/storage.h"
+#include <konexios/utf8.h>
 
-int restore_gateway_info(arrow_gateway_t *gateway) {
-    // FIXME arrow_gateway_add_hid(gateway, gateway_hid);
+int restore_gateway_info(konexios_gateway_t *gateway) {
+    // FIXME konexios_gateway_add_hid(gateway, gateway_hid);
     return -1;
 }
 
-void save_gateway_info(const arrow_gateway_t *gateway) {
+void save_gateway_info(const konexios_gateway_t *gateway) {
   // FIXME save gateway->hid
 }
 
-int restore_device_info(arrow_device_t *device) {
-  // FIXME arrow_device_set_hid(device, device_hid);
-  // and arrow_device_set_eid(device, device_eid);
+int restore_device_info(konexios_device_t *device) {
+  // FIXME konexios_device_set_hid(device, device_hid);
+  // and konexios_device_set_eid(device, device_eid);
   // if defined(__IBM__)
   return -1;
 }
 
-void save_device_info(arrow_device_t *device) {
+void save_device_info(konexios_device_t *device) {
   // FIXME save device->hid
   // and device->eid
   // if defined(__IBM__)

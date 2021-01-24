@@ -9,7 +9,7 @@
 #include <MQTTClient.h>
 #include <mqtt/client/client.h>
 #include <debug.h>
-#include "arrow/transaction.h"
+#include "konexios/transaction.h"
 
 typedef struct mqtthead {
     MQTTHeader head;
@@ -49,7 +49,7 @@ int waitfor_r(MQTTClient *c, int packet_type, TimerInterval *timer) {
 /**
  * @brief
  * @b Purpose:	Handle an MQTT publish packet from the broker and pass to the
- * \n           appropriate app handler as registered with arrow_command_handler_add( )
+ * \n           appropriate app handler as registered with konexios_command_handler_add( )
  * \n			e.g. feed_cmd(), schedule_add(), schedule_clear()...
  *
  * @param[in]	c: pointer to an MQTT client, info for receive buffer and channel.
@@ -153,7 +153,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
 
     int shift = 0;
 
-    int msg_err = arrow_mqtt_client_delivery_message_init(c, &topicName, &msg);
+    int msg_err = konexios_mqtt_client_delivery_message_init(c, &topicName, &msg);
 
     while( total_len ) {
         int chunk = total_len < rest_buffer ? total_len : rest_buffer;
@@ -169,13 +169,13 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
             shift += len;
             msg.payloadlen = len;
             if ( !msg_err ) {
-                msg_err = arrow_mqtt_client_delivery_message_process(c, &topicName, &msg);
+                msg_err = konexios_mqtt_client_delivery_message_process(c, &topicName, &msg);
             }
         }
     }
 
     if ( !msg_err ) {
-        msg_err = arrow_mqtt_client_delivery_message_done(c, &topicName, &msg);
+        msg_err = konexios_mqtt_client_delivery_message_done(c, &topicName, &msg);
     } else {
         DBG("ERROR --> Arrow delivery message done error.  Will not send ACK!");
     }
@@ -450,9 +450,9 @@ exit:
     return rc;
 }
 
-int arrow_mqtt_client_subscribe(MQTTClient *c,
+int konexios_mqtt_client_subscribe(MQTTClient *c,
                                 enum QoS qos,
-                                arrow_mqtt_delivery_callback_t *cb) {
+                                konexios_mqtt_delivery_callback_t *cb) {
     MQTTSubackData subdata;
     int rc = FAILURE;
     TimerInterval timer;
@@ -493,7 +493,7 @@ int arrow_mqtt_client_subscribe(MQTTClient *c,
       subdata.grantedQoS = QOS0;
       if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int *)&subdata.grantedQoS, c->readbuf, c->readbuf_size) == 1) {
         if (subdata.grantedQoS != 0x80) {
-          rc = arrow_mqtt_client_delivery_message_reg(c, cb);
+          rc = konexios_mqtt_client_delivery_message_reg(c, cb);
         }
       }
     } else {

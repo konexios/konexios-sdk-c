@@ -239,13 +239,13 @@
 #endif
 
 typedef enum {
-    arrow_scheme_http,
-    arrow_scheme_https
+    konexios_scheme_http,
+    konexios_scheme_https
 } scheme_http_t;
 
 typedef enum {
-    arrow_mqtt_scheme_tcp,
-    arrow_mqtt_scheme_tls
+    konexios_mqtt_scheme_tcp,
+    konexios_mqtt_scheme_tls
 } mqtt_scheme_t;
 
 
@@ -261,7 +261,7 @@ typedef struct {
   ((IoT_Client_Init_Mqtt)                         \
      {                                            \
         .host = { MQTT_COMMAND_ADDR }             \
-       ,.scheme = arrow_mqtt_scheme_tls           \
+       ,.scheme = konexios_mqtt_scheme_tls           \
        ,.port    = 8883                           \
        ,.virtualhost = { VHOST }                  \
     })
@@ -270,7 +270,7 @@ typedef struct {
   ((IoT_Client_Init_Mqtt)                         \
     {                                             \
         .host = { MQTT_COMMAND_ADDR }             \
-       ,.scheme = arrow_mqtt_scheme_tcp           \
+       ,.scheme = konexios_mqtt_scheme_tcp           \
        ,.port    = 1883                           \
        ,.virtualhost = { VHOST }                  \
     })
@@ -295,7 +295,7 @@ typedef struct {
      ((IoT_Client_Init_Api)                       \
       {                                           \
             .host ={ ARROW_ADDR }                 \
-           ,.scheme  = arrow_scheme_https         \
+           ,.scheme  = konexios_scheme_https         \
            ,.port    = 443                        \
         })
 #else   // HTTP_CIPHER
@@ -303,7 +303,7 @@ typedef struct {
      ((IoT_Client_Init_Api)                       \
       {                                           \
             .host ={ ARROW_ADDR }                 \
-           ,.scheme  = arrow_scheme_http          \
+           ,.scheme  = konexios_scheme_http          \
            ,.port    = 12001                      \
         })
 #endif  // HTTP_CIPHER

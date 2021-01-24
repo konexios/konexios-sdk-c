@@ -41,12 +41,12 @@ typedef struct TimerInterval {
 
 #if defined(MQTT_TASK)
 #include <sys/mutex.h>
-typedef arrow_mutex* Mutex;
+typedef konexios_mutex* Mutex;
 typedef int Thread;
 
-#define MutexInit arrow_mutex_init
-#define MutexLock(x) arrow_mutex_lock(*(x))
-#define MutexUnlock(x) arrow_mutex_unlock(*(x))
+#define MutexInit konexios_mutex_init
+#define MutexLock(x) konexios_mutex_lock(*(x))
+#define MutexUnlock(x) konexios_mutex_unlock(*(x))
 
 #define ThreadStart(...) (-1)
 #endif

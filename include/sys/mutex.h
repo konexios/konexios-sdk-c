@@ -12,15 +12,15 @@
 #include <konexios_config.h>
 
 #if defined(ARROW_THREAD)
-typedef void arrow_mutex;
+typedef void konexios_mutex;
 
-int arrow_mutex_init(arrow_mutex **mutex);
-int arrow_mutex_deinit(arrow_mutex *mutex);
-int arrow_mutex_lock(arrow_mutex *mutex);
-int arrow_mutex_unlock(arrow_mutex *mutex);
+int konexios_mutex_init(konexios_mutex **mutex);
+int konexios_mutex_deinit(konexios_mutex *mutex);
+int konexios_mutex_lock(konexios_mutex *mutex);
+int konexios_mutex_unlock(konexios_mutex *mutex);
 
-#define CRITICAL_SECTION_START(mutex)   arrow_mutex_lock(mutex)
-#define CRITICAL_SECTION_STOP(mutex)    arrow_mutex_unlock(mutex)
+#define CRITICAL_SECTION_START(mutex)   konexios_mutex_lock(mutex)
+#define CRITICAL_SECTION_STOP(mutex)    konexios_mutex_unlock(mutex)
 #else
 #define CRITICAL_SECTION_START(...)
 #define CRITICAL_SECTION_END(...)

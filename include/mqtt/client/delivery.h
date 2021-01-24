@@ -12,16 +12,16 @@
 #include <data/property.h>
 #include <data/linkedlist.h>
 
-typedef int(*arrow_mqtt_delivery_init)(int);
-typedef int(*arrow_mqtt_delivery_process)(const char *,int);
-typedef int(*arrow_mqtt_delivery_close)(void);
+typedef int(*konexios_mqtt_delivery_init)(int);
+typedef int(*konexios_mqtt_delivery_process)(const char *,int);
+typedef int(*konexios_mqtt_delivery_close)(void);
 
-typedef struct arrow_mqtt_delivery_callback_ {
+typedef struct konexios_mqtt_delivery_callback_ {
     property_t topic;
-    arrow_mqtt_delivery_init init;
-    arrow_mqtt_delivery_process process;
-    arrow_mqtt_delivery_close done;
-    arrow_linked_list_head_node;
-} arrow_mqtt_delivery_callback_t;
+    konexios_mqtt_delivery_init init;
+    konexios_mqtt_delivery_process process;
+    konexios_mqtt_delivery_close done;
+    konexios_linked_list_head_node;
+} konexios_mqtt_delivery_callback_t;
 
 #endif

@@ -12,9 +12,9 @@
 #include <MQTTClient.h>
 #include <mqtt/client/delivery.h>
 
-int arrow_mqtt_client_delivery_message_reg(MQTTClient *c, arrow_mqtt_delivery_callback_t *dc);
-int arrow_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
-int arrow_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
-int arrow_mqtt_client_delivery_message_done(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
+int konexios_mqtt_client_delivery_message_reg(MQTTClient *c, konexios_mqtt_delivery_callback_t *dc);
+int konexios_mqtt_client_delivery_message_init(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
+int konexios_mqtt_client_delivery_message_process(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
+int konexios_mqtt_client_delivery_message_done(MQTTClient *c, MQTTString *topicName, MQTTMessage *message);
 
 #endif

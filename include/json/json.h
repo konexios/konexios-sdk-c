@@ -97,7 +97,7 @@ typedef struct _json_encode_machine_ {
     size_t len;
     SB buffer;
     JsonNode *ptr;
-    arrow_linked_list_head_node;
+    konexios_linked_list_head_node;
 } json_encode_machine_t;
 
 int json_encode_machine_init(json_encode_machine_t *jem);

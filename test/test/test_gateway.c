@@ -3,8 +3,8 @@
 #include <string.h>
 #include <konexios_config.h>
 #include <debug.h>
-#include <arrow/credentials.h>
-#include <arrow/gateway.h>
+#include <konexios/credentials.h>
+#include <konexios/gateway.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
@@ -31,10 +31,10 @@ void tearDown(void) {
     property_types_deinit();
 }
 
-static arrow_gateway_t _test_gateway;
+static konexios_gateway_t _test_gateway;
 
 void test_gateway_init(void) {
-    arrow_gateway_init(&_test_gateway);
+    konexios_gateway_init(&_test_gateway);
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.hid));
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.name));
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.os));
@@ -51,7 +51,7 @@ void test_gateway_prepare( void ) {
 //    get_mac_address_ExpectAndReturn(mac, 0);
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
-    arrow_prepare_gateway(&_test_gateway);
+    konexios_prepare_gateway(&_test_gateway);
     TEST_ASSERT_EQUAL_STRING(NULL, P_VALUE(_test_gateway.hid));
     TEST_ASSERT_EQUAL_STRING(GATEWAY_NAME, P_VALUE(_test_gateway.name));
     TEST_ASSERT_EQUAL_STRING(GATEWAY_OS, P_VALUE(_test_gateway.os));

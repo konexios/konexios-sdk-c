@@ -7,20 +7,20 @@
 #include "api_device_device.h"
 #include "socket_weak.h"
 
-#include <arrow/credentials.h>
-#include <arrow/device.h>
-#include <arrow/routine.h>
-#include <arrow/transaction.h>
-#include <arrow/api/device/event.h>
-#include <arrow/api/device/info.h>
-#include <arrow/api/json/parse.h>
-#include <arrow/gateway.h>
-#include <arrow/api/log.h>
-#include <arrow/utf8.h>
+#include <konexios/credentials.h>
+#include <konexios/device.h>
+#include <konexios/routine.h>
+#include <konexios/transaction.h>
+#include <konexios/api/device/event.h>
+#include <konexios/api/device/info.h>
+#include <konexios/api/json/parse.h>
+#include <konexios/gateway.h>
+#include <konexios/api/log.h>
+#include <konexios/utf8.h>
 #include <sys/mem.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/sign.h>
+#include <konexios/sign.h>
 #include <bsd/socket.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
@@ -37,21 +37,21 @@
 #include <json/aob.h>
 #include <encode.h>
 #include <json/decode.h>
-#include <arrow_mqtt_client.h>
+#include <konexios_mqtt_client.h>
 #include <mqtt/client/callback.h>
 #include <http/client.h>
 #include <http/request.h>
 #include <http/response.h>
 #include <http/routine.h>
 #include <ssl/crypt.h>
-#include <arrow/state.h>
-#include <arrow/telemetry_api.h>
-#include <arrow/mqtt.h>
-#include <arrow/events.h>
-#include <arrow/gateway_payload_sign.h>
-#include <arrow/device_command.h>
-#include <arrow/software_release.h>
-#include <arrow/software_update.h>
+#include <konexios/state.h>
+#include <konexios/telemetry_api.h>
+#include <konexios/mqtt.h>
+#include <konexios/events.h>
+#include <konexios/gateway_payload_sign.h>
+#include <konexios/device_command.h>
+#include <konexios/software_release.h>
+#include <konexios/software_update.h>
 #include <ssl/md5sum.h>
 #include <http/client_mqtt.h>
 
@@ -86,7 +86,7 @@
 #include "http_cb.h"
 #include "fakedns.h"
 #include "fakesock.h"
-#include <arrow/storage.h>
+#include <konexios/storage.h>
 #include "fakestorage.h"
 #include "storage_weak.h"
 
@@ -97,26 +97,26 @@
 #define TEST_GATEWAY_HID "000TEST000"
 #define DEVICE_UID GATEWAY_UID "-" DEVICE_UID_SUFFIX
 
-static arrow_gateway_t _test_gateway;
-static arrow_gateway_config_t _test_gateway_config;
-static arrow_device_t _test_device;
+static konexios_gateway_t _test_gateway;
+static konexios_gateway_config_t _test_gateway_config;
+static konexios_device_t _test_device;
 
 void setUp(void) {
-    if ( arrow_init() < 0 ) {
-        printf("arrow_init fail!\r\n");
+    if ( konexios_init() < 0 ) {
+        printf("konexios_init fail!\r\n");
         return;
     }
     char mac[6] = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
     get_mac_address_ExpectAnyArgsAndReturn(0);
     get_mac_address_ReturnArrayThruPtr_mac(mac, 6);
-    arrow_gateway_init(&_test_gateway);
-    arrow_prepare_gateway(&_test_gateway);
+    konexios_gateway_init(&_test_gateway);
+    konexios_prepare_gateway(&_test_gateway);
     property_copy(&_test_gateway.hid, p_const(TEST_GATEWAY_HID));
 }
 
 void tearDown(void)
 {
-    arrow_deinit();
+    konexios_deinit();
 }
 
 #define TEST_DEVICE_HID "d000000ca3a1a317222772437dc586cb59d680fe"
@@ -140,7 +140,7 @@ char http_resp_text[] =
         TEST_DEVICE_HID
         "\",\"links\": {}, \"message\": \"OK\"}\r\n00\r\n";
 
-void test_arrow_register_device(void) {
+void test_konexios_register_device(void) {
     set_http_cb(http_resp_text, sizeof(http_resp_text));
     struct hostent *fake_addr = dns_fake(0xc0a80001, iotClientInitApi.host);
     struct sockaddr_in *serv = prepsock(fake_addr, iotClientInitApi.port);
@@ -152,8 +152,8 @@ void test_arrow_register_device(void) {
     recv_StubWithCallback(recv_cb);
     soc_close_Expect(0);
 
-    arrow_prepare_device(&_test_gateway, &_test_device);
-    int ret = arrow_register_device(&_test_gateway, &_test_device);
+    konexios_prepare_device(&_test_gateway, &_test_device);
+    int ret = konexios_register_device(&_test_gateway, &_test_device);
     TEST_ASSERT_EQUAL_INT(0, ret);
     TEST_ASSERT_EQUAL_STRING(TEST_DEVICE_HID, P_VALUE(_test_device.hid));
 }

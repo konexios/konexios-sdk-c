@@ -18,7 +18,7 @@ class String
     self.each_line do |line|
       columns = []
       margin.times{columns << ' '}
-      # handle special case of line being narrower than width to be lopped off
+      # handle special case of line being nkonexioser than width to be lopped off
       if (non_whitespace_column < line.length)
         new_lines << "#{columns.join}#{line[non_whitespace_column..-1]}"
       else

@@ -53,7 +53,7 @@ $(info GCC: $(CC))
 
 get_make_path = $(dir $(call, cross_abspath,$(lastword $(MAKEFILE_LIST))))/
 SDK_PATH ?= $(call get_make_path)
-SDK_IMPL ?= $(abspath $(SDK_PATH)/../$(PLATFORM)/acnsdkc/)
+SDK_IMPL ?= $(abspath $(SDK_PATH)/../$(PLATFORM)/konexiossdkc/)
 
 SDK_SRC += $(wildcard $(SDK_PATH)/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/sys/*.c)
@@ -65,9 +65,9 @@ SDK_SRC += $(wildcard $(SDK_PATH)/src/json/*.c)
 endif
 SDK_SRC += $(wildcard $(SDK_PATH)/src/bsd/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/time/*.c)
-SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/*.c)
-SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/**/*.c)
-SDK_SRC += $(wildcard $(SDK_PATH)/src/arrow/api/**/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/konexios/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/konexios/**/*.c)
+SDK_SRC += $(wildcard $(SDK_PATH)/src/konexios/api/**/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/client/src/*.c)
 SDK_SRC += $(wildcard $(SDK_PATH)/src/mqtt/packet/src/*.c)

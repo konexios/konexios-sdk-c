@@ -1,10 +1,10 @@
 #include "unity.h"
 #include <konexios_config.h>
 #include <debug.h>
-#include <arrow/credentials.h>
+#include <konexios/credentials.h>
 #include <data/static_buf.h>
 #include <data/static_alloc.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 #include <data/linkedlist.h>
 #include <data/property.h>
 #include <data/ringbuffer.h>
@@ -23,13 +23,13 @@
 #include <http/request.h>
 #include <http/response.h>
 #include <data/find_by.h>
-#include <arrow/storage.h>
+#include <konexios/storage.h>
 #include "fakestorage.h"
 #include "storage_weak.h"
 
 void setUp(void) {
     property_types_init();
-    arrow_hosts_init();
+    konexios_hosts_init();
 }
 
 void tearDown(void) {
@@ -47,7 +47,7 @@ void test_http_request_init(void) {
     TEST_ASSERT_EQUAL_STRING(iotClientInitApi.host, P_VALUE(_test_request.host));
     TEST_ASSERT_EQUAL_INT(iotClientInitApi.port, _test_request.port);
     TEST_ASSERT_EQUAL_STRING("GET", P_VALUE(_test_request.meth));
-    TEST_ASSERT_EQUAL_INT(arrow_scheme_https, _test_request.scheme);
+    TEST_ASSERT_EQUAL_INT(konexios_scheme_https, _test_request.scheme);
     TEST_ASSERT( IS_EMPTY(_test_request.payload) );
     TEST_ASSERT( ! _test_request.header );
     TEST_ASSERT( IS_EMPTY(_test_request.content_type.value) );
@@ -59,7 +59,7 @@ void test_http_request_add_header(void) {
     http_request_add_header(&_test_request, p_heap("hello"), p_heap("kokoko"));
     TEST_ASSERT( _test_request.header );
     property_map_t *tmp = NULL;
-    arrow_linked_list_for_each(tmp, _test_request.header, property_map_t) {
+    konexios_linked_list_for_each(tmp, _test_request.header, property_map_t) {
         TEST_ASSERT_EQUAL_STRING("hello", P_VALUE(tmp->key));
         TEST_ASSERT_EQUAL_STRING("kokoko", P_VALUE(tmp->value));
     }

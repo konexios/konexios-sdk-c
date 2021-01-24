@@ -1,7 +1,7 @@
 #include "data/linkedlist.h"
 
-arrow_linked_list_t *arrow_linked_list_add(arrow_linked_list_t *root, arrow_linked_list_t *el) {
-    arrow_linked_list_t *last = root;
+konexios_linked_list_t *konexios_linked_list_add(konexios_linked_list_t *root, konexios_linked_list_t *el) {
+    konexios_linked_list_t *last = root;
     el->next = 0;
     while ( last && last->next ) {
         last = last->next;
@@ -11,14 +11,14 @@ arrow_linked_list_t *arrow_linked_list_add(arrow_linked_list_t *root, arrow_link
     return root;
 }
 
-arrow_linked_list_t *arrow_linked_list_add_first(arrow_linked_list_t *root, arrow_linked_list_t *el) {
+konexios_linked_list_t *konexios_linked_list_add_first(konexios_linked_list_t *root, konexios_linked_list_t *el) {
     el->next = root;
     return el;
 }
 
-arrow_linked_list_t *arrow_linked_list_del(arrow_linked_list_t *root, arrow_linked_list_t *el) {
-    arrow_linked_list_t *last = root;
-    arrow_linked_list_t *prev = 0;
+konexios_linked_list_t *konexios_linked_list_del(konexios_linked_list_t *root, konexios_linked_list_t *el) {
+    konexios_linked_list_t *last = root;
+    konexios_linked_list_t *prev = 0;
     while ( last ) {
         if ( last == el) {
             if ( prev ) {
@@ -37,9 +37,9 @@ arrow_linked_list_t *arrow_linked_list_del(arrow_linked_list_t *root, arrow_link
     return 0;
 }
 
-arrow_linked_list_t *arrow_linked_list_del_last(arrow_linked_list_t *root) {
-    arrow_linked_list_t *last = root;
-    arrow_linked_list_t *prev = 0;
+konexios_linked_list_t *konexios_linked_list_del_last(konexios_linked_list_t *root) {
+    konexios_linked_list_t *last = root;
+    konexios_linked_list_t *prev = 0;
     while ( last && last->next ) {
         prev = last;
         last = last->next;

@@ -8,7 +8,7 @@ typedef struct _test_ {
   int data;
   int count;
   int hello;
-  arrow_linked_list_head_node;
+  konexios_linked_list_head_node;
 } test_t;
 
 void setUp(void)
@@ -26,7 +26,7 @@ void test_create_linkedlist(void) {
     node->data = 10;
     node->count = 0;
     node->hello = 111;
-    arrow_linked_list_add_node_last(__root, test_t, node);
+    konexios_linked_list_add_node_last(__root, test_t, node);
     TEST_ASSERT(__root);
     TEST_ASSERT_EQUAL_INT(10, __root->data);
     TEST_ASSERT_EQUAL_INT(0, __root->count);
@@ -39,7 +39,7 @@ void test_add_create_linkedlist(void) {
     node2->data = 11;
     node2->count = 1;
     node2->hello = 836;
-    arrow_linked_list_add_node_last(__root, test_t, node2);
+    konexios_linked_list_add_node_last(__root, test_t, node2);
     TEST_ASSERT(__root->node.next);
     TEST_ASSERT(!__root->node.next->next);
     // fill
@@ -47,14 +47,14 @@ void test_add_create_linkedlist(void) {
     node3->data = 12;
     node3->count = 2;
     node3->hello = 528;
-    arrow_linked_list_add_node_last(__root, test_t, node3);
+    konexios_linked_list_add_node_last(__root, test_t, node3);
 }
 
 void test_check_order(void) {
     int exp_ord[] = {0, 1, 2};
     test_t *tmp;
     int i = 0;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
 }
@@ -65,10 +65,10 @@ void test_check_add_order_last(void) {
     node4->data = 13;
     node4->count = 3;
     node4->hello = 964;
-    arrow_linked_list_add_node_last(__root, test_t, node4);
+    konexios_linked_list_add_node_last(__root, test_t, node4);
     test_t *tmp = NULL;
     int i = 0;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
     TEST_ASSERT(tmp);
@@ -83,10 +83,10 @@ void test_check_add_order_first(void) {
     node5->data = 14;
     node5->count = 4;
     node5->hello = 529;
-    arrow_linked_list_add_node_first(__root, test_t, node5);
+    konexios_linked_list_add_node_first(__root, test_t, node5);
     test_t *tmp = NULL;
     int i = 0;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
     TEST_ASSERT(__root);
@@ -99,15 +99,15 @@ void test_check_foreach(void) {
     test_t *list[5] = {0};
     test_t *tmp = NULL;
     int i = 0;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         list[i++] = tmp;
     }
     i = 0;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT( list[i++] == tmp );
     }
     i = 0;
-    arrow_linked_list_for_each_safe(tmp, __root, test_t) {
+    konexios_linked_list_for_each_safe(tmp, __root, test_t) {
         TEST_ASSERT( list[i++] == tmp );
     }
 }
@@ -131,8 +131,8 @@ void test_check_del_first(void) {
     test_t *tmp = NULL;
     int i = 0;
     test_t *rm = __root;
-    arrow_linked_list_del_node_first(__root, test_t);
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_del_node_first(__root, test_t);
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
     free(rm);
@@ -143,13 +143,13 @@ void test_check_del_last(void) {
     test_t *tmp = NULL;
     int i = 0;
     test_t *last;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         ;
     }
     last = tmp;
     TEST_ASSERT( last );
-    arrow_linked_list_del_node_last(__root, test_t);
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_del_node_last(__root, test_t);
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
     free(last);
@@ -162,8 +162,8 @@ void test_check_del_middle(void) {
     test_t *rm;
     linked_list_find_node(rm, __root, test_t, testeq, 1);
     TEST_ASSERT( rm );
-    arrow_linked_list_del_node(__root, test_t, rm);
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_del_node(__root, test_t, rm);
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         TEST_ASSERT_EQUAL_INT(exp_ord[i++], tmp->count);
     }
     free(rm);
@@ -171,7 +171,7 @@ void test_check_del_middle(void) {
 
 void test_check_del_hard(void) {
     test_t *tmp;
-    arrow_linked_list_for_each(tmp, __root, test_t) {
+    konexios_linked_list_for_each(tmp, __root, test_t) {
         free(tmp);
         tmp = NULL;
     }

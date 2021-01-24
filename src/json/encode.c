@@ -67,7 +67,7 @@ int json_encode_machine_init(json_encode_machine_t *jem) {
     jem->complete = 0;
     jem->ptr = NULL;
     sb_clear(&jem->buffer);
-    arrow_linked_list_init(jem);
+    konexios_linked_list_init(jem);
     return 0;
 }
 
@@ -343,11 +343,11 @@ int jem_encode_obj(json_encode_machine_t *jem, char *s, int len) {
     if ( !len ) return 0;
     int ret = 0;
     json_encode_machine_t *next = NULL;
-    arrow_linked_list_next_node(next, jem, json_encode_machine_t);
+    konexios_linked_list_next_node(next, jem, json_encode_machine_t);
     if ( !next ) {
         next = alloc_type(json_encode_machine_t);
         next->ptr = NULL;
-        arrow_linked_list_add_node_last(jem, json_encode_machine_t, next);
+        konexios_linked_list_add_node_last(jem, json_encode_machine_t, next);
     }
     if ( !next->ptr && !next->complete ) {
         json_encode_machine_init(next);
@@ -378,7 +378,7 @@ int jem_encode_obj(json_encode_machine_t *jem, char *s, int len) {
         }
     }
     if ( next && next->complete ) {
-        arrow_linked_list_del_node_last(jem, json_encode_machine_t);
+        konexios_linked_list_del_node_last(jem, json_encode_machine_t);
         json_encode_machine_fin(next);
         free(next);
         jem->complete = 1;
@@ -394,7 +394,7 @@ int json_encode_machine_fin(json_encode_machine_t *jem) {
       if ( sb_size(&jem->buffer) ) sb_free(&jem->buffer);
       jem->ptr = NULL;
       json_encode_machine_t *next = NULL;
-      arrow_linked_list_next_node(next, jem, json_encode_machine_t);
+      konexios_linked_list_next_node(next, jem, json_encode_machine_t);
       if ( next ) {
           json_encode_machine_fin(next);
           free(next);

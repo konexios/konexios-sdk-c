@@ -46,7 +46,7 @@ enum FindBy {
 typedef struct _find_by {
   int key;
   property_t value;
-  arrow_linked_list_head_node;
+  konexios_linked_list_head_node;
 #if defined(__cplusplus)
   _find_by(int k, const property_t &v): key(k), value(v) {}
 #endif
@@ -69,7 +69,7 @@ int find_by_validate_key(find_by_t *fb);
     for (i=0; i < n; i++) { \
       find_by_t *tmp = alloc_type(find_by_t); \
       *tmp = va_arg(args, find_by_t); \
-      arrow_linked_list_add_node_last(params, find_by_t, tmp); \
+      konexios_linked_list_add_node_last(params, find_by_t, tmp); \
     } \
     va_end(args); \
   } while(0)
@@ -77,7 +77,7 @@ int find_by_validate_key(find_by_t *fb);
 #define find_by_to_property(fb) get_find_by_name((fb)->key)
 
 #define find_by_for_each(tmp, params) \
-    arrow_linked_list_for_each(tmp, params, find_by_t) \
+    konexios_linked_list_for_each(tmp, params, find_by_t) \
     if ( find_by_validate_key(tmp) == 0 )
 
 #if defined(__cplusplus)

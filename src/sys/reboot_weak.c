@@ -8,6 +8,7 @@
 
 #include "sys/reboot.h"
 
-void __attribute__((weak)) reboot(void) {
+// void __attribute__((weak)) reboot(void) {
+int __attribute__((weak)) reboot(int cmd) {
   while(1) ;
 }

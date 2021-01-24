@@ -41,7 +41,7 @@ typedef struct _json_parse_machine_ {
     alloc_only_t *buffer;
     property_t key;
     JsonNode *root;
-    arrow_linked_list_head_node;
+    konexios_linked_list_head_node;
 } json_parse_machine_t;
 
 

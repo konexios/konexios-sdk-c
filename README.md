@@ -37,9 +37,9 @@ You can define this options in the private.h file or use "-Dxxx" compiler flag
 
 define **NO_EVENTS**            to switch off the event handlers for a mqtt connection
 
-define **NO_RELEASE_UPDATE**    turn off the firmware update capability (based on a arrow_software_release_dowload_set_cb functions)
+define **NO_RELEASE_UPDATE**    turn off the firmware update capability (based on a konexios_software_release_dowload_set_cb functions)
 
-define **NO_SOFTWARE_UPDATE**   turn off the software update capability (based on a arrow_gateway_software_update_set_cb function)
+define **NO_SOFTWARE_UPDATE**   turn off the software update capability (based on a konexios_gateway_software_update_set_cb function)
 
 define **ARROW_HAS_USERHID**  device would use user HID and application HID to register a gateway and device. For this option the **DEFAULT_APP_HID** and **DEFAULT_USER_HID** should be defined.
 For example:
@@ -63,23 +63,23 @@ define **ARCH_TIME**            use the platform specific headers or define need
 You should perform the ACN SDK initialisation before you start work with any SDK methods.
 There are 3 methods related:
 ```c
-arrow_routine_error_t arrow_init(void);
-arrow_routine_error_t arrow_deinit(void);
-void arrow_close(void);
+konexios_routine_error_t konexios_init(void);
+konexios_routine_error_t konexios_deinit(void);
+void konexios_close(void);
 ```
-**arrow_init** function initializes all needed structures for an SDK.
-**arrow_deinit** function destroys all structures and working objects.
-**arrow_close** close all connections and terminate the gateway and device objects.
+**konexios_init** function initializes all needed structures for an SDK.
+**konexios_deinit** function destroys all structures and working objects.
+**konexios_close** close all connections and terminate the gateway and device objects.
 
 ### Gateway and Device registration ###
 To get started with ArrowConnect gateway and device you should register it.
 You can call this function to register gateway and device:
 ```c
-arrow_routine_error_t arrow_initialize_routine(void);
+konexios_routine_error_t konexios_initialize_routine(void);
 ```
 or this function to register the gateway only.
 ```c
-arrow_routine_error_t arrow_gateway_initialize_routine(void);
+konexios_routine_error_t konexios_gateway_initialize_routine(void);
 ```
 You can call these function at begin of your application. The gateway and device would be register only one time if you implement the storage methods.
 If these gateway/device already registered these methods call checkin request to gateway.
@@ -115,7 +115,7 @@ this function returns 0 in success and returns -1 in other case.
 ### Find Gateway ###
 ```c
 gateway_info_t *list = NULL;
-int r = arrow_gateway_find_by(&list, 2, find_by(osNames, "mbed"), find_by(f_size, "100"));
+int r = konexios_gateway_find_by(&list, 2, find_by(osNames, "mbed"), find_by(f_size, "100"));
 if ( r == 0 ) {
   gateway_info_t *tmp;
   for_each_node_hard(tmp, list, gateway_info_t) {
@@ -145,9 +145,9 @@ defines for network connection:
 ```
 simple example:
 ```c
-arrow_gateway_t gateway;
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-arrow_gateway_free(&gateway);
+konexios_gateway_t gateway;
+while ( konexios_connect_gateway(&gateway) < 0) { printf("konexios gateway connection fail\r\n"); }
+konexios_gateway_free(&gateway);
 ```
 related defins in the private.h file:
 
@@ -168,74 +168,74 @@ where MAC is device MAC-address
 The Default Initialization include establishing a Gateway Connection and Configuration and Device Connection if it's necessary. This function implemeted all logic to initialize your device in a cloud. 
 
 ```c
-arrow_initialize_routine();
+konexios_initialize_routine();
 ```
 
 To access the Gateway and Device objects you can use following function:
 ```c
-arrow_gateway_t *current_gateway();
-arrow_device_t *current_device();
+konexios_gateway_t *current_gateway();
+konexios_device_t *current_device();
 ```
 
 You can use the raw API requests instead
 to register a gateway/device:
 ```c
-int arrow_register_gateway(arrow_gateway_t *gateway);
-int arrow_register_device(arrow_gateway_t *gateway, arrow_device_t *device);
+int konexios_register_gateway(konexios_gateway_t *gateway);
+int konexios_register_device(konexios_gateway_t *gateway, konexios_device_t *device);
 ```
 gateway and device objects should be filled before.
 
 ### Checkin Gateway ###
 
-It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
+It's not necessary to use this functions if you already initialize your device by the konexios_initialize_routine function.
 
 simple example:
 
 ```c
-arrow_gateway_t gateway;
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-arrow_checkin(&gateway); // CHECKIN
-arrow_gateway_free(&gateway);
+konexios_gateway_t gateway;
+while ( konexios_connect_gateway(&gateway) < 0) { printf("konexios gateway connection fail\r\n"); }
+konexios_checkin(&gateway); // CHECKIN
+konexios_gateway_free(&gateway);
 ```
 ### Heartbeat Gateway ###
 
 simple example:
 
 ```c
-arrow_gateway_t gateway;
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-arrow_heartbeat(&gateway); // HEARTBEAT
-arrow_gateway_free(&gateway);
+konexios_gateway_t gateway;
+while ( konexios_connect_gateway(&gateway) < 0) { printf("konexios gateway connection fail\r\n"); }
+konexios_heartbeat(&gateway); // HEARTBEAT
+konexios_gateway_free(&gateway);
 ```
 
 ### Get Gateway Configuration ###
 
-It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
+It's not necessary to use this functions if you already initialize your device by the konexios_initialize_routine function.
 
 simple example:
 
 ```c
-arrow_gateway_t gateway;
+konexios_gateway_t gateway;
 char config[1024];
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-arrow_config(&gateway, config);
+while ( konexios_connect_gateway(&gateway) < 0) { printf("konexios gateway connection fail\r\n"); }
+konexios_config(&gateway, config);
 printf("gateway config: %s\r\n");
-arrow_gateway_free(&gateway);
+konexios_gateway_free(&gateway);
 ```
 
 ### Register Device ###
 
-It's not necessary to use this functions if you already initialize your device by the arrow_initialize_routine function.
+It's not necessary to use this functions if you already initialize your device by the konexios_initialize_routine function.
 
 simple example:
 
 ```c
-arrow_gateway_t gateway;
-arrow_device_t device;
-while ( arrow_connect_gateway(&gateway) < 0) { printf("arrow gateway connection fail\r\n"); }
-while ( arrow_connect_device(&gateway, &device) < 0 ) { printf("arrow device connection fail\r\n"); } // Device registration
-arrow_device_free(&device);
-arrow_gateway_free(&gateway);
+konexios_gateway_t gateway;
+konexios_device_t device;
+while ( konexios_connect_gateway(&gateway) < 0) { printf("konexios gateway connection fail\r\n"); }
+while ( konexios_connect_device(&gateway, &device) < 0 ) { printf("konexios device connection fail\r\n"); } // Device registration
+konexios_device_free(&device);
+konexios_gateway_free(&gateway);
 ```
 
 related defins in the config.h file:
@@ -246,7 +246,7 @@ related defins in the config.h file:
 #define DEVICE_UID_SUFFIX   "board"
 ```
 
-This arrow_connect_device function automatically fill the gateway structure according a defines above.
+This konexios_connect_device function automatically fill the gateway structure according a defines above.
 Device UID scheme: GATEWAY_UIP_PREFIX-<MAC>-DEVICE_UID_SUFFIX
 where MAC is device MAC-address
 
@@ -270,13 +270,13 @@ add_cmd_handler("test", &test_cmd_proc);
 Simple example:
 
 ```c
-arrow_gateway_t gateway;
-arrow_device_t device;
+konexios_gateway_t gateway;
+konexios_device_t device;
 ...
 data = get_telemetry_data_from_sensors();
-while ( arrow_send_telemetry(&device, data) < 0 ) { printf("send telemetry fail\r\n") }
-arrow_device_free(&device);
-arrow_gateway_free(&gateway);
+while ( konexios_send_telemetry(&device, data) < 0 ) { printf("send telemetry fail\r\n") }
+konexios_device_free(&device);
+konexios_gateway_free(&gateway);
 free(data);
 ```
 
@@ -308,17 +308,17 @@ related defines in the config.h file (sensors depends):
 
 Or you can to replace this code by:
 ```c
-arrow_send_telemetry_routine(&data);
+konexios_send_telemetry_routine(&data);
 ```
 
 Also you may initialize the MQTT processor and run the telemetry loop.
 For MQTT initializing:
 ```c
-arrow_mqtt_connect_routine();
+konexios_mqtt_connect_routine();
 ```
 After that you can run loop:
 ```c
-arrow_mqtt_send_telemetry_routine(get_telemetry_data, &data);
+konexios_mqtt_send_telemetry_routine(get_telemetry_data, &data);
 ```
 where get_telemetry_data - function that fill a telemetry data object;
 data - argument for this function
@@ -333,56 +333,56 @@ The gateway example:
 
 ```c
 CREATE_TEST_SUITE(gate_test, "384f9d6832ce2272f18f3ee8597e0f108f6a8109");
-arrow_test_gateway(current_gateway(), &gate_test);
+konexios_test_gateway(current_gateway(), &gate_test);
 
-arrow_test_begin(&gate_test);
+konexios_test_begin(&gate_test);
 // start test procedure
-arrow_test_step_begin(&gate_test, 1);
+konexios_test_step_begin(&gate_test, 1);
 //test temperature
 if ( 1 ) {
-  arrow_test_step_success(&gate_test, 1);
+  konexios_test_step_success(&gate_test, 1);
 } else {
-  arrow_test_step_fail(&gate_test, 1, "no temp sensor");
+  konexios_test_step_fail(&gate_test, 1, "no temp sensor");
 }
 // end test
-arrow_test_end(&gate_test);
+konexios_test_end(&gate_test);
 ```
 
 The device example: 
 
 ```c
 CREATE_TEST_SUITE(p, "a53f0aa3e8bf7806ff5b8770ad4d9d3477d534c9");
-arrow_test_device(current_device(), &p);
+konexios_test_device(current_device(), &p);
 printf("test device result hid {%s}\r\n", P_VALUE(p.result_hid));
 
-arrow_test_begin(&p);
+konexios_test_begin(&p);
 // start test procedure
-arrow_test_step_begin(&p, 1);
+konexios_test_step_begin(&p, 1);
 //test temperature
 get_telemetry_data(&data);
 if ( sizeof(data) > 1 ) {
-  arrow_test_step_success(&p, 1);
+  konexios_test_step_success(&p, 1);
 } else {
-  arrow_test_step_fail(&p, 1, "no temp sensor");
+  konexios_test_step_fail(&p, 1, "no temp sensor");
 }
 
 #if !defined(SKIP_LED)
 // where is no LED, skiping...
-arrow_test_step_skip(&p, 2);
+konexios_test_step_skip(&p, 2);
 #else
-arrow_test_step_begin(&p, 2);
-arrow_test_step_fail(&p, 2, "no LED");
+konexios_test_step_begin(&p, 2);
+konexios_test_step_fail(&p, 2, "no LED");
 #endif
 
-arrow_test_step_begin(&p, 3);
+konexios_test_step_begin(&p, 3);
 // check ARM
 #if defined(__arm__)
-arrow_test_step_success(&p, 3);
+konexios_test_step_success(&p, 3);
 #else
-arrow_test_step_fail(&p, 3, "not ARM");
+konexios_test_step_fail(&p, 3, "not ARM");
 #endif
 // end test
-arrow_test_end(&p);
+konexios_test_end(&p);
 ```
 
 ### Software Update ###
@@ -391,7 +391,7 @@ You can set the callback for a Software Update ability.
 Just implement this function somewhere:
 
 ```c
-int arrow_software_update(const char *url,
+int konexios_software_update(const char *url,
                           const char *checksum,
                           const char *from,
                           const char *to)
@@ -405,7 +405,7 @@ This function should to return 0 if the update process succeeded.
 
 And in the main function you chould to install this callback this way:
 ```c
-arrow_software_release_set_cb(&arrow_software_update);
+konexios_software_release_set_cb(&konexios_software_update);
 ```
 
 ### OTA firmware upgrade ###
@@ -414,7 +414,7 @@ There is a capability to update the firmware via an SDK. It's sufficiantly to im
 
 ```c
 // somewere in the main function:
-#include <arrow/software_update.h>
+#include <konexios/software_update.h>
 
 int qca_gateway_software_update(const char *url) {
   // upgrade procedure
@@ -425,14 +425,14 @@ int qca_gateway_software_update(const char *url) {
 
 int main() {
   // ...
-  arrow_gateway_software_update_set_cb(qca_gateway_software_update);
+  konexios_gateway_software_update_set_cb(qca_gateway_software_update);
   // ...
 }
 ```
 
-Or reimplement the arrow_gateway_software_update function:
+Or reimplement the konexios_gateway_software_update function:
 
-int arrow_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
+int konexios_gateway_software_update(const char *url)  function into your application. Where url it is URL address passed through HTTP software update request. The content of this function is platform depend.
 For example for the linux:
 ```c
 #include <stdio.h>
@@ -442,7 +442,7 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
   size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
   return written;
 }
-int arrow_gateway_software_update(const char *url) {
+int konexios_gateway_software_update(const char *url) {
   CURL *curl;
   static const char *pagefilename = "update.file";
   FILE *pagefile;
@@ -468,12 +468,12 @@ This function for the QCA4010 board is more complicated. You can find it into ac
 The JSON message for a QCA update should be like this:
 ```json
 {
-  "url": "http://192.168.83.129:80/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
+  "url": "http://192.168.83.129:80/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_konexios.bin"
 }
 ```
 or
 ```json
 {
-  "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_arrow.bin"
+  "url": "tftp://192.168.83.129/ota_image_AR401X_REV6_IOT_MP1_hostless_unidev_singleband_iot_konexios.bin"
 }
 ```

@@ -26,7 +26,7 @@
 #include <network.h>
 #include <mqtt/client/delivery.h>
 
-#include <arrow/mqtt_out_msg.h>
+#include <konexios/mqtt_out_msg.h>
 
 #if defined(WIN32_DLL) || defined(WIN64_DLL)
   #define DLLImport __declspec(dllimport)
@@ -120,7 +120,7 @@ typedef struct MQTTClient
     int isconnected;
     int cleansession;
     int reject;
-    arrow_mqtt_delivery_callback_t *delivery_cb;
+    konexios_mqtt_delivery_callback_t *delivery_cb;
 
     struct MessageHandlers
     {
