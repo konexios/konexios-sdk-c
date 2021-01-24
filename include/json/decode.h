@@ -5,8 +5,8 @@
  * http://apache.org/licenses/LICENSE-2.0
  * Contributors: Arrow Electronics, Inc.
  */
-#ifndef ARROW_ACN_SDK_C_JSON_DECODE_H_
-#define ARROW_ACN_SDK_C_JSON_DECODE_H_
+#ifndef KONEXIOS_ACN_SDK_C_JSON_DECODE_H_
+#define KONEXIOS_ACN_SDK_C_JSON_DECODE_H_
 
 #include <data/linkedlist.h>
 #include <json/sb.h>

@@ -1,7 +1,6 @@
 gcc*
 *.o
 *.d
-*private.h
 *.qbs
 *.sh
 test/build

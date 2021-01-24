@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _ARROW_C_SDK_STATIC_ALLOC_H_
-#define _ARROW_C_SDK_STATIC_ALLOC_H_
+#ifndef _KONEXIOS_C_SDK_STATIC_ALLOC_H_
+#define _KONEXIOS_C_SDK_STATIC_ALLOC_H_
 
 #include <sys/mem.h>
 #include <data/static_buf.h>
@@ -19,4 +19,4 @@ CREATE_BUFFER(staticbuf_##type, sizeof(type) * (count), sizeof(type))
 #define static_allocator(type)  (type *)static_buf_alloc(staticbuf_##type, sizeof(type));
 #define static_free(type, ptr)  static_buf_free(staticbuf_##type, (ptr));
 
-#endif  // _ARROW_C_SDK_STATIC_ALLOC_H_
+#endif  // _KONEXIOS_C_SDK_STATIC_ALLOC_H_

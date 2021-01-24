@@ -1,5 +1,5 @@
-#if !defined(ARROW_NODE_H_)
-#define ARROW_NODE_H_
+#if !defined(KONEXIOS_NODE_H_)
+#define KONEXIOS_NODE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -25,4 +25,4 @@ int konexios_node_update(konexios_node_t *node);
 }
 #endif
 
-#endif  // ARROW_NODE_H_
+#endif  // KONEXIOS_NODE_H_

@@ -1,5 +1,5 @@
-#if !defined(_ARROW_TIME_WATCHDOG_H_)
-#define _ARROW_TIME_WATCHDOG_H_
+#if !defined(_KONEXIOS_TIME_WATCHDOG_H_)
+#define _KONEXIOS_TIME_WATCHDOG_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -13,4 +13,4 @@ void wdt_stop(void);
 }
 #endif
 
-#endif //_ARROW_TIME_WATCHDOG_H_
+#endif //_KONEXIOS_TIME_WATCHDOG_H_

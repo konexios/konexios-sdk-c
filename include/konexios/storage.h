@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_STORAGE_H_
-#define ARROW_STORAGE_H_
+#ifndef KONEXIOS_STORAGE_H_
+#define KONEXIOS_STORAGE_H_
 
 #if defined (__cplusplus)
 extern "C" {

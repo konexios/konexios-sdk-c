@@ -19,16 +19,16 @@
 // Types and definitions
 // ---------------------------------------------------------------------------
 
-#if defined(ARROW_INFO)
-#define ARROW_INF  printf
+#if defined(KONEXIOS_INFO)
+#define KONEXIOS_INF  printf
 #else
-#define ARROW_INF(...)
+#define KONEXIOS_INF(...)
 #endif
 
-#if defined(ARROW_DEBUG)
-#define ARROW_DBG       DBG
+#if defined(KONEXIOS_DEBUG)
+#define KONEXIOS_DBG       DBG
 #else
-#define ARROW_DBG(...)
+#define KONEXIOS_DBG(...)
 #endif
 
 #define TRACE(...)  DBG(__VA_ARGS__)
@@ -115,7 +115,7 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
       if ( ret < 0 )
       {
           // new registration
-        ARROW_INF("ACN: New gateway registration\n");
+        KONEXIOS_INF("ACN: New gateway registration\n");
         if ( konexios_register_gateway(gateway) < 0 )
         {
             // If we fail, return the fail code
@@ -130,11 +130,11 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
 
       } else {
         // hid already set so checkin gateway
-        ARROW_INF("ACN: Check in gateway\n");
-        ARROW_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
+        KONEXIOS_INF("ACN: Check in gateway\n");
+        KONEXIOS_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
         if(konexios_gateway_checkin(gateway)<0)
         {
-            ARROW_INF("ACN: Error in checkin\n");
+            KONEXIOS_INF("ACN: Error in checkin\n");
             // If we fail, return the fail code
             int rc = http_last_response_code();
             // 0 means the request didn't finish, 200==ok, 4xx==error, etc
@@ -149,7 +149,7 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
     // do it here
     if(update_gateway_info)
     {
-        ARROW_INF("ACN: Updating gateway info\n");
+        KONEXIOS_INF("ACN: Updating gateway info\n");
         if(konexios_gateway_update(gateway)<0)
         {
             // If we fail, return the fail code
@@ -170,7 +170,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
   if ( !IS_EMPTY(device->hid) )
       return ROUTINE_SUCCESS;
   if ( restore_device_info(device) < 0 ) {
-        ARROW_INF("ACN: Register device\n");
+        KONEXIOS_INF("ACN: Register device\n");
         if ( konexios_register_device(gateway, device) < 0 )
         {
             // If we fail, return the fail code
@@ -182,7 +182,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
     }
     save_device_info(device);
   }else{
-    ARROW_INF("ACN: Device already registered\n");
+    KONEXIOS_INF("ACN: Device already registered\n");
     //return 200;
   }
 
@@ -191,7 +191,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
     // do it here
     if(update_device_info)
     {
-        ARROW_INF("ACN: Updating device info\n");
+        KONEXIOS_INF("ACN: Updating device info\n");
         if(konexios_device_update(gateway, device)<0)
         {
             // If we fail, return the fail code
@@ -219,10 +219,10 @@ konexios_routine_error_t konexios_gateway_initialize_routine(void) {
     // Do the gateway connect logic
     while ( konexios_connect_gateway(&_gateway,false) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-        ARROW_DBG(GATEWAY_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(GATEWAY_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
-    ARROW_DBG(GATEWAY_CONNECT, "ok");
+    KONEXIOS_DBG(GATEWAY_CONNECT, "ok");
 
     // Close the socket after next HTTP transfer
     http_session_keep_active(false);
@@ -231,10 +231,10 @@ konexios_routine_error_t konexios_gateway_initialize_routine(void) {
     retry=0;
   while ( konexios_gateway_config(&_gateway, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-      ARROW_DBG(GATEWAY_CONFIG, "fail");
-    msleep(ARROW_RETRY_DELAY);
+      KONEXIOS_DBG(GATEWAY_CONFIG, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
-    ARROW_DBG(GATEWAY_CONFIG, "ok");
+    KONEXIOS_DBG(GATEWAY_CONFIG, "ok");
 
     // Mark as intialized and done
     acn_register_init_done = 1;
@@ -257,20 +257,20 @@ konexios_routine_error_t konexios_initialize_routine(bool update_gateway_info)
     // (Do gateway register/checkin)
     while ( konexios_connect_gateway(&_gateway, update_gateway_info) < 0 ) {
       RETRY_UP(retry, {return ROUTINE_ERROR;});
-      ARROW_DBG(GATEWAY_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+      KONEXIOS_DBG(GATEWAY_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
-    ARROW_DBG(GATEWAY_CONNECT, "ok");
+    KONEXIOS_DBG(GATEWAY_CONNECT, "ok");
 
     // Get gateway config
     retry=0;
-    ARROW_INF("ACN: Get gateway config\n");
+    KONEXIOS_INF("ACN: Get gateway config\n");
     while ( konexios_gateway_config(&_gateway, &_gateway_config) < 0 ) {
         RETRY_UP(retry, {return ROUTINE_ERROR;});
-        ARROW_DBG(GATEWAY_CONFIG, "fail");
-    msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(GATEWAY_CONFIG, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
-    ARROW_DBG(GATEWAY_CONFIG, "ok");
+    KONEXIOS_DBG(GATEWAY_CONFIG, "ok");
 
     // close session after next HTTP request
     http_session_keep_active(true);
@@ -279,10 +279,10 @@ konexios_routine_error_t konexios_initialize_routine(bool update_gateway_info)
     retry=0;
     while ( konexios_connect_device(&_gateway, &_device, update_gateway_info) < 0 ) {
         RETRY_UP(retry, {return ROUTINE_ERROR;});
-        ARROW_DBG(DEVICE_CONNECT, "fail");
-    msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(DEVICE_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
-    ARROW_DBG(DEVICE_CONNECT, "ok");
+    KONEXIOS_DBG(DEVICE_CONNECT, "ok");
 
     // Close the session!!!!
     http_end();
@@ -318,18 +318,18 @@ int konexios_startup_sequence(bool update_gateway_info)
         printf("ACN: Gateway register/checkin failed (%d)\n",rc);
         return rc;
 }
-    ARROW_INF("ACN: Gateway register/checkin success\n");
+    KONEXIOS_INF("ACN: Gateway register/checkin success\n");
 
     // Get gateway config
     retry=0;
-    ARROW_INF("ACN: Get gateway config\n");
+    KONEXIOS_INF("ACN: Get gateway config\n");
     rc = konexios_gateway_config(&_gateway, &_gateway_config);
     if(rc < 0 )
     {
         printf("Gateway config [failed]\n");
         return rc;
     }
-    ARROW_INF("ACN: Gateway config [ok]\n");
+    KONEXIOS_INF("ACN: Gateway config [ok]\n");
 
     // close session after next HTTP request
     //http_session_keep_active(true);
@@ -342,7 +342,7 @@ int konexios_startup_sequence(bool update_gateway_info)
         printf("ACN: Device connect [failed]\n");
         return rc;
     }
-    ARROW_INF("ACN: Device connect [ok]\n");
+    KONEXIOS_INF("ACN: Device connect [ok]\n");
 
     // Close the session!!!!
     http_end();
@@ -373,12 +373,12 @@ konexios_routine_error_t konexios_send_telemetry_routine(void *data) {
   int retry = 0;
   while ( konexios_send_telemetry(&_device, data) < 0) {
     RETRY_UP(retry, {return ROUTINE_ERROR;});
-        ARROW_DBG(DEVICE_TELEMETRY, "fail");
-    msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(DEVICE_TELEMETRY, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
 
     // Success
-    ARROW_DBG(DEVICE_TELEMETRY, "ok");
+    KONEXIOS_DBG(DEVICE_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
@@ -395,13 +395,13 @@ konexios_routine_error_t konexios_mqtt_connect_telemetry_routine(void) {
     retry = 0;
   while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
-        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(KONEXIOS_RETRY_DELAY);
   }
 
     // Mark MQTT as initialized
     acn_mqtt_init_flags |= MQTT_INIT_SYSTEM_DONE;
-    ARROW_DBG(DEVICE_MQTT_CONNECT, "ok");
+    KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "ok");
   return ROUTINE_SUCCESS;
 }
 
@@ -443,8 +443,8 @@ konexios_routine_error_t konexios_mqtt_connect_event_routine(void) {
     retry = 0;
   while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(KONEXIOS_RETRY_DELAY);
   }
 
     // Mark subscribe as done
@@ -460,8 +460,8 @@ konexios_routine_error_t konexios_mqtt_subscribe_event_routine(void) {
     // Do mqtt_subscribe()
   while( mqtt_subscribe() < 0 ) {
     RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-        ARROW_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(ARROW_RETRY_DELAY);
+        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+        msleep(KONEXIOS_RETRY_DELAY);
         acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE;
   }
 
@@ -508,7 +508,7 @@ konexios_routine_error_t konexios_mqtt_connect_routine(void)
     if ( !acn_register_init_done ) return ROUTINE_NOT_INITIALIZE;
 
     // Start the MQTT telemetry
-    ARROW_DBG("mqtt connect...");
+    KONEXIOS_DBG("mqtt connect...");
   ret = konexios_mqtt_connect_telemetry_routine();
     if ( ret != ROUTINE_SUCCESS ) return ret;
 
@@ -573,7 +573,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
 #endif
        )
     {
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
@@ -586,7 +586,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
         // Handle receiving events?
 #if !defined(NO_EVENTS)
     if ( konexios_mqtt_has_events() ) {
-            ARROW_DBG("There is an event");
+            KONEXIOS_DBG("There is an event");
       return ROUTINE_RECEIVE_EVENT;
     }
 #endif
@@ -595,7 +595,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
         int get_data_result;
         get_data_result = data_cb(data);
     if ( get_data_result < 0 ) {
-            //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+            //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
     } else if (get_data_result > 0 ) {
       // skip this
@@ -607,7 +607,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
         // Publish the data for this device
         if ( mqtt_publish(&_device, data) < 0 )
         {
-            ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
+            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
       return ROUTINE_MQTT_PUBLISH_FAILED;
     }
 
@@ -616,10 +616,10 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
     static int count = 0;
         if ( count++ > VALGRIND_TEST )
       return ROUTINE_TEST_DONE;
-        ARROW_DBG("test count [%d]", count);
+        KONEXIOS_DBG("test count [%d]", count);
 #endif
 
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
 
     // Why return success? There are no breaks in the while(1)
@@ -662,7 +662,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, vo
     if ( !acn_register_init_done ||
          !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) )
     {
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
@@ -676,7 +676,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, vo
         int get_data_result;
         get_data_result = data_cb(data);
     if ( get_data_result < 0 ) {
-            //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+            //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
     } else if (get_data_result > 0 ) {
       // skip this
@@ -688,7 +688,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, vo
         // Send the data
         if ( mqtt_publish(&_device, data) < 0 )
         {
-            ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
+            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
       return ROUTINE_MQTT_PUBLISH_FAILED;
     }
 
@@ -697,10 +697,10 @@ konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, vo
     static int count = 0;
         if ( count++ > VALGRIND_TEST )
       return ROUTINE_TEST_DONE;
-        ARROW_DBG("test count [%d]", count);
+        KONEXIOS_DBG("test count [%d]", count);
 #endif
 
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
 
     // TODO: Why send success? No break in while(1)
@@ -713,7 +713,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_c
     // Can't send if not initialized
     if ( !acn_register_init_done ||
          !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) ) {
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
@@ -721,18 +721,18 @@ konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_c
     // Collected the data into 'data'
   int get_data_result = data_cb(data);
   if ( get_data_result != 0 ) {
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
     return ROUTINE_GET_TELEMETRY_FAILED;
   }
 
     // Send the data
   if ( mqtt_publish(&_device, data) < 0 ) {
-        ARROW_DBG(DEVICE_MQTT_TELEMETRY, "fail");
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
     return ROUTINE_MQTT_PUBLISH_FAILED;
   }
 
     // Success!
-    ARROW_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
@@ -743,7 +743,7 @@ konexios_routine_error_t konexios_mqtt_event_receive_routine() {
     // Can't receive if not subscribed
     if ( !acn_register_init_done ||
          !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE) ) {
-        //ARROW_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+        //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 

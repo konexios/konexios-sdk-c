@@ -1,5 +1,5 @@
-#if !defined(ARROW_TESTSUITE_H_)
-#define ARROW_TESTSUITE_H_
+#if !defined(KONEXIOS_TESTSUITE_H_)
+#define KONEXIOS_TESTSUITE_H_
 
 #include <konexios/gateway.h>
 #include <konexios/device.h>
@@ -25,4 +25,4 @@ int konexios_test_step_fail(property_t *res_hid, int number, const char *error);
 // notify that test step skipped
 int konexios_test_step_skip(property_t *res_hid, int number);
 
-#endif  // ARROW_TESTSUITE_H_
+#endif  // KONEXIOS_TESTSUITE_H_

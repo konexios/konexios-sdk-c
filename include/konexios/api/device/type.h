@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#if !defined(ARROW_DEVICE_TYPE_H_)
-#define ARROW_DEVICE_TYPE_H_
+#if !defined(KONEXIOS_DEVICE_TYPE_H_)
+#define KONEXIOS_DEVICE_TYPE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -51,4 +51,4 @@ int konexios_device_type_update(konexios_device_t *dev, device_type_t *dev_type)
 }
 #endif
 
-#endif  // ARROW_DEVICE_TYPE_H_
+#endif  // KONEXIOS_DEVICE_TYPE_H_

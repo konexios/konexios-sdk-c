@@ -1,5 +1,5 @@
-#if !defined(ARROW_DEVICE_ACTION_H_)
-#define ARROW_DEVICE_ACTION_H_
+#if !defined(KONEXIOS_DEVICE_ACTION_H_)
+#define KONEXIOS_DEVICE_ACTION_H_
 
 #include <konexios/device.h>
 
@@ -23,4 +23,4 @@ int konexios_list_action_type(void);
 // update an existing device action for a specific device type
 int konexios_update_device_action(konexios_device_t *dev, dev_action_model_t *model);
 
-#endif  // ARROW_DEVICE_ACTION_H_
+#endif  // KONEXIOS_DEVICE_ACTION_H_

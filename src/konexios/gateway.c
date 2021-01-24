@@ -40,7 +40,7 @@ property_t konexios_gateway_serialize(konexios_gateway_t *gate) {
   if ( !IS_EMPTY(gate->sdkVersion) )
     json_append_member(_main, p_const("sdkVersion"), json_mk_weak_property(gate->sdkVersion));
 
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   if ( !IS_EMPTY(gate->app) )
       json_append_member(_main, p_const("applicationHid"), json_mk_weak_property(gate->app));
   if ( !IS_EMPTY(gate->user) )
@@ -77,7 +77,7 @@ void konexios_gateway_free(konexios_gateway_t *gate) {
   property_free( &gate->software_name );
   property_free( &gate->software_version );
   property_free( &gate->sdkVersion );
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   property_free( &gate->user );
   property_free( &gate->app );
 #endif
@@ -119,7 +119,7 @@ int konexios_prepare_gateway(konexios_gateway_t *gateway) {
       property_copy( &gateway->type, p_const(GATEWAY_TYPE));
   if ( IS_EMPTY(gateway->sdkVersion) )
       property_copy( &gateway->sdkVersion, p_const(xstr(SDK_VERSION)));
-  #if defined(ARROW_HAS_USERHID)
+  #if defined(KONEXIOS_HAS_USERHID)
   if ( IS_EMPTY(gateway->app) ) {
       char tmphid[46] = {0};
       if ( restore_apphid_address(tmphid) == 0 ) {

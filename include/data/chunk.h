@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _ARROW_C_SDK_CHUNK_H_
-#define _ARROW_C_SDK_CHUNK_H_
+#ifndef _KONEXIOS_C_SDK_CHUNK_H_
+#define _KONEXIOS_C_SDK_CHUNK_H_
 
 #if defined(USE_HEAP)
 #define CREATE_CHUNK(ptr, size) char *ptr = (char *)malloc(size)
@@ -30,4 +30,4 @@
 #define FREE_CHUNK(ptr)
 # endif
 
-#endif  // _ARROW_C_SDK_CHUNK_H_
+#endif  // _KONEXIOS_C_SDK_CHUNK_H_

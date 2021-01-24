@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_ACCOUNT_H_
-#define ARROW_ACCOUNT_H_
+#ifndef KONEXIOS_ACCOUNT_H_
+#define KONEXIOS_ACCOUNT_H_
 
 // create or login this account
 int konexios_create_account(const char *name, const char *email, const char *pass);

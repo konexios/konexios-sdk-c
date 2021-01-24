@@ -2,7 +2,7 @@
 #include <sys/mem.h>
 #include <debug.h>
 
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
 int __attribute__((weak)) konexios_mutex_init(konexios_mutex **mutex) {
     SSP_PARAMETER_NOT_USED(mutex);
     DBG("No mutex implementation!");

@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_ACN_SDK_C_JSON_SB_H_
-#define ARROW_ACN_SDK_C_JSON_SB_H_
+#ifndef KONEXIOS_ACN_SDK_C_JSON_SB_H_
+#define KONEXIOS_ACN_SDK_C_JSON_SB_H_
 
 #include <json/property_json.h>
 

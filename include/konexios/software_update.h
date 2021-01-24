@@ -1,5 +1,5 @@
-#if !defined(ARROW_SOFTWARE_UPDATE_H_)
-#define ARROW_SOFTWARE_UPDATE_H_
+#if !defined(KONEXIOS_SOFTWARE_UPDATE_H_)
+#define KONEXIOS_SOFTWARE_UPDATE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -23,4 +23,4 @@ int konexios_gateway_software_update_set_cb(__update_cb);
 }
 #endif
 
-#endif  // ARROW_SOFTWARE_UPDATE_H_
+#endif  // KONEXIOS_SOFTWARE_UPDATE_H_

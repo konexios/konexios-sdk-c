@@ -33,12 +33,12 @@ extern "C" {
 # include "sys/arch/mem.h"
 #endif
 
-#if !defined(ARROW_MIN)
-#define ARROW_MIN(a,b) ((a) < (b)) ? (a) : (b)
+#if !defined(KONEXIOS_MIN)
+#define KONEXIOS_MIN(a,b) ((a) < (b)) ? (a) : (b)
 #endif
 
-#if !defined(ARROW_MAX)
-#define ARROW_MAX(a,b) ((a) > (b)) ? (a) : (b)
+#if !defined(KONEXIOS_MAX)
+#define KONEXIOS_MAX(a,b) ((a) > (b)) ? (a) : (b)
 #endif
 
 #if defined(__xtensa__) || defined(__XCC__)

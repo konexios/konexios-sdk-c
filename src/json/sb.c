@@ -17,7 +17,7 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_buf.h>
-CREATE_BUFFER(jsonbuf, ARROW_JSON_STATIC_BUFFER_SIZE, 0x10)
+CREATE_BUFFER(jsonbuf, KONEXIOS_JSON_STATIC_BUFFER_SIZE, 0x10)
 #define SB_ALLOC(x)          static_buf_alloc(jsonbuf, (x))
 #define SB_REALLOC(ptr, len) static_buf_realloc(jsonbuf, (ptr), (len));
 #define SB_FREE(x)           static_buf_free(jsonbuf, (x));

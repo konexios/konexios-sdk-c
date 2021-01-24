@@ -45,9 +45,9 @@ static char test[512] = {0};
 #define bool2str(x) (x?"true":"false")
 
 #define STATIC_MEMORY_CHECK \
-    TEST_ASSERT_EQUAL_INT(ARROW_MAX_JSON_OBJECTS, JsonNode_object_alloc_size()); \
-    TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector()); \
-    TEST_ASSERT_EQUAL_INT(ARROW_DYNAMIC_STATIC_BUFFER_SIZE, dyn_static_mem_size());
+    TEST_ASSERT_EQUAL_INT(KONEXIOS_MAX_JSON_OBJECTS, JsonNode_object_alloc_size()); \
+    TEST_ASSERT_EQUAL_INT(KONEXIOS_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector()); \
+    TEST_ASSERT_EQUAL_INT(KONEXIOS_DYNAMIC_STATIC_BUFFER_SIZE, dyn_static_mem_size());
 
 void test_parse_json_number(void) {
     snprintf(test, sizeof(test), JSON_INT_EX, "key", 100);
@@ -1322,7 +1322,7 @@ char *decode_string_test = "{ "
                            "\"key_long_long_long20\":\"value_long_long_long20\","
                            "\"active\":true }";
 
-#if defined(ARROW_JSON_STATIC_BUFFER_SIZE) && ARROW_JSON_STATIC_BUFFER_SIZE == 5120
+#if defined(KONEXIOS_JSON_STATIC_BUFFER_SIZE) && KONEXIOS_JSON_STATIC_BUFFER_SIZE == 5120
 void test_size_json_decode_static_overflow(void) {
     char *test = decode_string_test;
     TEST_ASSERT_EQUAL_INT(5120, json_static_memory_max_sector());

@@ -1,5 +1,5 @@
-#if !defined(ARROW_SOFTWARE_RELEASE_H_)
-#define ARROW_SOFTWARE_RELEASE_H_
+#if !defined(KONEXIOS_SOFTWARE_RELEASE_H_)
+#define KONEXIOS_SOFTWARE_RELEASE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -111,4 +111,4 @@ int konexios_software_releases_schedules_start(konexios_schedule_t *sch);
 }
 #endif
 
-#endif  // ARROW_SOFTWARE_RELEASE_H_
+#endif  // KONEXIOS_SOFTWARE_RELEASE_H_

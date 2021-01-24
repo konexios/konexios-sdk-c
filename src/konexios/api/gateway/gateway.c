@@ -14,7 +14,7 @@
 #include <data/chunk.h>
 #include <json/decode.h>
 
-#define URI_LEN sizeof(ARROW_API_GATEWAY_ENDPOINT) + 100
+#define URI_LEN sizeof(KONEXIOS_API_GATEWAY_ENDPOINT) + 100
 #define GATEWAY_MSG "Gateway %d"
 
 static void _gateway_config_init(http_request_t *request, void *arg) {
@@ -22,7 +22,7 @@ static void _gateway_config_init(http_request_t *request, void *arg) {
 	CREATE_CHUNK(uri, URI_LEN);
     int ret = snprintf(uri, URI_LEN,
                        "%s/%s/config",
-                       ARROW_API_GATEWAY_ENDPOINT,
+                       KONEXIOS_API_GATEWAY_ENDPOINT,
                        P_VALUE(gateway->hid) );
     if ( ret > 0 ) uri[ret] = 0x0;
     http_request_init(request, GET, &p_stack(uri));
@@ -108,7 +108,7 @@ int konexios_gateway_config(konexios_gateway_t *gateway, konexios_gateway_config
 
 static void _gateway_register_init(http_request_t *request, void *arg) {
   konexios_gateway_t *gateway = (konexios_gateway_t *)arg;
-  http_request_init(request, POST, &p_const(ARROW_API_GATEWAY_ENDPOINT));
+  http_request_init(request, POST, &p_const(KONEXIOS_API_GATEWAY_ENDPOINT));
   if ( IS_EMPTY(gateway->uid) )
       konexios_prepare_gateway(gateway);
   property_t pay = konexios_gateway_serialize(gateway);
@@ -143,7 +143,7 @@ static void _gateway_heartbeat_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s/heartbeat",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      P_VALUE(gateway->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, &p_stack(uri));
@@ -161,7 +161,7 @@ static void _gateway_checkin_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s/checkin",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      P_VALUE(gateway->hid));
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, &p_stack(uri));
@@ -179,7 +179,7 @@ static void _gateway_find_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      hid);
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, GET, &p_stack(uri));
@@ -210,7 +210,7 @@ int konexios_gateway_find(gateway_info_t *info, const char *hid) {
 
 static void _gateway_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
-  http_request_init(request, GET, &p_const(ARROW_API_GATEWAY_ENDPOINT));
+  http_request_init(request, GET, &p_const(KONEXIOS_API_GATEWAY_ENDPOINT));
   http_request_set_findby(request, params);
 }
 
@@ -239,7 +239,7 @@ static void _gateway_list_logs_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s/logs",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      P_VALUE(dp->gate->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, GET, &p_stack(uri));
@@ -265,7 +265,7 @@ int konexios_gateway_logs_list(log_t **logs, konexios_gateway_t *gateway, int n,
 static void _gateway_devices_list_init(http_request_t *request, void *arg) {
   char *hid = (char *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int ret = snprintf(uri, URI_LEN, "%s/%s/devices", ARROW_API_GATEWAY_ENDPOINT, hid);
+  int ret = snprintf(uri, URI_LEN, "%s/%s/devices", KONEXIOS_API_GATEWAY_ENDPOINT, hid);
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -295,7 +295,7 @@ static void _gateway_device_cmd_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
            "%s/%s/devices/%s/actions/command",
-           ARROW_API_GATEWAY_ENDPOINT,
+           KONEXIOS_API_GATEWAY_ENDPOINT,
            gdc->g_hid,
            gdc->d_hid);
   if ( ret > 0 ) uri[ret] = 0x0;
@@ -326,7 +326,7 @@ static void _gateway_errors_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s/errors",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      P_VALUE(de->gateway->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, POST, &p_stack(uri));
@@ -349,7 +349,7 @@ static void _gateway_update_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
                      "%s/%s",
-                     ARROW_API_GATEWAY_ENDPOINT,
+                     KONEXIOS_API_GATEWAY_ENDPOINT,
                      P_VALUE(gate->hid) );
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, &p_stack(uri));

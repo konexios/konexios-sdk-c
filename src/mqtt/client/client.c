@@ -72,7 +72,7 @@ static int cycle_publish(MQTTClient* c, mqtt_head_t *m, TimerInterval* timer) {
     if ( c->reject ) {
         unsigned char dummy[16];
         while ( total_len ) {
-            int chunk = ARROW_MIN(total_len, (int)sizeof(dummy));
+            int chunk = KONEXIOS_MIN(total_len, (int)sizeof(dummy));
             int r = c->ipstack->mqttread(c->ipstack,
                                          dummy,
                                          chunk,

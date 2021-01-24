@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_MQTT_H_
-#define ARROW_MQTT_H_
+#ifndef KONEXIOS_MQTT_H_
+#define KONEXIOS_MQTT_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -122,4 +122,4 @@ void mqtt_terminate(void);
 }
 #endif
 
-#endif /* ARROW_MQTT_H_ */
+#endif /* KONEXIOS_MQTT_H_ */

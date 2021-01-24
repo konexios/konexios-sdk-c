@@ -24,7 +24,7 @@ typedef struct _state_list_ {
 
 #if defined(STATIC_DEVICE_STATES)
 # include <data/static_alloc.h>
-static_object_pool_type(konexios_state_list_t, ARROW_MAX_DEVICE_STATES)
+static_object_pool_type(konexios_state_list_t, KONEXIOS_MAX_DEVICE_STATES)
 # define ALLOC static_allocator
 # define FREE(p)  static_free(konexios_state_list_t, p)
 #else
@@ -226,8 +226,8 @@ int konexios_state_mqtt_run(konexios_device_t *device) {
 
 static void _state_get_init(http_request_t *request, void *arg) {
   konexios_device_t *device = (konexios_device_t *)arg;
-  CREATE_CHUNK(uri, sizeof(ARROW_API_DEVICE_ENDPOINT) + P_SIZE(device->hid) + 10);
-  strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
+  CREATE_CHUNK(uri, sizeof(KONEXIOS_API_DEVICE_ENDPOINT) + P_SIZE(device->hid) + 10);
+  strcpy(uri, KONEXIOS_API_DEVICE_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(device->hid));
   strcat(uri, "/state");
@@ -286,8 +286,8 @@ typedef struct _post_dev_ {
 
 static void _state_post_init(http_request_t *request, void *arg) {
   post_dev_t *pd = (post_dev_t *)arg;
-  CREATE_CHUNK(uri, sizeof(ARROW_API_DEVICE_ENDPOINT) + P_SIZE(pd->device->hid) + 20);
-  strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
+  CREATE_CHUNK(uri, sizeof(KONEXIOS_API_DEVICE_ENDPOINT) + P_SIZE(pd->device->hid) + 20);
+  strcpy(uri, KONEXIOS_API_DEVICE_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(pd->device->hid));
   strcat(uri, "/state/");
@@ -388,9 +388,9 @@ int konexios_device_state_handler(JsonNode *_main) {
 static void _state_put_init(http_request_t *request, void *arg) {
   put_dev_t *pd = (put_dev_t *)arg;
   JsonNode *_error = NULL;
-  CREATE_CHUNK(uri, sizeof(ARROW_API_DEVICE_ENDPOINT) +
+  CREATE_CHUNK(uri, sizeof(KONEXIOS_API_DEVICE_ENDPOINT) +
                property_size(&pd->device_hid) + strlen(pd->trans_hid) + 50);
-  strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
+  strcpy(uri, KONEXIOS_API_DEVICE_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(pd->device_hid));
   strcat(uri, "/state/trans/");
@@ -452,7 +452,7 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
 
   while ( konexios_device_state_answer(_device_hid, st_received, P_VALUE(trans_hid->string_)) < 0 ) {
       RETRY_UP(retry, {return -2;});
-      msleep(ARROW_RETRY_DELAY);
+      msleep(KONEXIOS_RETRY_DELAY);
   }
 
   int ret = -1;
@@ -463,12 +463,12 @@ int ev_DeviceStateRequest(void *_ev, JsonNode *_parameters) {
   if ( ret < 0 ) {
     while ( konexios_device_state_answer(_device_hid, st_error, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
-        msleep(ARROW_RETRY_DELAY);
+        msleep(KONEXIOS_RETRY_DELAY);
     }
   } else {
     while ( konexios_device_state_answer(_device_hid, st_complete, P_VALUE(trans_hid->string_) ) < 0 ) {
         RETRY_UP(retry, {return -2;});
-        msleep(ARROW_RETRY_DELAY);
+        msleep(KONEXIOS_RETRY_DELAY);
     }
   }
   return 0;

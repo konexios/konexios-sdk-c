@@ -165,7 +165,7 @@ void *__static_realloc(uint8_t *__alloc_head, uint8_t *__alloc_space, uint8_t *b
         if ( __static_enlarge_memory(__alloc_head, __alloc_space, buffer, _buf_size, chunk, ptr, size ) < 0 ) {
             void *p = __static_alloc(__alloc_head, __alloc_space, buffer, _buf_size, size, chunk);
             if ( p ) {
-                uint32_t s = ARROW_MIN(size, (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk));
+                uint32_t s = KONEXIOS_MIN(size, (int)chunk * __static_buf_size(__alloc_head, __alloc_space, buffer, _buf_size, ptr, chunk));
                 memcpy(p, ptr, s);
             }
             __static_free(__alloc_head, __alloc_space, buffer, ptr, chunk);

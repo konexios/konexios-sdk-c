@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#if !defined(ARROW_GATEWAY_API_H_)
-#define ARROW_GATEWAY_API_H_
+#if !defined(KONEXIOS_GATEWAY_API_H_)
+#define KONEXIOS_GATEWAY_API_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -63,4 +63,4 @@ int konexios_gateway_error(konexios_gateway_t *gateway, const char *error);
 }
 #endif
 
-#endif  // ARROW_GATEWAY_API_H_
+#endif  // KONEXIOS_GATEWAY_API_H_

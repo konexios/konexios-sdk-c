@@ -278,7 +278,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( req->is_chunked ) {
             ret = client_send_direct(cli, "Transfer-Encoding: chunked\r\n", 0);
         } else {
-            int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
+            int maxlen = KONEXIOS_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
             ret = snprintf((char*)tmpbuffer,
                            maxlen,
                            "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
@@ -289,7 +289,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         }
         ringbuf_clear(buf);
         if ( ret < 0 ) return ret;
-        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
+        int maxlen = KONEXIOS_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,
                        maxlen,
                        "Content-Type: %s\r\n", P_VALUE(req->content_type.value));
@@ -297,7 +297,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
         if ( ret < 0 ) return ret;
         if ( (ret = client_send(cli)) < 0 ) return ret;
     } else {
-        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
+        int maxlen = KONEXIOS_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,
                         maxlen,
                         "Content-Length: %lu\r\n", (long unsigned int)property_size(&req->payload));
@@ -309,7 +309,7 @@ static int send_header(http_client_t *cli, http_request_t *req, ring_buffer_t *b
     property_map_t *head = NULL;
     konexios_linked_list_for_each(head, req->header, property_map_t) {
         ringbuf_clear(buf);
-        int maxlen = ARROW_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
+        int maxlen = KONEXIOS_MIN(MAX_TMP_BUF_SIZE, ringbuf_capacity(cli->queue));
         ret = snprintf((char*)tmpbuffer,
                            maxlen,
                            "%s: %s\r\n", P_VALUE(head->key), P_VALUE(head->value));
@@ -483,7 +483,7 @@ static int receive_payload(http_client_t *cli, http_response_t *res) {
         }
         if ( !chunk_len || chunk_len < 0 ) break;
         while ( chunk_len ) {
-            uint32_t need_to_read = ARROW_MIN(chunk_len, CHUNK_SIZE);
+            uint32_t need_to_read = KONEXIOS_MIN(chunk_len, CHUNK_SIZE);
             HTTP_DBG("need to read %lu", need_to_read);
             while ( (int)ringbuf_size(cli->queue) < (int)need_to_read ) {
                 HTTP_DBG("get chunk add %lu", need_to_read-ringbuf_size(cli->queue));

@@ -203,6 +203,6 @@ void test_mqtt_connect(void) {
     TEST_ASSERT(konexios_mqtt_has_events());
     konexios_mqtt_event_proc();
 
-    TEST_ASSERT_EQUAL_INT(ARROW_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector());
+    TEST_ASSERT_EQUAL_INT(KONEXIOS_JSON_STATIC_BUFFER_SIZE, json_static_memory_max_sector());
 }
 #endif

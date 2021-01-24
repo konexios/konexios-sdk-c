@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_GATEWAY_H_
-#define ARROW_GATEWAY_H_
+#ifndef KONEXIOS_GATEWAY_H_
+#define KONEXIOS_GATEWAY_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -27,7 +27,7 @@ typedef struct __attribute_packed__ _konexios_gateway_ {
   property_t software_name;
   property_t software_version;
   property_t sdkVersion;
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   property_t app;
   property_t user;
 #endif
@@ -83,4 +83,4 @@ int konexios_prepare_gateway(konexios_gateway_t *gateway);
 }
 #endif
 
-#endif /* ARROW_GATEWAY_H_ */
+#endif /* KONEXIOS_GATEWAY_H_ */

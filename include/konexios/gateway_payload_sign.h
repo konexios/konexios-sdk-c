@@ -1,5 +1,5 @@
-#if !defined(_ARROW_GATEWAY_PAYLOAD_SIGN_H_)
-#define _ARROW_GATEWAY_PAYLOAD_SIGN_H_
+#if !defined(_KONEXIOS_GATEWAY_PAYLOAD_SIGN_H_)
+#define _KONEXIOS_GATEWAY_PAYLOAD_SIGN_H_
 
 #include <konexios_config.h>
 #include <json/json.h>
@@ -17,4 +17,4 @@ int konexios_event_sign(char *signature,
                   int encrypted,
                   JsonNode *_parameters);
 
-#endif // _ARROW_GATEWAY_PAYLOAD_SIGN_H_
+#endif // _KONEXIOS_GATEWAY_PAYLOAD_SIGN_H_

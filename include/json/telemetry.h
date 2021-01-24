@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_TELEMETRY_H_
-#define ARROW_TELEMETRY_H_
+#ifndef KONEXIOS_TELEMETRY_H_
+#define KONEXIOS_TELEMETRY_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -22,4 +22,4 @@ property_t telemetry_serialize(konexios_device_t *device, void *data);
 }
 #endif
 
-#endif /* ARROW_TELEMETRY_H_ */
+#endif /* KONEXIOS_TELEMETRY_H_ */

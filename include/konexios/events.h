@@ -1,5 +1,5 @@
-#if !defined(ARROW_EVENTS_H_) && !defined(NO_EVENTS)
-#define ARROW_EVENTS_H_
+#if !defined(KONEXIOS_EVENTS_H_) && !defined(NO_EVENTS)
+#define KONEXIOS_EVENTS_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -51,4 +51,4 @@ int process_http_payload(const char *s);
 }
 #endif
 
-#endif // ARROW_EVENTS_H_
+#endif // KONEXIOS_EVENTS_H_

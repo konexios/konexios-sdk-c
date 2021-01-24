@@ -4,7 +4,7 @@
 #include <json/decode.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
+#define URI_LEN sizeof(KONEXIOS_API_DEVICE_ENDPOINT) + 50
 #define DEVICE_MSG "Device %d"
 
 typedef struct _gate_dev {
@@ -14,7 +14,7 @@ typedef struct _gate_dev {
 
 static void _device_register_init(http_request_t *request, void *arg) {
   gate_dev_t *gd = (gate_dev_t *)arg;
-  http_request_init(request, POST, &p_const(ARROW_API_DEVICE_ENDPOINT));
+  http_request_init(request, POST, &p_const(KONEXIOS_API_DEVICE_ENDPOINT));
   if ( IS_EMPTY(gd->device->gateway_hid) )
       konexios_prepare_device(gd->gateway, gd->device);
   http_request_set_payload(request, konexios_device_serialize(gd->device));
@@ -47,7 +47,7 @@ int konexios_register_device(konexios_gateway_t *gateway, konexios_device_t *dev
 
 static void _device_find_by_init(http_request_t *request, void *arg) {
   find_by_t *params = (find_by_t *)arg;
-  http_request_init(request, GET, &p_const(ARROW_API_DEVICE_ENDPOINT));
+  http_request_init(request, GET, &p_const(KONEXIOS_API_DEVICE_ENDPOINT));
   http_request_set_findby(request, params);
 }
 
@@ -70,7 +70,7 @@ static void _device_find_by_hid_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
            "%s/%s",
-           ARROW_API_DEVICE_ENDPOINT,
+           KONEXIOS_API_DEVICE_ENDPOINT,
            hid);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -98,7 +98,7 @@ static void _device_update_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN,
            "%s/%s",
-           ARROW_API_DEVICE_ENDPOINT,
+           KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(gd->device->hid));
   if ( ret > 0 ) uri[ret] = 0x0;
   http_request_init(request, PUT, &p_stack(uri));
@@ -134,7 +134,7 @@ static void _device_list_events_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
            "%s/%s/events",
-           ARROW_API_DEVICE_ENDPOINT,
+           KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(dp->device->hid));
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -161,7 +161,7 @@ static void _device_list_logs_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
            "%s/%s/logs",
-           ARROW_API_DEVICE_ENDPOINT,
+           KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(dp->device->hid));
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -193,7 +193,7 @@ static void _device_errors_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
            "%s/%s/errors",
-           ARROW_API_DEVICE_ENDPOINT,
+           KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(de->device->hid));
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);

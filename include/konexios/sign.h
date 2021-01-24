@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_SIGN_H_
-#define ARROW_SIGN_H_
+#ifndef KONEXIOS_SIGN_H_
+#define KONEXIOS_SIGN_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -47,4 +47,4 @@ void sign_request(http_request_t *req);
 }
 #endif
 
-#endif /* ARROW_SIGN_H_ */
+#endif /* KONEXIOS_SIGN_H_ */

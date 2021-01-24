@@ -10,7 +10,7 @@
 
 #if defined(STATIC_PROPERTY)
 #include <data/static_alloc.h>
-static_object_pool_type(property_map_t, ARROW_MAX_PROPERTY)
+static_object_pool_type(property_map_t, KONEXIOS_MAX_PROPERTY)
 #define ALLOC static_allocator
 #define FREE(ptr)  static_free(property_map_t, ptr)
 #else

@@ -1,5 +1,5 @@
-#if !defined(ARROW_TELEMETRY_API_H_)
-#define ARROW_TELEMETRY_API_H_
+#if !defined(KONEXIOS_TELEMETRY_API_H_)
+#define KONEXIOS_TELEMETRY_API_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -57,4 +57,4 @@ int konexios_telemetry_find_by_node_hid(const char *hid, int n, ...);
 }
 #endif
 
-#endif  // ARROW_TELEMETRY_API_H_
+#endif  // KONEXIOS_TELEMETRY_API_H_

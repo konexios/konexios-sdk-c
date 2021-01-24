@@ -21,7 +21,7 @@ void konexios_device_init(konexios_device_t *dev) {
     property_init(&dev->hid);
     property_init(&dev->softwareName);
     property_init(&dev->softwareVersion);
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
     property_init(&dev->app);
     property_init(&dev->user);
 #endif
@@ -38,7 +38,7 @@ void konexios_device_free(konexios_device_t *dev) {
   property_free(&dev->hid);
   property_free(&dev->softwareName);
   property_free(&dev->softwareVersion);
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   property_free(&dev->app);
   property_free(&dev->user);
 #endif
@@ -74,7 +74,7 @@ property_t konexios_device_serialize(konexios_device_t *dev) {
   if ( !IS_EMPTY(dev->softwareVersion) )
       json_append_member(_main, p_const("softwareVersion"), json_mk_weak_property(dev->softwareVersion));
 
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   if ( !IS_EMPTY(dev->app) )
       json_append_member(_main, p_const("applicationHid"), json_mk_weak_property(dev->app));
   if ( !IS_EMPTY(dev->user) )
@@ -127,7 +127,7 @@ int konexios_prepare_device(konexios_gateway_t *gateway, konexios_device_t *devi
       property_copy(&device->softwareVersion, p_const(DEVICE_SOFTWARE_VERSION));
   if ( IS_EMPTY(gateway->uid) ) return -1;
 
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   if ( IS_EMPTY(device->user) && !IS_EMPTY(gateway->user) ) {
       property_weak_copy(&device->user, gateway->user);
   }

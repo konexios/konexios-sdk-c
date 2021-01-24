@@ -41,10 +41,10 @@ define **NO_RELEASE_UPDATE**    turn off the firmware update capability (based o
 
 define **NO_SOFTWARE_UPDATE**   turn off the software update capability (based on a konexios_gateway_software_update_set_cb function)
 
-define **ARROW_HAS_USERHID**  device would use user HID and application HID to register a gateway and device. For this option the **DEFAULT_APP_HID** and **DEFAULT_USER_HID** should be defined.
+define **KONEXIOS_HAS_USERHID**  device would use user HID and application HID to register a gateway and device. For this option the **DEFAULT_APP_HID** and **DEFAULT_USER_HID** should be defined.
 For example:
 ```c
-#define ARROW_HAS_USERHID
+#define KONEXIOS_HAS_USERHID
 #define DEFAULT_APP_HID "0452808a4abc39e3de6ae764aad457553ec00e8a"
 #define DEFAULT_USER_HID "2bbae13ae3a7d5e47c4741375ce8112f0b54616b"
 ```
@@ -139,9 +139,9 @@ if ( r == 0 ) {
 
 defines for network connection:
 ```c
-#define ARROW_SCH "http"
-#define ARROW_ADDR "pegasuskronos01-dev.cloudapp.net"
-#define ARROW_PORT 28880
+#define KONEXIOS_SCH "http"
+#define KONEXIOS_ADDR "pegasuskronos01-dev.cloudapp.net"
+#define KONEXIOS_PORT 28880
 ```
 simple example:
 ```c

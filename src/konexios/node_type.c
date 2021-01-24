@@ -5,11 +5,11 @@
 
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_NODE_TYPE_ENDPOINT) + 50
+#define URI_LEN sizeof(KONEXIOS_API_NODE_TYPE_ENDPOINT) + 50
 
 static void _node_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
-  http_request_init(request, GET, &p_const(ARROW_API_NODE_ENDPOINT));
+  http_request_init(request, GET, &p_const(KONEXIOS_API_NODE_ENDPOINT));
 }
 
 static int _node_type_list_proc(http_response_t *response, void *arg) {
@@ -37,7 +37,7 @@ static property_t konexios_node_type_serialize(konexios_node_type_t *node) {
 
 static void _node_type_create_init(http_request_t *request, void *arg) {
   konexios_node_type_t *node = (konexios_node_type_t *) arg;
-  http_request_init(request, POST, &p_const(ARROW_API_NODE_TYPE_ENDPOINT));
+  http_request_init(request, POST, &p_const(KONEXIOS_API_NODE_TYPE_ENDPOINT));
   http_request_set_payload(request, konexios_node_type_serialize(node));
 }
 
@@ -57,7 +57,7 @@ int konexios_node_type_create(konexios_node_type_t *node) {
 static void _node_type_update_init(http_request_t *request, void *arg) {
   konexios_node_type_t *node = (konexios_node_type_t *) arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/%s", ARROW_API_NODE_TYPE_ENDPOINT, node->hid);
+  snprintf(uri, URI_LEN, "%s/%s", KONEXIOS_API_NODE_TYPE_ENDPOINT, node->hid);
   http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, konexios_node_type_serialize(node));

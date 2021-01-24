@@ -20,7 +20,7 @@
 #if defined(NO_RELEASE_UPDATE)
 typedef void __dummy__;
 #else
-#define URI_LEN sizeof(ARROW_API_SOFTWARE_RELEASE_ENDPOINT) + 200
+#define URI_LEN sizeof(KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT) + 200
 
 static __release_cb  __release = NULL;
 static __download_init_cb __download_init = NULL;
@@ -46,7 +46,7 @@ typedef struct _gateway_software_sched_ {
 static void _gateway_software_releases_trans_init(http_request_t *request, void *arg) {
   gateway_software_sched_t *gs = (gateway_software_sched_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
+  strcpy(uri, KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/gateways/upgrade");
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -78,7 +78,7 @@ typedef struct _device_software_sched_ {
 static void _device_software_releases_trans_init(http_request_t *request, void *arg) {
   device_software_sched_t *gs = (device_software_sched_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  strcpy(uri, ARROW_API_SOFTWARE_RELEASE_ENDPOINT);
+  strcpy(uri, KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT);
   strcat(uri, "/devices/upgrade");
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -121,13 +121,13 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   CREATE_CHUNK(uri, URI_LEN);
   switch(ans->state) {
     case received:
-      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/received", ans->hid);
+      n = snprintf(uri, URI_LEN, KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT "/%s/received", ans->hid);
     break;
     case success:
-      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/succeeded", ans->hid);
+      n = snprintf(uri, URI_LEN, KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT "/%s/succeeded", ans->hid);
     break;
     case fail:
-      n = snprintf(uri, URI_LEN, ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/%s/failed", ans->hid);
+      n = snprintf(uri, URI_LEN, KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT "/%s/failed", ans->hid);
     break;
   }
   if ( n < 0 ) return;
@@ -161,7 +161,7 @@ int konexios_software_releases_trans_success(const char *hid) {
 static void _software_releases_start_init(http_request_t *request, void *arg) {
   const char *hid = (const char *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int n = snprintf(uri, URI_LEN, "%s/%s/start", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, hid);
+  int n = snprintf(uri, URI_LEN, "%s/%s/start", KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT, hid);
   if ( n < 0 ) return;
   uri[n] = 0x0;
   http_request_init(request, POST, &p_stack(uri));
@@ -190,7 +190,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   int retry = 0;
   while( konexios_software_releases_trans_received(trans_hid) < 0) {
     RETRY_UP(retry, {return -2;});
-    msleep(ARROW_RETRY_DELAY);
+    msleep(KONEXIOS_RETRY_DELAY);
   }
   wdt_feed();
   tmp = json_find_member(_parameters, p_const("tempToken"));
@@ -222,7 +222,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
       ret = konexios_software_release_download(_token, trans_hid, _checksum);
       if ( ret ) {
           RETRY_UP(retry, { goto software_release_done; });
-          msleep(ARROW_RETRY_DELAY);
+          msleep(KONEXIOS_RETRY_DELAY);
       }
   } while( ret < 0 );
   SSP_PARAMETER_NOT_USED(_to);
@@ -234,7 +234,7 @@ software_release_done:
       wdt_feed();
       while ( konexios_software_releases_trans_fail(trans_hid, "failed") < 0 ) {
           RETRY_UP(retry, {return -2;});
-          msleep(ARROW_RETRY_DELAY);
+          msleep(KONEXIOS_RETRY_DELAY);
       }
       wdt_feed();
   } else {
@@ -242,7 +242,7 @@ software_release_done:
       wdt_feed();
       while ( konexios_software_releases_trans_success(trans_hid) < 0 ) {
           RETRY_UP(retry, {return -2;});
-          msleep(ARROW_RETRY_DELAY);
+          msleep(KONEXIOS_RETRY_DELAY);
       }
       reboot(0);
   }
@@ -318,7 +318,7 @@ int konexios_software_release_payload_handler(void *r,
 static void _software_releases_download_init(http_request_t *request, void *arg) {
   token_hid_t *th = (token_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", ARROW_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
+  int n = snprintf(uri, URI_LEN, "%s/%s/%s/file", KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT, th->hid, th->token);
   if (n < 0) return;
   uri[n] = 0x0;
   http_request_init(request, GET, &p_stack(uri));
@@ -406,7 +406,7 @@ int konexios_schedule_model_free(konexios_schedule_t *sch) {
 static void _software_releases_schedule_start_init(http_request_t *request, void *arg) {
     konexios_schedule_t *sch = (konexios_schedule_t *)arg;
     CREATE_CHUNK(uri, URI_LEN);
-    int n = snprintf(uri, URI_LEN, "%s/start", ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
+    int n = snprintf(uri, URI_LEN, "%s/start", KONEXIOS_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
     if (n < 0) return;
     uri[n] = 0x0;
     http_request_init(request, POST, &p_stack(uri));
@@ -447,4 +447,3 @@ int konexios_software_releases_schedules_start(konexios_schedule_t *sch) {
                 _software_releases_schedule_start_proc, NULL, "Schedule fail");
 }
 #endif
-

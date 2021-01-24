@@ -43,7 +43,7 @@
 
 #if defined(STATIC_JSON)
 #include <data/static_alloc.h>
-static_object_pool_type(JsonNode, ARROW_MAX_JSON_OBJECTS)
+static_object_pool_type(JsonNode, KONEXIOS_MAX_JSON_OBJECTS)
 #endif
 
 #if defined(STATIC_JSON)

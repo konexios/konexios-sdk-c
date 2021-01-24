@@ -4,7 +4,7 @@
 #include <debug.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
+#define URI_LEN sizeof(KONEXIOS_API_DEVICE_ENDPOINT) + 50
 
 struct _dev_model {
   konexios_device_t *device;
@@ -14,7 +14,7 @@ struct _dev_model {
 static void _device_action_create_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  strcpy(uri, ARROW_API_DEVICE_ENDPOINT);
+  strcpy(uri, KONEXIOS_API_DEVICE_ENDPOINT);
   strcat(uri, "/");
   strcat(uri, P_VALUE(dm->device->hid));
   strcat(uri, "/actions");
@@ -42,7 +42,7 @@ static void _device_action_delete_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
-           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
+           "%s/%s/actions/%d", KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(dm->device->hid), dm->model->index);
   http_request_init(request, DELETE, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -59,7 +59,7 @@ static void _device_action_list_init(http_request_t *request, void *arg) {
   konexios_device_t *dev = (konexios_device_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
-           "%s/%s/actions", ARROW_API_DEVICE_ENDPOINT,
+           "%s/%s/actions", KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(dev->hid));
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -84,7 +84,7 @@ static void _action_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
-           "%s/actions/types", ARROW_API_DEVICE_ENDPOINT);
+           "%s/actions/types", KONEXIOS_API_DEVICE_ENDPOINT);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
@@ -109,7 +109,7 @@ static void _device_action_update_init(http_request_t *request, void *arg) {
   struct _dev_model *dm = (struct _dev_model *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN,
-           "%s/%s/actions/%d", ARROW_API_DEVICE_ENDPOINT,
+           "%s/%s/actions/%d", KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(dm->device->hid), dm->model->index);
   http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);

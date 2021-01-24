@@ -1,5 +1,5 @@
-#if !defined(ARROW_STATE_H_)
-#define ARROW_STATE_H_
+#if !defined(KONEXIOS_STATE_H_)
+#define KONEXIOS_STATE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -54,4 +54,4 @@ int konexios_device_state_handler(JsonNode *states);
 }
 #endif
 
-#endif // ARROW_STATE_H_
+#endif // KONEXIOS_STATE_H_

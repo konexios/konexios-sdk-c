@@ -11,7 +11,7 @@
 
 #if defined(STATIC_DYNAMIC_PROPERTY)
 #include <data/static_buf.h>
-CREATE_BUFFER(dynamicbuf, ARROW_DYNAMIC_STATIC_BUFFER_SIZE, 0x20)
+CREATE_BUFFER(dynamicbuf, KONEXIOS_DYNAMIC_STATIC_BUFFER_SIZE, 0x20)
 
 int dyn_static_mem_size() {
     return static_buf_free_size(dynamicbuf);

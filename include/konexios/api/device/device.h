@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#if !defined(ARROW_DEVICE_API_H_)
-#define ARROW_DEVICE_API_H_
+#if !defined(KONEXIOS_DEVICE_API_H_)
+#define KONEXIOS_DEVICE_API_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -48,4 +48,4 @@ int konexios_error_device(konexios_device_t *device, const char *error);
 }
 #endif
 
-#endif  // ARROW_DEVICE_API_H_
+#endif  // KONEXIOS_DEVICE_API_H_

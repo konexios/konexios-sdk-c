@@ -1,5 +1,5 @@
-#if !defined(ARROW_NODE_TYPE_H_)
-#define ARROW_NODE_TYPE_H_
+#if !defined(KONEXIOS_NODE_TYPE_H_)
+#define KONEXIOS_NODE_TYPE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -24,4 +24,4 @@ int konexios_node_type_update(konexios_node_type_t *node);
 }
 #endif
 
-#endif  // ARROW_NODE_TYPE_H_
+#endif  // KONEXIOS_NODE_TYPE_H_

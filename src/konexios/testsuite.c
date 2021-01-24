@@ -4,14 +4,14 @@
 #include <data/chunk.h>
 #include <json/decode.h>
 
-#define URI_LEN sizeof(ARROW_API_TESTSUITE_ENDPOINT) + 256
+#define URI_LEN sizeof(KONEXIOS_API_TESTSUITE_ENDPOINT) + 256
 
 //gateways
 
 static void _test_gateway_init(http_request_t *request, void *arg) {
   konexios_gateway_t *pg = (konexios_gateway_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int ret = snprintf(uri, URI_LEN, "%s/gateways/%s", ARROW_API_TESTSUITE_ENDPOINT,
+  int ret = snprintf(uri, URI_LEN, "%s/gateways/%s", KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(pg->hid));
   uri[ret] = 0x0;
   http_request_init(request, POST, &p_stack(uri));
@@ -48,7 +48,7 @@ static void _test_gateway_hid_init(http_request_t *request, void *arg) {
   proc_gate_t *pg = (proc_gate_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/gateways/%s/test-procedures/hids/%s",
-                     ARROW_API_TESTSUITE_ENDPOINT,
+                     KONEXIOS_API_TESTSUITE_ENDPOINT,
                      P_VALUE(pg->gate->hid),
                      pg->value);
   uri[ret] = 0x0;
@@ -67,7 +67,7 @@ static void _test_gateway_name_init(http_request_t *request, void *arg) {
   proc_gate_t *pg = (proc_gate_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/gateways/%s/test-procedures/names/%s",
-                     ARROW_API_TESTSUITE_ENDPOINT,
+                     KONEXIOS_API_TESTSUITE_ENDPOINT,
                      P_VALUE(pg->gate->hid),
                      pg->value);
   uri[ret] = 0x0;
@@ -87,7 +87,7 @@ int konexios_test_gateway_proc_name(konexios_gateway_t *gateway, const char *nam
 static void _test_device_init(http_request_t *request, void *arg) {
   konexios_device_t *dev = (konexios_device_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  int ret = snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TESTSUITE_ENDPOINT, P_VALUE(dev->hid));
+  int ret = snprintf(uri, URI_LEN, "%s/devices/%s", KONEXIOS_API_TESTSUITE_ENDPOINT, P_VALUE(dev->hid));
   uri[ret] = 0x0;
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -128,7 +128,7 @@ static void _test_device_proc_hid_init(http_request_t *request, void *arg) {
   proc_dev_t *pd = (proc_dev_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/devices/%s/test-procedures/hids/%s",
-                     ARROW_API_TESTSUITE_ENDPOINT,
+                     KONEXIOS_API_TESTSUITE_ENDPOINT,
                      P_VALUE(pd->dev->hid),
                      pd->value);
   uri[ret] = 0x0;
@@ -147,7 +147,7 @@ static void _test_device_proc_name_init(http_request_t *request, void *arg) {
   proc_dev_t *pd = (proc_dev_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/devices/%s/test-procedures/names/%s",
-                     ARROW_API_TESTSUITE_ENDPOINT,
+                     KONEXIOS_API_TESTSUITE_ENDPOINT,
                      P_VALUE(pd->dev->hid),
                      pd->value);
   uri[ret] = 0x0;
@@ -167,7 +167,7 @@ int konexios_test_device_proc_name(konexios_device_t *device, const char *name, 
 static void _test_begin_init(http_request_t *request, void *arg) {
   property_t *res_hid = (property_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/tests/%s/begin", ARROW_API_TESTSUITE_ENDPOINT,
+  snprintf(uri, URI_LEN, "%s/tests/%s/begin", KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*res_hid));
   http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -183,7 +183,7 @@ static void _test_end_init(http_request_t *request, void *arg) {
   property_t *res_hid = (property_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/tests/%s/end",
-           ARROW_API_TESTSUITE_ENDPOINT,
+           KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*res_hid));
   http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);
@@ -204,7 +204,7 @@ static void _test_step_begin_init(http_request_t *request, void *arg) {
   test_step_t *st = (test_step_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/begin",
-           ARROW_API_TESTSUITE_ENDPOINT,
+           KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
   http_request_init(request, PUT, &p_stack(uri));
@@ -227,7 +227,7 @@ static void _test_step_success_end_init(http_request_t *request, void *arg) {
   test_step_success_end_t *st = (test_step_success_end_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/succeeded",
-           ARROW_API_TESTSUITE_ENDPOINT,
+           KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
   uri[ret] = 0x0;
@@ -253,7 +253,7 @@ static void _test_step_fail_end_init(http_request_t *request, void *arg) {
   test_step_fail_end_t *st = (test_step_fail_end_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   int ret = snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/failed",
-           ARROW_API_TESTSUITE_ENDPOINT,
+           KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
   uri[ret] = 0x0;
@@ -279,7 +279,7 @@ static void _test_step_skip_init(http_request_t *request, void *arg) {
   test_step_t *st = (test_step_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
   snprintf(uri, URI_LEN, "%s/tests/%s/steps/%d/skip",
-           ARROW_API_TESTSUITE_ENDPOINT,
+           KONEXIOS_API_TESTSUITE_ENDPOINT,
            P_VALUE(*st->res_hid),
            st->number);
   http_request_init(request, PUT, &p_stack(uri));

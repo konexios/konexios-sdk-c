@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_UTF8_H_
-#define ARROW_UTF8_H_
+#ifndef KONEXIOS_UTF8_H_
+#define KONEXIOS_UTF8_H_
 
 char *copy_till(const char *src, const char *end_pattern, char *dst);
 char *copy_till_to_int(const char *src, const char *end_pattern, int *i);

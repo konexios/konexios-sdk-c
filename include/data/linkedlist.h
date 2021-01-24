@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#if !defined(ARROW_LINKED_LIST_H_)
-#define ARROW_LINKED_LIST_H_
+#if !defined(KONEXIOS_LINKED_LIST_H_)
+#define KONEXIOS_LINKED_LIST_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -105,5 +105,5 @@ konexios_linked_list_t *konexios_linked_list_del_last(konexios_linked_list_t *ro
 }
 #endif
 
-#endif  // ARROW_LINKED_LIST_H_
+#endif  // KONEXIOS_LINKED_LIST_H_
 

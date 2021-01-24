@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_DEVICE_H_
-#define ARROW_DEVICE_H_
+#ifndef KONEXIOS_DEVICE_H_
+#define KONEXIOS_DEVICE_H_
 
 #include "json/json.h"
 #include <sys/mem.h>
@@ -23,7 +23,7 @@ typedef struct __attribute_packed__ {
   JsonNode *info;
   JsonNode *prop;
   property_t hid;
-#if defined(ARROW_HAS_USERHID)
+#if defined(KONEXIOS_HAS_USERHID)
   property_t app;
   property_t user;
 #endif
@@ -50,4 +50,4 @@ int konexios_device_parse(konexios_device_t *dev, const char *str);
 
 int konexios_prepare_device(konexios_gateway_t *gateway, konexios_device_t *device);
 
-#endif /* ARROW_DEVICE_H_ */
+#endif /* KONEXIOS_DEVICE_H_ */

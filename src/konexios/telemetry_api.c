@@ -6,7 +6,7 @@
 #include <debug.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_TELEMETRY_ENDPOINT) + 50
+#define URI_LEN sizeof(KONEXIOS_API_TELEMETRY_ENDPOINT) + 50
 
 int telemetry_response_data_list_init(telemetry_response_data_list_t *data, int size, int page, int tsize, int tpage) {
   data->size = size;
@@ -55,7 +55,7 @@ typedef struct _device_telemetry {
 static void _telemetry_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
+  snprintf(uri, URI_LEN, "%s/devices/%s", KONEXIOS_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
@@ -74,7 +74,7 @@ int konexios_send_telemetry(konexios_device_t *device, void *d) {
 static void _telemetry_batch_init(http_request_t *request, void *arg) {
   device_telemetry_t *dt = (device_telemetry_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/devices/%s/batch", ARROW_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
+  snprintf(uri, URI_LEN, "%s/devices/%s/batch", KONEXIOS_API_TELEMETRY_ENDPOINT, P_VALUE(dt->device->hid));
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   request->is_chunked = 1;
@@ -110,7 +110,7 @@ typedef struct _telemetry_hid_ {
 static void _telemetry_find_by_application_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/applications/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
+  snprintf(uri, URI_LEN, "%s/applications/%s", KONEXIOS_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
@@ -134,7 +134,7 @@ int konexios_telemetry_find_by_application_hid(const char *hid, int n, ...) {
 static void _telemetry_find_by_device_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/devices/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
+  snprintf(uri, URI_LEN, "%s/devices/%s", KONEXIOS_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);
@@ -207,7 +207,7 @@ int konexios_telemetry_find_by_device_hid(const char *hid,
 static void _telemetry_find_by_node_hid_init(http_request_t *request, void *arg) {
   telemetry_hid_t *appl = (telemetry_hid_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/nodes/%s", ARROW_API_TELEMETRY_ENDPOINT, appl->hid);
+  snprintf(uri, URI_LEN, "%s/nodes/%s", KONEXIOS_API_TELEMETRY_ENDPOINT, appl->hid);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_findby(request, appl->params);

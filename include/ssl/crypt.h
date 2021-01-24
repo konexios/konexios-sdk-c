@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _ARROW_INCLUDE_CRYPT_SHA256_H_
-#define _ARROW_INCLUDE_CRYPT_SHA256_H_
+#ifndef _KONEXIOS_INCLUDE_CRYPT_SHA256_H_
+#define _KONEXIOS_INCLUDE_CRYPT_SHA256_H_
 
 void sha256(char *shasum, char *buf, int size);
 void sha256_init();
@@ -20,4 +20,4 @@ void hmac256_init(const char *key, int key_size);
 void hmac256_chunk(const char *buf, int buf_size);
 void hmac256_fin(char *hmacdig);
 
-#endif // _ARROW_INCLUDE_CRYPT_SHA256_H_
+#endif // _KONEXIOS_INCLUDE_CRYPT_SHA256_H_

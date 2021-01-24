@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_NTP_H_
-#define ARROW_NTP_H_
+#ifndef KONEXIOS_NTP_H_
+#define KONEXIOS_NTP_H_
 
 #ifndef NTP_DEFAULT_SERVER
 #define NTP_DEFAULT_SERVER "0.pool.ntp.org"
@@ -34,4 +34,4 @@ int ntp_set_time_common(const char *server, uint16_t port, int timeout, int try_
 }
 #endif
 
-#endif /* ARROW_NTP_H_ */
+#endif /* KONEXIOS_NTP_H_ */

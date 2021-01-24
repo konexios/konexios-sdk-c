@@ -1,5 +1,5 @@
-#if !defined(ARROW_DEVICE_COMMAND_H_)
-#define ARROW_DEVICE_COMMAND_H_
+#if !defined(KONEXIOS_DEVICE_COMMAND_H_)
+#define KONEXIOS_DEVICE_COMMAND_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -48,4 +48,4 @@ int konexios_send_event_ans(property_t hid, cmd_type ev, property_t payload);
 }
 #endif
 
-#endif // ARROW_DEVICE_COMMAND_H_
+#endif // KONEXIOS_DEVICE_COMMAND_H_

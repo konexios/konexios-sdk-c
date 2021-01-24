@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_SSL_H_
-#define ARROW_SSL_H_
+#ifndef KONEXIOS_SSL_H_
+#define KONEXIOS_SSL_H_
 
 int ssl_connect(int sock);
 int ssl_recv(int sock, char *data, int len);

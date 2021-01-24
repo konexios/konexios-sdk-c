@@ -11,7 +11,7 @@
 
 #include <konexios_config.h>
 
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
 typedef void konexios_mutex;
 
 int konexios_mutex_init(konexios_mutex **mutex);

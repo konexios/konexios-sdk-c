@@ -13,7 +13,7 @@
 #include <sys/mem.h>
 #include <data/chunk.h>
 
-#define URI_LEN sizeof(ARROW_API_DEVICE_ENDPOINT) + 50
+#define URI_LEN sizeof(KONEXIOS_API_DEVICE_ENDPOINT) + 50
 
 void device_type_init(device_type_t *dev, int enable, const char *name, const char *dec) {
   dev->enabled = enable;
@@ -54,7 +54,7 @@ int device_type_add_telemetry_variables(device_type_telemetry_t *tel, const char
 static void _device_type_list_init(http_request_t *request, void *arg) {
   SSP_PARAMETER_NOT_USED(arg);
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
+  snprintf(uri, URI_LEN, "%s/types", KONEXIOS_API_DEVICE_ENDPOINT);
   http_request_init(request, GET, &p_stack(uri));
   FREE_CHUNK(uri);
 }
@@ -105,7 +105,7 @@ static property_t device_type_serialize(device_type_t *dev) {
 static void _device_type_create_init(http_request_t *request, void *arg) {
   device_type_t *dev_type = (device_type_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/types", ARROW_API_DEVICE_ENDPOINT);
+  snprintf(uri, URI_LEN, "%s/types", KONEXIOS_API_DEVICE_ENDPOINT);
   http_request_init(request, POST, &p_stack(uri));
   FREE_CHUNK(uri);
   http_request_set_payload(request, device_type_serialize(dev_type));
@@ -124,7 +124,7 @@ typedef struct _device_device_type_ {
 static void _device_type_update_init(http_request_t *request, void *arg) {
   device_device_type_t *ddt = (device_device_type_t *)arg;
   CREATE_CHUNK(uri, URI_LEN);
-  snprintf(uri, URI_LEN, "%s/types/%s", ARROW_API_DEVICE_ENDPOINT,
+  snprintf(uri, URI_LEN, "%s/types/%s", KONEXIOS_API_DEVICE_ENDPOINT,
            P_VALUE(ddt->dev->hid));
   http_request_init(request, PUT, &p_stack(uri));
   FREE_CHUNK(uri);

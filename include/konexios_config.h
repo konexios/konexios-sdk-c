@@ -25,8 +25,8 @@
 #define STATIC_MQTT_ENV
 #define STATIC_HTTP_CLIENT
 #define STATIC_SIGN
-# if !defined(ARROW_MAX_MQTT_COMMANDS)
-# define ARROW_MAX_MQTT_COMMANDS 10
+# if !defined(KONEXIOS_MAX_MQTT_COMMANDS)
+# define KONEXIOS_MAX_MQTT_COMMANDS 10
 # endif
 #endif
 
@@ -87,11 +87,11 @@
 #if !defined(TELEMETRY_DELAY)
 #define TELEMETRY_DELAY             5000
 #endif
-#if !defined(ARROW_MAX_RETRY)
-#define ARROW_MAX_RETRY -1
+#if !defined(KONEXIOS_MAX_RETRY)
+#define KONEXIOS_MAX_RETRY -1
 #endif
 #define RETRY_UP(r, overact) \
-    if ( r >= 0 && ++r > ARROW_MAX_RETRY ) { overact; }
+    if ( r >= 0 && ++r > KONEXIOS_MAX_RETRY ) { overact; }
 #define RETRY_CR(r) \
     r = 0;
 #define TO_FAHRENHEIT(x) ((x)*1.8 + 32)
@@ -112,17 +112,17 @@
 #endif
 
 
-#define ARROW_API_BASE_URL                  ARROW_SCH "://" ARROW_ADDR ":" xstr(ARROW_PORT)
-#define ARROW_API_GATEWAY_ENDPOINT          "/api/v1/kronos/gateways"
-#define ARROW_API_DEVICE_ENDPOINT           "/api/v1/kronos/devices"
-#define ARROW_API_TELEMETRY_ENDPOINT        "/api/v1/kronos/telemetries"
-#define ARROW_API_EVENTS_ENDPOINT           "/api/v1/core/events"
-#define ARROW_API_ACCOUNT_ENDPOINT          "/api/v1/kronos/accounts"
-#define ARROW_API_NODE_ENDPOINT             "/api/v1/kronos/nodes"
-#define ARROW_API_NODE_TYPE_ENDPOINT        "/api/v1/kronos/nodes/types"
-#define ARROW_API_TESTSUITE_ENDPOINT        "/api/v1/kronos/testsuite"
-#define ARROW_API_SOFTWARE_RELEASE_ENDPOINT "/api/v1/kronos/software/releases/transactions"
-#define ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT "/api/v1/kronos/software/releases/schedules"
+#define KONEXIOS_API_BASE_URL                  KONEXIOS_SCH "://" KONEXIOS_ADDR ":" xstr(KONEXIOS_PORT)
+#define KONEXIOS_API_GATEWAY_ENDPOINT          "/api/v1/kronos/gateways"
+#define KONEXIOS_API_DEVICE_ENDPOINT           "/api/v1/kronos/devices"
+#define KONEXIOS_API_TELEMETRY_ENDPOINT        "/api/v1/kronos/telemetries"
+#define KONEXIOS_API_EVENTS_ENDPOINT           "/api/v1/core/events"
+#define KONEXIOS_API_ACCOUNT_ENDPOINT          "/api/v1/kronos/accounts"
+#define KONEXIOS_API_NODE_ENDPOINT             "/api/v1/kronos/nodes"
+#define KONEXIOS_API_NODE_TYPE_ENDPOINT        "/api/v1/kronos/nodes/types"
+#define KONEXIOS_API_TESTSUITE_ENDPOINT        "/api/v1/kronos/testsuite"
+#define KONEXIOS_API_SOFTWARE_RELEASE_ENDPOINT "/api/v1/kronos/software/releases/transactions"
+#define KONEXIOS_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT "/api/v1/kronos/software/releases/schedules"
 
 /* default gateway and device configuration */
 /* default gateway configuration */
@@ -166,8 +166,8 @@
 #define DEVICE_UID_SUFFIX           "dev"
 #endif
 
-#if !defined(ARROW_ERROR_DELAY)
-#define ARROW_RETRY_DELAY 3000
+#if !defined(KONEXIOS_ERROR_DELAY)
+#define KONEXIOS_RETRY_DELAY 3000
 #endif
 #if !defined(MQTT_ERROR_DELAY)
 #define MQTT_RETRY_DELAY 6000
@@ -194,11 +194,11 @@
 #define MQTT_RECVBUF_LEN 1200
 #endif
 
-#if defined(ARROW_THREAD) &&  \
+#if defined(KONEXIOS_THREAD) &&  \
     !defined(__IBM__) && \
     !defined(__AZURE__)
 # warning "There is only one possible MQTT connection"
-# undef ARROW_THREAD
+# undef KONEXIOS_THREAD
 #endif
 
 #if !defined(S_TOP_NAME)
@@ -226,7 +226,7 @@
 # endif
 #endif
 
-#define ARROW_MQTT_URL MQTT_SCH "://" MQTT_ADDR ":" #MQTT_PORT
+#define KONEXIOS_MQTT_URL MQTT_SCH "://" MQTT_ADDR ":" #MQTT_PORT
 
 #if !defined(MQTT_QOS)
 #define MQTT_QOS        1
@@ -294,7 +294,7 @@ typedef struct {
 #define IOT_CLIENT_INIT_API_DEFAULT               \
      ((IoT_Client_Init_Api)                       \
       {                                           \
-            .host ={ ARROW_ADDR }                 \
+            .host ={ KONEXIOS_ADDR }                 \
            ,.scheme  = konexios_scheme_https         \
            ,.port    = 443                        \
         })
@@ -302,7 +302,7 @@ typedef struct {
 #define IOT_CLIENT_INIT_API_DEFAULT               \
      ((IoT_Client_Init_Api)                       \
       {                                           \
-            .host ={ ARROW_ADDR }                 \
+            .host ={ KONEXIOS_ADDR }                 \
            ,.scheme  = konexios_scheme_http          \
            ,.port    = 12001                      \
         })

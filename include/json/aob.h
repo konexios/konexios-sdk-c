@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_ACN_SDK_C_JSON_AOB_H_
-#define ARROW_ACN_SDK_C_JSON_AOB_H_
+#ifndef KONEXIOS_ACN_SDK_C_JSON_AOB_H_
+#define KONEXIOS_ACN_SDK_C_JSON_AOB_H_
 
 #include <sys/mem.h>
 #include <json/sb.h>

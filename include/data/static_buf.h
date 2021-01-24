@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef _ARROW_C_SDK_STATIC_BUF_H_
-#define _ARROW_C_SDK_STATIC_BUF_H_
+#ifndef _KONEXIOS_C_SDK_STATIC_BUF_H_
+#define _KONEXIOS_C_SDK_STATIC_BUF_H_
 
 #include <sys/mem.h>
 
@@ -32,4 +32,4 @@ static uint8_t __alloc_head_##name[1 + (((size) / (chunk))>>3)] = {0}; \
 #define static_buf_realloc(name, ptr, size) __static_realloc(__alloc_head_##name, __alloc_space_##name, name, __##name##_size, ptr, size, __##name##_chunk)
 #define static_buf_free(name, ptr)   __static_free(__alloc_head_##name, __alloc_space_##name, name, ptr, __##name##_chunk)
 
-#endif  // _ARROW_C_SDK_STATIC_ALLOC_H_
+#endif  // _KONEXIOS_C_SDK_STATIC_ALLOC_H_

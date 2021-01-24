@@ -1,5 +1,5 @@
-#if !defined(ARROW_DEVICE_STARTSTOP_H_) && defined(DEVICE_STARTSTOP)
-#define ARROW_DEVICE_STARTSTOP_H_
+#if !defined(KONEXIOS_DEVICE_STARTSTOP_H_) && defined(DEVICE_STARTSTOP)
+#define KONEXIOS_DEVICE_STARTSTOP_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -23,4 +23,4 @@ int ev_DeviceStop(void *ev, JsonNode *node);
 }
 #endif
 
-#endif // ARROW_DEVICE_STARTSTOP_H_
+#endif // KONEXIOS_DEVICE_STARTSTOP_H_

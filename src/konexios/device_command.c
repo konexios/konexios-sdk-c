@@ -19,7 +19,7 @@
 
 #if defined(STATIC_DEVICE_COMMANDS)
 # include <data/static_alloc.h>
-static_object_pool_type(cmd_handler, ARROW_MAX_DEVICE_COMMANDS)
+static_object_pool_type(cmd_handler, KONEXIOS_MAX_DEVICE_COMMANDS)
 # define ALLOC static_allocator
 # define FREE(p)  static_free(cmd_handler, p)
 #else
@@ -68,9 +68,9 @@ typedef struct _event_data {
 } event_data_t;
 
 static void _event_ans_init(http_request_t *request, void *arg) {
-    CREATE_CHUNK(uri, sizeof(ARROW_API_EVENTS_ENDPOINT) + 100);
+    CREATE_CHUNK(uri, sizeof(KONEXIOS_API_EVENTS_ENDPOINT) + 100);
     event_data_t *data = (event_data_t *)arg;
-    strcpy(uri, ARROW_API_EVENTS_ENDPOINT);
+    strcpy(uri, KONEXIOS_API_EVENTS_ENDPOINT);
     strcat(uri, "/");
     strcat(uri, P_VALUE(data->hid));
     switch(data->ev) {
@@ -119,7 +119,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
                    DBG("Max retry %d", retry);
                    return -2;
                });
-      msleep(ARROW_RETRY_DELAY);
+      msleep(KONEXIOS_RETRY_DELAY);
   }
 #endif // end API call
   DBG("start device command processing");
@@ -187,7 +187,7 @@ device_command_done:
     while ( konexios_send_event_ans(ev->base.id, cmd_failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
-        msleep(ARROW_RETRY_DELAY);
+        msleep(KONEXIOS_RETRY_DELAY);
     }
     property_free(&_error_prop);
     json_delete(_error);
@@ -195,7 +195,7 @@ device_command_done:
     while ( konexios_send_event_ans(ev->base.id, cmd_succeeded, p_null) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
-        msleep(ARROW_RETRY_DELAY);
+        msleep(KONEXIOS_RETRY_DELAY);
     }
   }
   http_session_set_protocol(current_client(), api_via_http);

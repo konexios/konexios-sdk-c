@@ -36,11 +36,11 @@
 
 #if defined(STATIC_MQTT_ENV)
 #include <data/static_alloc.h>
-static_object_pool_type(mqtt_event_t, ARROW_MAX_MQTT_COMMANDS)
-static_object_pool_type(mqtt_api_event_t, ARROW_MAX_MQTT_COMMANDS)
+static_object_pool_type(mqtt_event_t, KONEXIOS_MAX_MQTT_COMMANDS)
+static_object_pool_type(mqtt_api_event_t, KONEXIOS_MAX_MQTT_COMMANDS)
 #endif
 
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
 #include <sys/mutex.h>
 #define MQTT_EVENTS_QUEUE_LOCK      konexios_mutex_lock(_event_mutex)
 #define MQTT_EVENTS_QUEUE_UNLOCK    konexios_mutex_unlock(_event_mutex)
@@ -168,14 +168,14 @@ static int check_signature(const char *vers, const char *sing, mqtt_event_base_t
 
 static mqtt_event_t *__event_queue = NULL;
 static mqtt_api_event_t *__api_event_queue = NULL;
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
 static konexios_mutex *_event_mutex = NULL;
 #endif
 
 void konexios_mqtt_events_init(void) {
     __api_event_queue = NULL;
     __event_queue = NULL;
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
     konexios_mutex_init(&_event_mutex);
 #endif
     int i = 0;
@@ -185,7 +185,7 @@ void konexios_mqtt_events_init(void) {
 }
 
 void konexios_mqtt_events_done() {
-#if defined(ARROW_THREAD)
+#if defined(KONEXIOS_THREAD)
     konexios_mutex_deinit(_event_mutex);
 #endif
     int i = 0;
@@ -266,10 +266,10 @@ int memory_check(int size, int reserved) {
 static json_parse_machine_t sm;
 
 int process_event_init(int size) {
-#if defined(ARROW_MAX_MQTT_COMMANDS)
+#if defined(KONEXIOS_MAX_MQTT_COMMANDS)
 	// TODO: mw190304: since commands vary in size, the queue should max out on memory used rather number of commands
     int queue_size = konexios_mqtt_has_events();
-    if ( queue_size >= ARROW_MAX_MQTT_COMMANDS) {
+    if ( queue_size >= KONEXIOS_MAX_MQTT_COMMANDS) {
 #if defined(HTTP_VIA_MQTT)
         DBG("Event Queue is full.  Marking event as FAILED, and forcing HTTP ACK responses until queue returns to baseline.");
         http_session_force_http(1);
@@ -338,8 +338,8 @@ int process_event_finish() {
   konexios_linked_list_add_node_last(__event_queue, mqtt_event_t, mqtt_e);
   DBG("Enque hid: %s, event queue size %d", P_VALUE(mqtt_e->base.id), konexios_mqtt_has_events());
 
-  #if defined(ARROW_MAX_MQTT_COMMANDS)
-  if ( konexios_mqtt_has_events() == ARROW_MAX_MQTT_COMMANDS )
+  #if defined(KONEXIOS_MAX_MQTT_COMMANDS)
+  if ( konexios_mqtt_has_events() == KONEXIOS_MAX_MQTT_COMMANDS )
       http_session_force_http(1);
 #endif
 error:
@@ -445,8 +445,8 @@ int konexios_mqtt_api_send(mqtt_event_t *event, cmd_type status) {
 		  DBG("\tsend_event_ans < 0, retry api_via_http");
 	      http_session_set_protocol(current_client(), api_via_http);
 	      RETRY_UP(retry, { DBG("exit -2, Max retry %d", retry); return -2; });
-	      DBG("sleep %d", ARROW_RETRY_DELAY);
-	      msleep(ARROW_RETRY_DELAY);
+	      DBG("sleep %d", KONEXIOS_RETRY_DELAY);
+	      msleep(KONEXIOS_RETRY_DELAY);
 	  }
 	  return 0;
 
@@ -464,7 +464,7 @@ int konexios_mqtt_api_wait(int num) {
 
 static int soft_reject = 0;
 int process_http_init(int size) {
-#if defined(ARROW_MAX_MQTT_COMMANDS)
+#if defined(KONEXIOS_MAX_MQTT_COMMANDS)
     if (konexios_mqtt_api_has_events() >= api_mqtt_max_capacity) {
         if ( !api_mqtt_max_capacity ) {
             soft_reject = 1;

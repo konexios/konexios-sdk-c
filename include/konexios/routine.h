@@ -6,8 +6,8 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#ifndef ARROW_ROUTINE_H_
-#define ARROW_ROUTINE_H_
+#ifndef KONEXIOS_ROUTINE_H_
+#define KONEXIOS_ROUTINE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -101,4 +101,4 @@ konexios_routine_error_t konexios_mqtt_check_init(void);
 }
 #endif
 
-#endif /* ARROW_ROUTINE_H_ */
+#endif /* KONEXIOS_ROUTINE_H_ */
