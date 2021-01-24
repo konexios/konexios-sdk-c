@@ -1,8 +1,8 @@
-#include "arrow/software_update.h"
+#include "konexios/software_update.h"
 #include <debug.h>
-#include <arrow/events.h>
-#include <arrow/routine.h>
-#include <arrow/api/gateway/gateway.h>
+#include <konexios/events.h>
+#include <konexios/routine.h>
+#include <konexios/api/gateway/gateway.h>
 #include <time/time.h>
 // #include <sys/reboot.h>
 
@@ -19,18 +19,18 @@ int ev_GatewaySoftwareUpdate(void *_ev, JsonNode *_parameters) {
   if ( !tmp || tmp->tag != JSON_STRING ) return -1;
   DBG("update url: %s", P_VALUE(tmp->string_));
 
-  if ( arrow_gateway_software_update(P_VALUE(tmp->string_)) < 0 ) return -1;
+  if ( konexios_gateway_software_update(P_VALUE(tmp->string_)) < 0 ) return -1;
   DBG("Reboot...");
   reboot(0);
   return 0;
 }
 
-int __attribute__((weak)) arrow_gateway_software_update(const char *url) {
+int __attribute__((weak)) konexios_gateway_software_update(const char *url) {
   if ( __update ) return __update(url);
   return -1;
 }
 
-int arrow_gateway_software_update_set_cb(__update_cb cb) {
+int konexios_gateway_software_update_set_cb(__update_cb cb) {
   __update = cb;
   return 0;
 }

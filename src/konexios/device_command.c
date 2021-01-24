@@ -6,12 +6,12 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "arrow/device_command.h"
+#include "konexios/device_command.h"
 #if !defined(NO_EVENTS)
 #include <http/routine.h>
 #include <json/json.h>
 #include <sys/mem.h>
-#include <arrow/events.h>
+#include <konexios/events.h>
 #include <time/time.h>
 #include <debug.h>
 
@@ -30,7 +30,7 @@ static_object_pool_type(cmd_handler, ARROW_MAX_DEVICE_COMMANDS)
 static cmd_handler *__handlers = NULL;
 
 // handlers
-void arrow_command_init(void) {
+void konexios_command_init(void) {
 	__handlers = NULL;
 }
 
@@ -40,20 +40,20 @@ int has_cmd_handler(void) {
 	return -1;
 }
 
-int arrow_command_handler_add(const char *name, __cmd_cb callback) {
+int konexios_command_handler_add(const char *name, __cmd_cb callback) {
 	cmd_handler *h = ALLOC(cmd_handler);
 	if (!h)
 		return -1;
 	property_copy(&h->name, p_const(name));
 	h->callback = callback;
-	arrow_linked_list_init(h);
-	arrow_linked_list_add_node_last(__handlers, cmd_handler, h);
+	konexios_linked_list_init(h);
+	konexios_linked_list_add_node_last(__handlers, cmd_handler, h);
 	return 0;
 }
 
-void arrow_command_handler_free(void) {
+void konexios_command_handler_free(void) {
 	cmd_handler *curr = NULL;
-	arrow_linked_list_for_each_safe(curr, __handlers, cmd_handler)
+	konexios_linked_list_for_each_safe(curr, __handlers, cmd_handler)
 	{
 		property_free(&curr->name);
 		FREE(curr);
@@ -85,7 +85,7 @@ static void _event_ans_init(http_request_t *request, void *arg) {
 	}
 }
 
-int arrow_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
+int konexios_send_event_ans(property_t hid, cmd_type ev, property_t payload) {
     event_data_t edata = {p_null, ev, p_null};
     property_weak_copy(&edata.hid, hid);
     if ( !IS_EMPTY(payload) ) {
@@ -113,7 +113,7 @@ int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
 #if defined(HTTP_VIA_MQTT)
   http_session_set_protocol(current_client(), api_via_mqtt);
 #endif
-  while( arrow_send_event_ans(ev->base.id, cmd_received, p_null) < 0 ) {
+  while( konexios_send_event_ans(ev->base.id, cmd_received, p_null) < 0 ) {
       http_session_set_protocol(current_client(), api_via_http);
       RETRY_UP(retry, {
                    DBG("Max retry %d", retry);
@@ -184,7 +184,7 @@ device_command_done:
   if ( _error ) {
     property_t _error_prop = json_encode_property(_error);
     DBG("error string: %s", P_VALUE(_error_prop));
-    while ( arrow_send_event_ans(ev->base.id, cmd_failed, _error_prop) < 0 ) {
+    while ( konexios_send_event_ans(ev->base.id, cmd_failed, _error_prop) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
         msleep(ARROW_RETRY_DELAY);
@@ -192,7 +192,7 @@ device_command_done:
     property_free(&_error_prop);
     json_delete(_error);
   } else {
-    while ( arrow_send_event_ans(ev->base.id, cmd_succeeded, p_null) < 0 ) {
+    while ( konexios_send_event_ans(ev->base.id, cmd_succeeded, p_null) < 0 ) {
         RETRY_UP(retry, {return -2;});
         http_session_set_protocol(current_client(), api_via_http);
         msleep(ARROW_RETRY_DELAY);

@@ -6,13 +6,13 @@
  * Contributors: Arrow Electronics, Inc.
  */
 
-#include "arrow/software_release.h"
+#include "konexios/software_release.h"
 #include <http/routine.h>
 #include <debug.h>
 #include <sys/watchdog.h>
 // #include <sys/reboot.h>
 #include <ssl/md5sum.h>
-#include <arrow/utf8.h>
+#include <konexios/utf8.h>
 #include <time/time.h>
 #include <data/chunk.h>
 #include <json/decode.h>
@@ -39,7 +39,7 @@ static property_t serialize_software_trans(const char *hid, release_sched_t *rs)
 }
 
 typedef struct _gateway_software_sched_ {
-  arrow_gateway_t *gate;
+  konexios_gateway_t *gate;
   release_sched_t *rs;
 } gateway_software_sched_t;
 
@@ -64,14 +64,14 @@ static int _gateway_software_releases_trans_proc(http_response_t *response, void
   return 0;
 }
 
-int arrow_gateway_software_releases_trans(arrow_gateway_t *gate, release_sched_t *rs) {
+int konexios_gateway_software_releases_trans(konexios_gateway_t *gate, release_sched_t *rs) {
   gateway_software_sched_t sch = {gate, rs};
   P_CLEAR(rs->trans_hid);
   STD_ROUTINE(_gateway_software_releases_trans_init, &sch, _gateway_software_releases_trans_proc, NULL, "Software Trans fail");
 }
 
 typedef struct _device_software_sched_ {
-  arrow_device_t *gate;
+  konexios_device_t *gate;
   release_sched_t *rs;
 } device_software_sched_t;
 
@@ -97,7 +97,7 @@ static int _device_software_releases_trans_proc(http_response_t *response, void 
 }
 
 
-int arrow_device_software_releases_trans(arrow_device_t *dev, release_sched_t *rs) {
+int konexios_device_software_releases_trans(konexios_device_t *dev, release_sched_t *rs) {
   device_software_sched_t sch = {dev, rs};
   P_CLEAR(rs->trans_hid);
   STD_ROUTINE(_device_software_releases_trans_init, &sch, _device_software_releases_trans_proc, NULL, "Software Trans fail");
@@ -143,17 +143,17 @@ static void _software_releases_ans_init(http_request_t *request, void *arg) {
   }
 }
 
-int arrow_software_releases_trans_fail(const char *hid, const char *error) {
+int konexios_software_releases_trans_fail(const char *hid, const char *error) {
   ans_t ans = {fail, hid, error};
   STD_ROUTINE(_software_releases_ans_init, &ans, NULL, NULL, "Software Trans fail");
 }
 
-int arrow_software_releases_trans_received(const char *hid) {
+int konexios_software_releases_trans_received(const char *hid) {
   ans_t ans = {received, hid, NULL};
   STD_ROUTINE(_software_releases_ans_init, &ans, NULL, NULL, "Software Trans fail");
 }
 
-int arrow_software_releases_trans_success(const char *hid) {
+int konexios_software_releases_trans_success(const char *hid) {
   ans_t ans = {success, hid, NULL};
   STD_ROUTINE(_software_releases_ans_init, &ans, NULL, NULL, "Software Trans fail");
 }
@@ -168,7 +168,7 @@ static void _software_releases_start_init(http_request_t *request, void *arg) {
   FREE_CHUNK(uri);
 }
 
-int arrow_software_releases_trans_start(const char *hid) {
+int konexios_software_releases_trans_start(const char *hid) {
   STD_ROUTINE(_software_releases_start_init, (void*)hid, NULL, NULL, "Software Trans start fail");
 }
 
@@ -188,7 +188,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
   http_session_close_set(current_client(), false);
 #endif
   int retry = 0;
-  while( arrow_software_releases_trans_received(trans_hid) < 0) {
+  while( konexios_software_releases_trans_received(trans_hid) < 0) {
     RETRY_UP(retry, {return -2;});
     msleep(ARROW_RETRY_DELAY);
   }
@@ -219,7 +219,7 @@ int ev_DeviceSoftwareRelease(void *_ev, JsonNode *_parameters) {
           ret = __download_init(_checksum);
           if ( ret < 0 ) goto software_release_done;
       }
-      ret = arrow_software_release_download(_token, trans_hid, _checksum);
+      ret = konexios_software_release_download(_token, trans_hid, _checksum);
       if ( ret ) {
           RETRY_UP(retry, { goto software_release_done; });
           msleep(ARROW_RETRY_DELAY);
@@ -232,7 +232,7 @@ software_release_done:
   if ( ret < 0 ) {
       int retry = 0;
       wdt_feed();
-      while ( arrow_software_releases_trans_fail(trans_hid, "failed") < 0 ) {
+      while ( konexios_software_releases_trans_fail(trans_hid, "failed") < 0 ) {
           RETRY_UP(retry, {return -2;});
           msleep(ARROW_RETRY_DELAY);
       }
@@ -240,7 +240,7 @@ software_release_done:
   } else {
       int retry = 0;
       wdt_feed();
-      while ( arrow_software_releases_trans_success(trans_hid) < 0 ) {
+      while ( konexios_software_releases_trans_success(trans_hid) < 0 ) {
           RETRY_UP(retry, {return -2;});
           msleep(ARROW_RETRY_DELAY);
       }
@@ -260,7 +260,7 @@ void free_release_schedule(release_sched_t *rs) {
   property_free(&rs->trans_hid);
 }
 
-int __attribute__((weak)) arrow_software_release(const char *token,
+int __attribute__((weak)) konexios_software_release(const char *token,
                                                  const char *chsum,
                                                  const char *from,
                                                  const char *to) {
@@ -268,7 +268,7 @@ int __attribute__((weak)) arrow_software_release(const char *token,
   return -1;
 }
 
-int arrow_software_release_set_cb(__release_cb cb) {
+int konexios_software_release_set_cb(__release_cb cb) {
   __release = cb;
   return 0;
 }
@@ -285,7 +285,7 @@ typedef struct _download_result_ {
 
 
 // set the callback for update file processing
-int arrow_software_release_dowload_set_cb(
+int konexios_software_release_dowload_set_cb(
         __download_init_cb icb,
         __download_payload_cb pcb,
         __download_complete_cb ccb,
@@ -299,7 +299,7 @@ int arrow_software_release_dowload_set_cb(
 }
 
 // this is a special payload handler for the OTA
-int arrow_software_release_payload_handler(void *r,
+int konexios_software_release_payload_handler(void *r,
                                            property_t payload) {
   http_response_t *res = (http_response_t *)r;
   int flag = FW_FIRST;
@@ -325,12 +325,12 @@ static void _software_releases_download_init(http_request_t *request, void *arg)
 #ifdef PETNET_API_SOFTWARE_RELEASE_HOST
   property_free(&request->host);
   request->scheme = PETNET_API_SOFTWARE_RELEASE_SCHEME;
-  request->is_cipher = request->scheme == arrow_scheme_http ? 0 : 1;
+  request->is_cipher = request->scheme == konexios_scheme_http ? 0 : 1;
   request->port = PETNET_API_SOFTWARE_RELEASE_PORT;
   property_copy(&request->host, p_const(PETNET_API_SOFTWARE_RELEASE_HOST));
   DBG("PN WORKAROUND: Redirecting to Petnet proxy: %s", P_VALUE(request->host));
 #endif
-  request->_response_payload_meth._p_add_handler = arrow_software_release_payload_handler;
+  request->_response_payload_meth._p_add_handler = konexios_software_release_payload_handler;
   FREE_CHUNK(uri);
   wdt_feed();
 }
@@ -358,7 +358,7 @@ static int _software_releases_download_proc(http_response_t *response, void *arg
     return -1;
 }
 
-int arrow_software_release_download(const char *token, const char *tr_hid, const char *checksum) {
+int konexios_software_release_download(const char *token, const char *tr_hid, const char *checksum) {
   token_hid_t th = { token, tr_hid };
   download_result_t dr = { checksum, 0 };
   int ret = http_routine(_software_releases_download_init,
@@ -373,7 +373,7 @@ int arrow_software_release_download(const char *token, const char *tr_hid, const
 }
 
 // schedules
-int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw_hid, property_t user_hid) {
+int konexios_schedule_model_init(konexios_schedule_t *sch, int category, property_t sw_hid, property_t user_hid) {
     sch->device_category = category;
     property_init(&sch->software_release_hid);
     property_init(&sch->user_hid);
@@ -383,19 +383,19 @@ int arrow_schedule_model_init(arrow_schedule_t *sch, int category, property_t sw
     return 0;
 }
 
-int arrow_schedule_model_add_object(arrow_schedule_t *sch, property_t hid) {
+int konexios_schedule_model_add_object(konexios_schedule_t *sch, property_t hid) {
     struct object_hid_list *objhid = alloc_type(struct object_hid_list);
-    arrow_linked_list_init(objhid);
+    konexios_linked_list_init(objhid);
     property_weak_copy(&objhid->hid, hid);
-    arrow_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
+    konexios_linked_list_add_node_last(sch->_hids, struct object_hid_list, objhid);
     return 0;
 }
 
-int arrow_schedule_model_free(arrow_schedule_t *sch) {
+int konexios_schedule_model_free(konexios_schedule_t *sch) {
     property_free(&sch->software_release_hid);
     property_free(&sch->user_hid);
     struct object_hid_list *tmp = NULL;
-    arrow_linked_list_for_each_safe(tmp, sch->_hids, struct object_hid_list) {
+    konexios_linked_list_for_each_safe(tmp, sch->_hids, struct object_hid_list) {
         property_free(&tmp->hid);
         free(tmp);
     }
@@ -404,14 +404,14 @@ int arrow_schedule_model_free(arrow_schedule_t *sch) {
 }
 
 static void _software_releases_schedule_start_init(http_request_t *request, void *arg) {
-    arrow_schedule_t *sch = (arrow_schedule_t *)arg;
+    konexios_schedule_t *sch = (konexios_schedule_t *)arg;
     CREATE_CHUNK(uri, URI_LEN);
     int n = snprintf(uri, URI_LEN, "%s/start", ARROW_API_SOFTWARE_RELEASE_SCHEDULE_ENDPOINT);
     if (n < 0) return;
     uri[n] = 0x0;
     http_request_init(request, POST, &p_stack(uri));
     //http_request_add_header(request,
-    //                        p_const("x-arrow-apikey"),
+    //                        p_const("x-konexios-apikey"),
     //                        p_const(DEFAULT_API_KEY));
     JsonNode *_main = json_mkobject();
     if ( sch->device_category == schedule_GATEWAY ) {
@@ -423,7 +423,7 @@ static void _software_releases_schedule_start_init(http_request_t *request, void
     json_append_member(_main, p_const("userHid"), json_mkstring(P_VALUE(sch->user_hid)));
     JsonNode *hids = json_mkarray();
     struct object_hid_list *tmp = NULL;
-    arrow_linked_list_for_each(tmp, sch->_hids, struct object_hid_list) {
+    konexios_linked_list_for_each(tmp, sch->_hids, struct object_hid_list) {
         json_append_element(hids, json_mkstring(P_VALUE(tmp->hid)));
     }
     json_append_member(_main, p_const("objectHids"), hids);
@@ -442,7 +442,7 @@ static int _software_releases_schedule_start_proc(http_response_t *response, voi
     return 0;
 }
 
-int arrow_software_releases_schedules_start(arrow_schedule_t *sch) {
+int konexios_software_releases_schedules_start(konexios_schedule_t *sch) {
     STD_ROUTINE(_software_releases_schedule_start_init, (void*)sch,
                 _software_releases_schedule_start_proc, NULL, "Schedule fail");
 }

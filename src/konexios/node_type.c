@@ -1,0 +1,78 @@
+#include "konexios/node_type.h"
+#include <json/json.h>
+#include <http/routine.h>
+#include <debug.h>
+
+#include <data/chunk.h>
+
+#define URI_LEN sizeof(ARROW_API_NODE_TYPE_ENDPOINT) + 50
+
+static void _node_type_list_init(http_request_t *request, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  http_request_init(request, GET, &p_const(ARROW_API_NODE_ENDPOINT));
+}
+
+static int _node_type_list_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  if ( response->m_httpResponseCode != 200 ) return -1;
+  DBG("gateway hid: %s", P_VALUE(response->payload));
+  return 0;
+}
+
+int konexios_node_type_list(void) {
+  STD_ROUTINE(_node_type_list_init, NULL,
+              _node_type_list_proc, NULL,
+              "Arrow Node Type list failed...");
+}
+
+static property_t konexios_node_type_serialize(konexios_node_type_t *node) {
+  JsonNode *_main = json_mkobject();
+  json_append_member(_main, p_const("description"), json_mkstring(node->description));
+  json_append_member(_main, p_const("enabled"), json_mkbool(node->enabled));
+  json_append_member(_main, p_const("name"), json_mkstring(node->name));
+  property_t payload = json_encode_property(_main);
+  json_delete(_main);
+  return payload;
+}
+
+static void _node_type_create_init(http_request_t *request, void *arg) {
+  konexios_node_type_t *node = (konexios_node_type_t *) arg;
+  http_request_init(request, POST, &p_const(ARROW_API_NODE_TYPE_ENDPOINT));
+  http_request_set_payload(request, konexios_node_type_serialize(node));
+}
+
+static int _node_type_create_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  if ( response->m_httpResponseCode != 200 ) return -1;
+  DBG("ans: %s", P_VALUE(response->payload));
+  return 0;
+}
+
+int konexios_node_type_create(konexios_node_type_t *node) {
+  STD_ROUTINE(_node_type_create_init, node,
+              _node_type_create_proc, NULL,
+              "Arrow Node create failed...");
+}
+
+static void _node_type_update_init(http_request_t *request, void *arg) {
+  konexios_node_type_t *node = (konexios_node_type_t *) arg;
+  CREATE_CHUNK(uri, URI_LEN);
+  snprintf(uri, URI_LEN, "%s/%s", ARROW_API_NODE_TYPE_ENDPOINT, node->hid);
+  http_request_init(request, PUT, &p_stack(uri));
+  FREE_CHUNK(uri);
+  http_request_set_payload(request, konexios_node_type_serialize(node));
+}
+
+static int _node_type_update_proc(http_response_t *response, void *arg) {
+  SSP_PARAMETER_NOT_USED(arg);
+  if ( response->m_httpResponseCode != 200 ) return -1;
+  DBG("ans: %s", P_VALUE(response->payload));
+  return 0;
+}
+
+
+int konexios_node_type_update(konexios_node_type_t *node) {
+  STD_ROUTINE(_node_type_update_init, node,
+              _node_type_update_proc, NULL,
+              "Arrow Node updaet failed...");
+}

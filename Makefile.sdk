@@ -17,6 +17,25 @@
 #
 #==========================================================
 
+SDK_PATH ?= .
+
+OS_TYPE :=
+ifeq ($(OS),Windows_NT)
+	OS_TYPE := WINDOWS
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		OS_TYPE := LINUX
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		OS_TYPE := OSX
+	endif
+endif
+
+ifeq ($(OS_TYPE),OSX)
+	CC_FLAGS += -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+endif
+
 -include $(SDK_PATH)/Makefile.static
 -include $(SDK_PATH)/Makefile.wolf
 
@@ -25,21 +44,22 @@ $(info SDK: $(SDK_PATH))
 LIBDIR ?= .
 OPT ?= -Os
 $(info DIR:   $(LIBDIR))
-SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libacnsdkc.a
+SDK_TARGET = $(call cross_abspath,$(LIBDIR))/libkonexiossdkc.a
 
 ifeq ($(WOLFSSL),yes)
 SDK_SRC		+= $(WOLF_SRC)
 SDK_INCLUDES	+= $(WOLF_INCLUDES)
 endif
 
-OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.o))
-DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/acn-sdk-c%,$(SDK_SRC:.c=.d))
+OBJ	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/konexios-sdk-c%,$(SDK_SRC:.c=.o))
+DEPS	:= $(patsubst ${SDK_PATH}%,${LIBDIR}/konexios-sdk-c%,$(SDK_SRC:.c=.d))
 
-$(info OS:   $(OS))
-$(info BASH: $(SHELL_BASH))
-$(info TARGET:   $(SDK_TARGET))
+$(info OS_TYPE: $(OS_TYPE))
+$(info BASH:    $(SHELL_BASH))
+$(info TARGET:  $(SDK_TARGET))
 
 CC_SYMBOLS += -DDEBUG
+CC_FLAGS += -Wno-address-of-packed-member
 
 $(info PRIVATE: $(PRIV_INC))
 $(info PRIVATE: $(call file_exist,$(PRIV_INC)))
@@ -49,7 +69,7 @@ ifneq ($(call file_exist,$(PRIV_INC)),yes)
 endif
 
 # Windows argument string issue
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS_TYPE),WINDOWS)
 FIXED_OBJ := $(patsubst $(PWD)\%,.\\%,$(call fix_slash,$(OBJ)))
 else
 FIXED_OBJ := $(OBJ)
@@ -63,10 +83,10 @@ default: $(SDK_TARGET)
 
 make_dst_path:
 	$(MAKEDIR) $(call fix_slash,$(LIBDIR)) $(QUIET)
-	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c) $(QUIET)
-	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/acn-sdk-c/src) $(QUIET)
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/konexios-sdk-c) $(QUIET)
+	$(MAKEDIR) $(call fix_slash,$(LIBDIR)/konexios-sdk-c/src) $(QUIET)
 
-$(LIBDIR)/acn-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
+$(LIBDIR)/konexios-sdk-c/src/%.o : $(SDK_PATH)/src/%.c
 	$(MAKEDIR) $(call fix_slash,$(dir $@)) $(QUIET)
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) $(SDK_INCLUDES) $(OPT) -c $< -o $@
 
