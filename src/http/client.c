@@ -238,6 +238,8 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
     int ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE,
                        "%s %s",
                        P_VALUE(req->meth), P_VALUE(req->uri));
+
+    DBG("(1) ret: %d", ret);
     if ( ret < 0 ) return ret;
     if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0 ) return -1;
     if ( req->query ) {
@@ -258,14 +260,18 @@ static int send_start(http_client_t *cli, http_request_t *req, ring_buffer_t *bu
         }
     }
     ret = ringbuf_push(buf, (uint8_t*)HTTP_VERS, 0);
+    DBG("(2) ret: %d", ret);
     if ( ret < 0 ) return ret;
     if ( (ret = client_send(cli)) < 0 ) {
+        DBG("(3) ret: %d", ret);
         return ret;
     }
     ret = snprintf((char*)tmpbuffer, MAX_TMP_BUF_SIZE, "Host: %s:%d\r\n", P_VALUE(req->host), req->port);
+    DBG("(5) ret: %d", ret);
     if ( ret < 0 ) return ret;
     if ( ringbuf_push(cli->queue, tmpbuffer, ret) < 0) return -1;
     if ( (ret = client_send(cli)) < 0 ) {
+        DBG("(6) ret: %d", ret);
         return ret;
     }
     return 0;

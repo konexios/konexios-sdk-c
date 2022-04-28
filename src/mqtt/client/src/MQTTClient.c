@@ -359,7 +359,7 @@ int MQTTBuildAck(MQTTClient *c, MQTTMessage *msg, int packet_type, TimerInterval
             rc = sendPacket(c, out_msg.mqtt_ack.resp, out_msg.mqtt_ack.len, timer);
          }
          
-         trace(TRACE_DEBUG,"sent ACK type: %d", acktype);
+         // trace(TRACE_DEBUG,"sent ACK type: %d", acktype);
       }
    }
 

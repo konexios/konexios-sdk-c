@@ -55,7 +55,7 @@ int timestamp_is_empty(acn_timestamp_t *t);
 # endif
 #endif
 
-#if !defined(__arm__)
+#if !defined(__arm__) && !defined(__macosx__)
 struct tm
 {
   int	tm_sec;

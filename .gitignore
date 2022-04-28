@@ -6,3 +6,4 @@ gcc*
 test/build
 *.bak
 *.a
+.DS_Store

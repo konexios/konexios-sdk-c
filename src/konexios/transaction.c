@@ -155,7 +155,7 @@ int transaction_match(int packetId, int packetType) {
 		return pdTRUE;
 	}
 	else {
-		DBG("Mismatch Id: %d\n", packetId);
+		DBG("Mismatch - packetId: %d, activeId: %d\n", packetId, activeMsg.packetId);
 	}
 
 	return pdFALSE;

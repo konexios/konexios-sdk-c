@@ -84,6 +84,11 @@ void sign(char *signature,
           const char *canQueryString,
           const char *payload,
           const char *apiVersion) {
+
+    DBG_SIGN("api_key: %s", get_api_key());
+    DBG_SIGN("secret_key: %s", get_secret_key());
+    DBG_SIGN("timestamp: %s", timestamp);
+
     sha256_init();
     sha256_chunk(P_VALUE(*meth), property_size(meth));
     sha256_chunk("\n", 1);
@@ -165,16 +170,16 @@ void sign_request(http_request_t *req) {
     }
     timestamp(&timest);
     timestamp_string(&timest, ts);
-    if ( http_request_find_header(req, p_const("x-konexios-apikey"), NULL) < 0 ) {
+    if ( http_request_find_header(req, p_const("x-arrow-apikey"), NULL) < 0 ) {
         http_request_add_header(req,
-                                p_const("x-konexios-apikey"),
+                                p_const("x-arrow-apikey"),
                                 p_const(DEFAULT_API_KEY));
     }
     http_request_add_header(req,
-                            p_const("x-konexios-date"),
+                            p_const("x-arrow-date"),
                             p_const(ts));
     http_request_add_header(req,
-                            p_const("x-konexios-version"),
+                            p_const("x-arrow-version"),
                             p_const("1"));
 
     sign(signature, ts, &req->meth,
@@ -184,7 +189,7 @@ void sign_request(http_request_t *req) {
     if (canonicalQuery) free(canonicalQuery);
 
     http_request_add_header(req,
-                            p_const("x-konexios-signature"),
+                            p_const("x-arrow-signature"),
                             p_const(signature));
     http_request_set_content_type(req, p_const("application/json"));
     http_request_add_header(req,

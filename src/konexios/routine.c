@@ -605,11 +605,12 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
         // We now have get_data_result==0 and some data in 'data'
 
         // Publish the data for this device
+        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish ...");
         if ( mqtt_publish(&_device, data) < 0 )
         {
-            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
-      return ROUTINE_MQTT_PUBLISH_FAILED;
-    }
+            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish failed!");
+            return ROUTINE_MQTT_PUBLISH_FAILED;
+        }
 
         // Some tests?
 #if defined(VALGRIND_TEST)
