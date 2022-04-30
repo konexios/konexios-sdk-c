@@ -10,7 +10,7 @@
 #include <http/routine.h>
 #include <debug.h>
 #include <sys/watchdog.h>
-// #include <sys/reboot.h>
+#include "sys/reboot.h"
 #include <ssl/md5sum.h>
 #include <konexios/utf8.h>
 #include <time/time.h>
@@ -244,6 +244,7 @@ software_release_done:
           RETRY_UP(retry, {return -2;});
           msleep(KONEXIOS_RETRY_DELAY);
       }
+
       reboot(0);
   }
   http_session_set_protocol(current_client(), api_via_http);
