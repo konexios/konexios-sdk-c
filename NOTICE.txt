@@ -1,2 +1,2 @@
-Copyright 2018 Arrow Electronics, Inc. or its affiliates. All Rights Reserved.
-Product: Arrow Connect Android SDK
+Copyright 2022 Konexios, Inc. or its affiliates. All Rights Reserved.
+Product: Konexios C-SDK

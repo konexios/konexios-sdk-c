@@ -20,29 +20,30 @@
 // ---------------------------------------------------------------------------
 
 #if defined(KONEXIOS_INFO)
-#define KONEXIOS_INF  printf
+#define KONEXIOS_INF printf
 #else
 #define KONEXIOS_INF(...)
 #endif
 
 #if defined(KONEXIOS_DEBUG)
-#define KONEXIOS_DBG       DBG
+#define KONEXIOS_DBG DBG
 #else
 #define KONEXIOS_DBG(...)
 #endif
 
-#define TRACE(...)  DBG(__VA_ARGS__)
+#define TRACE(...) DBG(__VA_ARGS__)
 
-#define GATEWAY_CONNECT "Gateway connection [%s]"
-#define GATEWAY_CONFIG "Gateway config [%s]"
-#define DEVICE_CONNECT "Device connection [%s]"
-#define DEVICE_TELEMETRY "Device telemetry [%s]"
-#define DEVICE_MQTT_CONNECT "Device mqtt connection [%s]"
-#define DEVICE_MQTT_TELEMETRY "Device mqtt telemetry [%s]"
+#define GATEWAY_CONNECT "******** Gateway connection [%s]"
+#define GATEWAY_CONFIG "******** Gateway config [%s]"
+#define DEVICE_CONNECT "******** Device connection [%s]"
+#define DEVICE_TELEMETRY "******** Device telemetry [%s]"
+#define DEVICE_MQTT_CONNECT "******** Device mqtt connection [%s]"
+#define DEVICE_MQTT_TELEMETRY "******** Device mqtt telemetry [%s]"
 
-enum MQTT_INIT_FLAGS {
-    MQTT_INIT_SYSTEM_DONE = 0x01,
-    MQTT_INIT_SUBSCRIBE_DONE   = 0x02
+enum MQTT_INIT_FLAGS
+{
+  MQTT_INIT_SYSTEM_DONE = 0x01,
+  MQTT_INIT_SUBSCRIBE_DONE = 0x02
 };
 
 // Variables
@@ -57,23 +58,27 @@ static int acn_mqtt_init_flags = 0;
 // Public functions
 // ---------------------------------------------------------------------------
 
-konexios_device_t *konexios_get_current_device(void) {
-    TRACE("Enter");
+konexios_device_t *konexios_get_current_device(void)
+{
+  TRACE("Enter");
   return &_device;
 }
 
-konexios_gateway_t *konexios_get_current_gateway(void) {
-    TRACE("Enter");
+konexios_gateway_t *konexios_get_current_gateway(void)
+{
+  TRACE("Enter");
   return &_gateway;
 }
 
-konexios_gateway_config_t *konexios_get_current_gateway_config(void) {
-    TRACE("Enter");
+konexios_gateway_config_t *konexios_get_current_gateway_config(void)
+{
+  TRACE("Enter");
   return &_gateway_config;
 }
 
 // Initialize the http and mqtt subsystems
-konexios_routine_error_t konexios_init(void) {
+konexios_routine_error_t konexios_init(void)
+{
   property_types_init();
   property_type_add(property_type_get_json());
   property_type_add(property_type_get_aob());
@@ -81,7 +86,8 @@ konexios_routine_error_t konexios_init(void) {
   konexios_gateway_init(&_gateway);
   konexios_device_init(&_device);
 
-  if ( http_init() < 0 ) {
+  if (http_init() < 0)
+  {
     return ROUTINE_ERROR;
   }
 #if !defined(NO_EVENTS)
@@ -90,7 +96,8 @@ konexios_routine_error_t konexios_init(void) {
   return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_deinit(void) {
+konexios_routine_error_t konexios_deinit(void)
+{
 #if !defined(NO_EVENTS)
   konexios_mqtt_events_done();
 #endif
@@ -103,105 +110,110 @@ konexios_routine_error_t konexios_deinit(void) {
 // Init, load, and Register/Checkin gateway
 int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_info)
 {
-    TRACE("Enter");
-    int ret;
+  TRACE("Enter");
+  int ret;
 
-    // Init gateway
+  // Init gateway
   konexios_prepare_gateway(gateway);
-  if ( IS_EMPTY(gateway->hid) )
+  if (IS_EMPTY(gateway->hid))
   {
-      ret = restore_gateway_info(gateway);
+    ret = restore_gateway_info(gateway);
 
-      if ( ret < 0 )
+    if (ret < 0)
+    {
+      // new registration
+      KONEXIOS_INF("ACN: New gateway registration\n");
+      if (konexios_register_gateway(gateway) < 0)
       {
-          // new registration
-        KONEXIOS_INF("ACN: New gateway registration\n");
-        if ( konexios_register_gateway(gateway) < 0 )
-        {
-            // If we fail, return the fail code
-            int rc = http_last_response_code();
-            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
-            if(rc!=200)
-                return (-1*rc);
-            return rc;
-        }
-        // Success, save this info
-        save_gateway_info(gateway);
-
-      } else {
-        // hid already set so checkin gateway
-        KONEXIOS_INF("ACN: Check in gateway\n");
-        KONEXIOS_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
-        if(konexios_gateway_checkin(gateway)<0)
-        {
-            KONEXIOS_INF("ACN: Error in checkin\n");
-            // If we fail, return the fail code
-            int rc = http_last_response_code();
-            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
-            if(rc!=200)
-                return (-1*rc);
-            return rc;
-        }
+        // If we fail, return the fail code
+        int rc = http_last_response_code();
+        // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+        if (rc != 200)
+          return (-1 * rc);
+        return rc;
       }
+      // Success, save this info
+      save_gateway_info(gateway);
+    }
+    else
+    {
+      // hid already set so checkin gateway
+      KONEXIOS_INF("ACN: Check in gateway\n");
+      KONEXIOS_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
+      if (konexios_gateway_checkin(gateway) < 0)
+      {
+        KONEXIOS_INF("ACN: Error in checkin\n");
+        // If we fail, return the fail code
+        int rc = http_last_response_code();
+        // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+        if (rc != 200)
+          return (-1 * rc);
+        return rc;
+      }
+    }
   }
 
-    // If we need to send the gateway 'update' request
-    // do it here
-    if(update_gateway_info)
+  // If we need to send the gateway 'update' request
+  // do it here
+  if (update_gateway_info)
+  {
+    KONEXIOS_INF("ACN: Updating gateway info\n");
+    if (konexios_gateway_update(gateway) < 0)
     {
-        KONEXIOS_INF("ACN: Updating gateway info\n");
-        if(konexios_gateway_update(gateway)<0)
-        {
-            // If we fail, return the fail code
-            int rc = http_last_response_code();
-            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
-            if(rc!=200)
-                return (-1*rc);
-            return rc;
-        }
+      // If we fail, return the fail code
+      int rc = http_last_response_code();
+      // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+      if (rc != 200)
+        return (-1 * rc);
+      return rc;
     }
+  }
 
-    return 200;
+  return 200;
 }
 
-int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *device, bool update_device_info) {
+int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *device, bool update_device_info)
+{
   int ret = 0;
   konexios_prepare_device(gateway, device);
-  if ( !IS_EMPTY(device->hid) )
-      return ROUTINE_SUCCESS;
-  if ( restore_device_info(device) < 0 ) {
-        KONEXIOS_INF("ACN: Register device\n");
-        if ( konexios_register_device(gateway, device) < 0 )
-        {
-            // If we fail, return the fail code
-            int rc = http_last_response_code();
-            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
-            if(rc!=200)
-                return (-1*rc);
-            return rc;
+  if (!IS_EMPTY(device->hid))
+    return ROUTINE_SUCCESS;
+  if (restore_device_info(device) < 0)
+  {
+    KONEXIOS_INF("ACN: Register device\n");
+    if (konexios_register_device(gateway, device) < 0)
+    {
+      // If we fail, return the fail code
+      int rc = http_last_response_code();
+      // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+      if (rc != 200)
+        return (-1 * rc);
+      return rc;
     }
     save_device_info(device);
-  }else{
+  }
+  else
+  {
     KONEXIOS_INF("ACN: Device already registered\n");
-    //return 200;
+    return 200;
   }
 
-    // Send the device config????
-    // If we need to send the gateway 'update' request
-    // do it here
-    if(update_device_info)
+  // Send the device config????
+  // If we need to send the gateway 'update' request
+  // do it here
+  if (update_device_info)
+  {
+    KONEXIOS_INF("ACN: Updating device info\n");
+    if (konexios_device_update(gateway, device) < 0)
     {
-        KONEXIOS_INF("ACN: Updating device info\n");
-        if(konexios_device_update(gateway, device)<0)
-        {
-            // If we fail, return the fail code
-            int rc = http_last_response_code();
-            // 0 means the request didn't finish, 200==ok, 4xx==error, etc
-            if(rc!=200)
-                return (-1*rc);
-            return rc;
-        }
+      // If we fail, return the fail code
+      int rc = http_last_response_code();
+      // 0 means the request didn't finish, 200==ok, 4xx==error, etc
+      if (rc != 200)
+        return (-1 * rc);
+      return rc;
     }
+  }
 
   return 200;
 }
@@ -242,53 +254,57 @@ konexios_routine_error_t konexios_gateway_initialize_routine(void) {
 }
 #endif
 
-
 // Do the initialization for the gateway and device
 konexios_routine_error_t konexios_initialize_routine(bool update_gateway_info)
 {
-    TRACE("Enter");
+  TRACE("=====>>>> konexios_initialize_routine");
   int retry = 0;
-  int ret=0;
+  int ret = 0;
 
-    // Keep socket connections alive for all HTTP transfers
-    http_session_keep_active(true);
+  // Keep socket connections alive for all HTTP transfers
+  http_session_keep_active(true);
 
-    // Connect to Arrow Connect
-    // (Do gateway register/checkin)
-    while ( konexios_connect_gateway(&_gateway, update_gateway_info) < 0 ) {
-      RETRY_UP(retry, {return ROUTINE_ERROR;});
-      KONEXIOS_DBG(GATEWAY_CONNECT, "fail");
+  // Connect to Konexios
+  // (Do gateway register/checkin)
+  while (konexios_connect_gateway(&_gateway, update_gateway_info) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_ERROR; });
+    KONEXIOS_DBG(GATEWAY_CONNECT, "fail");
     msleep(KONEXIOS_RETRY_DELAY);
   }
-    KONEXIOS_DBG(GATEWAY_CONNECT, "ok");
+  KONEXIOS_DBG(GATEWAY_CONNECT, "ok");
 
-    // Get gateway config
-    retry=0;
-    KONEXIOS_INF("ACN: Get gateway config\n");
-    while ( konexios_gateway_config(&_gateway, &_gateway_config) < 0 ) {
-        RETRY_UP(retry, {return ROUTINE_ERROR;});
-        KONEXIOS_DBG(GATEWAY_CONFIG, "fail");
+  // Get gateway config
+  retry = 0;
+  KONEXIOS_INF("ACN: Get gateway config\n");
+  while (konexios_gateway_config(&_gateway, &_gateway_config) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_ERROR; });
+    KONEXIOS_DBG(GATEWAY_CONFIG, "fail");
     msleep(KONEXIOS_RETRY_DELAY);
   }
-    KONEXIOS_DBG(GATEWAY_CONFIG, "ok");
+  KONEXIOS_DBG(GATEWAY_CONFIG, "ok");
 
-    // close session after next HTTP request
-    http_session_keep_active(true);
+  // close session after next HTTP request
+  http_session_keep_active(true);
 
-    // device registration
-    retry=0;
-    while ( konexios_connect_device(&_gateway, &_device, update_gateway_info) < 0 ) {
-        RETRY_UP(retry, {return ROUTINE_ERROR;});
-        KONEXIOS_DBG(DEVICE_CONNECT, "fail");
+  msleep(KONEXIOS_RETRY_DELAY);
+
+  // device registration
+  retry = 0;
+  while (konexios_connect_device(&_gateway, &_device, update_gateway_info) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_ERROR; });
+    KONEXIOS_DBG(DEVICE_CONNECT, "fail");
     msleep(KONEXIOS_RETRY_DELAY);
   }
-    KONEXIOS_DBG(DEVICE_CONNECT, "ok");
+  KONEXIOS_DBG(DEVICE_CONNECT, "ok");
 
-    // Close the session!!!!
-    http_end();
+  // Close the session!!!!
+  http_end();
 
-    // Mark as initialized and return
-    acn_register_init_done = 1;
+  // Mark as initialized and return
+  acn_register_init_done = 1;
   return ROUTINE_SUCCESS;
 
 device_reg_error:
@@ -303,116 +319,126 @@ gateway_reg_error:
 // Do the initialization for the gateway and device
 int konexios_startup_sequence(bool update_gateway_info)
 {
-    TRACE("Enter");
-    int retry = 0;
-    int rc;
+  TRACE("Enter");
+  int retry = 0;
+  int rc;
 
-    // Keep socket connections alive for all HTTP transfers
-    http_session_keep_active(true);
+  // Keep socket connections alive for all HTTP transfers
+  http_session_keep_active(true);
 
-    // Connect to Arrow Connect
-    // (Do gateway register/checkin)
-    rc = konexios_connect_gateway(&_gateway, update_gateway_info);
-    if(rc != 200 )
-    {
-        printf("ACN: Gateway register/checkin failed (%d)\n",rc);
-        return rc;
+  // Connect to Konexios
+  // (Do gateway register/checkin)
+  rc = konexios_connect_gateway(&_gateway, update_gateway_info);
+  if (rc != 200)
+  {
+    printf("ACN: Gateway register/checkin failed (%d)\n", rc);
+    return rc;
+  }
+  KONEXIOS_INF("ACN: Gateway register/checkin success\n");
+
+  // Get gateway config
+  retry = 0;
+  KONEXIOS_INF("ACN: Get gateway config\n");
+  rc = konexios_gateway_config(&_gateway, &_gateway_config);
+  if (rc < 0)
+  {
+    printf("Gateway config [failed]\n");
+    return rc;
+  }
+  KONEXIOS_INF("ACN: Gateway config [ok]\n");
+
+  // close session after next HTTP request
+  // http_session_keep_active(true);
+
+  // device registration
+  retry = 0;
+  rc = konexios_connect_device(&_gateway, &_device, false);
+  if (rc != 200)
+  {
+    printf("ACN: Device connect [failed]\n");
+    return rc;
+  }
+  KONEXIOS_INF("ACN: Device connect [ok]\n");
+
+  // Close the session!!!!
+  http_end();
+
+  // Mark as initialized and return
+  acn_register_init_done = 1;
+  return 200;
 }
-    KONEXIOS_INF("ACN: Gateway register/checkin success\n");
 
-    // Get gateway config
-    retry=0;
-    KONEXIOS_INF("ACN: Get gateway config\n");
-    rc = konexios_gateway_config(&_gateway, &_gateway_config);
-    if(rc < 0 )
-    {
-        printf("Gateway config [failed]\n");
-        return rc;
-    }
-    KONEXIOS_INF("ACN: Gateway config [ok]\n");
-
-    // close session after next HTTP request
-    //http_session_keep_active(true);
-
-    // device registration
-    retry=0;
-    rc = konexios_connect_device(&_gateway, &_device, false);
-    if(rc != 200 )
-    {
-        printf("ACN: Device connect [failed]\n");
-        return rc;
-    }
-    KONEXIOS_INF("ACN: Device connect [ok]\n");
-
-    // Close the session!!!!
-    http_end();
-
-    // Mark as initialized and return
-    acn_register_init_done = 1;
-    return 200;
-}
-
-
-konexios_routine_error_t konexios_update_state(const char *name, const char *value) {
-    TRACE("Enter");
-  //add_state(name, value);
-  if ( acn_register_init_done ) {
+konexios_routine_error_t konexios_update_state(const char *name, const char *value)
+{
+  TRACE("Enter");
+  // add_state(name, value);
+  if (acn_register_init_done)
+  {
     konexios_post_state_update(&_device);
     return ROUTINE_SUCCESS;
   }
   return ROUTINE_ERROR;
 }
 
-konexios_routine_error_t konexios_send_telemetry_routine(void *data) {
-    TRACE("Enter");
+konexios_routine_error_t konexios_send_telemetry_routine(void *data)
+{
+  TRACE("konexios_send_telemetry_routine");
 
-    // Must register first
-    if ( !acn_register_init_done ) return ROUTINE_NOT_INITIALIZE;
+  // Must register first
+  if (!acn_register_init_done)
+    return ROUTINE_NOT_INITIALIZE;
 
-    // Collect and send telemetry
+  // Collect and send telemetry
   int retry = 0;
-  while ( konexios_send_telemetry(&_device, data) < 0) {
-    RETRY_UP(retry, {return ROUTINE_ERROR;});
-        KONEXIOS_DBG(DEVICE_TELEMETRY, "fail");
+  while (konexios_send_telemetry(&_device, data) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_ERROR; });
+    KONEXIOS_DBG(DEVICE_TELEMETRY, "fail");
     msleep(KONEXIOS_RETRY_DELAY);
   }
 
-    // Success
-    KONEXIOS_DBG(DEVICE_TELEMETRY, "ok");
+  // Success
+  KONEXIOS_DBG(DEVICE_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
 // MQTT
 
-konexios_routine_error_t konexios_mqtt_connect_telemetry_routine(void) {
-    TRACE("Enter");
-    int retry;
+konexios_routine_error_t konexios_mqtt_connect_telemetry_routine(void)
+{
+  TRACE("Enter");
+  int retry;
 
-    // Don't reinit
-    if ( acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE ) return ROUTINE_ERROR;
+  // Don't reinit
+  if (acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE)
+    return ROUTINE_ERROR;
 
-    // Run the connect routine for the MQTT client
-    retry = 0;
-  while ( mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-    RETRY_UP(retry, {return ROUTINE_MQTT_CONNECT_FAILED;});
-        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(KONEXIOS_RETRY_DELAY);
+  // Run the connect routine for the MQTT client
+  retry = 0;
+  while (mqtt_telemetry_connect(&_gateway, &_device, &_gateway_config) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_MQTT_CONNECT_FAILED; });
+    KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
 
-    // Mark MQTT as initialized
-    acn_mqtt_init_flags |= MQTT_INIT_SYSTEM_DONE;
-    KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "ok");
+  // Mark MQTT as initialized
+  acn_mqtt_init_flags |= MQTT_INIT_SYSTEM_DONE;
+  KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "ok");
   return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_disconnect_telemetry_routine(void) {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_disconnect_telemetry_routine(void)
+{
+  TRACE("Enter");
 
-    // Check for init
-    if ( ! ( acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE ) ) return ROUTINE_ERROR;
+  // Check for init
+  if (!(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE))
+    return ROUTINE_ERROR;
 
-    // Terminate the MQTT connection
-    if ( mqtt_telemetry_terminate() < 0 ) return ROUTINE_ERROR;
+  // Terminate the MQTT connection
+  if (mqtt_telemetry_terminate() < 0)
+    return ROUTINE_ERROR;
 
   return ROUTINE_SUCCESS;
 }
@@ -426,63 +452,69 @@ konexios_routine_error_t konexios_mqtt_terminate_telemetry_routine(void) {
 }
 #endif
 
-
 // If EVENTS are enabled
 #if !defined(NO_EVENTS)
 
 // TODO: What is the difference between this and the one belowl????
-konexios_routine_error_t konexios_mqtt_connect_event_routine(void) {
-    TRACE("Enter");
-    int retry;
+konexios_routine_error_t konexios_mqtt_connect_event_routine(void)
+{
+  TRACE("Enter");
+  int retry;
 
-    // Make sure MQTT subscribe has not been done before
-    if ( acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE ) return ROUTINE_ERROR;
+  // Make sure MQTT subscribe has not been done before
+  if (acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE)
+    return ROUTINE_ERROR;
 
-    // do mqtt_subscribe_connect()
-    // Subscribe to gateway topics
-    retry = 0;
-  while(mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0 ) {
-    RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(KONEXIOS_RETRY_DELAY);
+  // do mqtt_subscribe_connect()
+  // Subscribe to gateway topics
+  retry = 0;
+  while (mqtt_subscribe_connect(&_gateway, &_device, &_gateway_config) < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_MQTT_SUBSCRIBE_FAILED; });
+    KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
   }
 
-    // Mark subscribe as done
-    acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
+  // Mark subscribe as done
+  acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
   return ROUTINE_SUCCESS;
 }
 
 // TODO: What is the difference between this and the one above????
-konexios_routine_error_t konexios_mqtt_subscribe_event_routine(void) {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_subscribe_event_routine(void)
+{
+  TRACE("Enter");
   int retry = 0;
 
-    // Do mqtt_subscribe()
-  while( mqtt_subscribe() < 0 ) {
-    RETRY_UP(retry, {return ROUTINE_MQTT_SUBSCRIBE_FAILED;});
-        KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
-        msleep(KONEXIOS_RETRY_DELAY);
-        acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE;
+  // Do mqtt_subscribe()
+  while (mqtt_subscribe() < 0)
+  {
+    RETRY_UP(retry, { return ROUTINE_MQTT_SUBSCRIBE_FAILED; });
+    KONEXIOS_DBG(DEVICE_MQTT_CONNECT, "fail");
+    msleep(KONEXIOS_RETRY_DELAY);
+    acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE;
   }
 
-    // Make subscribe as done
-    acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
+  // Make subscribe as done
+  acn_mqtt_init_flags |= MQTT_INIT_SUBSCRIBE_DONE;
   return ROUTINE_SUCCESS;
 }
 
 // Stop event routine
 konexios_routine_error_t konexios_mqtt_disconnect_event_routine(void)
 {
-    TRACE("Enter");
+  TRACE("Enter");
 
-    // Only run when subscribe is done
-    if ( ! ( acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE ) ) return ROUTINE_ERROR;
+  // Only run when subscribe is done
+  if (!(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE))
+    return ROUTINE_ERROR;
 
-    // Disconnect
-    if ( mqtt_subscribe_disconnect() < 0 ) return ROUTINE_ERROR;
+  // Disconnect
+  if (mqtt_subscribe_disconnect() < 0)
+    return ROUTINE_ERROR;
 
-    // Clear the flag?
-    //acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE
+  // Clear the flag?
+  // acn_mqtt_init_flags &= ~MQTT_INIT_SUBSCRIBE_DONE
 
   return ROUTINE_SUCCESS;
 }
@@ -498,132 +530,145 @@ konexios_routine_error_t konexios_mqtt_terminate_event_routine(void) {
 
 #endif
 
-
 konexios_routine_error_t konexios_mqtt_connect_routine(void)
 {
-    TRACE("Enter");
+  TRACE("Enter");
   konexios_routine_error_t ret = ROUTINE_ERROR;
 
-    // Must call register first
-    if ( !acn_register_init_done ) return ROUTINE_NOT_INITIALIZE;
+  // Must call register first
+  if (!acn_register_init_done)
+    return ROUTINE_NOT_INITIALIZE;
 
-    // Start the MQTT telemetry
-    KONEXIOS_DBG("mqtt connect...");
+  // Start the MQTT telemetry
+  KONEXIOS_DBG("mqtt connect...");
   ret = konexios_mqtt_connect_telemetry_routine();
-    if ( ret != ROUTINE_SUCCESS ) return ret;
+  if (ret != ROUTINE_SUCCESS)
+    return ret;
 
-    // TODO: What is this?
-    konexios_state_mqtt_run(&_device);
+  // TODO: What is this?
+  konexios_state_mqtt_run(&_device);
 
-    // Start the MQTT events
+  // Start the MQTT events
 #if !defined(NO_EVENTS)
   ret = konexios_mqtt_connect_event_routine();
-    if ( ret != ROUTINE_SUCCESS ) return ret;
+  if (ret != ROUTINE_SUCCESS)
+    return ret;
 
-    // TODO: What is this?
-    // process postponed messages?
-  if ( konexios_mqtt_event_receive_routine() != ROUTINE_RECEIVE_EVENT ) {
+  // TODO: What is this?
+  // process postponed messages?
+  if (konexios_mqtt_event_receive_routine() != ROUTINE_RECEIVE_EVENT)
+  {
     konexios_mqtt_subscribe_event_routine();
   }
 #endif
 
-    // Return success
+  // Return success
   return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_disconnect_routine() {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_disconnect_routine()
+{
+  TRACE("Enter");
 
-    // If we have INIT or SUBSCRIBE flags set
-    if ( acn_mqtt_init_flags ) {
-        // Disconnect?
+  // If we have INIT or SUBSCRIBE flags set
+  if (acn_mqtt_init_flags)
+  {
+    // Disconnect?
     mqtt_disconnect();
-        // Clear flags
-        acn_mqtt_init_flags = 0;
+    // Clear flags
+    acn_mqtt_init_flags = 0;
     return ROUTINE_SUCCESS;
   }
 
-    // Error since no flags are set
+  // Error since no flags are set
   return ROUTINE_ERROR;
 }
 
 #if 1
 // Another pointless function???
-konexios_routine_error_t konexios_mqtt_terminate_routine() {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_terminate_routine()
+{
+  TRACE("Enter");
   mqtt_terminate();
   acn_mqtt_init_flags = 0;
   return ROUTINE_SUCCESS;
 }
 #endif
 
-konexios_routine_error_t konexios_mqtt_pause_routine(int pause) {
-    mqtt_pause(pause);
-    return ROUTINE_SUCCESS;
+konexios_routine_error_t konexios_mqtt_pause_routine(int pause)
+{
+  mqtt_pause(pause);
+  return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data) {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data)
+{
+  TRACE("konexios_mqtt_send_telemetry_routine");
 
-    // Can't send if not fully connected
-    if( !acn_register_init_done ||
-       !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE)
+  // Can't send if not fully connected
+  if (!acn_register_init_done ||
+      !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE)
 #if !defined(NO_EVENTS)
-       || !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE)
+      || !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE)
 #endif
-       )
-    {
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+  )
+  {
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
-    // The main loop for telemetry and events
-    while (1)
-    {
-        // TODO: What does this do?
-        mqtt_yield(TELEMETRY_DELAY);
+  // The main loop for telemetry and events
+  while (1)
+  {
+    // TODO: What does this do?
+    mqtt_yield(TELEMETRY_DELAY);
 
-        // Handle receiving events?
+    // Handle receiving events?
 #if !defined(NO_EVENTS)
-    if ( konexios_mqtt_has_events() ) {
-            KONEXIOS_DBG("There is an event");
+    if (konexios_mqtt_has_events())
+    {
+      TRACE("konexios_mqtt_send_telemetry_routine -----> ROUTINE_RECEIVE_EVENT");
       return ROUTINE_RECEIVE_EVENT;
     }
 #endif
 
-        // Collect telemetry into 'data'
-        int get_data_result;
-        get_data_result = data_cb(data);
-    if ( get_data_result < 0 ) {
-            //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+    // Collect telemetry into 'data'
+    int get_data_result;
+    get_data_result = data_cb(data);
+    if (get_data_result < 0)
+    {
+      KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, ">>>>>>>>>>>>>>>> Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
-    } else if (get_data_result > 0 ) {
+    }
+    else if (get_data_result > 0)
+    {
       // skip this
       continue;
     }
 
-        // We now have get_data_result==0 and some data in 'data'
+    // We now have get_data_result==0 and some data in 'data'
 
-        // Publish the data for this device
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish ...");
-        if ( mqtt_publish(&_device, data) < 0 )
-        {
-            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish failed!");
-            return ROUTINE_MQTT_PUBLISH_FAILED;
-        }
+    // Publish the data for this device
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish ...");
+    if (mqtt_publish(&_device, data) < 0)
+    {
+      KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "mqtt_publish failed!");
+      // return ROUTINE_MQTT_PUBLISH_FAILED;
+      continue;
+    }
 
-        // Some tests?
+    // Some tests?
 #if defined(VALGRIND_TEST)
     static int count = 0;
-        if ( count++ > VALGRIND_TEST )
+    if (count++ > VALGRIND_TEST)
       return ROUTINE_TEST_DONE;
-        KONEXIOS_DBG("test count [%d]", count);
+    KONEXIOS_DBG("test count [%d]", count);
 #endif
 
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
 
-    // Why return success? There are no breaks in the while(1)
+  // Why return success? There are no breaks in the while(1)
   return ROUTINE_SUCCESS;
 }
 
@@ -631,143 +676,153 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
 void konexios_close(void)
 {
   konexios_mqtt_terminate_routine();
-    if ( acn_register_init_done )
-    {
-        // Free the structures
+  if (acn_register_init_done)
+  {
+    // Free the structures
     konexios_device_free(&_device);
     konexios_gateway_free(&_gateway);
     konexios_gateway_config_free(&_gateway_config);
 
-        // Stop events
-        #if !defined(NO_EVENTS)
-        konexios_mqtt_events_done();
-        #endif
+// Stop events
+#if !defined(NO_EVENTS)
+    konexios_mqtt_events_done();
+#endif
 
-        // Clear flags
-        acn_register_init_done = 0;
+    // Clear flags
+    acn_register_init_done = 0;
   }
 
-    // Stop the HTTP client?
-    http_end();
-    http_done();
+  // Stop the HTTP client?
+  http_end();
+  http_done();
 
-    return;
+  return;
 }
 
 // What's the difference between this and konexios_mqtt_send_telemetry_routine()
 konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, void *data)
 {
-    TRACE("Enter");
+  TRACE("Enter");
 
-    // Can't run if not fully connected
-    if ( !acn_register_init_done ||
-         !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) )
-    {
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+  // Can't run if not fully connected
+  if (!acn_register_init_done ||
+      !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE))
+  {
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
-    //
-    while (1)
-    {
-        // Wait a bit
+  //
+  while (1)
+  {
+    // Wait a bit
     msleep(TELEMETRY_DELAY);
 
-        // Load the telemetry data
-        int get_data_result;
-        get_data_result = data_cb(data);
-    if ( get_data_result < 0 ) {
-            //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+    // Load the telemetry data
+    int get_data_result;
+    get_data_result = data_cb(data);
+    if (get_data_result < 0)
+    {
+      // KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
-    } else if (get_data_result > 0 ) {
+    }
+    else if (get_data_result > 0)
+    {
       // skip this
       continue;
     }
 
-        // Now have data in 'data'
+    // Now have data in 'data'
 
-        // Send the data
-        if ( mqtt_publish(&_device, data) < 0 )
-        {
-            KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
+    // Send the data
+    if (mqtt_publish(&_device, data) < 0)
+    {
+      KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
       return ROUTINE_MQTT_PUBLISH_FAILED;
     }
 
-        // Some tests?
+    // Some tests?
 #if defined(VALGRIND_TEST)
     static int count = 0;
-        if ( count++ > VALGRIND_TEST )
+    if (count++ > VALGRIND_TEST)
       return ROUTINE_TEST_DONE;
-        KONEXIOS_DBG("test count [%d]", count);
+    KONEXIOS_DBG("test count [%d]", count);
 #endif
 
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   }
 
-    // TODO: Why send success? No break in while(1)
+  // TODO: Why send success? No break in while(1)
   return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data) {
-    TRACE("Enter");
+konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data)
+{
+  TRACE("Enter");
 
-    // Can't send if not initialized
-    if ( !acn_register_init_done ||
-         !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE) ) {
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+  // Can't send if not initialized
+  if (!acn_register_init_done ||
+      !(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE))
+  {
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
-
-    // Collected the data into 'data'
+  // Collected the data into 'data'
   int get_data_result = data_cb(data);
-  if ( get_data_result != 0 ) {
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
+  if (get_data_result != 0)
+  {
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
     return ROUTINE_GET_TELEMETRY_FAILED;
   }
 
-    // Send the data
-  if ( mqtt_publish(&_device, data) < 0 ) {
-        KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
+  // Send the data
+  if (mqtt_publish(&_device, data) < 0)
+  {
+    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "fail");
     return ROUTINE_MQTT_PUBLISH_FAILED;
   }
 
-    // Success!
-    KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
+  // Success!
+  KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "ok");
   return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_event_receive_routine() {
-    //TRACE("Enter");
-    int ret;
+konexios_routine_error_t konexios_mqtt_event_receive_routine()
+{
+  // TRACE("Enter");
+  int ret;
 
-    // Can't receive if not subscribed
-    if ( !acn_register_init_done ||
-         !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE) ) {
-        //KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
+  // Can't receive if not subscribed
+  if (!acn_register_init_done ||
+      !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE))
+  {
+    // KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
 
-    printf("mqtt_yield Start\n");
+  printf("mqtt_yield Start\n");
 
-    // yield blocks for a period of time and returns what
-    // events the MQTT client has received.
-    // MQTT_SUCCESS == we have a message (aka an 'event'
-    // FAILURE = timeout?????
-    ret = mqtt_yield(TELEMETRY_DELAY);
+  // yield blocks for a period of time and returns what
+  // events the MQTT client has received.
+  // MQTT_SUCCESS == we have a message (aka an 'event'
+  // FAILURE = timeout?????
+  ret = mqtt_yield(TELEMETRY_DELAY);
 
-    printf("mqtt_yield End\n");
+  printf("mqtt_yield End\n");
 
-    // TODO: Return if we have events?
-    if ( ret == MQTT_SUCCESS )
+  // TODO: Return if we have events?
+  if (ret == MQTT_SUCCESS)
     return ROUTINE_RECEIVE_EVENT;
 
-    return ROUTINE_SUCCESS;
+  return ROUTINE_SUCCESS;
 }
 
-konexios_routine_error_t konexios_mqtt_check_init(void) {
-  if ( !acn_register_init_done ||
-       !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE) ) {
+konexios_routine_error_t konexios_mqtt_check_init(void)
+{
+  if (!acn_register_init_done ||
+      !(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE))
+  {
     DBG(DEVICE_MQTT_TELEMETRY, "Cloud not initialize");
     return ROUTINE_NOT_INITIALIZE;
   }
