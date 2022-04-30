@@ -4,7 +4,7 @@
 #include <konexios/routine.h>
 #include <konexios/api/gateway/gateway.h>
 #include <time/time.h>
-// #include <sys/reboot.h>
+#include "sys/reboot.h"
 
 #if defined(NO_SOFTWARE_UPDATE)
 typedef void __dummy__;
