@@ -466,6 +466,7 @@ JsonNode *json_first_child(const JsonNode *node)
 
 static void delayed_reboot(void* param) {
     // reboot();
+	(void)param;
     reboot(0);
 }
 static JsonNode *mknode(JsonTag tag)

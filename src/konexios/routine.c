@@ -603,7 +603,7 @@ konexios_routine_error_t konexios_mqtt_pause_routine(int pause)
 
 konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_cb, void *data)
 {
-  TRACE("konexios_mqtt_send_telemetry_routine");
+  TRACE("konexios_mqtt_send_telemetry_routine ...");
 
   // Can't send if not fully connected
   if (!acn_register_init_done ||
@@ -627,7 +627,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
 #if !defined(NO_EVENTS)
     if (konexios_mqtt_has_events())
     {
-      TRACE("konexios_mqtt_send_telemetry_routine -----> ROUTINE_RECEIVE_EVENT");
+      TRACE("konexios_mqtt_send_telemetry_routine: ROUTINE_RECEIVE_EVENT");
       return ROUTINE_RECEIVE_EVENT;
     }
 #endif
@@ -637,7 +637,7 @@ konexios_routine_error_t konexios_mqtt_send_telemetry_routine(get_data_cb data_c
     get_data_result = data_cb(data);
     if (get_data_result < 0)
     {
-      KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, ">>>>>>>>>>>>>>>> Fail to get telemetry data");
+      KONEXIOS_DBG(DEVICE_MQTT_TELEMETRY, "Fail to get telemetry data");
       return ROUTINE_GET_TELEMETRY_FAILED;
     }
     else if (get_data_result > 0)

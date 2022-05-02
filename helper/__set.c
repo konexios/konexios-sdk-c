@@ -18,7 +18,8 @@
     || defined(__senseability__) \
     || defined(__stm32l475iot__) \
     || defined(__semiconductor__) \
-    || defined(__quadro__)
+    || defined(__quadro__) \
+    || defined(__macosx__)
 #else
 # warning "probably this platform doesn't support"
 #endif

@@ -105,6 +105,7 @@ static int cmdeq(cmd_handler *s, property_t name) {
 int ev_DeviceCommand(void *_ev, JsonNode *_parameters) {
   int ret = -1;
   JsonNode *_error = NULL;
+  (void)_ev;
 //  mqtt_event_t *ev = (mqtt_event_t *)_ev;
 
 #if(0)  //mw1902: this should be handled elsewhere // begin API /received call

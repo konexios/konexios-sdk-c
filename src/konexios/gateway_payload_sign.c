@@ -130,9 +130,10 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
     int alloc_len = child->tag==JSON_STRING?property_size(&child->string_):50;
     alloc_len += strlen(json_key(child));
     alloc_len += 10;
+    DBG("allocating count:%d, alloc_len:%d ...", count, alloc_len);
     can_list[count] = (char*)malloc( alloc_len );
     if ( !can_list[count] ) {
-        DBG("GATEWAY SIGN: not enough memory");
+        DBG("form_canonical_prm: not enough memory");
         goto can_list_error;
     }
     total_len += alloc_len;
@@ -153,9 +154,9 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
   }
   if ( total_len <= can_buffer_len )
       canParam = can_buffer;
-  DBG("GATEWAY SIGN: alloc memory %d", total_len);
+  DBG("GATEWAY SIGN: alloc memory %d / %d", total_len, can_buffer_len);
   if ( !canParam ) {
-      DBG("GATEWAY SIGN: not enough memory %d", total_len);
+      DBG("form_canonical_prm: not enough memory %d", total_len);
       goto can_list_error;
   }
   *canParam = 0;
@@ -164,8 +165,10 @@ static char *form_canonical_prm(JsonNode *param, char *can_buffer, int can_buffe
   for (i=0; i<count; i++) {
     strcat(canParam, can_list[i]);
     if ( i < count-1 ) strcat(canParam, "\n");
+    DBG("free count:%d ...", i);
     free(can_list[i]);
   }
+  DBG("done, return canParam");
   return canParam;
 can_list_error:
   for (i=0; i < count; i++) {

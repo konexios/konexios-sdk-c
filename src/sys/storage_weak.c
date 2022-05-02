@@ -60,6 +60,7 @@ int __attribute_weak__ restore_apphid_address(char *hid) {
     if (hid) strcpy(hid, DEFAULT_APP_HID);
     return 0;
 #else
+    (void)hid;
     return -1;
 #endif
 }
@@ -73,6 +74,7 @@ int __attribute_weak__ restore_userhid_address(char *hid) {
     if (hid) strcpy(hid, DEFAULT_USER_HID);
     return 0;
 #else
+    (void)hid;
     return -1;
 #endif
 }
