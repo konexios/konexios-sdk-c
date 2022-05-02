@@ -257,7 +257,7 @@ konexios_routine_error_t konexios_gateway_initialize_routine(void) {
 // Do the initialization for the gateway and device
 konexios_routine_error_t konexios_initialize_routine(bool update_gateway_info)
 {
-  TRACE("=====>>>> konexios_initialize_routine");
+  TRACE("konexios_initialize_routine ...");
   int retry = 0;
   int ret = 0;
 
