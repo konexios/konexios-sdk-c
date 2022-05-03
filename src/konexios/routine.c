@@ -60,19 +60,19 @@ static int acn_mqtt_init_flags = 0;
 
 konexios_device_t *konexios_get_current_device(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_get_current_device ...");
   return &_device;
 }
 
 konexios_gateway_t *konexios_get_current_gateway(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_get_current_gateway ...");
   return &_gateway;
 }
 
 konexios_gateway_config_t *konexios_get_current_gateway_config(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_get_current_gateway_config ...");
   return &_gateway_config;
 }
 
@@ -110,7 +110,7 @@ konexios_routine_error_t konexios_deinit(void)
 // Init, load, and Register/Checkin gateway
 int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_info)
 {
-  TRACE("Enter");
+  TRACE("konexios_connect_gateway ...");
   int ret;
 
   // Init gateway
@@ -319,7 +319,7 @@ gateway_reg_error:
 // Do the initialization for the gateway and device
 int konexios_startup_sequence(bool update_gateway_info)
 {
-  TRACE("Enter");
+  TRACE("konexios_startup_sequence ...");
   int retry = 0;
   int rc;
 
@@ -370,7 +370,7 @@ int konexios_startup_sequence(bool update_gateway_info)
 
 konexios_routine_error_t konexios_update_state(const char *name, const char *value)
 {
-  TRACE("Enter");
+  TRACE("konexios_update_state ...");
   // add_state(name, value);
   if (acn_register_init_done)
   {
@@ -430,7 +430,7 @@ konexios_routine_error_t konexios_mqtt_connect_telemetry_routine(void)
 
 konexios_routine_error_t konexios_mqtt_disconnect_telemetry_routine(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_disconnect_telemetry_routine ...");
 
   // Check for init
   if (!(acn_mqtt_init_flags & MQTT_INIT_SYSTEM_DONE))
@@ -458,7 +458,7 @@ konexios_routine_error_t konexios_mqtt_terminate_telemetry_routine(void) {
 // TODO: What is the difference between this and the one belowl????
 konexios_routine_error_t konexios_mqtt_connect_event_routine(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_connect_event_routine ...");
   int retry;
 
   // Make sure MQTT subscribe has not been done before
@@ -503,7 +503,7 @@ konexios_routine_error_t konexios_mqtt_subscribe_event_routine(void)
 // Stop event routine
 konexios_routine_error_t konexios_mqtt_disconnect_event_routine(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_disconnect_event_routine ...");
 
   // Only run when subscribe is done
   if (!(acn_mqtt_init_flags & MQTT_INIT_SUBSCRIBE_DONE))
@@ -532,7 +532,7 @@ konexios_routine_error_t konexios_mqtt_terminate_event_routine(void) {
 
 konexios_routine_error_t konexios_mqtt_connect_routine(void)
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_connect_routine ...");
   konexios_routine_error_t ret = ROUTINE_ERROR;
 
   // Must call register first
@@ -588,7 +588,7 @@ konexios_routine_error_t konexios_mqtt_disconnect_routine()
 // Another pointless function???
 konexios_routine_error_t konexios_mqtt_terminate_routine()
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_terminate_routine ...");
   mqtt_terminate();
   acn_mqtt_init_flags = 0;
   return ROUTINE_SUCCESS;
@@ -758,7 +758,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_routine(get_data_cb data_cb, vo
 
 konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_cb, void *data)
 {
-  TRACE("Enter");
+  TRACE("konexios_mqtt_telemetry_once_routine ...");
 
   // Can't send if not initialized
   if (!acn_register_init_done ||
@@ -790,7 +790,7 @@ konexios_routine_error_t konexios_mqtt_telemetry_once_routine(get_data_cb data_c
 
 konexios_routine_error_t konexios_mqtt_event_receive_routine()
 {
-  // TRACE("Enter");
+  TRACE("konexios_mqtt_event_receive_routine ...");
   int ret;
 
   // Can't receive if not subscribed
