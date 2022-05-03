@@ -122,7 +122,7 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
     if (ret < 0)
     {
       // new registration
-      KONEXIOS_INF("ACN: New gateway registration\n");
+      KONEXIOS_INF("konexios-api: New gateway registration\n");
       if (konexios_register_gateway(gateway) < 0)
       {
         // If we fail, return the fail code
@@ -138,11 +138,11 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
     else
     {
       // hid already set so checkin gateway
-      KONEXIOS_INF("ACN: Check in gateway\n");
+      KONEXIOS_INF("konexios-api: Check in gateway\n");
       KONEXIOS_DBG("gateway checkin hid %s", P_VALUE(gateway->hid));
       if (konexios_gateway_checkin(gateway) < 0)
       {
-        KONEXIOS_INF("ACN: Error in checkin\n");
+        KONEXIOS_INF("konexios-api: Error in checkin\n");
         // If we fail, return the fail code
         int rc = http_last_response_code();
         // 0 means the request didn't finish, 200==ok, 4xx==error, etc
@@ -157,7 +157,7 @@ int konexios_connect_gateway(konexios_gateway_t *gateway, bool update_gateway_in
   // do it here
   if (update_gateway_info)
   {
-    KONEXIOS_INF("ACN: Updating gateway info\n");
+    KONEXIOS_INF("konexios-api: Updating gateway info\n");
     if (konexios_gateway_update(gateway) < 0)
     {
       // If we fail, return the fail code
@@ -180,7 +180,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
     return ROUTINE_SUCCESS;
   if (restore_device_info(device) < 0)
   {
-    KONEXIOS_INF("ACN: Register device\n");
+    KONEXIOS_INF("konexios-api: Register device\n");
     if (konexios_register_device(gateway, device) < 0)
     {
       // If we fail, return the fail code
@@ -194,7 +194,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
   }
   else
   {
-    KONEXIOS_INF("ACN: Device already registered\n");
+    KONEXIOS_INF("konexios-api: Device already registered\n");
     return 200;
   }
 
@@ -203,7 +203,7 @@ int konexios_connect_device(konexios_gateway_t *gateway, konexios_device_t *devi
   // do it here
   if (update_device_info)
   {
-    KONEXIOS_INF("ACN: Updating device info\n");
+    KONEXIOS_INF("konexios-api: Updating device info\n");
     if (konexios_device_update(gateway, device) < 0)
     {
       // If we fail, return the fail code
@@ -276,7 +276,7 @@ konexios_routine_error_t konexios_initialize_routine(bool update_gateway_info)
 
   // Get gateway config
   retry = 0;
-  KONEXIOS_INF("ACN: Get gateway config\n");
+  KONEXIOS_INF("konexios-api: Get gateway config\n");
   while (konexios_gateway_config(&_gateway, &_gateway_config) < 0)
   {
     RETRY_UP(retry, { return ROUTINE_ERROR; });
@@ -320,7 +320,6 @@ gateway_reg_error:
 int konexios_startup_sequence(bool update_gateway_info)
 {
   TRACE("konexios_startup_sequence ...");
-  int retry = 0;
   int rc;
 
   // Keep socket connections alive for all HTTP transfers
@@ -331,34 +330,32 @@ int konexios_startup_sequence(bool update_gateway_info)
   rc = konexios_connect_gateway(&_gateway, update_gateway_info);
   if (rc != 200)
   {
-    printf("ACN: Gateway register/checkin failed (%d)\n", rc);
+    printf("konexios-api: Gateway register/checkin failed (%d)\n", rc);
     return rc;
   }
-  KONEXIOS_INF("ACN: Gateway register/checkin success\n");
+  KONEXIOS_INF("konexios-api: Gateway register/checkin success\n");
 
   // Get gateway config
-  retry = 0;
-  KONEXIOS_INF("ACN: Get gateway config\n");
+  KONEXIOS_INF("konexios-api: Get gateway config\n");
   rc = konexios_gateway_config(&_gateway, &_gateway_config);
   if (rc < 0)
   {
     printf("Gateway config [failed]\n");
     return rc;
   }
-  KONEXIOS_INF("ACN: Gateway config [ok]\n");
+  KONEXIOS_INF("konexios-api: Gateway config [ok]\n");
 
   // close session after next HTTP request
   // http_session_keep_active(true);
 
   // device registration
-  retry = 0;
   rc = konexios_connect_device(&_gateway, &_device, false);
   if (rc != 200)
   {
-    printf("ACN: Device connect [failed]\n");
+    printf("konexios-api: Device connect [failed]\n");
     return rc;
   }
-  KONEXIOS_INF("ACN: Device connect [ok]\n");
+  KONEXIOS_INF("konexios-api: Device connect [ok]\n");
 
   // Close the session!!!!
   http_end();

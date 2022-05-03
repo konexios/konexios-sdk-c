@@ -60,7 +60,7 @@ define **ARCH_SSL**             use the wolfSSL settings file *${SDK_IMPL}/sys/a
 define **ARCH_TIME**            use the platform specific headers or define needed types for common time functions (struct tm etc)
 
 ### SDK initialize ###
-You should perform the ACN SDK initialisation before you start work with any SDK methods.
+You should perform the Konexios SDK initialization before you start work with any SDK methods.
 There are 3 methods related:
 ```c
 konexios_routine_error_t konexios_init(void);
@@ -72,7 +72,7 @@ void konexios_close(void);
 **konexios_close** close all connections and terminate the gateway and device objects.
 
 ### Gateway and Device registration ###
-To get started with ArrowConnect gateway and device you should register it.
+To get started with Konexios gateway and device you should register it.
 You can call this function to register gateway and device:
 ```c
 konexios_routine_error_t konexios_initialize_routine(void);
